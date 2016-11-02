@@ -27,15 +27,14 @@ public class LS {
 	private int Start_HI[];
 	
 	//private List<Node> topo_Nodes;
-	
-
 
 	public LS(int dln, int cores, DAG d){
 		this.setDeadline(dln);
 		this.setNb_cores(cores);
 		this.setMxcDag(d);
-		
 	}
+	
+	public LS() {}
 	
 	/**
 	 * Calc weights for HLFET for both tables
@@ -362,6 +361,10 @@ public class LS {
 		}
 
 	}
+	
+	public void Alloc_All(){
+		
+	}
 
 	
 	/**
@@ -406,8 +409,6 @@ public class LS {
 	public void setWeights_HI(int weights_HI[]) {
 		this.weights_HI = weights_HI;
 	}
-
-	
 	public String[][] getS_HI() {
 		return S_HI;
 	}

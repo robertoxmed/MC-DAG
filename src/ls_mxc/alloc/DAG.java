@@ -81,5 +81,16 @@ public class DAG {
 	}
 	public void setNodes(Set<Node> nodes) {
 		Nodes = nodes;
-	}	
+	}
+	
+	public Node getNodebyID(int id){
+		Iterator<Node> it = Nodes.iterator();
+		while(it.hasNext()){
+			Node n = it.next();
+			if (n.getId() == id)
+				return n; 
+		}
+		return null;
+	}
+	
 }

@@ -72,6 +72,10 @@ public class Main {
 			System.out.println("HI weight "+ i +" = " + w_hi[i]);
 		}
 		
+		/*
+		 * Allocation, construction of tables
+		 */
+		
 		alloc_problem.Alloc_HI();
 		
 		System.out.println("\n-------------- S HI Table ---------------");
@@ -84,9 +88,16 @@ public class Main {
 		alloc_problem.printS_LO();
 		System.out.println("-----------------------------------------");
 		
+		
 		/*
-		 * Allocation, construction of tables
+		 * Reading from file
 		 */
+		System.out.println("\n-------------- Reading from file ---------------");
+
+		FileUtilities fu = new FileUtilities();
+		LS l2 = new LS();
+		
+		fu.ReadAndInit("/home/roberto/workspace/LS_mxc/src/ls_mxc/tests/5nodes.test", l2);
 		
 		
 		System.out.println("\n========== LS Alloc END ==========");
