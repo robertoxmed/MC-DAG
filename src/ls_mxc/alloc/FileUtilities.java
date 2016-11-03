@@ -63,8 +63,9 @@ public class FileUtilities {
 			
 			for(int i = 0; i < nb_nodes; i++){
 				line = line.trim();
-				Node n = new Node(i, Integer.toString('A'+i), 0, 0);
+				Node n = new Node(i, Character.toString((char) ((char)'A'+i)), 0, 0);
 				n.setC_LO(Integer.parseInt(line));
+				
 				d.getNodes().add(n);
 				line = br.readLine();
 			}
@@ -73,17 +74,13 @@ public class FileUtilities {
 			while ((line.length() == 0) || (line.charAt(0) == '#')) 
 				line = br.readLine();
 			
-			Iterator<Node> it_n = d.getNodes().iterator();
 			// C HIs are passed afterwards
 			for (int i = 0; i < nb_nodes; i++){
 				line = line.trim();
 				
-				Node n = it_n.next();
-				while (n.getId() != i)
-					n = it_n.next();
-				
+				Node n = d.getNodebyID(i);
+				System.out.println("Adding C HI "+n.getName()+" = " +line);
 				n.setC_HI(Integer.parseInt(line));
-				it_n = d.getNodes().iterator();
 				line = br.readLine();
 			}
 			
@@ -102,14 +99,19 @@ public class FileUtilities {
 						Edge e = new Edge(src, n, false);
 						src.getSnd_edges().add(e);
 						n.getRcv_edges().add(e);
-						
-						System.out.println("Adding edge from "+src.getId()+" to " + n.getId());
 					}
 				}
 				line = br.readLine();
 			}
 			
 			// Set the constructed DAG
+			Iterator<Node> it_n = d.getNodes().iterator();
+			while(it_n.hasNext()){
+				Node n = it_n.next();
+				n.checkifSink();
+				n.checkifSource();
+			}
+			
 			ls.setMxcDag(d);
 			br.close();
 			fr.close();

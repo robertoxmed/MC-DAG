@@ -10,9 +10,11 @@ import java.util.Set;
 public class DAG {
 	
 	private Set<Node> Nodes;
+	private Set<Node> Nodes_HI;
 	
 	public DAG() {
 		Nodes = new HashSet<Node>();
+		Nodes_HI = new HashSet<Node>();
 	}
 	
 	/**
@@ -68,7 +70,6 @@ public class DAG {
 					not_visited.add(m);
 			}
 		}
-		
 		return sort_nodes;
 	}
 	
@@ -85,6 +86,24 @@ public class DAG {
 	
 	public Node getNodebyID(int id){
 		Iterator<Node> it = Nodes.iterator();
+		while(it.hasNext()){
+			Node n = it.next();
+			if (n.getId() == id)
+				return n; 
+		}
+		return null;
+	}
+
+	public Set<Node> getNodes_HI() {
+		return Nodes_HI;
+	}
+
+	public void setNodes_HI(Set<Node> nodes_HI) {
+		Nodes_HI = nodes_HI;
+	}
+	
+	public Node getNodeHIbyID(int id){
+		Iterator<Node> it = Nodes_HI.iterator();
 		while(it.hasNext()){
 			Node n = it.next();
 			if (n.getId() == id)

@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
+
 public class LS {
 	
 	// DAG to be scheduled
@@ -40,12 +41,6 @@ public class LS {
 	 * Calc weights for HLFET for both tables
 	 */
 	public void calcWeights(int mode) {
-		/*topo_Nodes = new LinkedList<Node>();
-		topo_Nodes = mxc_dag.topoSort();
-		
-		ListIterator<Node> li = topo_Nodes.listIterator(topo_Nodes.size());
-		
-		while (li.hasPrevious()) {*/
 		
 		weights_LO = new int[mxc_dag.getNodes().size()];
 		weights_HI = new int[mxc_dag.getNodes().size()];
@@ -134,6 +129,7 @@ public class LS {
 		while(it_n.hasNext()){
 			Node n = it_n.next();
 			if (n.getC_HI() != 0) {
+				System.out.println("Adding "+n.getName()+ " CiHI = "+ n.getC_HI());
 				t_hi[n.getId()] = n.getC_HI();
 				li_hi.add(n);
 				if (n.isSource()) // At the beginning only source nodes are added
@@ -180,7 +176,7 @@ public class LS {
 						li_it.remove();
 					
 						// Check for new activations
-						checkActivation(li_it, n, t_hi);
+						checkActivation(li_it, n, t_hi, 1);
 						
 						// Heavier tasks can be activated -> needs a new sort
 						Collections.sort(ready_hi, new Comparator<Node>() {
@@ -273,7 +269,7 @@ public class LS {
 						li_it.remove();
 
 						// Check for new activations
-						checkActivation(li_it, n, t_lo);
+						checkActivation(li_it, n, t_lo, 0);
 
 						// Heavier tasks can be activated -> needs a new sort
 						Collections.sort(ready_lo, new Comparator<Node>() {
@@ -304,7 +300,7 @@ public class LS {
 	/**
 	 * Checks if successors of node n are activated/
 	 */
-	public void checkActivation(ListIterator<Node> li_r, Node n, int[] t_hi){
+	public void checkActivation(ListIterator<Node> li_r, Node n, int[] t_hi, int mode){
 		
 		// Check all successors
 		Iterator<Edge> it_e = n.getSnd_edges().iterator();
@@ -312,8 +308,13 @@ public class LS {
 			Edge e = it_e.next();
 			Node suc = e.getDest();
 			boolean ready = true;
+			
+			if (mode == 1 && suc.getC_HI() == 0) // Don't activate LO tasks in HI mode
+				ready = false;
+			
 			Iterator<Edge> it_e_rcv = suc.getRcv_edges().iterator();
 			while (it_e_rcv.hasNext()){ // For each successor we check its dependencies
+				
 				Edge e2 = it_e_rcv.next();
 				Node pred = e2.getSrc();
 				if (t_hi[pred.getId()] != 0){
@@ -364,6 +365,15 @@ public class LS {
 	
 	public void Alloc_All(){
 		
+		this.calcWeights(1);
+		this.Alloc_HI();
+		
+		this.printS_HI();
+		
+		this.calcWeights(0);
+		this.Alloc_LO();
+	
+		this.printS_LO();
 	}
 
 	
