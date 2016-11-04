@@ -79,7 +79,6 @@ public class FileUtilities {
 				line = line.trim();
 				
 				Node n = d.getNodebyID(i);
-				System.out.println("Adding C HI "+n.getName()+" = " +line);
 				n.setC_HI(Integer.parseInt(line));
 				line = br.readLine();
 			}

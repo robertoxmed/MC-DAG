@@ -129,7 +129,6 @@ public class LS {
 		while(it_n.hasNext()){
 			Node n = it_n.next();
 			if (n.getC_HI() != 0) {
-				System.out.println("Adding "+n.getName()+ " CiHI = "+ n.getC_HI());
 				t_hi[n.getId()] = n.getC_HI();
 				li_hi.add(n);
 				if (n.isSource()) // At the beginning only source nodes are added
@@ -245,20 +244,17 @@ public class LS {
 		
 		// Iterate through slots
 		for(int t = 0; t < deadline; t++){
+			// For each slot check if it's an WC activation time
+			checkStartHI(ready_lo, t, Start_HI, t_lo);
+			
 			ListIterator<Node> li_it = ready_lo.listIterator();
 			for(int c = 0; c < nb_cores; c++) {
 				if (li_it.hasNext() && S_LO[t][c].contains("0")){
 					Node n = li_it.next(); // Get head of the list
 					
 					// Check if slot is a HI start time
-					checkStartHI(t, Start_HI, t_lo, n);
 					// Heavier tasks can be activated -> needs a new sort
-					Collections.sort(ready_lo, new Comparator<Node>() {
-						@Override
-						public int compare(Node n1, Node n2) {
-							return n2.getWeight_LO() - n1.getWeight_LO();
-						}
-					});
+					
 					
 					S_LO[t][c] = n.getName(); // Give the slot to the task
 
@@ -288,12 +284,24 @@ public class LS {
 	/**
 	 * Check if t is a start time and allocates what's left of the HI task
 	 */
-	public boolean checkStartHI(int t, int[] start_hi, int[] t_lo, Node n){
+	public boolean checkStartHI(LinkedList<Node> ready_lo, int t, int[] start_hi, int[] t_lo){
 		boolean ret = false;
-		if (start_hi[n.getId()] == t && t_lo[n.getId()] != 0) { // Task i has to start/finish its execution
-			// If it's an activation time promote weight
-			n.setWeight_LO(Integer.MAX_VALUE);
+		Iterator<Node> it_n = mxc_dag.getNodes().iterator();
+		while (it_n.hasNext()){
+			Node n = it_n.next();
+			if (start_hi[n.getId()] == t && t_lo[n.getId()] != 0 && n.getC_HI() != 0){
+				n.setWeight_LO(Integer.MAX_VALUE);
+				Collections.sort(ready_lo, new Comparator<Node>() {
+					@Override
+					public int compare(Node n1, Node n2) {
+						return n2.getWeight_LO() - n1.getWeight_LO();
+					}
+				});
+
+			}
 		}
+		
+		
 		return ret;
 	}
 	

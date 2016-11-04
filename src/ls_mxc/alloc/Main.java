@@ -101,11 +101,7 @@ public class Main {
 		fu.ReadAndInit("/home/roberto/workspace/LS_mxc/src/ls_mxc/tests/12nodes.test", l3);
 
 		l3.Alloc_All();
-		
-		int[] w = l3.getWeights_LO();
-		
-		for(int i = 0; i < 12; i++)
-			System.out.println("LO weight "+ i +" = " + w[i]);
+
 
 		
 		System.out.println("\n========== LS Alloc END ==========");
