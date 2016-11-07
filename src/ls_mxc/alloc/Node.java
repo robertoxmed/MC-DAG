@@ -50,6 +50,7 @@ public class Node {
 		if (snd_edges.size() == 0)
 			this.setSink(true);
 	}
+
 	
 	/**
 	 *  Getters & Setters

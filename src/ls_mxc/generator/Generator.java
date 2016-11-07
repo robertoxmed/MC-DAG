@@ -1,5 +1,8 @@
 package ls_mxc.generator;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
@@ -20,16 +23,19 @@ public class Generator {
 	private int MIN_PER_RANK;
 	private int MAX_PER_RANK;
 	
+	private int deadline;
+	
 	private float edgeProb;
 	private Set<Node> Nodes;
 	private float hiPerc;
 	
 	private int[][] adjMatrix;
 	
-	public Generator(int rank, int cores, int eprob, int hperc) {
+	public Generator(int rank, int cores, int eprob, int hperc, int dead) {
 		this.setNbCores(cores);
 		this.setEdgeProb(eprob);
 		this.setHiPerc(hperc);
+		this.setDeadline(dead);
 		
 		MIN_RANKS = 1;
 		MAX_RANKS = rank;
@@ -122,8 +128,69 @@ public class Generator {
 		}
 	}
 	
+	public Node getNodebyID(int id){
+		Iterator<Node> it = Nodes.iterator();
+		while(it.hasNext()){
+			Node n = it.next();
+			if (n.getId() == id)
+				return n; 
+		}
+		return null;
+	}
 	
-	public void toFile(String filename){
+	
+	public void toFile(String filename) throws IOException{
+		BufferedWriter out = null;
+		try {
+			FileWriter fstream = new FileWriter(filename);
+			out = new BufferedWriter(fstream);
+			
+			// Write number of nodes
+			out.write("#NbNodes\n");
+			out.write(Integer.toString(this.getNbNodes()) + "\n\n");
+			
+			// Write number of cores
+			out.write("#NbCores\n");
+			out.write(Integer.toString(this.getNbCores()) + "\n\n");
+			
+			// Write number of cores
+			out.write("#Deadline\n");
+			out.write(Integer.toString(this.getDeadline()) + "\n\n");
+			
+			//Write C LOs
+			out.write("#C_LO\n");
+			for (int i = 0; i < nbNodes; i++) {
+				Node n = getNodebyID(i);
+				out.write(Integer.toString(n.getC_LO()) + "\n");
+			}
+			out.write("\n");
+			
+			//Write C HIs
+			out.write("#C_HI\n");
+			for (int i = 0; i < nbNodes; i++) {
+				Node n = getNodebyID(i);
+				out.write(Integer.toString(n.getC_HI()) + "\n");
+			}
+			out.write("\n");
+			
+			//Write precedence matrix
+			out.write("#Pred\n");
+			for (int i = 0; i < nbNodes; i++) {
+				for (int j = 0; j < nbNodes; j++){
+					out.write(Integer.toString(adjMatrix[i][j]));
+					if (j < nbNodes - 1)
+						out.write(",");
+				}
+				out.write("\n");
+			}
+			out.write("\n");
+			
+		}catch (IOException e ){
+			System.out.print("Exception " + e.getMessage());
+		}finally{
+			if(out != null)
+				out.close();
+		}
 		
 	}
 	
@@ -167,6 +234,14 @@ public class Generator {
 
 	public void setAdjMatrix(int[][] adjMatrix) {
 		this.adjMatrix = adjMatrix;
+	}
+
+	public int getDeadline() {
+		return deadline;
+	}
+
+	public void setDeadline(int deadline) {
+		this.deadline = deadline;
 	}
 	
 	
