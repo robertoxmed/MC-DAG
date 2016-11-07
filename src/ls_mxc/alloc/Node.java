@@ -20,14 +20,19 @@ public class Node {
 	private Set<Edge> rcv_edges;
 	private Set<Edge> snd_edges;
 	
+	// Used for DAG generation
+	private int rank;
+	
 	/**
-	 * Constructor
+	 * Constructors
 	 */
 	public Node(int id, String name, int c_lo, int c_hi){
 		this.setId(id);
 		this.setC_LO(c_lo);
 		this.setC_HI(c_hi);
 		this.setName(name);
+		this.setSink(false);
+		this.setSource(false);
 		
 		rcv_edges = new HashSet<Edge>();
 		snd_edges = new HashSet<Edge>();
@@ -110,5 +115,13 @@ public class Node {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public int getRank() {
+		return rank;
+	}
+
+	public void setRank(int rank) {
+		this.rank = rank;
 	}
 }
