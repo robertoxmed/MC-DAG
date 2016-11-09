@@ -8,8 +8,8 @@ import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
 
-import ls_mxc.alloc.Edge;
-import ls_mxc.alloc.Node;
+import ls_mxc.model.Edge;
+import ls_mxc.model.Node;
 
 public class Generator {
 

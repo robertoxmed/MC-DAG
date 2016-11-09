@@ -6,6 +6,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Iterator;
 
+import ls_mxc.model.DAG;
+import ls_mxc.model.Edge;
+import ls_mxc.model.Node;
+
 public class FileUtilities {
 	
 	public FileUtilities (){

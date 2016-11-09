@@ -6,6 +6,10 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
+import ls_mxc.model.DAG;
+import ls_mxc.model.Edge;
+import ls_mxc.model.Node;
+
 
 public class LS {
 	
@@ -156,8 +160,8 @@ public class LS {
 		 * =============================================*/
 		
 		// Iterate through slots
+		ListIterator<Node> li_it = ready_hi.listIterator();
 		for(int t = 0; t < deadline; t++){
-			ListIterator<Node> li_it = ready_hi.listIterator();
 			for(int c = 0; c < nb_cores; c++) {
 				if (li_it.hasNext()){
 					Node n = li_it.next(); // Get head of the list
@@ -243,18 +247,14 @@ public class LS {
 		 * =============================================*/
 		
 		// Iterate through slots
+		ListIterator<Node> li_it = ready_lo.listIterator();
 		for(int t = 0; t < deadline; t++){
 			// For each slot check if it's an WC activation time
 			checkStartHI(ready_lo, t, Start_HI, t_lo);
 			
-			ListIterator<Node> li_it = ready_lo.listIterator();
 			for(int c = 0; c < nb_cores; c++) {
-				if (li_it.hasNext() && S_LO[t][c].contains("0")){
+				if (li_it.hasNext()){
 					Node n = li_it.next(); // Get head of the list
-					
-					// Check if slot is a HI start time
-					// Heavier tasks can be activated -> needs a new sort
-					
 					
 					S_LO[t][c] = n.getName(); // Give the slot to the task
 

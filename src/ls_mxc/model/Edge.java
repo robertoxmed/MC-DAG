@@ -1,4 +1,4 @@
-package ls_mxc.alloc;
+package ls_mxc.model;
 
 public class Edge {
 	

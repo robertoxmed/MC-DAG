@@ -1,5 +1,9 @@
 package ls_mxc.alloc;
 
+import ls_mxc.model.DAG;
+import ls_mxc.model.Edge;
+import ls_mxc.model.Node;
+
 public class Main {
 	
 	public static void main (String args[]){

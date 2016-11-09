@@ -1,4 +1,4 @@
-package ls_mxc.alloc;
+package ls_mxc.model;
 
 import java.util.HashSet;
 import java.util.Iterator;
