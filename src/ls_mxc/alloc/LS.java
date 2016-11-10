@@ -111,7 +111,7 @@ public class LS {
 	public void Alloc_HI(){
 		
 		/* =============================================
-		 *  Initialization of variables used by the class
+		 *  Initialization of variables used by the method & class
 		 ================================================*/
 		S_HI = new String[deadline][nb_cores];
 		// Initialize with 0s

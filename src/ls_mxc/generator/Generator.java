@@ -144,6 +144,7 @@ public class Generator {
 	
 	
 	public void toFile(String filename) throws IOException{
+		
 		BufferedWriter out = null;
 		try {
 			FileWriter fstream = new FileWriter(filename);
