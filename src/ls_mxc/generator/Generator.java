@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
 
+import ls_mxc.model.DAG;
 import ls_mxc.model.Edge;
 import ls_mxc.model.Node;
 
@@ -18,6 +19,7 @@ public class Generator {
 	 */
 	private int nbNodes;
 	private int nbCores;
+	private int quota;
 	private int MIN_RANKS;
 	private int MAX_RANKS;
 	private int MIN_PER_RANK;
@@ -26,21 +28,22 @@ public class Generator {
 	private int deadline;
 	
 	private float edgeProb;
-	private Set<Node> Nodes;
 	private float hiPerc;
+	private DAG d;
 	
 	private int[][] adjMatrix;
 	
-	public Generator(int rank, int cores, int eprob, int hperc, int dead) {
+	public Generator(int height, int width, int quota, int cores, int eprob, int hperc, int dead) {
 		this.setNbCores(cores);
 		this.setEdgeProb(eprob);
 		this.setHiPerc(hperc);
 		this.setDeadline(dead);
-		
+		this.setQuota(quota);
+				
 		MIN_RANKS = 1;
-		MAX_RANKS = rank;
+		MAX_RANKS = height;
 		MIN_PER_RANK = 1;
-		MAX_PER_RANK = rank;
+		MAX_PER_RANK = width;
 	}
 	
 	/**
@@ -51,26 +54,34 @@ public class Generator {
 	 */
 	public void GenerateGraph(){
 		
+		
 		Set<Node> nodes = new HashSet<Node>();
 		Set<Node> new_nodes = new HashSet<Node>();
 		Random r = new Random();
+		int nodes_created = 0;
 		int id = 0;
+		d = new DAG();
 		
 		// How "tall" the DAG should be
-		int ranks = MIN_RANKS + (r.nextInt() % (MAX_RANKS - MIN_RANKS + 1));
+		
+		int ranks = r.nextInt(MAX_RANKS - MIN_RANKS) + MIN_RANKS;
+		
+		System.out.println("Ranks = " + ranks);
 		
 		// For each level of the DAG
 		for (int i = 0; i < ranks; i++) {
 			
 			// Generate a new node with a higher rank than the one previously made
 			// And its parameters
-			int nb_nodes_rank = MIN_PER_RANK+ (r.nextInt() % (MAX_PER_RANK - MIN_PER_RANK +1));
+			int nb_nodes_rank = r.nextInt(MAX_PER_RANK - MIN_PER_RANK) + MIN_PER_RANK;
+
+			System.out.println("Rank = " + i + " Nb nodes in rank = " + nb_nodes_rank);
 			
 			for(int j = 0; j < nb_nodes_rank; j++) {
 			
 				Node n = new Node(id, Character.toString((char) ((char)'A'+j+(i*10))), 0, 0);
 				n.setRank(i);
-				n.setC_LO(r.nextInt(5));
+				n.setC_LO(r.nextInt(4) + 1);
 				
 				if ((r.nextInt() % 100) < hiPerc)
 					n.setC_HI((int) (n.getC_LO() * 1.5));
@@ -79,6 +90,7 @@ public class Generator {
 				
 				new_nodes.add(n);
 				id++;
+				nodes_created++;
 			}
 		
 			
@@ -86,12 +98,12 @@ public class Generator {
 			Iterator<Node> it_n = nodes.iterator();
 			while (it_n.hasNext()){
 				Iterator<Node> it_n2 = new_nodes.iterator();
+				Node src = it_n.next();
 				while (it_n2.hasNext()){
-					Node src = it_n.next();
 					Node dest = it_n2.next();
 					
 					// Probably of adding an edge between the 2 nodes
-					if ((r.nextInt()%100) < edgeProb){
+					if (r.nextInt(100) < edgeProb){
 						Edge e = new Edge(src, dest, false);
 						src.getSnd_edges().add(e);
 						dest.getRcv_edges().add(e);
@@ -108,7 +120,9 @@ public class Generator {
 			}
 			
 		}
-		setNbNodes(id);
+		setNbNodes(nodes_created);
+		d.setNodes(nodes);
+		createAdjMatrix();
 	}
 	
 	public void createAdjMatrix(){
@@ -116,7 +130,7 @@ public class Generator {
 		for (int i = 0; i < nbNodes; i++)
 			adjMatrix[i] = new int[nbNodes];
 		
-		Iterator<Node> it_n = Nodes.iterator();
+		Iterator<Node> it_n = d.getNodes().iterator();
 		while (it_n.hasNext()){
 			Node n = it_n.next();
 			
@@ -126,16 +140,6 @@ public class Generator {
 				adjMatrix[e.getDest().getId()][e.getSrc().getId()] = 1;
 			}
 		}
-	}
-	
-	public Node getNodebyID(int id){
-		Iterator<Node> it = Nodes.iterator();
-		while(it.hasNext()){
-			Node n = it.next();
-			if (n.getId() == id)
-				return n; 
-		}
-		return null;
 	}
 	
 	
@@ -160,7 +164,7 @@ public class Generator {
 			//Write C LOs
 			out.write("#C_LO\n");
 			for (int i = 0; i < nbNodes; i++) {
-				Node n = getNodebyID(i);
+				Node n = d.getNodebyID(i);
 				out.write(Integer.toString(n.getC_LO()) + "\n");
 			}
 			out.write("\n");
@@ -168,7 +172,7 @@ public class Generator {
 			//Write C HIs
 			out.write("#C_HI\n");
 			for (int i = 0; i < nbNodes; i++) {
-				Node n = getNodebyID(i);
+				Node n = d.getNodebyID(i);
 				out.write(Integer.toString(n.getC_HI()) + "\n");
 			}
 			out.write("\n");
@@ -215,12 +219,6 @@ public class Generator {
 	public void setEdgeProb(float edgeProb) {
 		this.edgeProb = edgeProb;
 	}
-	public Set<Node> getNodes() {
-		return Nodes;
-	}
-	public void setNodes(Set<Node> nodes) {
-		Nodes = nodes;
-	}
 	public float getHiPerc() {
 		return hiPerc;
 	}
@@ -242,6 +240,22 @@ public class Generator {
 
 	public void setDeadline(int deadline) {
 		this.deadline = deadline;
+	}
+
+	public int getQuota() {
+		return quota;
+	}
+
+	public void setQuota(int quota) {
+		this.quota = quota;
+	}
+
+	public DAG getD() {
+		return d;
+	}
+
+	public void setD(DAG d) {
+		this.d = d;
 	}
 	
 	
