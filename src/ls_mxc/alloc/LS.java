@@ -108,7 +108,7 @@ public class LS {
 	/**
 	 * Creates the S_HI table 
 	 */
-	public void Alloc_HI(){
+	public void Alloc_HI() throws SchedulingException{
 		
 		/* =============================================
 		 *  Initialization of variables used by the method & class
@@ -162,6 +162,13 @@ public class LS {
 		// Iterate through slots
 		ListIterator<Node> li_it = ready_hi.listIterator();
 		for(int t = 0; t < deadline; t++){
+			
+			// Check if there is enough slots to finish executing tasks
+			if (! checkFreeSlot(t_hi, mxc_dag.getNodes().size(), (deadline - t) * nb_cores)){
+				SchedulingException se = new SchedulingException("Alloc HI : Not enough slot lefts");
+				throw se;
+			}
+			
 			for(int c = 0; c < nb_cores; c++) {
 				if (li_it.hasNext()){
 					Node n = li_it.next(); // Get head of the list
@@ -199,7 +206,7 @@ public class LS {
 	/**
 	 * S LO allocation
 	 */
-	public void Alloc_LO(){
+	public void Alloc_LO() throws SchedulingException{
 		/* =============================================
 		 *  Initialization of variables used by the method
 		 ================================================*/
@@ -250,7 +257,13 @@ public class LS {
 		ListIterator<Node> li_it = ready_lo.listIterator();
 		for(int t = 0; t < deadline; t++){
 			// For each slot check if it's an WC activation time
+			if (! checkFreeSlot(t_lo, mxc_dag.getNodes().size(), (deadline - t) * nb_cores)){
+				SchedulingException se = new SchedulingException("Alloc HI : Not enough slot lefts");
+				throw se;
+			}
+			
 			checkStartHI(ready_lo, t, Start_HI, t_lo);
+			
 			
 			for(int c = 0; c < nb_cores; c++) {
 				if (li_it.hasNext()){
@@ -371,7 +384,11 @@ public class LS {
 
 	}
 	
-	public void Alloc_All(){
+	/**
+	 * Does the whole allocaiton
+	 * @throws SchedulingException 
+	 */
+	public void Alloc_All() throws SchedulingException{
 		
 		this.calcWeights(1);
 		this.Alloc_HI();
@@ -383,7 +400,30 @@ public class LS {
 	
 		this.printS_LO();
 	}
-
+	
+	/**
+	 * Check if there is enough time slots for remaining tasks
+	 * @param t
+	 * @param n
+	 * @param l
+	 * @return
+	 */
+	public boolean checkFreeSlot(int[] t, int n, int l){
+		boolean r = true;
+		int s = 0;
+		
+		for(int i = 0; i < n; i ++){
+			s += t[i];
+		}
+		
+		if (s > l)
+			r = false;
+		
+		return r;
+	}
+	
+	/************************************************************************************/
+	
 	
 	/**
 	 * 

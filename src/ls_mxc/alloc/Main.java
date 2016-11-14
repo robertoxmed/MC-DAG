@@ -80,13 +80,21 @@ public class Main {
 		 * Allocation, construction of tables
 		 */
 		
-		alloc_problem.Alloc_HI();
+		try {
+			alloc_problem.Alloc_HI();
+		} catch (SchedulingException e) {
+			System.out.println(e.getMessage());
+		}
 		
 		System.out.println("\n-------------- S HI Table ---------------");
 		alloc_problem.printS_HI();
 		System.out.println("-----------------------------------------");
 
-		alloc_problem.Alloc_LO();
+		try {
+			alloc_problem.Alloc_LO();
+		} catch (SchedulingException e) {
+			System.out.println(e.getMessage());
+		}
 		
 		System.out.println("\n-------------- S LO Table ---------------");
 		alloc_problem.printS_LO();
@@ -104,7 +112,11 @@ public class Main {
 		
 		fu.ReadAndInit("/home/roberto/workspace/LS_mxc/src/ls_mxc/tests/12nodes.test", l3);
 
-		l3.Alloc_All();
+		try {
+			l3.Alloc_All();
+		} catch (SchedulingException e) {
+			System.out.println(e.getMessage());
+		}
 
 
 		

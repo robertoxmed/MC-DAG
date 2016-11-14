@@ -1,6 +1,7 @@
 package ls_mxc.generator;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashSet;
@@ -65,17 +66,13 @@ public class Generator {
 		// How "tall" the DAG should be
 		
 		int ranks = r.nextInt(MAX_RANKS - MIN_RANKS) + MIN_RANKS;
-		
-		System.out.println("Ranks = " + ranks);
-		
+				
 		// For each level of the DAG
 		for (int i = 0; i < ranks; i++) {
 			
 			// Generate a new node with a higher rank than the one previously made
 			// And its parameters
 			int nb_nodes_rank = r.nextInt(MAX_PER_RANK - MIN_PER_RANK) + MIN_PER_RANK;
-
-			System.out.println("Rank = " + i + " Nb nodes in rank = " + nb_nodes_rank);
 			
 			for(int j = 0; j < nb_nodes_rank; j++) {
 			
@@ -147,7 +144,9 @@ public class Generator {
 		
 		BufferedWriter out = null;
 		try {
-			FileWriter fstream = new FileWriter(filename);
+			File f = new File(filename);
+			f.createNewFile();
+			FileWriter fstream = new FileWriter(f);
 			out = new BufferedWriter(fstream);
 			
 			// Write number of nodes

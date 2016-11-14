@@ -10,7 +10,7 @@ public class Main {
 		g.GenerateGraph();
 		
 		try {
-			g.toFile("/home/roberto/workspace/LS_mxc/src/ls_mxc/tests/ex1.test");
+			g.toFile("/home/roberto/workspace/LS_mxc/src/ls_mxc/tests/ex2.test");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
