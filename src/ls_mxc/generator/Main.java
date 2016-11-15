@@ -2,6 +2,12 @@ package ls_mxc.generator;
 
 import java.io.IOException;
 
+
+/**
+ * Graph generator
+ * @author Roberto Medina
+ *
+ */
 public class Main {
 
 	public static void main (String args[]){

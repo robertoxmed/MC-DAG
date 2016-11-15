@@ -13,6 +13,11 @@ import ls_mxc.model.DAG;
 import ls_mxc.model.Edge;
 import ls_mxc.model.Node;
 
+/**
+ * Generates random graphs to schedule 
+ * @author Roberto Medina
+ *
+ */
 public class Generator {
 
 	/**
@@ -122,6 +127,9 @@ public class Generator {
 		createAdjMatrix();
 	}
 	
+	/**
+	 * 
+	 */
 	public void createAdjMatrix(){
 		adjMatrix = new int[nbNodes][];
 		for (int i = 0; i < nbNodes; i++)
@@ -139,7 +147,11 @@ public class Generator {
 		}
 	}
 	
-	
+	/**
+	 * 
+	 * @param filename
+	 * @throws IOException
+	 */
 	public void toFile(String filename) throws IOException{
 		
 		BufferedWriter out = null;
@@ -257,7 +269,6 @@ public class Generator {
 	public void setD(DAG d) {
 		this.d = d;
 	}
-	
 	
 	
 }

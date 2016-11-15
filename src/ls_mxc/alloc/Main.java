@@ -1,5 +1,7 @@
 package ls_mxc.alloc;
 
+import java.io.IOException;
+
 import org.apache.commons.cli.*;
 
 /**
@@ -55,6 +57,17 @@ public class Main {
 			
 			System.exit(1);
 			return;
+		}
+		
+		// User specified a file to write to
+		if (outputFilePath != null) {
+			try {
+				fu.writeToFile(outputFilePath, ls);
+			} catch (IOException ie) {
+				System.out.println("Write to file " + ie.getMessage());
+				System.exit(1);
+				return;
+			}
 		}
 		
 	}
