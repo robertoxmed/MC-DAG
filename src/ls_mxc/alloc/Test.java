@@ -4,7 +4,7 @@ import ls_mxc.model.DAG;
 import ls_mxc.model.Edge;
 import ls_mxc.model.Node;
 
-public class Main2 {
+public class Test {
 	
 	public static void main (String args[]){
 		

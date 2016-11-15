@@ -11,9 +11,14 @@ import org.apache.commons.cli.*;
  */
 public class Main {
 
-	public static void main(String[] args) throws Exception {
+	/**
+	 * 
+	 * @param args
+	 */
+	public static void main(String[] args) {
+				
+		/* ============================ Command line ================= */
 		
-		 
 		Options options = new Options();
 		
 		Option input = new Option("i", "input", true, "input file path");

@@ -25,7 +25,6 @@ public class Generator {
 	 */
 	private int nbNodes;
 	private int nbCores;
-	private int quota;
 	private int MIN_RANKS;
 	private int MAX_RANKS;
 	private int MIN_PER_RANK;
@@ -39,12 +38,11 @@ public class Generator {
 	
 	private int[][] adjMatrix;
 	
-	public Generator(int height, int width, int quota, int cores, int eprob, int hperc, int dead) {
+	public Generator(int height, int width, int cores, int eprob, int hperc, int dead) {
 		this.setNbCores(cores);
 		this.setEdgeProb(eprob);
 		this.setHiPerc(hperc);
 		this.setDeadline(dead);
-		this.setQuota(quota);
 				
 		MIN_RANKS = 1;
 		MAX_RANKS = height;
@@ -58,7 +56,7 @@ public class Generator {
 	 *  - Creating an edge from a LO task to a HI task
 	 * 
 	 */
-	public void GenerateGraph(){
+	public void generateGraph(){
 		
 		
 		Set<Node> nodes = new HashSet<Node>();
@@ -253,15 +251,6 @@ public class Generator {
 	public void setDeadline(int deadline) {
 		this.deadline = deadline;
 	}
-
-	public int getQuota() {
-		return quota;
-	}
-
-	public void setQuota(int quota) {
-		this.quota = quota;
-	}
-
 	public DAG getD() {
 		return d;
 	}
