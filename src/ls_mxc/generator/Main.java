@@ -65,7 +65,7 @@ public class Main {
 		
 		
 		int height = Integer.parseInt(cmd.getOptionValue("height"));
-		int width = Integer.parseInt(cmd.getOptionValue("widht"));
+		int width = Integer.parseInt(cmd.getOptionValue("width"));
 		int cores = Integer.parseInt(cmd.getOptionValue("cores"));
 		int eprob = Integer.parseInt(cmd.getOptionValue("eprobability"));
 		int hperc = Integer.parseInt(cmd.getOptionValue("hiperc"));
@@ -78,10 +78,24 @@ public class Main {
 				
 		g.generateGraph();
 		
+		// Generate the file used for the list scheduling
 		try {
 			g.toFile(output);
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println("To file from generator " + e.getMessage());
+			
+			System.exit(1);
+			return;
+		}
+		
+		// Generate the file used for the CSP
+		try {
+			g.toDZN("/home/roberto/workspace/LS_mxc/src/ls_mxc/tests/ex1.dzn");
+		} catch (IOException e) {
+			System.out.println("To DZN from generator " + e.getMessage());
+			
+			System.exit(1);
+			return;
 		}
 	}
 }

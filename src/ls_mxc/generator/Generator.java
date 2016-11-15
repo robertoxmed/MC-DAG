@@ -199,13 +199,80 @@ public class Generator {
 			}
 			out.write("\n");
 			
+		}catch (IOException e){
+			System.out.print("To File : " + e.getMessage());
+		}finally{
+			if(out != null)
+				out.close();
+		}
+	}
+	
+	/**
+	 * Write the DAG to a .dzn file for the CSP
+	 * @param filename
+	 * @throws IOException
+	 */
+	public void toDZN(String filename) throws IOException {
+		BufferedWriter out = null;
+		try {
+			File f = new File(filename);
+			f.createNewFile();
+			FileWriter fstream = new FileWriter(f);
+			out = new BufferedWriter(fstream);
+			
+			// Write number of nodes
+			out.write("NbNodes = ");
+			out.write(Integer.toString(this.getNbNodes()) + ";\n");
+			
+			// Write number of cores
+			out.write("NbCores = ");
+			out.write(Integer.toString(this.getNbCores()) + ";\n");
+			
+			// Write number of cores
+			out.write("Deadline = ");
+			out.write(Integer.toString(this.getDeadline()) + ";\n");
+			
+			// Max slots
+			out.write("MaxSlot = ");
+			out.write(Integer.toString(this.getDeadline()) + ";\n\n");
+			
+			//Write C LOs
+			out.write("C_LO = [");
+			for (int i = 0; i < nbNodes + 1; i++) {
+				Node n = d.getNodebyID(i);
+				if (i != nbNodes - 1)
+					out.write(Integer.toString(n.getC_LO()) + ", ");
+			}
+			out.write("];\n\n");
+			
+			//Write C HIs
+			out.write("C_HI = [");
+			for (int i = 0; i < nbNodes + 1; i++) {
+				Node n = d.getNodebyID(i);
+				if (i != nbNodes - 1)
+					out.write(Integer.toString(n.getC_HI()) + ", ");
+			}
+			out.write("];\n\n");
+			
+			//Write precedence matrix
+			out.write("Pred = [");
+			for (int i = 0; i < nbNodes; i++) {
+				out.write("| ");
+				for (int j = 0; j < nbNodes; j++){
+					out.write(Integer.toString(adjMatrix[i][j]));
+					if (j < nbNodes - 1)
+						out.write(", ");
+				}
+				out.write("\n");
+			}
+			out.write("|];\n");
+			
 		}catch (IOException e ){
 			System.out.print("Exception " + e.getMessage());
 		}finally{
 			if(out != null)
 				out.close();
 		}
-		
 	}
 	
 	/**
