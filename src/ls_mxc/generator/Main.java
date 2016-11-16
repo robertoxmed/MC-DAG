@@ -3,8 +3,9 @@ package ls_mxc.generator;
 import java.io.IOException;
 
 import org.apache.commons.cli.*;
+
 /**
- * 
+ * Main for the Graph generator interface
  * @author Roberto Medina
  *
  */
@@ -40,9 +41,6 @@ public class Main {
 		o_hperc.setRequired(true);
 		options.addOption(o_hperc);
 		
-		Option o_dead = new Option("d", "deadline", true, "Deadline for the DAG");
-		o_dead.setRequired(true);
-		options.addOption(o_dead);
 		
 		Option o_out = new Option("o", "output", true, "Output file for the DAG");
 		o_out.setRequired(true);
@@ -69,12 +67,11 @@ public class Main {
 		int cores = Integer.parseInt(cmd.getOptionValue("cores"));
 		int eprob = Integer.parseInt(cmd.getOptionValue("eprobability"));
 		int hperc = Integer.parseInt(cmd.getOptionValue("hiperc"));
-		int dead = Integer.parseInt(cmd.getOptionValue("deadline"));
 		String output = cmd.getOptionValue("output");
 		
 		/* ============================= Generator parameters ============================= */
 		
-		Generator g = new Generator(height, width, cores, eprob, hperc, dead);
+		Generator g = new Generator(height, width, cores, eprob, hperc);
 				
 		g.generateGraph();
 		
@@ -90,7 +87,7 @@ public class Main {
 		
 		// Generate the file used for the CSP
 		try {
-			g.toDZN("/home/roberto/workspace/LS_mxc/src/ls_mxc/tests/ex1.dzn");
+			g.toDZN("/home/roberto/workspace/LS_mxc/tests/ex1.dzn");
 		} catch (IOException e) {
 			System.out.println("To DZN from generator " + e.getMessage());
 			

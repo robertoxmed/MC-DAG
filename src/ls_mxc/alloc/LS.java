@@ -10,7 +10,11 @@ import ls_mxc.model.DAG;
 import ls_mxc.model.Edge;
 import ls_mxc.model.Node;
 
-
+/**
+ * 
+ * @author roberto
+ *
+ */
 public class LS {
 	
 	// DAG to be scheduled
@@ -33,6 +37,12 @@ public class LS {
 	
 	//private List<Node> topo_Nodes;
 
+	/**
+	 * Constructor of LS
+	 * @param dln Deadline
+	 * @param cores Number of cores
+	 * @param d Dag
+	 */
 	public LS(int dln, int cores, DAG d){
 		this.setDeadline(dln);
 		this.setNb_cores(cores);
@@ -61,8 +71,11 @@ public class LS {
 	}
 	
 	/**
-	 * Longest path from n to the sinks
-	 * HLFET level
+	 * Calculates HLFET levels for each Node depending on the mode.
+	 * Sets the HLFET level in the Node object.
+	 * @param n Node of the graph
+	 * @param mode Mode of the graph
+	 * @return Level of the Node in the graph
 	 */
 	public int HLFET_level(Node n, int mode) {
 		
@@ -106,7 +119,10 @@ public class LS {
 	}
 	
 	/**
-	 * Creates the S_HI table 
+	 * Allocation algorithm for the HI mode.
+	 * Instantiates the scheduling table + gives start times
+	 * for HI tasks in HI mode.
+	 * @throws SchedulingException
 	 */
 	public void Alloc_HI() throws SchedulingException{
 		
@@ -204,7 +220,9 @@ public class LS {
 	}
 	
 	/**
-	 * S LO allocation
+	 * Allocation of the LO mode for the graph.
+	 * Needs to be called after Alloc_HI.
+	 * @throws SchedulingException
 	 */
 	public void Alloc_LO() throws SchedulingException{
 		/* =============================================
@@ -295,7 +313,13 @@ public class LS {
 	}
 	
 	/**
-	 * Check if t is a start time and allocates what's left of the HI task
+	 * Checks if a new HI task needs to be promoted. If it's the case then
+	 * the ready list is reordered.
+	 * @param ready_lo List of tasks that can be scheduled
+	 * @param t Time unit to check
+	 * @param start_hi Table of start times for HI tasks
+	 * @param t_lo Table of execution times
+	 * @return
 	 */
 	public boolean checkStartHI(LinkedList<Node> ready_lo, int t, int[] start_hi, int[] t_lo){
 		boolean ret = false;
@@ -319,7 +343,11 @@ public class LS {
 	}
 	
 	/**
-	 * Checks if successors of node n are activated/
+	 * 
+	 * @param li_r
+	 * @param n
+	 * @param t_hi
+	 * @param mode
 	 */
 	public void checkActivation(ListIterator<Node> li_r, Node n, int[] t_hi, int mode){
 		
@@ -403,7 +431,7 @@ public class LS {
 	
 	/**
 	 * Check if there is enough time slots for remaining tasks
-	 * @param t
+	 * @param t 
 	 * @param n
 	 * @param l
 	 * @return

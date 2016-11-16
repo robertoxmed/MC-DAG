@@ -38,11 +38,10 @@ public class Generator {
 	
 	private int[][] adjMatrix;
 	
-	public Generator(int height, int width, int cores, int eprob, int hperc, int dead) {
+	public Generator(int height, int width, int cores, int eprob, int hperc) {
 		this.setNbCores(cores);
 		this.setEdgeProb(eprob);
 		this.setHiPerc(hperc);
-		this.setDeadline(dead);
 				
 		MIN_RANKS = 1;
 		MAX_RANKS = height;
@@ -103,10 +102,14 @@ public class Generator {
 					Node dest = it_n2.next();
 					
 					// Probably of adding an edge between the 2 nodes
-					if (r.nextInt(100) < edgeProb){
-						Edge e = new Edge(src, dest, false);
-						src.getSnd_edges().add(e);
-						dest.getRcv_edges().add(e);
+					if (r.nextInt(100) <= edgeProb){
+						// Check that it's not a LO->HI communication
+						if ((src.getC_HI() > 0 && dest.getC_HI() >= 0) ||
+								(src.getC_HI() == 0 && dest.getC_HI() == 0)) {
+							Edge e = new Edge(src, dest, false);
+							src.getSnd_edges().add(e);
+							dest.getRcv_edges().add(e);
+						}
 					}
 				}
 			}
@@ -123,6 +126,7 @@ public class Generator {
 		setNbNodes(nodes_created);
 		d.setNodes(nodes);
 		createAdjMatrix();
+		this.setDeadline(d.calcCriticalPath());
 	}
 	
 	/**
@@ -238,19 +242,21 @@ public class Generator {
 			
 			//Write C LOs
 			out.write("C_LO = [");
-			for (int i = 0; i < nbNodes + 1; i++) {
+			for (int i = 0; i < nbNodes; i++) {
 				Node n = d.getNodebyID(i);
+				out.write(Integer.toString(n.getC_LO()));
 				if (i != nbNodes - 1)
-					out.write(Integer.toString(n.getC_LO()) + ", ");
+					out.write(", ");
 			}
 			out.write("];\n\n");
 			
 			//Write C HIs
 			out.write("C_HI = [");
-			for (int i = 0; i < nbNodes + 1; i++) {
+			for (int i = 0; i < nbNodes; i++) {
 				Node n = d.getNodebyID(i);
+				out.write(Integer.toString(n.getC_HI()));
 				if (i != nbNodes - 1)
-					out.write(Integer.toString(n.getC_HI()) + ", ");
+					out.write(", ");
 			}
 			out.write("];\n\n");
 			
@@ -263,7 +269,8 @@ public class Generator {
 					if (j < nbNodes - 1)
 						out.write(", ");
 				}
-				out.write("\n");
+				if (i != nbNodes - 1)
+					out.write("\n");
 			}
 			out.write("|];\n");
 			

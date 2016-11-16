@@ -6,11 +6,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import ls_mxc.alloc.LS;
+
 
 public class DAG {
 	
 	private Set<Node> Nodes;
 	private Set<Node> Nodes_HI;
+	private int critPath;
 	
 	public DAG() {
 		Nodes = new HashSet<Node>();
@@ -74,6 +77,28 @@ public class DAG {
 	}
 	
 	/**
+	 * Method to get the critical Path.
+	 * Needs to be called after getting HLFET levels.
+	 */
+	public int calcCriticalPath() {
+		int cp = 0;
+		
+		LS ls = new LS();
+		ls.setMxcDag(this);
+		ls.calcWeights(0);
+		ls.calcWeights(1);
+		
+		for(int i = 0; i < this.getNodes().size(); i++) {
+			if (cp < this.getNodebyID(i).getWeight_LO())
+				cp = this.getNodebyID(i).getWeight_LO();
+			if (cp < this.getNodebyID(i).getWeight_HI())
+				cp = this.getNodebyID(i).getWeight_HI();
+		}
+		this.setCritPath(cp);
+		return cp;
+	}
+	
+	/**
 	 * Getters & Setters
 	 * 
 	 */
@@ -111,5 +136,14 @@ public class DAG {
 		}
 		return null;
 	}
+
+	public int getCritPath() {
+		return critPath;
+	}
+
+	public void setCritPath(int critPath) {
+		this.critPath = critPath;
+	}
+
 	
 }
