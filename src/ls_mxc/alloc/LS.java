@@ -144,6 +144,9 @@ public class LS {
 		Iterator<Node> it_n = mxc_dag.getNodes().iterator(); 
 		// Ready list of tasks that have their dependencies met
 		LinkedList<Node> ready_hi = new LinkedList<Node>();
+		// List of recently finished tasks -> to activate new ones
+		LinkedList<Node> finished_hi = new LinkedList<Node>();
+		boolean task_finished = false;
 		
 		// Add HI nodes to the list
 		while(it_n.hasNext()){
@@ -200,19 +203,29 @@ public class LS {
 				
 					if (t_hi[n.getId()] == 0){ // Task has ended its execution
 						li_it.remove();
-					
-						// Check for new activations
-						checkActivation(li_it, n, t_hi, 1);
-						
-						// Heavier tasks can be activated -> needs a new sort
-						Collections.sort(ready_hi, new Comparator<Node>() {
-							@Override
-							public int compare(Node n1, Node n2) {
-								return n2.getWeight_HI() - n1.getWeight_HI();
-							}
-						});
+						finished_hi.add(n);
+						task_finished = true;						
 					}
 				}
+			}
+			// Tasks finished their execution 
+			if (task_finished) {
+				// Check for new activations
+				ListIterator<Node> li_f = finished_hi.listIterator();
+				while (li_f.hasNext()) {
+					Node n = li_f.next();
+					checkActivation(li_it, n, t_hi, 1);
+					// Heavier tasks can be activated -> needs a new sort
+					Collections.sort(ready_hi, new Comparator<Node>() {
+						@Override
+						public int compare(Node n1, Node n2) {
+							return n2.getWeight_HI() - n1.getWeight_HI();
+						}
+					});
+					
+				}
+				task_finished = false;
+				finished_hi.clear();
 			}
 			li_it = ready_hi.listIterator(); // Restart the iterator for the next slot
 		}
@@ -242,6 +255,9 @@ public class LS {
 		Iterator<Node> it_n = mxc_dag.getNodes().iterator(); 
 		// Ready list of tasks that have their dependencies met
 		LinkedList<Node> ready_lo = new LinkedList<Node>();
+		// List of recently finished tasks -> to activate new ones
+		LinkedList<Node> finished_lo = new LinkedList<Node>();
+		boolean task_finished = false;
 		
 		// Add LO nodes to the list
 		while(it_n.hasNext()){
@@ -294,19 +310,29 @@ public class LS {
 
 					if (t_lo[n.getId()] == 0){ // Task has ended its execution
 						li_it.remove();
-
-						// Check for new activations
-						checkActivation(li_it, n, t_lo, 0);
-
-						// Heavier tasks can be activated -> needs a new sort
-						Collections.sort(ready_lo, new Comparator<Node>() {
-							@Override
-							public int compare(Node n1, Node n2) {
-								return n2.getWeight_LO() - n1.getWeight_LO();
-							}
-						});
+						task_finished = true;
+						finished_lo.add(n);
 					}
 				}
+			}
+			
+			if (task_finished) {
+				ListIterator<Node> li_f = finished_lo.listIterator();
+				while (li_f.hasNext()) {
+					Node n = li_f.next();
+					// Check for new activations
+					checkActivation(li_it, n, t_lo, 0);
+
+					// Heavier tasks can be activated -> needs a new sort
+					Collections.sort(ready_lo, new Comparator<Node>() {
+						@Override
+						public int compare(Node n1, Node n2) {
+							return n2.getWeight_LO() - n1.getWeight_LO();
+						}
+					});
+				}
+				task_finished = false;
+				finished_lo.clear();
 			}
 			li_it = ready_lo.listIterator(); // Restart the iterator for the next slot
 		}

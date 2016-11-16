@@ -47,7 +47,7 @@ public class Main {
 		String inputFilePath = cmd.getOptionValue("input");
 		String outputFilePath = cmd.getOptionValue("output");
 		
-		/* ============================================================================ */
+		/* =============== Read from file and try to solve ================ */
 		
 		FileUtilities fu = new FileUtilities();
 		
