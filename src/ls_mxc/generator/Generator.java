@@ -146,14 +146,18 @@ public class Generator {
 				Iterator<Node> it_n2 = d.getNodes().iterator();
 				while (it_n2.hasNext() && added == false) {
 					Node n2 = it_n2.next();
-					if (n.getRank() < n2.getRank() &&
-							n.getC_HI() >= n.getC_HI()){
+					if ((n.getRank() < n2.getRank()) &&
+							((n.getC_HI() > 0 && n2.getC_HI() > 0) ||
+							 (n.getC_HI() == 0 && n2.getC_HI() == 0) ||
+							 (n.getC_HI() > 0 && n2.getC_HI() == 0))){
 						Edge e = new Edge(n, n2, false);
 						n.getSnd_edges().add(e);
 						n2.getRcv_edges().add(e);
 						added = true;
 					} else if (n.getRank() > n2.getRank() &&
-							n.getC_HI() <= n2.getC_HI()) {
+							((n.getC_HI() > 0 && n2.getC_HI() > 0) ||
+							 (n.getC_HI() == 0 && n2.getC_HI() == 0) ||
+							 (n.getC_HI() == 0 && n2.getC_HI() > 0))) {
 						Edge e = new Edge(n2, n, false);
 						n.getRcv_edges().add(e);
 						n2.getSnd_edges().add(e);

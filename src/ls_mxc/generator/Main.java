@@ -37,10 +37,13 @@ public class Main {
 		o_hperc.setRequired(true);
 		options.addOption(o_hperc);
 		
-		
 		Option o_out = new Option("o", "output", true, "Output file for the DAG");
 		o_out.setRequired(true);
 		options.addOption(o_out);
+		
+		Option o_dznout = new Option("d", "dzn_output", true, "Output file for the DAG in DZN format");
+		o_out.setRequired(false);
+		options.addOption(o_dznout);
 		
 		
 		CommandLineParser parser = new DefaultParser();
@@ -63,6 +66,7 @@ public class Main {
 		int eprob = Integer.parseInt(cmd.getOptionValue("eprobability"));
 		int hperc = Integer.parseInt(cmd.getOptionValue("hiperc"));
 		String output = cmd.getOptionValue("output");
+		String outputDZN = cmd.getOptionValue("dzn_output");
 		
 		/* ============================= Generator parameters ============================= */
 		
@@ -81,13 +85,15 @@ public class Main {
 		}
 		
 		// Generate the file used for the CSP
-		try {
-			g.toDZN("/home/roberto/workspace/LS_mxc/tests/ex1.dzn");
-		} catch (IOException e) {
-			System.out.println("To DZN from generator " + e.getMessage());
+		if (outputDZN != null) {
+			try {
+				g.toDZN(outputDZN);
+			} catch (IOException e) {
+				System.out.println("To DZN from generator " + e.getMessage());
 			
-			System.exit(1);
-			return;
+				System.exit(1);
+				return;
+			}
 		}
 	}
 }
