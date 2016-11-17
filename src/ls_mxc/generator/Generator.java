@@ -38,12 +38,11 @@ public class Generator {
 	
 	private int[][] adjMatrix;
 	
-	public Generator(int height, int width, int cores, int eprob, int hperc) {
-		this.setNbCores(cores);
+	public Generator(int height, int width, int eprob, int hperc) {
 		this.setEdgeProb(eprob);
 		this.setHiPerc(hperc);
 				
-		MIN_RANKS = 1;
+		MIN_RANKS = 2;
 		MAX_RANKS = height;
 		MIN_PER_RANK = 1;
 		MAX_PER_RANK = width;
@@ -53,7 +52,6 @@ public class Generator {
 	 * Graph generation should avoid 2 things:
 	 *  - Making cycles with the edges
 	 *  - Creating an edge from a LO task to a HI task
-	 * 
 	 */
 	public void generateGraph(){
 		
@@ -78,11 +76,11 @@ public class Generator {
 			
 			for(int j = 0; j < nb_nodes_rank; j++) {
 			
-				Node n = new Node(id, Character.toString((char) ((char)'A'+j+(i*10))), 0, 0);
+				Node n = new Node(id, Character.toString((char) ((char)'A'+ id )), 0, 0);
 				n.setRank(i);
 				n.setC_LO(r.nextInt(4) + 1);
 				
-				if ((r.nextInt() % 100) < hiPerc)
+				if ((r.nextInt() % 100) < hiPerc || (id == 0)) // At least one source is HI
 					n.setC_HI((int) (n.getC_LO() * 1.5));
 				else
 					n.setC_HI(0);
@@ -125,12 +123,73 @@ public class Generator {
 		}
 		setNbNodes(nodes_created);
 		d.setNodes(nodes);
-		createAdjMatrix();
 		this.setDeadline(d.calcCriticalPath());
+		calcMinCores();
+		graphSanityCheck();
+		createAdjMatrix();
+	}
+	
+	
+	/**
+	 * Sanity check for the graph:
+	 * 	- Each node has to have at least one edge
+	 */
+	public void graphSanityCheck() {
+		boolean added = false;
+		Iterator<Node> it_n = d.getNodes().iterator();
+		
+		while (it_n.hasNext()) {
+			Node n = it_n.next();
+			
+			// It is an independent node with no edges
+			if (n.getRcv_edges().size() == 0 && n.getSnd_edges().size() == 0) {
+				Iterator<Node> it_n2 = d.getNodes().iterator();
+				while (it_n2.hasNext() && added == false) {
+					Node n2 = it_n2.next();
+					if (n.getRank() < n2.getRank() &&
+							n.getC_HI() >= n.getC_HI()){
+						Edge e = new Edge(n, n2, false);
+						n.getSnd_edges().add(e);
+						n2.getRcv_edges().add(e);
+						added = true;
+					} else if (n.getRank() > n2.getRank() &&
+							n.getC_HI() <= n2.getC_HI()) {
+						Edge e = new Edge(n2, n, false);
+						n.getRcv_edges().add(e);
+						n2.getSnd_edges().add(e);
+						added = true;
+					}
+				}
+			}
+		}
 	}
 	
 	/**
-	 * 
+	 * Calculate the minimum number of cores for the Graph.
+	 */
+	public void calcMinCores() {
+		int sumClo = 0;
+		int sumChi = 0;
+		int max;
+		
+		Iterator<Node> it_n = d.getNodes().iterator();
+		
+		while (it_n.hasNext()) {
+			Node n = it_n.next();
+			sumChi += n.getC_HI();
+			sumClo += n.getC_LO();
+		}
+		
+		if (sumChi >= sumClo)
+			max = sumChi;
+		else
+			max = sumClo;
+		
+		this.setNbCores((int)Math.ceil(max/this.getDeadline()));
+	}
+	
+	/**
+	 * Creates the matrix to be written in the files
 	 */
 	public void createAdjMatrix(){
 		adjMatrix = new int[nbNodes][];
@@ -150,7 +209,7 @@ public class Generator {
 	}
 	
 	/**
-	 * 
+	 * Writes the generated Graph into a file that can be used by the allocator
 	 * @param filename
 	 * @throws IOException
 	 */

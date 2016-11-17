@@ -214,7 +214,7 @@ public class LS {
 				ListIterator<Node> li_f = finished_hi.listIterator();
 				while (li_f.hasNext()) {
 					Node n = li_f.next();
-					checkActivation(li_it, n, t_hi, 1);
+					checkActivation(ready_hi, li_it, n, t_hi, 1);
 					// Heavier tasks can be activated -> needs a new sort
 					Collections.sort(ready_hi, new Comparator<Node>() {
 						@Override
@@ -321,7 +321,7 @@ public class LS {
 				while (li_f.hasNext()) {
 					Node n = li_f.next();
 					// Check for new activations
-					checkActivation(li_it, n, t_lo, 0);
+					checkActivation(ready_lo, li_it, n, t_lo, 0);
 
 					// Heavier tasks can be activated -> needs a new sort
 					Collections.sort(ready_lo, new Comparator<Node>() {
@@ -375,7 +375,7 @@ public class LS {
 	 * @param t_hi
 	 * @param mode
 	 */
-	public void checkActivation(ListIterator<Node> li_r, Node n, int[] t_hi, int mode){
+	public void checkActivation(LinkedList<Node> l_r, ListIterator<Node> li_r, Node n, int[] t_hi, int mode){
 		
 		// Check all successors
 		Iterator<Edge> it_e = n.getSnd_edges().iterator();
@@ -383,6 +383,7 @@ public class LS {
 			Edge e = it_e.next();
 			Node suc = e.getDest();
 			boolean ready = true;
+			boolean add = true;
 			
 			if (mode == 1 && suc.getC_HI() == 0) // Don't activate LO tasks in HI mode
 				ready = false;
@@ -399,7 +400,14 @@ public class LS {
 			}
 			
 			if (ready) {
-				li_r.add(suc);
+				// Need to check if the task has already been added
+				ListIterator<Node> li = l_r.listIterator();
+				while(li.hasNext()){
+					if(li.next().getId() == suc.getId())
+						add = false;
+				}
+				if (add)
+					li_r.add(suc);
 			}
 		}
 	}

@@ -29,10 +29,6 @@ public class Main {
 		o_width.setRequired(true);
 		options.addOption(o_width);
 		
-		Option o_cores = new Option("c", "cores", true, "Cores for the scheduling");
-		o_cores.setRequired(true);
-		options.addOption(o_cores);
-		
 		Option o_eprob = new Option("e", "eprobability", true, "Probability of edges");
 		o_eprob.setRequired(true);
 		options.addOption(o_eprob);
@@ -64,14 +60,13 @@ public class Main {
 		
 		int height = Integer.parseInt(cmd.getOptionValue("height"));
 		int width = Integer.parseInt(cmd.getOptionValue("width"));
-		int cores = Integer.parseInt(cmd.getOptionValue("cores"));
 		int eprob = Integer.parseInt(cmd.getOptionValue("eprobability"));
 		int hperc = Integer.parseInt(cmd.getOptionValue("hiperc"));
 		String output = cmd.getOptionValue("output");
 		
 		/* ============================= Generator parameters ============================= */
 		
-		Generator g = new Generator(height, width, cores, eprob, hperc);
+		Generator g = new Generator(height, width, eprob, hperc);
 				
 		g.generateGraph();
 		
