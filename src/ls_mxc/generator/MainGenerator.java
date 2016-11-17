@@ -9,7 +9,7 @@ import org.apache.commons.cli.*;
  * @author Roberto Medina
  *
  */
-public class Main {
+public class MainGenerator {
 
 	/**
 	 * 
@@ -42,7 +42,7 @@ public class Main {
 		options.addOption(o_out);
 		
 		Option o_dznout = new Option("d", "dzn_output", true, "Output file for the DAG in DZN format");
-		o_out.setRequired(false);
+		o_dznout.setRequired(false);
 		options.addOption(o_dznout);
 		
 		
@@ -60,13 +60,13 @@ public class Main {
 			return;
 		}
 		
-		
+		String outputDZN = cmd.getOptionValue("dzn_output");
+
 		int height = Integer.parseInt(cmd.getOptionValue("height"));
 		int width = Integer.parseInt(cmd.getOptionValue("width"));
 		int eprob = Integer.parseInt(cmd.getOptionValue("eprobability"));
 		int hperc = Integer.parseInt(cmd.getOptionValue("hiperc"));
 		String output = cmd.getOptionValue("output");
-		String outputDZN = cmd.getOptionValue("dzn_output");
 		
 		/* ============================= Generator parameters ============================= */
 		

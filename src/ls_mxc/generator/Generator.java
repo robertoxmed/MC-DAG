@@ -80,7 +80,7 @@ public class Generator {
 				n.setRank(i);
 				n.setC_LO(r.nextInt(4) + 1);
 				
-				if ((r.nextInt() % 100) < hiPerc || (id == 0)) // At least one source is HI
+				if ((r.nextInt(100) % 100) <= hiPerc || (id == 0)) // At least one source is HI
 					n.setC_HI((int) (n.getC_LO() * 1.5));
 				else
 					n.setC_HI(0);
@@ -123,7 +123,7 @@ public class Generator {
 		}
 		setNbNodes(nodes_created);
 		d.setNodes(nodes);
-		this.setDeadline(d.calcCriticalPath());
+		this.setDeadline((int)Math.ceil(d.calcCriticalPath()));
 		calcMinCores();
 		graphSanityCheck();
 		createAdjMatrix();
@@ -145,7 +145,7 @@ public class Generator {
 			if (n.getRcv_edges().size() == 0 && n.getSnd_edges().size() == 0) {
 				Iterator<Node> it_n2 = d.getNodes().iterator();
 				while (it_n2.hasNext() && added == false) {
-					Node n2 = it_n2.next();
+					Node n2 = it_n2.next(); 
 					if ((n.getRank() < n2.getRank()) &&
 							((n.getC_HI() > 0 && n2.getC_HI() > 0) ||
 							 (n.getC_HI() == 0 && n2.getC_HI() == 0) ||
@@ -153,7 +153,7 @@ public class Generator {
 						Edge e = new Edge(n, n2, false);
 						n.getSnd_edges().add(e);
 						n2.getRcv_edges().add(e);
-						added = true;
+						added = true; 
 					} else if (n.getRank() > n2.getRank() &&
 							((n.getC_HI() > 0 && n2.getC_HI() > 0) ||
 							 (n.getC_HI() == 0 && n2.getC_HI() == 0) ||
@@ -164,6 +164,7 @@ public class Generator {
 						added = true;
 					}
 				}
+				added = false;
 			}
 		}
 	}
@@ -189,7 +190,7 @@ public class Generator {
 		else
 			max = sumClo;
 		
-		this.setNbCores((int)Math.ceil(max/this.getDeadline()));
+		this.setNbCores((int)Math.ceil(max/this.getDeadline()) + 1);
 	}
 	
 	/**

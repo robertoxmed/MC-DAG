@@ -292,7 +292,7 @@ public class LS {
 		for(int t = 0; t < deadline; t++){
 			// For each slot check if it's an WC activation time
 			if (! checkFreeSlot(t_lo, mxc_dag.getNodes().size(), (deadline - t) * nb_cores)){
-				SchedulingException se = new SchedulingException("Alloc HI : Not enough slot lefts");
+				SchedulingException se = new SchedulingException("Alloc LO : Not enough slot lefts");
 				throw se;
 			}
 			
