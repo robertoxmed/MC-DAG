@@ -73,7 +73,7 @@ public class FileUtilities {
 			
 			for(int i = 0; i < nb_nodes; i++){
 				line = line.trim();
-				Node n = new Node(i, Character.toString((char) ((char)'A'+i)), 0, 0);
+				Node n = new Node(i, Integer.toString(i), 0, 0);
 				n.setC_LO(Integer.parseInt(line));
 				
 				d.getNodes().add(n);

@@ -76,7 +76,7 @@ public class Generator {
 			
 			for(int j = 0; j < nb_nodes_rank; j++) {
 			
-				Node n = new Node(id, Character.toString((char) ((char)'A'+ id )), 0, 0);
+				Node n = new Node(id, Integer.toString(id), 0, 0);
 				n.setRank(i);
 				n.setC_LO(r.nextInt(4) + 1);
 				

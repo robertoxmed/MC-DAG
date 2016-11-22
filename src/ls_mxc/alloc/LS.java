@@ -133,7 +133,7 @@ public class LS {
 		// Initialize with 0s
 		for (int c = 0; c < nb_cores; c++) {
 			for(int t = 0; t < deadline; t++) {
-				S_HI[t][c] = "0";
+				S_HI[t][c] = "-";
 			}
 		}
 			

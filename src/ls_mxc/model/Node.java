@@ -1,6 +1,7 @@
 package ls_mxc.model;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 public class Node {
@@ -49,6 +50,38 @@ public class Node {
 	public void checkifSink() {
 		if (snd_edges.size() == 0)
 			this.setSink(true);
+	}
+	
+	/**
+	 * 
+	 * @param n
+	 * @param mode
+	 * @return
+	 */
+	public int CPfromNode (int mode) {
+		
+		if (this.getRcv_edges().size() == 0) {
+			if (mode == 0)
+				return this.getC_LO();
+			else
+				return this.getC_HI();
+		} else {
+			int max = 0;
+			Iterator<Edge> it_e = this.getRcv_edges().iterator();
+			while (it_e.hasNext()){
+				Edge e = it_e.next();
+				int tmp = e.getSrc().CPfromNode(mode);
+				if (max < tmp) {
+					if (mode == 0)
+						max = tmp + this.getC_LO();
+					else
+						max = tmp + this.getC_HI();
+				}
+					
+			}
+			return max;
+		}
+			
 	}
 
 	

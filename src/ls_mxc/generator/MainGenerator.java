@@ -71,12 +71,16 @@ public class MainGenerator {
 		/* ============================= Generator parameters ============================= */
 		
 		Generator g = new Generator(height, width, eprob, hperc);
-				
+		
+		UtilizationGenerator ug = new UtilizationGenerator(4, 4, 20, 50);
+		
 		g.generateGraph();
+		
+		ug.GenerateGraph();
 		
 		// Generate the file used for the list scheduling
 		try {
-			g.toFile(output);
+			ug.toFile(output);
 		} catch (IOException e) {
 			System.out.println("To file from generator " + e.getMessage());
 			
