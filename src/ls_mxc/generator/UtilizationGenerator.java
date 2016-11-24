@@ -21,124 +21,220 @@ public class UtilizationGenerator {
 	private int nbNodes;
 	private int nbCores;
 	private DAG genDAG;
-	private int hiPerc;
 	private int edgeProb;
+	private int uHIinLO;
 
 
 	private int deadline;
 	
 	private int[][] adjMatrix;
 
-	public UtilizationGenerator (int U_LO, int U_HI, int cp, int hiPerc) {
+	public UtilizationGenerator (int U_LO, int U_HI, int cp, int edgeProb, int UHIinLO) {
 		this.setUserU_LO(U_LO);
 		this.setUserU_HI(U_HI);
 		this.setUserCp(cp);
-		this.setHiPerc(hiPerc);
+		this.setEdgeProb(edgeProb);
+		this.setuHIinLO(UHIinLO);
 	}
 
+	
 	/**
-	 * Generates the DAG with U at least equals to U LO and U HI
-	 * given by the user. The Critical path is also respected
+	 * Generates a DAG
 	 */
-	public void GenerateGraph() {
-		int nodesPerRank; // Number of nodes at each rank
-		int id = 0; // Counter of the ids for the nodes
-		Set<Node> nodes = new HashSet<Node>();
-		Set<Node> newNodes = new HashSet<Node>();
+	public void GenenrateGraphCp() {
+		// Variables
+		int id = 0;
 		setGenDAG(new DAG());
+		Set<Node> nodes = new HashSet<Node>();
 		boolean cpReached = false;
-		
+		int rank = 0;
 		Random r = new Random();
 		
-		// Execution time that needs to be allocated for each mode
-		int budgetLO = getUserCp() * getUserU_LO();
-		int budgetHI = getUserCp() * getUserU_HI();
-		// Maximum execution time 
-		int cLOBound = (int) Math.ceil(getUserCp() / getUserU_HI());
-		int currentCPLO = 0;
-		int currentCPHI = 0;
-		int maxCP = 0;
+		// Budgets deduced by utilization and CP
+		int budgetHI = userCp * userU_HI;
+		int budgetLO = userCp * userU_LO;
+		int CHIBound = (int) Math.ceil(userCp / userU_HI);
+		int CLOBound = (int) Math.ceil(userCp / userU_LO);
 		
-		int i = 0;
+		
+		// Generate the CP in HI mode
+		Node last = null;
+		int toCP = userCp;
 		while (!cpReached) {
-			nodesPerRank = r.nextInt(10) + 1;
-			System.out.println("Height " + i + " with " + nodesPerRank + " nodes." );
-
+			Node n = new Node(id, Integer.toString(id), 0, 0);
+			n.setRank(rank);
 			
-			for (int j = 0; j < nodesPerRank; j++) {
-				Node n = new Node(id, Integer.toString(id), 0, 0);
-				n.setRank(i);
-				
-				n.setC_LO(r.nextInt(20) + 1);
-				budgetLO = budgetLO - n.getC_LO(); // Decrement LO budget
-				
-				if ((r.nextInt(100) % 100 <= hiPerc) || (id == 0))  {
-					n.setC_HI(r.nextInt(n.getC_LO()) + n.getC_LO()); 
-					budgetHI = budgetHI - n.getC_HI(); // Decrement HI budget
-				} else {
-					n.setC_HI(0);
-				}
-				
-				newNodes.add(n);
-				id++;
+			n.setC_HI(r.nextInt(2) + 2);
+			
+			
+			// Add egde and update the CP (if not source)
+			if (id != 0) {
+				Edge e = new Edge(last, n, false);
+				last.getSnd_edges().add(e);
+				n.getRcv_edges().add(e);
 			}
 			
-			// Loop to add edges
-			Iterator<Node> it_n = nodes.iterator();
-			while (it_n.hasNext()) {
-				Iterator<Node> it_n2 = newNodes.iterator();
-				Node src = it_n.next();
-				while (it_n2.hasNext()) {
-					Node dest = it_n2.next();
-					
-					// Probability of adding an edge between 2 nodes
-					// And communciation between them is allowed
-					if (r.nextInt(100) <= edgeProb && allowedCommunitcation(src, dest)) {
-
-						int tmpLO = src.CPfromNode(0);
-						int tmpHI = src.CPfromNode(1);
-						
-						if (currentCPLO +  tmpLO >= userCp ||
-								currentCPHI + tmpHI >= userCp) {
-							// Check if the Critical Path is respected/reached
-							cpReached = true;
-							System.out.println("CP Reached");
-						}
-						
-						if (currentCPLO < tmpLO)
-							currentCPLO = tmpLO;
-						if (currentCPHI < tmpHI)
-							currentCPHI = tmpHI;
-							
-						maxCP = (currentCPHI <= currentCPLO) ? currentCPHI : currentCPLO;
-						
-						Edge e = new Edge(src, dest, false);
-						src.getSnd_edges().add(e);
-						dest.getRcv_edges().add(e);
-					}
-				}
-			}
+			nodes.add(n);
+			n.CPfromNode(1);
+			last = n;
+			rank++;
+			id++;
 			
-			Iterator<Node> it_n2 = newNodes.iterator();
-			while (it_n2.hasNext()) {
-				Node n = it_n2.next();
-				nodes.add(n);
-				it_n2.remove();
+			if (toCP - n.getC_HI() > 0) {
+				toCP = toCP  - n.getC_HI();
+				budgetHI = budgetHI - n.getC_HI();
+			} else {
+				n.setC_HI(toCP);
+				budgetHI = budgetHI - n.getC_HI();
+				cpReached = true;
+				System.out.println("CP Reached");
 			}
-			i++;
+			n.setC_LO(n.getC_HI());
+			System.out.println("Created " + n.getId() + " C HI " + n.getC_HI());
 		}
 		
-		if (budgetHI > 0)
-			inflateCHIs(nodes, budgetHI);
-		else if (budgetLO > 0)
-			inflateCLOs(nodes, budgetLO);
+		// Generate the other HI nodes and the arcs
+		rank = 0;
+		System.out.println("\nBudget HI left " + budgetHI + "\n");
+		
+		while (budgetHI > 0) {
+			// Roll a number of nodes to add to the level
+			int nodesPerRank = r.nextInt(5);
+			for (int j=0; j < nodesPerRank && budgetHI > 0; j++) {
+				Node n = new Node(id, Integer.toString(id), 0, 0);
+			
+				// Roll a C_HI and test if budget is left
+				n.setC_HI(r.nextInt(CHIBound) + 2);
+				if (budgetHI - n.getC_HI() > 0) {
+					budgetHI = budgetHI - n.getC_HI();
+				} else {
+					n.setC_HI(budgetHI);
+					budgetHI = 0;
+					System.out.println("Budget for HI tasks reached!\n");
+				}
+				
+				n.setRank(rank);
+				if (rank != 0) {
+					Iterator<Node> it_n = nodes.iterator();
+					while (it_n.hasNext()) {
+						Node src = it_n.next();
+						// Test if the rank of the source is lower and if the CP
+						// is not reached
+						if (r.nextInt(100) <= edgeProb && n.getRank() > src.getRank()
+								&& src.getCpFromNode_HI() + n.getC_HI() <= userCp) {
+							Edge e = new Edge(src, n, false);
+							src.getSnd_edges().add(e);
+							n.getRcv_edges().add(e);
+							System.out.println("Edge "+ src.getId()+" -> " + n.getId() + " added.");
+						}
+					}
+				}
+				n.setC_LO(n.getC_HI());
+				n.CPfromNode(1);
+				nodes.add(n);
+				System.out.println("Node " + n.getId() + " C HI " + n.getC_HI()
+						+ " rank " + n.getRank() + " created.");
+				id++;
+			}
+
+			rank++;
+		}
+		
+		// Deflate HI execution times
+		int budgetHIinLO = uHIinLO * userCp;
+		int actualBudget = userU_HI * userCp;
+		Iterator<Node> it_n;
+		System.out.println("\nTrying to respect " + budgetHIinLO + " budget of HI tasks in LO mode from "+ actualBudget);
+		while (budgetHIinLO <= actualBudget || !allHIareMin(nodes)) {
+			it_n = nodes.iterator();
+			while (it_n.hasNext()) {
+				Node n = it_n.next();
+				n.setC_LO(r.nextInt(n.getC_LO()));
+				
+				if (n.getC_LO() == 0)
+					n.setC_LO(1);
+				
+				n.CPfromNode(0);
+				actualBudget = actualBudget - n.getC_LO();
+			}
+		}
+		
+		System.out.println("\nDeflation completed! actual budget " + actualBudget);
+		
+		// Add LO nodes
+		budgetLO = budgetLO - actualBudget;
+		System.out.println("\nStarting LO node generation with budget " + budgetLO);
+		
+		rank = 0;
+		while (budgetLO > 0) {
+			// Roll a number of nodes to add to the level
+			int nodesPerRank = r.nextInt(5);
+			for (int j=0; j < nodesPerRank && budgetLO > 0; j++) {
+				Node n = new Node(id, Integer.toString(id), 0, 0);
+			
+				// Roll a C_HI and test if budget is left
+				n.setC_HI(0);
+				n.setC_LO(r.nextInt(CLOBound));
+				if (n.getC_LO() == 0)
+					n.setC_LO(1); // Minimal execution time
+				
+				if (budgetLO - n.getC_LO() > 0) {
+					budgetLO = budgetLO - n.getC_LO();
+				} else {
+					n.setC_HI(budgetLO);
+					budgetLO = 0;
+					System.out.println("Budget for LO tasks reached!\n");
+				}
+				
+				n.setRank(rank);
+				if (rank != 0) {
+					Iterator<Node> it = nodes.iterator();
+					while (it.hasNext()) {
+						Node src = it.next();
+						// Test if the rank of the source is lower and if the CP
+						// is not reached
+						if (r.nextInt(100) <= edgeProb && n.getRank() > src.getRank()
+								&& src.getCpFromNode_LO() + n.getC_LO() <= userCp &&
+								allowedCommunitcation(src, n)) {
+							Edge e = new Edge(src, n, false);
+							src.getSnd_edges().add(e);
+							n.getRcv_edges().add(e);
+							System.out.println("Edge "+ src.getId()+" -> " + n.getId() + " added.");
+						}
+					}
+				}
+				n.CPfromNode(0);
+				nodes.add(n);
+				System.out.println("Node " + n.getId() + " C LO " + n.getC_LO()
+						+ " rank " + n.getRank() + " created.");
+				id++;
+			}
+
+			rank++;
+		}
+		
 		
 		setNbNodes(id + 1);
 		genDAG.setNodes(nodes);
 		setDeadline(genDAG.calcCriticalPath());
-		calcMinCores();
 		graphSanityCheck();
+		calcMinCores();
 		createAdjMatrix();
+	}
+	
+	
+	/**
+	 * Tests if all HI nodes are minimal execution <=> C LO = 1
+	 * @param nodes
+	 * @return
+	 */
+	public boolean allHIareMin (Set<Node> nodes) {
+		Iterator<Node> it = nodes.iterator();
+		while (it.hasNext()){
+			if (it.next().getC_LO() != 1)
+				return false;
+		}
+		return true;
 	}
 	
 	/**
@@ -381,14 +477,6 @@ public class UtilizationGenerator {
 	public void setGenDAG(DAG genDAG) {
 		this.genDAG = genDAG;
 	}
-	public int getHiPerc() {
-		return hiPerc;
-	}
-
-	public void setHiPerc(int hiPerc) {
-		this.hiPerc = hiPerc;
-	}
-
 	public int getDeadline() {
 		return deadline;
 	}
@@ -402,5 +490,13 @@ public class UtilizationGenerator {
 
 	public void setEdgeProb(int edgeProb) {
 		this.edgeProb = edgeProb;
+	}
+
+	public int getuHIinLO() {
+		return uHIinLO;
+	}
+
+	public void setuHIinLO(int uHIinLO) {
+		this.uHIinLO = uHIinLO;
 	}
 }

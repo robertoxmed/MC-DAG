@@ -23,6 +23,8 @@ public class Node {
 	
 	// Used for DAG generation
 	private int rank;
+	private int cpFromNode_LO;
+	private int cpFromNode_HI;
 	
 	/**
 	 * Constructors
@@ -61,24 +63,34 @@ public class Node {
 	public int CPfromNode (int mode) {
 		
 		if (this.getRcv_edges().size() == 0) {
-			if (mode == 0)
+			if (mode == 0) {
+				this.setCpFromNode_LO(C_LO);
 				return this.getC_LO();
-			else
+			} else {
+				this.setCpFromNode_HI(C_HI);
 				return this.getC_HI();
+			}
 		} else {
 			int max = 0;
+			int tmp = 0;
 			Iterator<Edge> it_e = this.getRcv_edges().iterator();
 			while (it_e.hasNext()){
 				Edge e = it_e.next();
-				int tmp = e.getSrc().CPfromNode(mode);
-				if (max < tmp) {
-					if (mode == 0)
+				if (mode == 0) {
+					tmp = e.getSrc().getCpFromNode_LO();
+					if (max < tmp)
 						max = tmp + this.getC_LO();
-					else
+				} else {
+					tmp = e.getSrc().getCpFromNode_HI();
+					if (max < tmp)
 						max = tmp + this.getC_HI();
 				}
-					
 			}
+			if (mode == 0)
+				this.setCpFromNode_LO(max);
+			else
+				this.setCpFromNode_HI(max);
+			
 			return max;
 		}
 			
@@ -158,4 +170,22 @@ public class Node {
 	public void setRank(int rank) {
 		this.rank = rank;
 	}
+
+	public int getCpFromNode_LO() {
+		return cpFromNode_LO;
+	}
+
+	public void setCpFromNode_LO(int cpFromNode_LO) {
+		this.cpFromNode_LO = cpFromNode_LO;
+	}
+
+	public int getCpFromNode_HI() {
+		return cpFromNode_HI;
+	}
+
+	public void setCpFromNode_HI(int cpFromNode_HI) {
+		this.cpFromNode_HI = cpFromNode_HI;
+	}
+
+
 }

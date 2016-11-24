@@ -184,7 +184,6 @@ public class Generator {
 			sumChi += n.getC_HI();
 			sumClo += n.getC_LO();
 		}
-		
 		if (sumChi >= sumClo)
 			max = sumChi;
 		else

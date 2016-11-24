@@ -72,11 +72,11 @@ public class MainGenerator {
 		
 		Generator g = new Generator(height, width, eprob, hperc);
 		
-		UtilizationGenerator ug = new UtilizationGenerator(4, 4, 20, 50);
+		UtilizationGenerator ug = new UtilizationGenerator(2, 1, 20, 30, 1);
 		
 		g.generateGraph();
 		
-		ug.GenerateGraph();
+		ug.GenenrateGraphCp();
 		
 		// Generate the file used for the list scheduling
 		try {
