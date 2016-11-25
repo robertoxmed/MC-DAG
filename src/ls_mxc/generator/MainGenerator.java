@@ -21,21 +21,25 @@ public class MainGenerator {
 
 		Options options = new Options();
 		
-		Option o_height = new Option("h", "height", true, "Height of the DAG");
-		o_height.setRequired(true);
-		options.addOption(o_height);
+		Option o_hi = new Option("h", "hi_utilization", true, "HI Utilization");
+		o_hi.setRequired(true);
+		options.addOption(o_hi);
 		
-		Option o_width = new Option("w", "width", true, "Width of the DAG");
-		o_width.setRequired(true);
-		options.addOption(o_width);
+		Option o_lo = new Option("l", "lo_utilization", true, "LO Utilization");
+		o_lo.setRequired(true);
+		options.addOption(o_lo);
+		
+		Option o_hi_lo = new Option("hl", "hi_lo_utilization", true, "HI Utilization in LO mode");
+		o_hi_lo.setRequired(true);
+		options.addOption(o_hi_lo);
 		
 		Option o_eprob = new Option("e", "eprobability", true, "Probability of edges");
 		o_eprob.setRequired(true);
 		options.addOption(o_eprob);
 		
-		Option o_hperc = new Option("hp", "hiperc", true, "Percentage of HI tasks");
-		o_hperc.setRequired(true);
-		options.addOption(o_hperc);
+		Option o_cp = new Option("cp", "critical_path", true, "Critical Path of the DAG");
+		o_cp.setRequired(true);
+		options.addOption(o_cp);
 		
 		Option o_out = new Option("o", "output", true, "Output file for the DAG");
 		o_out.setRequired(true);
@@ -62,19 +66,18 @@ public class MainGenerator {
 		
 		String outputDZN = cmd.getOptionValue("dzn_output");
 
-		int height = Integer.parseInt(cmd.getOptionValue("height"));
-		int width = Integer.parseInt(cmd.getOptionValue("width"));
-		int eprob = Integer.parseInt(cmd.getOptionValue("eprobability"));
-		int hperc = Integer.parseInt(cmd.getOptionValue("hiperc"));
+		int userHI = Integer.parseInt(cmd.getOptionValue("hi_utilization"));
+		int userLO = Integer.parseInt(cmd.getOptionValue("lo_utilization"));
+		int UserHIinLO = Integer.parseInt(cmd.getOptionValue("hi_lo_utilization"));
+		int edgeProb = Integer.parseInt(cmd.getOptionValue("eprobability"));
+		int cp = Integer.parseInt(cmd.getOptionValue("critical_path"));
+		
 		String output = cmd.getOptionValue("output");
 		
 		/* ============================= Generator parameters ============================= */
 		
-		Generator g = new Generator(height, width, eprob, hperc);
 		
-		UtilizationGenerator ug = new UtilizationGenerator(2, 1, 20, 30, 1);
-		
-		g.generateGraph();
+		UtilizationGenerator ug = new UtilizationGenerator(userLO, userHI, cp, edgeProb, UserHIinLO);
 		
 		ug.GenenrateGraphCp();
 		
@@ -91,7 +94,7 @@ public class MainGenerator {
 		// Generate the file used for the CSP
 		if (outputDZN != null) {
 			try {
-				g.toDZN(outputDZN);
+				ug.toDZN(outputDZN);
 			} catch (IOException e) {
 				System.out.println("To DZN from generator " + e.getMessage());
 			

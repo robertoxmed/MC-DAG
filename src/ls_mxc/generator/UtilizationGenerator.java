@@ -56,6 +56,9 @@ public class UtilizationGenerator {
 		int CHIBound = (int) Math.ceil(userCp / userU_HI);
 		int CLOBound = (int) Math.ceil(userCp / userU_LO);
 		
+		if (userU_HI == 1)
+			CHIBound = CLOBound;
+		
 		
 		// Generate the CP in HI mode
 		Node last = null;
@@ -64,7 +67,7 @@ public class UtilizationGenerator {
 			Node n = new Node(id, Integer.toString(id), 0, 0);
 			n.setRank(rank);
 			
-			n.setC_HI(r.nextInt(2) + 2);
+			n.setC_HI(r.nextInt(CHIBound) + 2);
 			
 			
 			// Add egde and update the CP (if not source)
@@ -87,16 +90,12 @@ public class UtilizationGenerator {
 				n.setC_HI(toCP);
 				budgetHI = budgetHI - n.getC_HI();
 				cpReached = true;
-				System.out.println("CP Reached");
 			}
 			n.setC_LO(n.getC_HI());
-			System.out.println("Created " + n.getId() + " C HI " + n.getC_HI());
 		}
 		
 		// Generate the other HI nodes and the arcs
-		rank = 0;
-		System.out.println("\nBudget HI left " + budgetHI + "\n");
-		
+		rank = 0;		
 		while (budgetHI > 0) {
 			// Roll a number of nodes to add to the level
 			int nodesPerRank = r.nextInt(5);
@@ -125,15 +124,12 @@ public class UtilizationGenerator {
 							Edge e = new Edge(src, n, false);
 							src.getSnd_edges().add(e);
 							n.getRcv_edges().add(e);
-							System.out.println("Edge "+ src.getId()+" -> " + n.getId() + " added.");
 						}
 					}
 				}
 				n.setC_LO(n.getC_HI());
 				n.CPfromNode(1);
 				nodes.add(n);
-				System.out.println("Node " + n.getId() + " C HI " + n.getC_HI()
-						+ " rank " + n.getRank() + " created.");
 				id++;
 			}
 
@@ -141,16 +137,16 @@ public class UtilizationGenerator {
 		}
 		
 		// Deflate HI execution times
-		int budgetHIinLO = uHIinLO * userCp;
+		int wantedHIinLO = uHIinLO * userCp;
 		int actualBudget = userU_HI * userCp;
 		Iterator<Node> it_n;
-		System.out.println("\nTrying to respect " + budgetHIinLO + " budget of HI tasks in LO mode from "+ actualBudget);
-		while (budgetHIinLO <= actualBudget || !allHIareMin(nodes)) {
+		System.out.println("Trying to respect " + wantedHIinLO + " budget of HI tasks in LO mode from "+ actualBudget);
+		while (wantedHIinLO <= actualBudget || allHIareMin(nodes)) {
 			it_n = nodes.iterator();
 			while (it_n.hasNext()) {
 				Node n = it_n.next();
-				n.setC_LO(r.nextInt(n.getC_LO()));
 				
+				n.setC_LO(r.nextInt(n.getC_LO()) + 1);				
 				if (n.getC_LO() == 0)
 					n.setC_LO(1);
 				
@@ -159,12 +155,20 @@ public class UtilizationGenerator {
 			}
 		}
 		
-		System.out.println("\nDeflation completed! actual budget " + actualBudget);
+		System.out.println("Deflation completed! Actual budget " + actualBudget);
 		
 		// Add LO nodes
+		actualBudget = 0;
+		it_n = nodes.iterator();
+		while (it_n.hasNext()) {
+			actualBudget += it_n.next().getC_LO();
+		}
+		
+		
 		budgetLO = budgetLO - actualBudget;
 		System.out.println("\nStarting LO node generation with budget " + budgetLO);
 		
+				
 		rank = 0;
 		while (budgetLO > 0) {
 			// Roll a number of nodes to add to the level
@@ -181,9 +185,8 @@ public class UtilizationGenerator {
 				if (budgetLO - n.getC_LO() > 0) {
 					budgetLO = budgetLO - n.getC_LO();
 				} else {
-					n.setC_HI(budgetLO);
+					n.setC_LO(budgetLO);
 					budgetLO = 0;
-					System.out.println("Budget for LO tasks reached!\n");
 				}
 				
 				n.setRank(rank);
@@ -199,14 +202,11 @@ public class UtilizationGenerator {
 							Edge e = new Edge(src, n, false);
 							src.getSnd_edges().add(e);
 							n.getRcv_edges().add(e);
-							System.out.println("Edge "+ src.getId()+" -> " + n.getId() + " added.");
 						}
 					}
 				}
 				n.CPfromNode(0);
 				nodes.add(n);
-				System.out.println("Node " + n.getId() + " C LO " + n.getC_LO()
-						+ " rank " + n.getRank() + " created.");
 				id++;
 			}
 
@@ -220,6 +220,8 @@ public class UtilizationGenerator {
 		graphSanityCheck();
 		calcMinCores();
 		createAdjMatrix();
+		
+		System.out.println("Generation finished!");
 	}
 	
 	
