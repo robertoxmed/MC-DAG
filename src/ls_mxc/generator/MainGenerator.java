@@ -37,6 +37,10 @@ public class MainGenerator {
 		o_eprob.setRequired(true);
 		options.addOption(o_eprob);
 		
+		Option o_para = new Option("p", "parallelism", true, "Max parallelism for the DAG");
+		o_para.setRequired(true);
+		options.addOption(o_para);
+		
 		Option o_cp = new Option("cp", "critical_path", true, "Critical Path of the DAG");
 		o_cp.setRequired(true);
 		options.addOption(o_cp);
@@ -71,13 +75,14 @@ public class MainGenerator {
 		int UserHIinLO = Integer.parseInt(cmd.getOptionValue("hi_lo_utilization"));
 		int edgeProb = Integer.parseInt(cmd.getOptionValue("eprobability"));
 		int cp = Integer.parseInt(cmd.getOptionValue("critical_path"));
+		int para = Integer.parseInt(cmd.getOptionValue("parallelism"));
 		
 		String output = cmd.getOptionValue("output");
 		
 		/* ============================= Generator parameters ============================= */
 		
 		
-		UtilizationGenerator ug = new UtilizationGenerator(userLO, userHI, cp, edgeProb, UserHIinLO);
+		UtilizationGenerator ug = new UtilizationGenerator(userLO, userHI, cp, edgeProb, UserHIinLO, para);
 		
 		ug.GenenrateGraphCp();
 		

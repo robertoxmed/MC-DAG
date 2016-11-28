@@ -423,13 +423,6 @@ public class LS {
 			System.out.print("\n");
 		}
 		System.out.print("\n");
-
-		Iterator<Node> it_n = mxc_dag.getNodes().iterator();
-		while(it_n.hasNext()){
-			Node n = it_n.next();
-			if (n.getC_HI() != 0)
-				System.out.println("Start HI ["+n.getName()+"] = "+ Start_HI[n.getId()]);
-		}
 			
 	}
 	
@@ -455,12 +448,14 @@ public class LS {
 		this.calcWeights(1);
 		this.Alloc_HI();
 		
-		this.printS_HI();
+		//this.printS_HI();
 		
 		this.calcWeights(0);
 		this.Alloc_LO();
 	
-		this.printS_LO();
+		//this.printS_LO();
+		
+		System.out.println("Allocation succeded!");
 	}
 	
 	/**

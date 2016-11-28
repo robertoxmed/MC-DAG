@@ -70,10 +70,10 @@ public class Main {
 				fu.writeToFile(outputFilePath, ls);
 			} catch (IOException ie) {
 				System.out.println("Write to file " + ie.getMessage());
-				System.exit(1);
+				System.exit(3);
 				return;
 			}
 		}
-		
+		System.exit(0);
 	}
 }

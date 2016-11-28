@@ -23,18 +23,20 @@ public class UtilizationGenerator {
 	private DAG genDAG;
 	private int edgeProb;
 	private int uHIinLO;
+	private int paraDegree;
 
 
 	private int deadline;
 	
 	private int[][] adjMatrix;
 
-	public UtilizationGenerator (int U_LO, int U_HI, int cp, int edgeProb, int UHIinLO) {
+	public UtilizationGenerator (int U_LO, int U_HI, int cp, int edgeProb, int UHIinLO, int para) {
 		this.setUserU_LO(U_LO);
 		this.setUserU_HI(U_HI);
 		this.setUserCp(cp);
 		this.setEdgeProb(edgeProb);
 		this.setuHIinLO(UHIinLO);
+		this.setParaDegree(para);
 	}
 
 	
@@ -98,7 +100,7 @@ public class UtilizationGenerator {
 		rank = 0;		
 		while (budgetHI > 0) {
 			// Roll a number of nodes to add to the level
-			int nodesPerRank = r.nextInt(5);
+			int nodesPerRank = r.nextInt(paraDegree);
 			for (int j=0; j < nodesPerRank && budgetHI > 0; j++) {
 				Node n = new Node(id, Integer.toString(id), 0, 0);
 			
@@ -109,7 +111,6 @@ public class UtilizationGenerator {
 				} else {
 					n.setC_HI(budgetHI);
 					budgetHI = 0;
-					System.out.println("Budget for HI tasks reached!\n");
 				}
 				
 				n.setRank(rank);
@@ -128,8 +129,9 @@ public class UtilizationGenerator {
 					}
 				}
 				n.setC_LO(n.getC_HI());
-				n.CPfromNode(1);
 				nodes.add(n);
+				n.CPfromNode(1);
+				System.out.println("Node "+ n.getId() + " CP HI in node" + n.getCpFromNode_HI());
 				id++;
 			}
 
@@ -140,7 +142,6 @@ public class UtilizationGenerator {
 		int wantedHIinLO = uHIinLO * userCp;
 		int actualBudget = userU_HI * userCp;
 		Iterator<Node> it_n;
-		System.out.println("Trying to respect " + wantedHIinLO + " budget of HI tasks in LO mode from "+ actualBudget);
 		while (wantedHIinLO <= actualBudget || allHIareMin(nodes)) {
 			it_n = nodes.iterator();
 			while (it_n.hasNext()) {
@@ -166,19 +167,19 @@ public class UtilizationGenerator {
 		
 		
 		budgetLO = budgetLO - actualBudget;
-		System.out.println("\nStarting LO node generation with budget " + budgetLO);
+		System.out.println("\nStarting LO node generation with budget " + budgetLO + " HI in LO budget " + actualBudget);
 		
 				
 		rank = 0;
 		while (budgetLO > 0) {
 			// Roll a number of nodes to add to the level
-			int nodesPerRank = r.nextInt(5);
+			int nodesPerRank = r.nextInt(paraDegree);
 			for (int j=0; j < nodesPerRank && budgetLO > 0; j++) {
 				Node n = new Node(id, Integer.toString(id), 0, 0);
 			
 				// Roll a C_HI and test if budget is left
 				n.setC_HI(0);
-				n.setC_LO(r.nextInt(CLOBound));
+				n.setC_LO(r.nextInt(userCp/2) + 1);
 				if (n.getC_LO() == 0)
 					n.setC_LO(1); // Minimal execution time
 				
@@ -205,8 +206,10 @@ public class UtilizationGenerator {
 						}
 					}
 				}
-				n.CPfromNode(0);
 				nodes.add(n);
+				n.CPfromNode(0);
+				System.out.println("Node "+ n.getId() + " CPLO in node" + n.getCpFromNode_LO());
+
 				id++;
 			}
 
@@ -216,12 +219,13 @@ public class UtilizationGenerator {
 		
 		setNbNodes(id + 1);
 		genDAG.setNodes(nodes);
+		
 		setDeadline(genDAG.calcCriticalPath());
-		graphSanityCheck();
+		//graphSanityCheck(0);
+		//graphSanityCheck(1);
 		calcMinCores();
 		createAdjMatrix();
-		
-		System.out.println("Generation finished!");
+		System.out.println("Finished");
 	}
 	
 	
@@ -302,7 +306,7 @@ public class UtilizationGenerator {
 	 * Sanity check for the graph:
 	 * 	- Each node has to have at least one edge
 	 */
-	public void graphSanityCheck() {
+	public void graphSanityCheck(int mode) {
 		boolean added = false;
 		Iterator<Node> it_n = genDAG.getNodes().iterator();
 		
@@ -313,23 +317,44 @@ public class UtilizationGenerator {
 			if (n.getRcv_edges().size() == 0 && n.getSnd_edges().size() == 0) {
 				Iterator<Node> it_n2 = genDAG.getNodes().iterator();
 				while (it_n2.hasNext() && added == false) {
-					Node n2 = it_n2.next(); 
-					if ((n.getRank() < n2.getRank()) &&
-							((n.getC_HI() > 0 && n2.getC_HI() > 0) ||
-							 (n.getC_HI() == 0 && n2.getC_HI() == 0) ||
-							 (n.getC_HI() > 0 && n2.getC_HI() == 0))){
-						Edge e = new Edge(n, n2, false);
-						n.getSnd_edges().add(e);
-						n2.getRcv_edges().add(e);
-						added = true; 
-					} else if (n.getRank() > n2.getRank() &&
-							((n.getC_HI() > 0 && n2.getC_HI() > 0) ||
-							 (n.getC_HI() == 0 && n2.getC_HI() == 0) ||
-							 (n.getC_HI() == 0 && n2.getC_HI() > 0))) {
-						Edge e = new Edge(n2, n, false);
-						n.getRcv_edges().add(e);
-						n2.getSnd_edges().add(e);
-						added = true;
+					if (mode == 0) {
+						Node n2 = it_n2.next(); 
+						if (n.getRank() < n2.getRank() &&
+								allowedCommunitcation(n, n2) &&
+								n.getCpFromNode_LO() + n2.getC_LO() <= userCp){
+							Edge e = new Edge(n, n2, false);
+							n.getSnd_edges().add(e);
+							n2.getRcv_edges().add(e);
+							added = true;
+							n2.CPfromNode(mode);
+						} else if (n.getRank() > n2.getRank() &&
+								allowedCommunitcation(n2,n) &&
+								n2.getCpFromNode_LO() + n.getC_LO() <= userCp) {
+							Edge e = new Edge(n2, n, false);
+							n.getRcv_edges().add(e);
+							n2.getSnd_edges().add(e);
+							added = true;
+							n.CPfromNode(mode);
+						}
+					} else {
+						Node n2 = it_n2.next(); 
+						if (n.getRank() < n2.getRank() &&
+								allowedCommunitcation(n, n2) &&
+								n.getCpFromNode_HI() + n2.getC_HI() < userCp){
+							Edge e = new Edge(n, n2, false);
+							n.getSnd_edges().add(e);
+							n2.getRcv_edges().add(e);
+							added = true;
+							n.CPfromNode(mode);
+						} else if (n.getRank() > n2.getRank() &&
+								allowedCommunitcation(n2,n) &&
+								n2.getCpFromNode_HI() + n.getC_HI() < userCp) {
+							Edge e = new Edge(n2, n, false);
+							n.getRcv_edges().add(e);
+							n2.getSnd_edges().add(e);
+							added = true;
+							n.CPfromNode(mode);
+						}
 					}
 				}
 				added = false;
@@ -500,5 +525,15 @@ public class UtilizationGenerator {
 
 	public void setuHIinLO(int uHIinLO) {
 		this.uHIinLO = uHIinLO;
+	}
+
+
+	public int getParaDegree() {
+		return paraDegree;
+	}
+
+
+	public void setParaDegree(int paraDegree) {
+		this.paraDegree = paraDegree;
 	}
 }
