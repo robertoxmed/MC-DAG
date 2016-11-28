@@ -131,7 +131,7 @@ public class UtilizationGenerator {
 				n.setC_LO(n.getC_HI());
 				nodes.add(n);
 				n.CPfromNode(1);
-				System.out.println("Node "+ n.getId() + " CP HI in node" + n.getCpFromNode_HI());
+				System.out.println("Node "+ n.getId() + " CP HI in node " + n.getCpFromNode_HI());
 				id++;
 			}
 
@@ -151,9 +151,13 @@ public class UtilizationGenerator {
 				if (n.getC_LO() == 0)
 					n.setC_LO(1);
 				
-				n.CPfromNode(0);
 				actualBudget = actualBudget - n.getC_LO();
 			}
+		}
+		
+		it_n = nodes.iterator();
+		while (it_n.hasNext()){
+			it_n.next().CPfromNode(0);
 		}
 		
 		System.out.println("Deflation completed! Actual budget " + actualBudget);
@@ -208,12 +212,19 @@ public class UtilizationGenerator {
 				}
 				nodes.add(n);
 				n.CPfromNode(0);
-				System.out.println("Node "+ n.getId() + " CPLO in node" + n.getCpFromNode_LO());
+				System.out.println("Node "+ n.getId() + " C LO "+ n.getC_LO() +" CP LO in node " + n.getCpFromNode_LO());
 
 				id++;
 			}
 
 			rank++;
+		}
+		
+		it_n = nodes.iterator();
+		while (it_n.hasNext()){
+			Node n = it_n.next();
+			n.checkifSink();
+			n.checkifSource();
 		}
 		
 		
