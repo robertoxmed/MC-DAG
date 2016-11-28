@@ -55,12 +55,8 @@ public class UtilizationGenerator {
 		// Budgets deduced by utilization and CP
 		int budgetHI = userCp * userU_HI;
 		int budgetLO = userCp * userU_LO;
-		int CHIBound = (int) Math.ceil(userCp / userU_HI);
-		int CLOBound = (int) Math.ceil(userCp / userU_LO);
-		
-		if (userU_HI == 1)
-			CHIBound = CLOBound;
-		
+		int CHIBound = (int) Math.ceil(userCp / 2);
+		int CLOBound = (int) Math.ceil(userCp / 2);
 		
 		// Generate the CP in HI mode
 		Node last = null;
@@ -160,6 +156,8 @@ public class UtilizationGenerator {
 			it_n.next().CPfromNode(0);
 		}
 		
+		
+		graphSanityCheck(1);
 		System.out.println("Deflation completed! Actual budget " + actualBudget);
 		
 		// Add LO nodes
@@ -183,9 +181,7 @@ public class UtilizationGenerator {
 			
 				// Roll a C_HI and test if budget is left
 				n.setC_HI(0);
-				n.setC_LO(r.nextInt(userCp/2) + 1);
-				if (n.getC_LO() == 0)
-					n.setC_LO(1); // Minimal execution time
+				n.setC_LO(r.nextInt(CLOBound) + 1);
 				
 				if (budgetLO - n.getC_LO() > 0) {
 					budgetLO = budgetLO - n.getC_LO();
@@ -227,13 +223,11 @@ public class UtilizationGenerator {
 			n.checkifSource();
 		}
 		
-		
+		graphSanityCheck(0);
 		setNbNodes(id + 1);
 		genDAG.setNodes(nodes);
 		
 		setDeadline(genDAG.calcCriticalPath());
-		//graphSanityCheck(0);
-		//graphSanityCheck(1);
 		calcMinCores();
 		createAdjMatrix();
 		System.out.println("Finished");
@@ -326,6 +320,7 @@ public class UtilizationGenerator {
 			
 			// It is an independent node with no edges
 			if (n.getRcv_edges().size() == 0 && n.getSnd_edges().size() == 0) {
+				System.out.print("Node " + n.getId() + " has no edges");
 				Iterator<Node> it_n2 = genDAG.getNodes().iterator();
 				while (it_n2.hasNext() && added == false) {
 					if (mode == 0) {

@@ -77,11 +77,11 @@ public class Node {
 			while (it_e.hasNext()){
 				Edge e = it_e.next();
 				if (mode == 0) {
-					tmp = e.getSrc().getCpFromNode_LO();
+					tmp = e.getSrc().CPfromNode(0);
 					if (max < tmp)
 						max = tmp + this.getC_LO();
 				} else {
-					tmp = e.getSrc().getCpFromNode_HI();
+					tmp = e.getSrc().CPfromNode(1);
 					if (max < tmp)
 						max = tmp + this.getC_HI();
 				}
