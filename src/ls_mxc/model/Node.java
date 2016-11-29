@@ -77,19 +77,19 @@ public class Node {
 			while (it_e.hasNext()){
 				Edge e = it_e.next();
 				if (mode == 0) {
-					tmp = e.getSrc().CPfromNode(0);
+					tmp = e.getSrc().getCpFromNode_LO();
 					if (max < tmp)
-						max = tmp + this.getC_LO();
+						max = tmp;
 				} else {
-					tmp = e.getSrc().CPfromNode(1);
+					tmp = e.getSrc().getCpFromNode_HI();
 					if (max < tmp)
-						max = tmp + this.getC_HI();
+						max = tmp;
 				}
 			}
 			if (mode == 0)
-				this.setCpFromNode_LO(max);
+				this.setCpFromNode_LO(max + this.getC_LO());
 			else
-				this.setCpFromNode_HI(max);
+				this.setCpFromNode_HI(max + this.getC_HI());
 			
 			return max;
 		}

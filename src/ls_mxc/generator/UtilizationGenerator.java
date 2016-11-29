@@ -55,8 +55,12 @@ public class UtilizationGenerator {
 		// Budgets deduced by utilization and CP
 		int budgetHI = userCp * userU_HI;
 		int budgetLO = userCp * userU_LO;
-		int CHIBound = (int) Math.ceil(userCp / 2);
-		int CLOBound = (int) Math.ceil(userCp / 2);
+		int CHIBound = (int) Math.ceil(userCp / userU_HI);
+		int CLOBound = (int) Math.ceil(userCp / userU_LO);
+		
+		if (userU_HI == 1)
+			CHIBound = CLOBound;
+		
 		
 		// Generate the CP in HI mode
 		Node last = null;
@@ -127,10 +131,8 @@ public class UtilizationGenerator {
 				n.setC_LO(n.getC_HI());
 				nodes.add(n);
 				n.CPfromNode(1);
-				System.out.println("Node "+ n.getId() + " CP HI in node " + n.getCpFromNode_HI());
 				id++;
 			}
-
 			rank++;
 		}
 		
@@ -156,9 +158,9 @@ public class UtilizationGenerator {
 			it_n.next().CPfromNode(0);
 		}
 		
+		System.out.println("Deflation completed! Actual budget " + actualBudget);
 		
 		graphSanityCheck(1);
-		System.out.println("Deflation completed! Actual budget " + actualBudget);
 		
 		// Add LO nodes
 		actualBudget = 0;
@@ -182,6 +184,8 @@ public class UtilizationGenerator {
 				// Roll a C_HI and test if budget is left
 				n.setC_HI(0);
 				n.setC_LO(r.nextInt(CLOBound) + 1);
+				if (n.getC_LO() == 0)
+					n.setC_LO(1); // Minimal execution time
 				
 				if (budgetLO - n.getC_LO() > 0) {
 					budgetLO = budgetLO - n.getC_LO();
@@ -208,12 +212,38 @@ public class UtilizationGenerator {
 				}
 				nodes.add(n);
 				n.CPfromNode(0);
-				System.out.println("Node "+ n.getId() + " C LO "+ n.getC_LO() +" CP LO in node " + n.getCpFromNode_LO());
-
 				id++;
 			}
 
 			rank++;
+		}
+		
+		// Have at least a 2 rank LO graph by adding one extra LO node
+		if (rank == 1) {
+			Node n = new Node(id, Integer.toString(id), 0, 0);
+			n.setC_HI(0);
+			n.setC_LO(r.nextInt(1) + 1);
+			
+			Iterator<Node> it = nodes.iterator();
+			while (it.hasNext()) {
+				Node src = it.next();
+				
+				if (src.getC_HI() == 0) {
+					Edge e = new Edge(src, n, false);
+					src.getSnd_edges().add(e);
+					n.getRcv_edges().add(e);
+				} else if (r.nextInt(100) <= edgeProb && n.getRank() > src.getRank()
+						&& src.getCpFromNode_LO() + n.getC_LO() <= userCp &&
+						allowedCommunitcation(src, n)) {
+					Edge e = new Edge(src, n, false);
+					src.getSnd_edges().add(e);
+					n.getRcv_edges().add(e);
+				}
+			}
+			nodes.add(n);
+			n.CPfromNode(0);
+			id++;
+			
 		}
 		
 		it_n = nodes.iterator();
@@ -223,10 +253,9 @@ public class UtilizationGenerator {
 			n.checkifSource();
 		}
 		
-		graphSanityCheck(0);
 		setNbNodes(id + 1);
 		genDAG.setNodes(nodes);
-		
+		graphSanityCheck(0);
 		setDeadline(genDAG.calcCriticalPath());
 		calcMinCores();
 		createAdjMatrix();
@@ -320,7 +349,6 @@ public class UtilizationGenerator {
 			
 			// It is an independent node with no edges
 			if (n.getRcv_edges().size() == 0 && n.getSnd_edges().size() == 0) {
-				System.out.print("Node " + n.getId() + " has no edges");
 				Iterator<Node> it_n2 = genDAG.getNodes().iterator();
 				while (it_n2.hasNext() && added == false) {
 					if (mode == 0) {
@@ -537,7 +565,6 @@ public class UtilizationGenerator {
 	public int getParaDegree() {
 		return paraDegree;
 	}
-
 
 	public void setParaDegree(int paraDegree) {
 		this.paraDegree = paraDegree;
