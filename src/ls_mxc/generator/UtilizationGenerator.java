@@ -15,14 +15,14 @@ import ls_mxc.model.Node;
 
 public class UtilizationGenerator {
 	
-	private int userU_LO;
-	private int userU_HI;
+	private double userU_LO;
+	private double userU_HI;
 	private int userCp;
 	private int nbNodes;
 	private int nbCores;
 	private DAG genDAG;
 	private int edgeProb;
-	private int uHIinLO;
+	private double uHIinLO;
 	private int paraDegree;
 
 
@@ -30,13 +30,14 @@ public class UtilizationGenerator {
 	
 	private int[][] adjMatrix;
 
-	public UtilizationGenerator (int U_LO, int U_HI, int cp, int edgeProb, int UHIinLO, int para) {
+	public UtilizationGenerator (double U_LO, double U_HI, int cp, int edgeProb, double UHIinLO, int para, int cores) {
 		this.setUserU_LO(U_LO);
 		this.setUserU_HI(U_HI);
 		this.setUserCp(cp);
 		this.setEdgeProb(edgeProb);
 		this.setuHIinLO(UHIinLO);
 		this.setParaDegree(para);
+		this.setNbCores(cores);
 	}
 
 	
@@ -53,8 +54,8 @@ public class UtilizationGenerator {
 		Random r = new Random();
 		
 		// Budgets deduced by utilization and CP
-		int budgetHI = userCp * userU_HI;
-		int budgetLO = userCp * userU_LO;
+		int budgetHI = (int) Math.ceil(userCp * userU_HI);
+		int budgetLO = (int) Math.ceil(userCp * userU_LO);
 		int CHIBound = (int) Math.ceil(userCp / userU_HI);
 		int CLOBound = (int) Math.ceil(userCp / userU_LO);
 		
@@ -137,8 +138,8 @@ public class UtilizationGenerator {
 		}
 		
 		// Deflate HI execution times
-		int wantedHIinLO = uHIinLO * userCp;
-		int actualBudget = userU_HI * userCp;
+		int wantedHIinLO = (int) Math.ceil(uHIinLO * userCp);
+		int actualBudget = (int) Math.ceil(userU_HI * userCp);
 		Iterator<Node> it_n;
 		while (wantedHIinLO <= actualBudget || allHIareMin(nodes)) {
 			it_n = nodes.iterator();
@@ -243,7 +244,6 @@ public class UtilizationGenerator {
 			nodes.add(n);
 			n.CPfromNode(0);
 			id++;
-			
 		}
 		
 		it_n = nodes.iterator();
@@ -257,7 +257,6 @@ public class UtilizationGenerator {
 		genDAG.setNodes(nodes);
 		graphSanityCheck(0);
 		setDeadline(genDAG.calcCriticalPath());
-		calcMinCores();
 		createAdjMatrix();
 		System.out.println("Finished");
 	}
@@ -298,7 +297,7 @@ public class UtilizationGenerator {
 		else
 			max = sumClo;
 		
-		this.setNbCores((int)Math.ceil(max/this.getDeadline()) + 1);
+		this.setNbCores((int)Math.ceil(max/this.getDeadline()));
 	}
 	
 	public boolean allowedCommunitcation (Node src, Node dest) {
@@ -491,11 +490,11 @@ public class UtilizationGenerator {
 	/**
 	 * Getters and setters
 	 */
-	public int getUserU_LO() {
+	public double getUserU_LO() {
 		return userU_LO;
 	}
 
-	public void setUserU_LO(int userU_LO) {
+	public void setUserU_LO(double userU_LO) {
 		this.userU_LO = userU_LO;
 	}
 
@@ -507,11 +506,11 @@ public class UtilizationGenerator {
 		this.userCp = userCp;
 	}
 
-	public int getUserU_HI() {
+	public double getUserU_HI() {
 		return userU_HI;
 	}
 
-	public void setUserU_HI(int userU_HI) {
+	public void setUserU_HI(double userU_HI) {
 		this.userU_HI = userU_HI;
 	}
 
@@ -553,11 +552,11 @@ public class UtilizationGenerator {
 		this.edgeProb = edgeProb;
 	}
 
-	public int getuHIinLO() {
+	public double getuHIinLO() {
 		return uHIinLO;
 	}
 
-	public void setuHIinLO(int uHIinLO) {
+	public void setuHIinLO(double uHIinLO) {
 		this.uHIinLO = uHIinLO;
 	}
 

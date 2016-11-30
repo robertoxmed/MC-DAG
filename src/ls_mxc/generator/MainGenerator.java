@@ -45,6 +45,10 @@ public class MainGenerator {
 		o_cp.setRequired(true);
 		options.addOption(o_cp);
 		
+		Option o_cores = new Option("c", "cores", true, "Number of cores");
+		o_cores.setRequired(true);
+		options.addOption(o_cores);
+		
 		Option o_out = new Option("o", "output", true, "Output file for the DAG");
 		o_out.setRequired(true);
 		options.addOption(o_out);
@@ -70,19 +74,20 @@ public class MainGenerator {
 		
 		String outputDZN = cmd.getOptionValue("dzn_output");
 
-		int userHI = Integer.parseInt(cmd.getOptionValue("hi_utilization"));
-		int userLO = Integer.parseInt(cmd.getOptionValue("lo_utilization"));
-		int UserHIinLO = Integer.parseInt(cmd.getOptionValue("hi_lo_utilization"));
+		double userHI = Double.parseDouble(cmd.getOptionValue("hi_utilization"));
+		double userLO = Double.parseDouble(cmd.getOptionValue("lo_utilization"));
+		double UserHIinLO = Double.parseDouble(cmd.getOptionValue("hi_lo_utilization"));
 		int edgeProb = Integer.parseInt(cmd.getOptionValue("eprobability"));
 		int cp = Integer.parseInt(cmd.getOptionValue("critical_path"));
 		int para = Integer.parseInt(cmd.getOptionValue("parallelism"));
+		int cores = Integer.parseInt(cmd.getOptionValue("cores"));
 		
 		String output = cmd.getOptionValue("output");
 		
 		/* ============================= Generator parameters ============================= */
 		
 		
-		UtilizationGenerator ug = new UtilizationGenerator(userLO, userHI, cp, edgeProb, UserHIinLO, para);
+		UtilizationGenerator ug = new UtilizationGenerator(userLO, userHI, cp, edgeProb, UserHIinLO, para, cores);
 		
 		ug.GenenrateGraphCp();
 		
