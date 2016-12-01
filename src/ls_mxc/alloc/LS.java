@@ -454,8 +454,6 @@ public class LS {
 		this.Alloc_LO();
 	
 		//this.printS_LO();
-		
-		System.out.println("Allocation succeded!");
 	}
 	
 	/**

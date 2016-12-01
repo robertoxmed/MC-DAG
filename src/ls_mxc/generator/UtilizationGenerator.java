@@ -51,7 +51,7 @@ public class UtilizationGenerator {
 		Set<Node> nodes = new HashSet<Node>();
 		boolean cpReached = false;
 		int rank = 0;
-		Random r = new Random();
+		Random r = new Random(System.currentTimeMillis());
 		
 		// Budgets deduced by utilization and CP
 		int budgetHI = (int) Math.ceil(userCp * userU_HI);
@@ -95,8 +95,7 @@ public class UtilizationGenerator {
 				cpReached = true;
 			}
 			n.setC_LO(n.getC_HI());
-		}
-		
+		}		
 		// Generate the other HI nodes and the arcs
 		rank = 0;		
 		while (budgetHI > 0) {
@@ -141,7 +140,7 @@ public class UtilizationGenerator {
 		int wantedHIinLO = (int) Math.ceil(uHIinLO * userCp);
 		int actualBudget = (int) Math.ceil(userU_HI * userCp);
 		Iterator<Node> it_n;
-		while (wantedHIinLO <= actualBudget || allHIareMin(nodes)) {
+		while (wantedHIinLO < actualBudget && !allHIareMin(nodes)) {
 			it_n = nodes.iterator();
 			while (it_n.hasNext()) {
 				Node n = it_n.next();
@@ -151,6 +150,8 @@ public class UtilizationGenerator {
 					n.setC_LO(1);
 				
 				actualBudget = actualBudget - n.getC_LO();
+				if (actualBudget < 0)
+					actualBudget = 0;
 			}
 		}
 		
@@ -158,9 +159,7 @@ public class UtilizationGenerator {
 		while (it_n.hasNext()){
 			it_n.next().CPfromNode(0);
 		}
-		
-		System.out.println("Deflation completed! Actual budget " + actualBudget);
-		
+				
 		graphSanityCheck(1);
 		
 		// Add LO nodes
@@ -169,12 +168,9 @@ public class UtilizationGenerator {
 		while (it_n.hasNext()) {
 			actualBudget += it_n.next().getC_LO();
 		}
-		
-		
+			
 		budgetLO = budgetLO - actualBudget;
-		System.out.println("\nStarting LO node generation with budget " + budgetLO + " HI in LO budget " + actualBudget);
-		
-				
+					
 		rank = 0;
 		while (budgetLO > 0) {
 			// Roll a number of nodes to add to the level
@@ -258,7 +254,6 @@ public class UtilizationGenerator {
 		graphSanityCheck(0);
 		setDeadline(genDAG.calcCriticalPath());
 		createAdjMatrix();
-		System.out.println("Finished");
 	}
 	
 	
