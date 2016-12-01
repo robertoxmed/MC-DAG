@@ -18,7 +18,7 @@ f = open("results.out", 'w')
 
 for cores in range(2, max_nb_cores+1, 2):
     for u_lo in np.arange(min_u_lo, cores, step_utilization):
-        for u_hi in np.arange(min_u_hi, cores, step_utilization):
+        for u_hi in np.arange(min_u_lo, cores, step_utilization):
             for dags in range (0, nbdags):
                 u_hi_in_lo = cores - 1
                 para = cores * 2
@@ -26,12 +26,14 @@ for cores in range(2, max_nb_cores+1, 2):
                 os.system(gen_command)
 
             for dags in range (0, nbdags):
-                exe_command = "java -jar ls_alloc.jar -i "+ex_root+str(dags)+".test"
+                exe_command = "java -jar ls-alloc.jar -i "+ex_root+str(dags)+".test"
                 ret = os.system(exe_command)
                 if ret == 0:
                     success += 1
             line = "cores %d U_LO %f U_HI %f Success rate: %d\n" % (cores, u_lo, u_hi, success)
             f.write(line)
             success = 0
-        min_u_hi = cores
+    print(" Cores ", cores)
+    min_u_lo = cores
+
 f.close()

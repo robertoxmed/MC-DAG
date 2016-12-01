@@ -94,6 +94,7 @@ public class MainGenerator {
 		// Generate the file used for the list scheduling
 		try {
 			ug.toFile(output);
+			System.out.println("Written to file!\n");
 		} catch (IOException e) {
 			System.out.println("To file from generator " + e.getMessage());
 			
