@@ -258,6 +258,224 @@ public class UtilizationGenerator {
 	
 	
 	/**
+	 * Generates a DAG without making the CP in HI first
+	 */
+	public void GenenrateGraph() {
+		// Variables
+		int id = 0;
+		setGenDAG(new DAG());
+		Set<Node> nodes = new HashSet<Node>();
+		boolean cpReached = false;
+		int rank = 0;
+		Random r = new Random(System.currentTimeMillis());
+		
+		// Budgets deduced by utilization and CP
+		int budgetHI = (int) Math.ceil(userCp * userU_HI);
+		int budgetLO = (int) Math.ceil(userCp * userU_LO);
+		int CHIBound = (int) Math.ceil(userCp / userU_HI);
+		int CLOBound = (int) Math.ceil(userCp / userU_LO);
+		
+		if (userU_HI == 1)
+			CHIBound = CLOBound;
+		
+			
+		// Generate HI nodes and the arcs
+		// No hypothesis about the CP.
+		rank = 0;		
+		while (budgetHI > 0) {
+			// Roll a number of nodes to add to the level
+			int nodesPerRank = r.nextInt(paraDegree);
+			for (int j=0; j < nodesPerRank && budgetHI > 0; j++) {
+				Node n = new Node(id, Integer.toString(id), 0, 0);
+			
+				// Roll a C_HI and test if budget is left
+				n.setC_HI(r.nextInt(CHIBound) + 2);
+				if (budgetHI - n.getC_HI() > 0) {
+					budgetHI = budgetHI - n.getC_HI();
+				} else {
+					n.setC_HI(budgetHI);
+					budgetHI = 0;
+				}
+				
+				n.setRank(rank);
+				if (rank != 0) {
+					Iterator<Node> it_n = nodes.iterator();
+					while (it_n.hasNext()) {
+						Node src = it_n.next();
+						// Test if the rank of the source is lower and if the CP
+						// is not reached
+						if (r.nextInt(100) <= edgeProb && n.getRank() > src.getRank()
+								&& src.getCpFromNode_HI() + n.getC_HI() <= userCp) {
+							Edge e = new Edge(src, n, false);
+							src.getSnd_edges().add(e);
+							n.getRcv_edges().add(e);
+							if (src.getCpFromNode_HI() + n.getC_HI() == userCp)
+								cpReached = true;
+						}
+					}
+				}
+				n.setC_LO(n.getC_HI());
+				nodes.add(n);
+				n.CPfromNode(1);
+				id++;
+			}
+			rank++;
+		}
+		
+		// Deflate HI execution times
+		int wantedHIinLO = (int) Math.ceil(uHIinLO * userCp);
+		int actualBudget = (int) Math.ceil(userU_HI * userCp);
+		Iterator<Node> it_n;
+		while (wantedHIinLO < actualBudget && !allHIareMin(nodes)) {
+			it_n = nodes.iterator();
+			while (it_n.hasNext()) {
+				Node n = it_n.next();
+				
+				n.setC_LO(r.nextInt(n.getC_LO()) + 1);				
+				if (n.getC_LO() == 0)
+					n.setC_LO(1);
+				
+				actualBudget = actualBudget - n.getC_LO();
+				if (actualBudget < 0)
+					actualBudget = 0;
+			}
+		}
+		
+		it_n = nodes.iterator();
+		while (it_n.hasNext()){
+			it_n.next().CPfromNode(0);
+		}
+				
+		graphSanityCheck(1);
+		
+		// Add LO nodes
+		actualBudget = 0;
+		it_n = nodes.iterator();
+		while (it_n.hasNext()) {
+			actualBudget += it_n.next().getC_LO();
+		}
+			
+		budgetLO = budgetLO - actualBudget;
+
+		// Generate LO tasks
+		rank = 0;
+		while (budgetLO > 0) {
+			// Roll a number of nodes to add to the level
+			int nodesPerRank = r.nextInt(paraDegree);
+			for (int j=0; j < nodesPerRank && budgetLO > 0; j++) {
+				Node n = new Node(id, Integer.toString(id), 0, 0);
+			
+				// Roll a C_HI and test if budget is left
+				n.setC_HI(0);
+				n.setC_LO(r.nextInt(CLOBound) + 1);
+				if (n.getC_LO() == 0)
+					n.setC_LO(1); // Minimal execution time
+				
+				if (budgetLO - n.getC_LO() > 0) {
+					budgetLO = budgetLO - n.getC_LO();
+				} else {
+					n.setC_LO(budgetLO);
+					budgetLO = 0;
+				}
+				
+				n.setRank(rank);
+				if (rank != 0) {
+					Iterator<Node> it = nodes.iterator();
+					while (it.hasNext()) {
+						Node src = it.next();
+						// Test if the rank of the source is lower and if the CP
+						// is not reached
+						if (r.nextInt(100) <= edgeProb && n.getRank() > src.getRank()
+								&& src.getCpFromNode_LO() + n.getC_LO() <= userCp &&
+								allowedCommunitcation(src, n)) {
+							Edge e = new Edge(src, n, false);
+							src.getSnd_edges().add(e);
+							n.getRcv_edges().add(e);
+							if (src.getCpFromNode_HI() + n.getC_HI() == userCp)
+								cpReached = true;
+						}
+					}
+				}
+				nodes.add(n);
+				n.CPfromNode(0);
+				id++;
+			}
+
+			rank++;
+		}
+		
+		// Have at least a 2 rank LO graph by adding one extra LO node
+		if (rank == 1) {
+			Node n = new Node(id, Integer.toString(id), 0, 0);
+			n.setC_HI(0);
+			n.setC_LO(r.nextInt(1) + 1);
+			
+			Iterator<Node> it = nodes.iterator();
+			while (it.hasNext()) {
+				Node src = it.next();
+				
+				if (src.getC_HI() == 0) {
+					Edge e = new Edge(src, n, false);
+					src.getSnd_edges().add(e);
+					n.getRcv_edges().add(e);
+				} else if (r.nextInt(100) <= edgeProb && n.getRank() > src.getRank()
+						&& src.getCpFromNode_LO() + n.getC_LO() <= userCp &&
+						allowedCommunitcation(src, n)) {
+					Edge e = new Edge(src, n, false);
+					src.getSnd_edges().add(e);
+					n.getRcv_edges().add(e);
+				}
+			}
+			nodes.add(n);
+			n.CPfromNode(0);
+			id++;
+		}
+		
+
+		// The Cp wasn't reached we need to add more tasks in LO mode
+		if (!cpReached) {
+			Node n = new Node(id, Integer.toString(id), 0, 0);
+			
+			// Get the closest node to the CP
+			int max = 0;
+			Node node_max = null;
+			Iterator<Node> it = nodes.iterator();
+			while (it.hasNext()) {
+				Node m = it.next();
+				if (m.getCpFromNode_LO() > max) {
+					max = m.getCpFromNode_LO();
+					node_max = m;
+				}
+			}
+			
+			// Roll a C_HI and test if budget is left
+			n.setC_HI(0);
+			n.setC_LO(userCp - node_max.getCpFromNode_LO());
+			Edge e = new Edge(node_max, n, false);
+			node_max.getSnd_edges().add(e);
+			n.getRcv_edges().add(e);
+			
+			n.CPfromNode(0);
+			nodes.add(n);
+			id++;
+		}
+		
+		it_n = nodes.iterator();
+		while (it_n.hasNext()){
+			Node n = it_n.next();
+			n.checkifSink();
+			n.checkifSource();
+		}
+		
+		
+		setNbNodes(id + 1);
+		genDAG.setNodes(nodes);
+		graphSanityCheck(0);
+		setDeadline(genDAG.calcCriticalPath());
+		createAdjMatrix();
+	}
+	
+	/**
 	 * Tests if all HI nodes are minimal execution <=> C LO = 1
 	 * @param nodes
 	 * @return
@@ -301,33 +519,6 @@ public class UtilizationGenerator {
 			return true;
 		
 		return false;	
-	}
-	
-	public void inflateCHIs(Set<Node> nodes, int budgetHI) {
-		Iterator<Node> it_n;
-		while (budgetHI > 0) {
-			it_n = nodes.iterator();
-			while (it_n.hasNext() && budgetHI > 0) {
-				Node n = it_n.next();
-				if (n.getC_HI() > 0) {
-					n.setC_HI(n.getC_HI()+1);
-					budgetHI--;
-				}
-			}
-		}
-	}
-	
-	public void inflateCLOs(Set<Node> nodes, int budgetLO) {
-		Iterator<Node> it_n;
-		while (budgetLO > 0) {
-			it_n = nodes.iterator();
-			while (it_n.hasNext() && budgetLO > 0) {
-				Node n = it_n.next();
-			
-				n.setC_LO(n.getC_LO()+1);
-				budgetLO--;
-			}
-		}
 	}
 	
 	/**

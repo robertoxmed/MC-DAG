@@ -31,6 +31,7 @@ public class LS {
 	// Scheduling tables, i: slot, j: task
 	private String S_LO[][];
 	private String S_HI[][];
+	private String S_HLFET[][];
 	
 	// Starting times of HI tasks in HI mode
 	private int Start_HI[];
@@ -245,7 +246,7 @@ public class LS {
 		// Initialize with 0s
 		for (int c = 0; c < nb_cores; c++) {
 			for(int t = 0; t < deadline; t++) {
-				S_LO[t][c] = "0";
+				S_LO[t][c] = "-";
 			}
 		}
 			
@@ -337,6 +338,7 @@ public class LS {
 			li_it = ready_lo.listIterator(); // Restart the iterator for the next slot
 		}
 	}
+	
 	
 	/**
 	 * Checks if a new HI task needs to be promoted. If it's the case then
@@ -475,6 +477,107 @@ public class LS {
 			r = false;
 		
 		return r;
+	}
+	
+	public boolean HLFETSchedulable() {
+
+		this.calcWeights(0);
+		/* =============================================
+		 *  Initialization of variables used by the method
+		 ================================================*/
+		S_HLFET = new String[deadline][nb_cores];
+		// Initialize with 0s
+		for (int c = 0; c < nb_cores; c++) {
+			for(int t = 0; t < deadline; t++) {
+				S_HLFET[t][c] = "-";
+			}
+		}
+			
+		int[] t_lo = new int[mxc_dag.getNodes().size()];
+		
+		LinkedList<Node> li_lo = new LinkedList<Node>();
+		Iterator<Node> it_n = mxc_dag.getNodes().iterator(); 
+		// Ready list of tasks that have their dependencies met
+		LinkedList<Node> ready_lo = new LinkedList<Node>();
+		// List of recently finished tasks -> to activate new ones
+		LinkedList<Node> finished_lo = new LinkedList<Node>();
+		boolean task_finished = false;
+		
+		// Add LO nodes to the list
+		while(it_n.hasNext()){
+			Node n = it_n.next();
+			t_lo[n.getId()] = n.getC_LO();
+			li_lo.add(n);
+			if (n.isSource()) // At the beginning only source nodes are added
+				ready_lo.add(n);
+		}
+
+		// Sort lists
+		Collections.sort(li_lo, new Comparator<Node>() {
+			@Override
+			public int compare(Node n1, Node n2) {
+				return n2.getWeight_LO() - n1.getWeight_LO();
+			}
+		});
+		
+		Collections.sort(ready_lo, new Comparator<Node>() {
+			@Override
+			public int compare(Node n1, Node n2) {
+				return n2.getWeight_LO()- n1.getWeight_LO();
+			}
+		});
+		
+		/* =============================================
+		 *  Actual allocation
+		 * =============================================*/
+		
+		// Iterate through slots
+		ListIterator<Node> li_it = ready_lo.listIterator();
+		for(int t = 0; t < deadline; t++){
+			// For each slot check if it's an WC activation time
+			if (! checkFreeSlot(t_lo, mxc_dag.getNodes().size(), (deadline - t) * nb_cores)){
+				return false;
+			}
+			
+			
+			for(int c = 0; c < nb_cores; c++) {
+				if (li_it.hasNext()){
+					Node n = li_it.next(); // Get head of the list
+					
+					S_HLFET[t][c] = n.getName(); // Give the slot to the task
+
+					// Decrement slots left for the task
+					t_lo[n.getId()] = t_lo[n.getId()] - 1;
+
+					if (t_lo[n.getId()] == 0){ // Task has ended its execution
+						li_it.remove();
+						task_finished = true;
+						finished_lo.add(n);
+					}
+				}
+			}
+			
+			if (task_finished) {
+				ListIterator<Node> li_f = finished_lo.listIterator();
+				while (li_f.hasNext()) {
+					Node n = li_f.next();
+					// Check for new activations
+					checkActivation(ready_lo, li_it, n, t_lo, 0);
+
+					// Heavier tasks can be activated -> needs a new sort
+					Collections.sort(ready_lo, new Comparator<Node>() {
+						@Override
+						public int compare(Node n1, Node n2) {
+							return n2.getWeight_LO() - n1.getWeight_LO();
+						}
+					});
+				}
+				task_finished = false;
+				finished_lo.clear();
+			}
+			li_it = ready_lo.listIterator(); // Restart the iterator for the next slot
+		}
+		return true;
 	}
 	
 	/************************************************************************************/

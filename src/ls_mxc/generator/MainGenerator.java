@@ -4,6 +4,8 @@ import java.io.IOException;
 
 import org.apache.commons.cli.*;
 
+import ls_mxc.alloc.LS;
+
 /**
  * Main for the Graph generator interface
  * @author Roberto Medina
@@ -89,7 +91,12 @@ public class MainGenerator {
 		
 		UtilizationGenerator ug = new UtilizationGenerator(userLO, userHI, cp, edgeProb, UserHIinLO, para, cores);
 		
-		ug.GenenrateGraphCp();
+		ug.GenenrateGraph();
+		LS ls = new LS(ug.getDeadline(), ug.getNbCores(), ug.getGenDAG());
+		if (!ls.HLFETSchedulable()) {
+			System.exit(3);
+			return;
+		}
 		
 		// Generate the file used for the list scheduling
 		try {
