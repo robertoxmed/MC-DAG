@@ -98,6 +98,11 @@ public class MainGenerator {
 			return;
 		}
 		
+		if (!ls.HLFETSchedulableHI()) {
+			System.exit(4);
+			return;
+		}
+		
 		// Generate the file used for the list scheduling
 		try {
 			ug.toFile(output);

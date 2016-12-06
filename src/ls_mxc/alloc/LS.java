@@ -32,6 +32,7 @@ public class LS {
 	private String S_LO[][];
 	private String S_HI[][];
 	private String S_HLFET[][];
+	private String S_HLFET_HI[][];
 	
 	// Starting times of HI tasks in HI mode
 	private int Start_HI[];
@@ -229,6 +230,8 @@ public class LS {
 				finished_hi.clear();
 			}
 			li_it = ready_hi.listIterator(); // Restart the iterator for the next slot
+			if (ready_hi.isEmpty())
+				return;
 		}
 
 	}
@@ -336,6 +339,8 @@ public class LS {
 				finished_lo.clear();
 			}
 			li_it = ready_lo.listIterator(); // Restart the iterator for the next slot
+			if (ready_lo.isEmpty())
+				return;
 		}
 	}
 	
@@ -576,6 +581,111 @@ public class LS {
 				finished_lo.clear();
 			}
 			li_it = ready_lo.listIterator(); // Restart the iterator for the next slot
+		}
+		return true;
+	}
+	
+	public boolean HLFETSchedulableHI() {
+
+		this.calcWeights(1);
+		/* =============================================
+		 *  Initialization of variables used by the method
+		 ================================================*/
+		S_HLFET_HI = new String[deadline][nb_cores];
+		// Initialize with 0s
+		for (int c = 0; c < nb_cores; c++) {
+			for(int t = 0; t < deadline; t++) {
+				S_HLFET_HI[t][c] = "-";
+			}
+		}
+			
+		int[] t_hi = new int[mxc_dag.getNodes().size()];
+		
+		LinkedList<Node> li_hi = new LinkedList<Node>();
+		Iterator<Node> it_n = mxc_dag.getNodes().iterator(); 
+		// Ready list of tasks that have their dependencies met
+		LinkedList<Node> ready_hi = new LinkedList<Node>();
+		// List of recently finished tasks -> to activate new ones
+		LinkedList<Node> finished_hi = new LinkedList<Node>();
+		boolean task_finished = false;
+		
+		// Add HI nodes to the list
+		while(it_n.hasNext()){
+			Node n = it_n.next();
+			if (n.getC_HI() != 0) {
+				t_hi[n.getId()] = n.getC_HI();
+				li_hi.add(n);
+				if (n.isSource()) // At the beginning only source nodes are added
+					ready_hi.add(n);
+			}
+		}
+
+		// Sort lists
+		Collections.sort(li_hi, new Comparator<Node>() {
+			@Override
+			public int compare(Node n1, Node n2) {
+				return n2.getWeight_HI() - n1.getWeight_HI();
+			}
+		});
+		
+		Collections.sort(ready_hi, new Comparator<Node>() {
+			@Override
+			public int compare(Node n1, Node n2) {
+				return n2.getWeight_HI()- n1.getWeight_HI();
+			}
+		});
+		
+		/* =============================================
+		 *  Actual allocation
+		 * =============================================*/
+		
+		// Iterate through slots
+		ListIterator<Node> li_it = ready_hi.listIterator();
+		for(int t = 0; t < deadline; t++){
+			
+			// Check if there is enough slots to finish executing tasks
+			if (! checkFreeSlot(t_hi, mxc_dag.getNodes().size(), (deadline - t) * nb_cores)){
+				return false;
+			}
+			
+			for(int c = 0; c < nb_cores; c++) {
+				if (li_it.hasNext()){
+					Node n = li_it.next(); // Get head of the list
+					S_HLFET_HI[t][c] = n.getName(); // Give the slot to the task
+					
+					
+					// Decrement slots left for the task
+					t_hi[n.getId()] = t_hi[n.getId()] - 1;
+				
+					if (t_hi[n.getId()] == 0){ // Task has ended its execution
+						li_it.remove();
+						finished_hi.add(n);
+						task_finished = true;						
+					}
+				}
+			}
+			// Tasks finished their execution 
+			if (task_finished) {
+				// Check for new activations
+				ListIterator<Node> li_f = finished_hi.listIterator();
+				while (li_f.hasNext()) {
+					Node n = li_f.next();
+					checkActivation(ready_hi, li_it, n, t_hi, 1);
+					// Heavier tasks can be activated -> needs a new sort
+					Collections.sort(ready_hi, new Comparator<Node>() {
+						@Override
+						public int compare(Node n1, Node n2) {
+							return n2.getWeight_HI() - n1.getWeight_HI();
+						}
+					});
+					
+				}
+				task_finished = false;
+				finished_hi.clear();
+			}
+			li_it = ready_hi.listIterator(); // Restart the iterator for the next slot
+			if (ready_hi.isEmpty())
+				return true;
 		}
 		return true;
 	}
