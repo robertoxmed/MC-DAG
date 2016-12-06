@@ -274,11 +274,10 @@ public class UtilizationGenerator {
 		int budgetLO = (int) Math.ceil(userCp * userU_LO);
 		int CHIBound = (int) Math.ceil(userCp / userU_HI);
 		int CLOBound = (int) Math.ceil(userCp / userU_LO);
-		
+
 		if (userU_HI == 1)
 			CHIBound = CLOBound;
-		
-			
+					
 		// Generate HI nodes and the arcs
 		// No hypothesis about the CP.
 		rank = 0;		
