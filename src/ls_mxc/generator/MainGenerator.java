@@ -1,6 +1,7 @@
 package ls_mxc.generator;
 
 import java.io.IOException;
+import java.util.Random;
 
 import org.apache.commons.cli.*;
 
@@ -91,7 +92,13 @@ public class MainGenerator {
 		
 		UtilizationGenerator ug = new UtilizationGenerator(userLO, userHI, cp, edgeProb, UserHIinLO, para, cores);
 		
-		ug.GenenrateGraph();
+		Random r = new Random();
+		
+		if (r.nextInt(10)%2 == 0)
+			ug.GenenrateGraph();
+		else
+			ug.GenenrateGraphCp();
+		
 		LS ls = new LS(ug.getDeadline(), ug.getNbCores(), ug.getGenDAG());
 		if (!ls.HLFETSchedulable()) {
 			System.exit(3);
@@ -102,7 +109,6 @@ public class MainGenerator {
 			System.exit(4);
 			return;
 		}
-		
 		// Generate the file used for the list scheduling
 		try {
 			ug.toFile(output);

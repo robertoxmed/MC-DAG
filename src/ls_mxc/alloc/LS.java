@@ -163,8 +163,7 @@ public class LS {
 		Collections.sort(ready_hi, new Comparator<Node>() {
 			@Override
 			public int compare(Node n1, Node n2) {
-				if (n2.getWeight_HI()- n1.getWeight_HI() < 0 ||
-						n2.getWeight_HI()- n1.getWeight_HI() > 0)
+				if (n2.getWeight_HI()- n1.getWeight_HI() != 0)
 					return n2.getWeight_HI()- n1.getWeight_HI();
 				else
 					return n2.getId() - n1.getId();
@@ -253,7 +252,6 @@ public class LS {
 			
 		int[] t_lo = new int[mxc_dag.getNodes().size()];
 		
-		LinkedList<Node> li_lo = new LinkedList<Node>();
 		Iterator<Node> it_n = mxc_dag.getNodes().iterator(); 
 		// Ready list of tasks that have their dependencies met
 		LinkedList<Node> ready_lo = new LinkedList<Node>();
@@ -265,23 +263,19 @@ public class LS {
 		while(it_n.hasNext()){
 			Node n = it_n.next();
 			t_lo[n.getId()] = n.getC_LO();
-			li_lo.add(n);
 			if (n.isSource()) // At the beginning only source nodes are added
 				ready_lo.add(n);
 		}
 
 		// Sort lists
-		Collections.sort(li_lo, new Comparator<Node>() {
-			@Override
-			public int compare(Node n1, Node n2) {
-				return n2.getWeight_LO() - n1.getWeight_LO();
-			}
-		});
 		
 		Collections.sort(ready_lo, new Comparator<Node>() {
 			@Override
 			public int compare(Node n1, Node n2) {
-				return n2.getWeight_LO()- n1.getWeight_LO();
+				if (n2.getWeight_LO() - n1.getWeight_LO() !=0)
+					return n2.getWeight_LO() - n1.getWeight_LO();
+				else
+					return n2.getId() - n1.getId();
 			}
 		});
 		
@@ -329,7 +323,10 @@ public class LS {
 					Collections.sort(ready_lo, new Comparator<Node>() {
 						@Override
 						public int compare(Node n1, Node n2) {
-							return n2.getWeight_LO() - n1.getWeight_LO();
+							if (n2.getWeight_LO() - n1.getWeight_LO() !=0)
+								return n2.getWeight_LO() - n1.getWeight_LO();
+							else
+								return n2.getId() - n1.getId();
 						}
 					});
 				}
@@ -362,14 +359,15 @@ public class LS {
 				Collections.sort(ready_lo, new Comparator<Node>() {
 					@Override
 					public int compare(Node n1, Node n2) {
-						return n2.getWeight_LO() - n1.getWeight_LO();
+						if (n2.getWeight_LO() - n1.getWeight_LO() !=0)
+							return n2.getWeight_LO() - n1.getWeight_LO();
+						else
+							return n2.getId() - n1.getId();
 					}
 				});
 
 			}
 		}
-		
-		
 		return ret;
 	}
 	
@@ -446,6 +444,18 @@ public class LS {
 	}
 	
 	/**
+	 * Prints the S_HLFET_HI LO table table
+	 */
+	public void printS_HLFETHI(){
+		for (int c = 0; c < nb_cores; c++) {
+			for(int t = 0; t < deadline; t++) {
+				System.out.print(S_HLFET_HI[t][c]+" | ");
+			}
+			System.out.print("\n");
+		}
+	}
+	
+	/**
 	 * Does the whole allocaiton
 	 * @throws SchedulingException 
 	 */
@@ -499,7 +509,6 @@ public class LS {
 			
 		int[] t_lo = new int[mxc_dag.getNodes().size()];
 		
-		LinkedList<Node> li_lo = new LinkedList<Node>();
 		Iterator<Node> it_n = mxc_dag.getNodes().iterator(); 
 		// Ready list of tasks that have their dependencies met
 		LinkedList<Node> ready_lo = new LinkedList<Node>();
@@ -511,23 +520,18 @@ public class LS {
 		while(it_n.hasNext()){
 			Node n = it_n.next();
 			t_lo[n.getId()] = n.getC_LO();
-			li_lo.add(n);
 			if (n.isSource()) // At the beginning only source nodes are added
 				ready_lo.add(n);
 		}
 
 		// Sort lists
-		Collections.sort(li_lo, new Comparator<Node>() {
-			@Override
-			public int compare(Node n1, Node n2) {
-				return n2.getWeight_LO() - n1.getWeight_LO();
-			}
-		});
-		
 		Collections.sort(ready_lo, new Comparator<Node>() {
 			@Override
 			public int compare(Node n1, Node n2) {
-				return n2.getWeight_LO()- n1.getWeight_LO();
+				if (n2.getWeight_LO() - n1.getWeight_LO() != 0)
+					return n2.getWeight_LO()- n1.getWeight_LO();
+				else
+					return n2.getId() - n1.getId();
 			}
 		});
 		
@@ -572,7 +576,10 @@ public class LS {
 					Collections.sort(ready_lo, new Comparator<Node>() {
 						@Override
 						public int compare(Node n1, Node n2) {
-							return n2.getWeight_LO() - n1.getWeight_LO();
+							if (n2.getWeight_LO() - n1.getWeight_LO() != 0)
+								return n2.getWeight_LO()- n1.getWeight_LO();
+							else
+								return n2.getId() - n1.getId();
 						}
 					});
 				}
@@ -621,8 +628,7 @@ public class LS {
 		Collections.sort(ready_hi, new Comparator<Node>() {
 			@Override
 			public int compare(Node n1, Node n2) {
-				if (n2.getWeight_HI()- n1.getWeight_HI() < 0 ||
-						n2.getWeight_HI()- n1.getWeight_HI() > 0)
+				if (n2.getWeight_HI()- n1.getWeight_HI() != 0)
 					return n2.getWeight_HI()- n1.getWeight_HI();
 				else
 					return n2.getId() - n1.getId();
@@ -669,8 +675,7 @@ public class LS {
 					Collections.sort(ready_hi, new Comparator<Node>() {
 						@Override
 						public int compare(Node n1, Node n2) {
-							if (n2.getWeight_HI()- n1.getWeight_HI() < 0 ||
-									n2.getWeight_HI()- n1.getWeight_HI() > 0)
+							if (n2.getWeight_HI()- n1.getWeight_HI() != 0)
 								return n2.getWeight_HI()- n1.getWeight_HI();
 							else
 								return n2.getId() - n1.getId();

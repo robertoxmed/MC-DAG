@@ -55,13 +55,9 @@ public class UtilizationGenerator {
 		
 		// Budgets deduced by utilization and CP
 		int budgetHI = (int) Math.ceil(userCp * userU_HI);
-		int budgetLO = (int) Math.ceil(userCp * userU_LO);
-		int CHIBound = (int) Math.ceil(userCp / userU_HI);
-		int CLOBound = (int) Math.ceil(userCp / userU_LO);
-		
-		if (userU_HI == 1)
-			CHIBound = CLOBound;
-		
+		int budgetLO = (int) Math.ceil(userCp * userU_LO);		
+		int CHIBound = (int) Math.ceil(userCp);
+		int CLOBound = (int) Math.ceil(userCp);
 		
 		// Generate the CP in HI mode
 		Node last = null;
@@ -250,8 +246,8 @@ public class UtilizationGenerator {
 		}
 		
 		setNbNodes(id + 1);
-		genDAG.setNodes(nodes);
 		graphSanityCheck(0);
+		genDAG.setNodes(nodes);
 		setDeadline(genDAG.calcCriticalPath());
 		createAdjMatrix();
 	}
@@ -271,12 +267,9 @@ public class UtilizationGenerator {
 		
 		// Budgets deduced by utilization and CP
 		int budgetHI = (int) Math.ceil(userCp * userU_HI);
-		int budgetLO = (int) Math.ceil(userCp * userU_LO);
-		int CHIBound = (int) Math.ceil(userCp / userU_HI);
-		int CLOBound = (int) Math.ceil(userCp / userU_LO);
-
-		if (userU_HI == 1)
-			CHIBound = CLOBound;
+		int budgetLO = (int) Math.ceil(userCp * userU_LO);		
+		int CHIBound = (int) Math.ceil(userCp);
+		int CLOBound = (int) Math.ceil(userCp);
 					
 		// Generate HI nodes and the arcs
 		// No hypothesis about the CP.
@@ -308,8 +301,9 @@ public class UtilizationGenerator {
 							Edge e = new Edge(src, n, false);
 							src.getSnd_edges().add(e);
 							n.getRcv_edges().add(e);
-							if (src.getCpFromNode_HI() + n.getC_HI() == userCp)
+							if (src.getCpFromNode_HI() + n.getC_HI() == userCp) {
 								cpReached = true;
+							}
 						}
 					}
 				}
@@ -390,8 +384,10 @@ public class UtilizationGenerator {
 							Edge e = new Edge(src, n, false);
 							src.getSnd_edges().add(e);
 							n.getRcv_edges().add(e);
-							if (src.getCpFromNode_HI() + n.getC_HI() == userCp)
+							if (src.getCpFromNode_HI() + n.getC_HI() == userCp) {
 								cpReached = true;
+							}
+								
 						}
 					}
 				}
@@ -468,8 +464,8 @@ public class UtilizationGenerator {
 		
 		
 		setNbNodes(id + 1);
-		genDAG.setNodes(nodes);
 		graphSanityCheck(0);
+		genDAG.setNodes(nodes);
 		setDeadline(genDAG.calcCriticalPath());
 		createAdjMatrix();
 	}
