@@ -170,7 +170,7 @@ public class UtilizationGenerator {
 		rank = 0;
 		while (budgetLO > 0) {
 			// Roll a number of nodes to add to the level
-			int nodesPerRank = r.nextInt(paraDegree);
+			int nodesPerRank = r.nextInt((int)(paraDegree / 2));
 			for (int j=0; j < nodesPerRank && budgetLO > 0; j++) {
 				Node n = new Node(id, Integer.toString(id), 0, 0);
 			
@@ -268,7 +268,7 @@ public class UtilizationGenerator {
 		// Budgets deduced by utilization and CP
 		int budgetHI = (int) Math.ceil(userCp * userU_HI);
 		int budgetLO = (int) Math.ceil(userCp * userU_LO);		
-		int CHIBound = (int) Math.ceil(userCp);
+		int CHIBound = (int) Math.ceil(userCp - 1);
 		int CLOBound = (int) Math.ceil(userCp);
 					
 		// Generate HI nodes and the arcs
@@ -325,9 +325,6 @@ public class UtilizationGenerator {
 				Node n = it_n.next();
 				
 				n.setC_LO(r.nextInt(n.getC_LO()) + 1);				
-				if (n.getC_LO() == 0)
-					n.setC_LO(1);
-				
 				actualBudget = actualBudget - n.getC_LO();
 				if (actualBudget < 0)
 					actualBudget = 0;
@@ -354,7 +351,7 @@ public class UtilizationGenerator {
 		rank = 0;
 		while (budgetLO > 0) {
 			// Roll a number of nodes to add to the level
-			int nodesPerRank = r.nextInt(paraDegree);
+			int nodesPerRank = r.nextInt((int)(paraDegree / 2));
 			for (int j=0; j < nodesPerRank && budgetLO > 0; j++) {
 				Node n = new Node(id, Integer.toString(id), 0, 0);
 			
