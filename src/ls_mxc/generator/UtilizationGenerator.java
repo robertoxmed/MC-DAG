@@ -268,7 +268,7 @@ public class UtilizationGenerator {
 		// Budgets deduced by utilization and CP
 		int budgetHI = (int) Math.ceil(userCp * userU_HI);
 		int budgetLO = (int) Math.ceil(userCp * userU_LO);		
-		int CHIBound = (int) Math.ceil(userCp - 1);
+		int CHIBound = (int) Math.ceil(userCp);
 		int CLOBound = (int) Math.ceil(userCp);
 					
 		// Generate HI nodes and the arcs
