@@ -156,7 +156,6 @@ public class LS {
 				t_hi[n.getId()] = n.getC_HI();
 				if (n.isSinkinHI()) {// At the beginning only exit nodes are added
 					ready_hi.add(n);
-					System.out.println("Added "+ n.getId());
 				}
 			}
 		}
@@ -686,12 +685,12 @@ public class LS {
 		
 		// Iterate through slots
 		ListIterator<Node> li_it = ready_hi.listIterator();
-		for(int t = 0 -1 ; t < deadline ; t++){
+		for(int t = 0 ; t < deadline ; t++){
 			
-			// Check if there is enough slots to finish executing tasks
-//			if (! checkFreeSlot(t_hi, mxc_dag.getNodes().size(), (deadline - t) * nb_cores)){
-//				return false;
-//			}
+			//Check if there is enough slots to finish executing tasks
+			if (! checkFreeSlot(t_hi, mxc_dag.getNodes().size(), (deadline - t) * nb_cores)){
+				return false;
+			}
 			
 			for(int c = 0; c < nb_cores; c++) {
 				if (li_it.hasNext()){
