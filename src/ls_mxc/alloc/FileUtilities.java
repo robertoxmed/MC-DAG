@@ -119,6 +119,7 @@ public class FileUtilities {
 				Node n = it_n.next();
 				n.checkifSink();
 				n.checkifSource();
+				n.checkifSinkinHI();
 			}
 			
 			ls.setMxcDag(d);

@@ -54,6 +54,7 @@ public class Test {
 		D.checkifSource();
 		E.checkifSink();
 		E.checkifSource();
+		B.checkifSinkinHI();
 		
 		/*
 		 * HLFET Levels
@@ -110,10 +111,12 @@ public class Test {
 			
 		LS l3 = new LS();
 		
-		fu.ReadAndInit("/home/roberto/workspace/LS_mxc/src/ls_mxc/tests/12nodes.test", l3);
+		fu.ReadAndInit("/home/roberto/workspace/LS_mxc/tests/ex3.test", l3);
 
 		try {
 			l3.Alloc_All();
+			l3.printS_HI();
+			l3.printS_LO();
 		} catch (SchedulingException e) {
 			System.out.println(e.getMessage());
 		}
@@ -124,10 +127,12 @@ public class Test {
 		
 		LS l4 = new LS();
 		
-		fu.ReadAndInit("/home/roberto/workspace/LS_mxc/src/ls_mxc/tests/ex2.test", l4);
+		fu.ReadAndInit("/home/roberto/workspace/LS_mxc/tests/ex2.test", l4);
 		
 		try {
 			l4.Alloc_All();
+			l3.printS_HI();
+			l3.printS_LO();
 		} catch (SchedulingException e) {
 			System.out.println(e.getMessage());
 		}

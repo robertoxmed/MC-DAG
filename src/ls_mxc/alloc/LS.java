@@ -154,8 +154,10 @@ public class LS {
 			Node n = it_n.next();
 			if (n.getC_HI() != 0) {
 				t_hi[n.getId()] = n.getC_HI();
-				if (n.isSource()) // At the beginning only source nodes are added
+				if (n.isSinkinHI()) {// At the beginning only exit nodes are added
 					ready_hi.add(n);
+					System.out.println("Added "+ n.getId());
+				}
 			}
 		}
 
@@ -164,9 +166,9 @@ public class LS {
 			@Override
 			public int compare(Node n1, Node n2) {
 				if (n2.getWeight_HI()- n1.getWeight_HI() != 0)
-					return n2.getWeight_HI()- n1.getWeight_HI();
+					return n1.getWeight_HI()- n2.getWeight_HI();
 				else
-					return n2.getId() - n1.getId();
+					return n1.getId() - n2.getId();
 			}
 		});
 		
@@ -176,28 +178,25 @@ public class LS {
 		
 		// Iterate through slots
 		ListIterator<Node> li_it = ready_hi.listIterator();
-		for(int t = 0; t < deadline; t++){
+		for(int t = deadline - 1; t >= 0 ; t--){
 			
 			// Check if there is enough slots to finish executing tasks
-			if (! checkFreeSlot(t_hi, mxc_dag.getNodes().size(), (deadline - t) * nb_cores)){
-				SchedulingException se = new SchedulingException("Alloc HI : Not enough slot lefts");
-				throw se;
-			}
-			
+//			if (! checkFreeSlot(t_hi, mxc_dag.getNodes().size(), (deadline - t) * nb_cores)){
+//				SchedulingException se = new SchedulingException("Alloc HI : Not enough slot lefts");
+//				throw se;
+//			}
+//			
 			for(int c = 0; c < nb_cores; c++) {
 				if (li_it.hasNext()){
 					Node n = li_it.next(); // Get head of the list
 					S_HI[t][c] = n.getName(); // Give the slot to the task
 					
-					// Check if it's the first slot allocated
-					// Start time
-					if (t_hi[n.getId()] == n.getC_HI())
-						Start_HI[n.getId()] = t;
-					
 					// Decrement slots left for the task
 					t_hi[n.getId()] = t_hi[n.getId()] - 1;
-				
-					if (t_hi[n.getId()] == 0){ // Task has ended its execution
+					
+					// Check if it's the first slot allocated
+					if (t_hi[n.getId()] == 0){ // Task has began its execution
+						Start_HI[n.getId()] = t;
 						li_it.remove();
 						finished_hi.add(n);
 						task_finished = true;						
@@ -210,16 +209,16 @@ public class LS {
 				ListIterator<Node> li_f = finished_hi.listIterator();
 				while (li_f.hasNext()) {
 					Node n = li_f.next();
-					checkActivation(ready_hi, li_it, n, t_hi, 1);
+					checkActivationHI(ready_hi, li_it, n, t_hi);
 					// Heavier tasks can be activated -> needs a new sort
 					Collections.sort(ready_hi, new Comparator<Node>() {
 						@Override
 						public int compare(Node n1, Node n2) {
 							if (n2.getWeight_HI()- n1.getWeight_HI() < 0 ||
 									n2.getWeight_HI()- n1.getWeight_HI() > 0)
-								return n2.getWeight_HI()- n1.getWeight_HI();
+								return n1.getWeight_HI()- n2.getWeight_HI();
 							else
-								return n2.getId() - n1.getId();
+								return n1.getId() - n2.getId();
 						}
 					});
 					
@@ -413,6 +412,52 @@ public class LS {
 				}
 				if (add)
 					li_r.add(suc);
+			}
+		}
+	}
+	
+	/**
+	 * 
+	 * @param li_r
+	 * @param n
+	 * @param t_hi
+	 * @param mode
+	 */
+	public void checkActivationHI(LinkedList<Node> l_r, ListIterator<Node> li_r, Node n, int[] t_hi){
+		
+		// Check all successors
+		Iterator<Edge> it_e = n.getRcv_edges().iterator();
+		while (it_e.hasNext()){
+			Edge e = it_e.next();
+			Node pred = e.getSrc();
+			boolean ready = true;
+			boolean add = true;
+			
+			if (pred.getC_HI() == 0) { // Don't activate LO tasks in HI mode
+				ready = false;
+				break;
+			}
+			
+			Iterator<Edge> it_e_rcv = pred.getSnd_edges().iterator();
+			while (it_e_rcv.hasNext()){ // For each successor we check its dependencies
+				
+				Edge e2 = it_e_rcv.next();
+				Node suc = e2.getDest();
+				if (t_hi[suc.getId()] != 0){
+					ready = false;
+					break;
+				}
+			}
+			
+			if (ready) {
+				// Need to check if the task has already been added
+				ListIterator<Node> li = l_r.listIterator();
+				while(li.hasNext()){
+					if(li.next().getId() == pred.getId())
+						add = false;
+				}
+				if (add)
+					li_r.add(pred);
 			}
 		}
 	}
@@ -619,7 +664,7 @@ public class LS {
 			Node n = it_n.next();
 			if (n.getC_HI() != 0) {
 				t_hi[n.getId()] = n.getC_HI();
-				if (n.isSource()) // At the beginning only source nodes are added
+				if (n.isSink()) // At the beginning only source nodes are added
 					ready_hi.add(n);
 			}
 		}
@@ -629,9 +674,9 @@ public class LS {
 			@Override
 			public int compare(Node n1, Node n2) {
 				if (n2.getWeight_HI()- n1.getWeight_HI() != 0)
-					return n2.getWeight_HI()- n1.getWeight_HI();
+					return n1.getWeight_HI()- n2.getWeight_HI();
 				else
-					return n2.getId() - n1.getId();
+					return n1.getId() - n2.getId();
 			}
 		});
 		
@@ -641,12 +686,12 @@ public class LS {
 		
 		// Iterate through slots
 		ListIterator<Node> li_it = ready_hi.listIterator();
-		for(int t = 0; t < deadline; t++){
+		for(int t = deadline -1 ; t >= 0 ; t--){
 			
 			// Check if there is enough slots to finish executing tasks
-			if (! checkFreeSlot(t_hi, mxc_dag.getNodes().size(), (deadline - t) * nb_cores)){
-				return false;
-			}
+//			if (! checkFreeSlot(t_hi, mxc_dag.getNodes().size(), (deadline - t) * nb_cores)){
+//				return false;
+//			}
 			
 			for(int c = 0; c < nb_cores; c++) {
 				if (li_it.hasNext()){

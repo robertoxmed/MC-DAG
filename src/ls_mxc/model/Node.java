@@ -14,7 +14,9 @@ public class Node {
 	
 	private boolean source;
 	private boolean sink;
+	private boolean sinkinHI;
 	
+
 	private int weight_LO;
 	private int weight_HI;
 	
@@ -52,6 +54,20 @@ public class Node {
 	public void checkifSink() {
 		if (snd_edges.size() == 0)
 			this.setSink(true);
+	}
+	
+	public void checkifSinkinHI() {
+		Iterator<Edge> it_e = this.getSnd_edges().iterator();
+		this.setSinkinHI(true);
+		
+		while (it_e.hasNext()){
+			Edge e = it_e.next();
+			Node dst = e.getDest();
+			if (dst.getC_HI() != 0) {
+				this.setSinkinHI(false);
+				break;
+			}
+		}
 	}
 	
 	/**
@@ -187,5 +203,12 @@ public class Node {
 		this.cpFromNode_HI = cpFromNode_HI;
 	}
 
+	public boolean isSinkinHI() {
+		return sinkinHI;
+	}
+
+	public void setSinkinHI(boolean sinkinHI) {
+		this.sinkinHI = sinkinHI;
+	}
 
 }
