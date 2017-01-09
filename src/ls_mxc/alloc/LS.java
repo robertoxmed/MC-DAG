@@ -664,7 +664,7 @@ public class LS {
 			Node n = it_n.next();
 			if (n.getC_HI() != 0) {
 				t_hi[n.getId()] = n.getC_HI();
-				if (n.isSink()) // At the beginning only source nodes are added
+				if (n.isSource()) // At the beginning only source nodes are added
 					ready_hi.add(n);
 			}
 		}
@@ -674,9 +674,9 @@ public class LS {
 			@Override
 			public int compare(Node n1, Node n2) {
 				if (n2.getWeight_HI()- n1.getWeight_HI() != 0)
-					return n1.getWeight_HI()- n2.getWeight_HI();
+					return n2.getWeight_HI()- n1.getWeight_HI();
 				else
-					return n1.getId() - n2.getId();
+					return n2.getId() - n1.getId();
 			}
 		});
 		
@@ -686,7 +686,7 @@ public class LS {
 		
 		// Iterate through slots
 		ListIterator<Node> li_it = ready_hi.listIterator();
-		for(int t = deadline -1 ; t >= 0 ; t--){
+		for(int t = 0 -1 ; t < deadline ; t++){
 			
 			// Check if there is enough slots to finish executing tasks
 //			if (! checkFreeSlot(t_hi, mxc_dag.getNodes().size(), (deadline - t) * nb_cores)){
