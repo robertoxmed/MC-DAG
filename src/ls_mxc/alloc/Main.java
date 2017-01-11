@@ -64,6 +64,15 @@ public class Main {
 			return;
 		}
 		
+		try {
+			ls.CheckBaruah();
+		} catch (SchedulingException se) {
+			System.out.println(se.getMessage());
+			
+			System.exit(20);
+			return;
+		}
+		
 		// User specified a file to write to
 		if (outputFilePath != null) {
 			try {

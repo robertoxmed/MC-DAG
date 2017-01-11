@@ -19,6 +19,7 @@ public class Node {
 
 	private int weight_LO;
 	private int weight_HI;
+	private int weight_B;
 	
 	private Set<Edge> rcv_edges;
 	private Set<Edge> snd_edges;
@@ -209,6 +210,14 @@ public class Node {
 
 	public void setSinkinHI(boolean sinkinHI) {
 		this.sinkinHI = sinkinHI;
+	}
+
+	public int getWeight_B() {
+		return weight_B;
+	}
+
+	public void setWeight_B(int weight_B) {
+		this.weight_B = weight_B;
 	}
 
 }

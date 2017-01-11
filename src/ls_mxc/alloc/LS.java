@@ -27,10 +27,12 @@ public class LS {
 	// Weights to calculate HLFET levels
 	private int weights_LO[];
 	private int weights_HI[];
+	private int weights_B[];
 	
 	// Scheduling tables, i: slot, j: task
 	private String S_LO[][];
 	private String S_HI[][];
+	private String S_B[][];
 	private String S_HLFET[][];
 	private String S_HLFET_HI[][];
 	
@@ -66,9 +68,31 @@ public class LS {
 			Node n = it_n.next();
 			if(mode == 0) { // LO mode
 				weights_LO[n.getId()] = HLFET_level(n, mode);
+				
 			} else { // HI Mode
 				weights_HI[n.getId()] = HLFET_level(n, mode);
 			}
+		}
+	}
+	
+	/**
+	 * Calc weights for HLFET for Baruah
+	 */
+	public void calcWeightsB() {
+		
+		weights_B = new int[mxc_dag.getNodes().size()];
+		
+		Iterator<Node> it_n = mxc_dag.getNodes().iterator();
+		while(it_n.hasNext()){
+			Node n = it_n.next();
+			if (n.getC_HI() !=  0) {
+				weights_B[n.getId()] = HLFET_level(n, 0) + mxc_dag.getCritPath()*2; // Add constant
+				n.setWeight_B(n.getWeight_LO()+mxc_dag.getCritPath()*2);
+			} else {
+				weights_B[n.getId()] = HLFET_level(n, 0);
+			}
+
+			
 		}
 	}
 	
@@ -337,6 +361,107 @@ public class LS {
 		}
 	}
 	
+	/**
+	 * Allocation of the LO mode for the graph.
+	 * Needs to be called after Alloc_HI.
+	 * @throws SchedulingException
+	 */
+	public void Alloc_B() throws SchedulingException{
+		/* =============================================
+		 *  Initialization of variables used by the method
+		 ================================================*/
+		S_B = new String[deadline][nb_cores];
+		// Initialize with 0s
+		for (int c = 0; c < nb_cores; c++) {
+			for(int t = 0; t < deadline; t++) {
+				S_B[t][c] = "-";
+			}
+		}
+			
+		int[] t_lo = new int[mxc_dag.getNodes().size()];
+		
+		Iterator<Node> it_n = mxc_dag.getNodes().iterator(); 
+		// Ready list of tasks that have their dependencies met
+		LinkedList<Node> ready_lo = new LinkedList<Node>();
+		// List of recently finished tasks -> to activate new ones
+		LinkedList<Node> finished_lo = new LinkedList<Node>();
+		boolean task_finished = false;
+		
+		// Add LO nodes to the list
+		while(it_n.hasNext()){
+			Node n = it_n.next();
+			t_lo[n.getId()] = n.getC_LO();
+			if (n.isSource()) // At the beginning only source nodes are added
+				ready_lo.add(n);
+		}
+
+		// Sort lists
+		Collections.sort(ready_lo, new Comparator<Node>() {
+			@Override
+			public int compare(Node n1, Node n2) {
+				if (n2.getWeight_B() - n1.getWeight_B() !=0)
+					return n2.getWeight_B() - n1.getWeight_B();
+				else
+					return n2.getId() - n1.getId();
+			}
+		});
+		
+		/* =============================================
+		 *  Actual allocation
+		 * =============================================*/
+		
+		// Iterate through slots
+		ListIterator<Node> li_it = ready_lo.listIterator();
+		for(int t = 0; t < deadline; t++){
+			// For each slot check if it's an WC activation time
+			if (! checkFreeSlot(t_lo, mxc_dag.getNodes().size(), (deadline - t) * nb_cores)){
+				SchedulingException se = new SchedulingException("Alloc B : Not enough slot lefts");
+				throw se;
+			}			
+			
+			for(int c = 0; c < nb_cores; c++) {
+				if (li_it.hasNext()){
+					Node n = li_it.next(); // Get head of the list
+					
+					S_B[t][c] = n.getName(); // Give the slot to the task
+
+					// Decrement slots left for the task
+					t_lo[n.getId()] = t_lo[n.getId()] - 1;
+
+					if (t_lo[n.getId()] == 0){ // Task has ended its execution
+						li_it.remove();
+						task_finished = true;
+						finished_lo.add(n);
+					}
+				}
+			}
+			
+			if (task_finished) {
+				ListIterator<Node> li_f = finished_lo.listIterator();
+				while (li_f.hasNext()) {
+					Node n = li_f.next();
+					// Check for new activations
+					checkActivation(ready_lo, li_it, n, t_lo, 0);
+
+					// Heavier tasks can be activated -> needs a new sort
+					Collections.sort(ready_lo, new Comparator<Node>() {
+						@Override
+						public int compare(Node n1, Node n2) {
+							if (n2.getWeight_B() - n1.getWeight_B() !=0)
+								return n2.getWeight_B() - n1.getWeight_B();
+							else
+								return n2.getId() - n1.getId();
+						}
+					});
+				}
+				task_finished = false;
+				finished_lo.clear();
+			}
+			li_it = ready_lo.listIterator(); // Restart the iterator for the next slot
+			if (ready_lo.isEmpty())
+				return;
+		}
+	}
 	
 	/**
 	 * Checks if a new HI task needs to be promoted. If it's the case then
@@ -438,7 +563,7 @@ public class LS {
 			}
 			
 			Iterator<Edge> it_e_rcv = pred.getSnd_edges().iterator();
-			while (it_e_rcv.hasNext()){ // For each successor we check its dependencies
+			while (it_e_rcv.hasNext()){ // For each successor we check if it has been executed
 				
 				Edge e2 = it_e_rcv.next();
 				Node suc = e2.getDest();
@@ -512,6 +637,12 @@ public class LS {
 		
 		this.calcWeights(0);
 		this.Alloc_LO();
+	}
+	
+	public void CheckBaruah() throws SchedulingException{
+		// Check if schedulable by Baruah
+		this.calcWeightsB();
+		this.Alloc_B();
 	
 		//this.printS_LO();
 	}
