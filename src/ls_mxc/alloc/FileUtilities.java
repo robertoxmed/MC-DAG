@@ -71,7 +71,7 @@ public class FileUtilities {
 			
 			// C LOs are passed afterwards
 			
-			for(int i = 0; i < nb_nodes - 1; i++){
+			for(int i = 0; i < nb_nodes; i++){
 				line = line.trim();
 				Node n = new Node(i, Integer.toString(i), 0, 0);
 				n.setC_LO(Integer.parseInt(line));
@@ -85,7 +85,7 @@ public class FileUtilities {
 				line = br.readLine();
 			
 			// C HIs are passed afterwards
-			for (int i = 0; i < nb_nodes - 1; i++){
+			for (int i = 0; i < nb_nodes; i++){
 				line = line.trim();
 				
 				Node n = d.getNodebyID(i);

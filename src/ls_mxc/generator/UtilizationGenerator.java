@@ -24,7 +24,7 @@ public class UtilizationGenerator {
 	private int edgeProb;
 	private double uHIinLO;
 	private int paraDegree;
-
+	private boolean HtoL;
 
 	private int deadline;
 	
@@ -537,6 +537,9 @@ public class UtilizationGenerator {
 							n.getSnd_edges().add(e);
 							n2.getRcv_edges().add(e);
 							added = true;
+							if ((n.getC_HI() == 0 && n2.getC_HI() != 0) ||
+									(n.getC_HI() != 0 && n2.getC_HI() == 0))
+								this.setHtoL(true);
 							n2.CPfromNode(mode);
 						} else if (n.getRank() > n2.getRank() &&
 								allowedCommunitcation(n2,n) &&
@@ -545,6 +548,9 @@ public class UtilizationGenerator {
 							n.getRcv_edges().add(e);
 							n2.getSnd_edges().add(e);
 							added = true;
+							if ((n.getC_HI() == 0 && n2.getC_HI() != 0) ||
+									(n.getC_HI() != 0 && n2.getC_HI() == 0))
+								this.setHtoL(true);
 							n.CPfromNode(mode);
 						}
 					} else {
@@ -573,6 +579,39 @@ public class UtilizationGenerator {
 		}
 	}
 	
+	public void addHtoL() {
+		Node hi = null;
+		Node lo = null;
+		Iterator<Node> it_n = genDAG.getNodes().iterator();
+		
+		while (HtoL == false) {
+
+			while (it_n.hasNext()) { // Find a HI task
+				Node n = it_n.next();
+				if (n.getRank() < 2 && n.getC_HI() > 0) {
+					hi = n;
+				}
+			}
+
+			it_n = genDAG.getNodes().iterator();
+			while (it_n.hasNext()) { // Find a HI task
+				Node n = it_n.next();
+				if (n.getRank() > 2 && n.getC_HI() == 0) {
+					lo = n;
+				}
+			}
+
+			if (hi.getRank() < lo.getRank() &&
+					allowedCommunitcation(hi, lo) &&
+					hi.getCpFromNode_LO() + lo.getC_LO() <= userCp) {
+				Edge e = new Edge(hi, lo, false);
+				hi.getSnd_edges().add(e);
+				lo.getRcv_edges().add(e);
+				lo.CPfromNode(0);
+				this.setHtoL(true);
+			}
+		}
+	}
 	
 	/**
 	 * Creates the matrix to be written in the files
@@ -609,7 +648,7 @@ public class UtilizationGenerator {
 			
 			// Write number of nodes
 			out.write("#NbNodes\n");
-			out.write(Integer.toString(this.getNbNodes()) + "\n\n");
+			out.write(Integer.toString(this.getNbNodes() - 1) + "\n\n");
 			
 			// Write number of cores
 			out.write("#NbCores\n");
@@ -745,5 +784,15 @@ public class UtilizationGenerator {
 
 	public void setParaDegree(int paraDegree) {
 		this.paraDegree = paraDegree;
+	}
+
+
+	public boolean isHtoL() {
+		return HtoL;
+	}
+
+
+	public void setHtoL(boolean htoL) {
+		HtoL = htoL;
 	}
 }
