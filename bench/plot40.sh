@@ -1,22 +1,22 @@
 #! /usr/bin/gnuplot
 set term pngcairo dashed
 set output "results40.png"
-set style fill solid 1.00 border 0
+set border 3
 set xlabel "U HI" font "bold"
-set ylabel "Acceptance rate (%)" font "bold"
 set datafile separator ","
+set pointintervalbox 3
 
-set style line 1 lc rgb "#FF0000" lt 1 dashtype 2
-set style line 2 lc rgb "#0B610B" lt 2 dashtype 2
-set style line 3 lc rgb "#610B0B" lt 3 dashtype 2
-set style line 4 lc rgb "#29088A" lt 4 dashtype 2
 
-plot "results40-2.csv" using ($1==4 ? $2:1/0):3 lw 2 title "4" with lines,\
-"results40-2.csv" using ($1==7 ? $2:1/0):3 lw 2 title "7" with lines,\
-"results40-2.csv" using ($1==7.5 ? $2:1/0):3 lw 2 title "7.5" with lines,\
-"results40-2.csv" using ($1==8 ? $2:1/0):3 lw 2 title "8" with lines,\
-"results40-2.csv" using ($1==4 ? $2:1/0):4 ls 1 lw 2 title "4 (B)" with lines,\
-"results40-2.csv" using ($1==7 ? $2:1/0):4 ls 2 lw 2 title "7 (B)" with lines,\
-"results40-2.csv" using ($1==7.5 ? $2:1/0):4 ls 3 lw 2 title  "7.5 (B)" with lines,\
-"results40-2.csv" using ($1==8 ? $2:1/0):4 ls 4 lw 2 title "8 (B)" with lines
-pause -1
+set style line 1 lc rgb "#FF0000" lt 1 lw 2 pt 1 pi -1 ps 1 dashtype 3
+set style line 2 lc rgb "#0B610B" lt 2 lw 2 pt 2 pi -1 ps 1 dashtype 3
+set style line 3 lc rgb "#610B0B" lt 3 lw 2 pt 3 pi -1 ps 1 dashtype 3
+set style line 4 lc rgb "#29088A" lt 4 lw 2 pt 4 pi -1 ps 1 dashtype 3
+
+plot "results40-2.csv" using ($2==4 ? $3:1/0):6 lw 2 title "4" with linespoints,\
+"results40-2.csv" using ($2==7 ? $3:1/0):6 lw 2 title "7" with linespoints,\
+"results40-2.csv" using ($2==7.5 ? $3:1/0):6 lw 2 title "7.5" with linespoints,\
+"results40-2.csv" using ($2==8 ? $3:1/0):6 lw 2 title "8" with linespoints,\
+"results40-2.csv" using ($2==4 ? $3:1/0):7 title "4 (B)" with linespoints ls 1,\
+"results40-2.csv" using ($2==7 ? $3:1/0):7 title "7 (B)" with linespoints ls 2,\
+"results40-2.csv" using ($2==7.5 ? $3:1/0):7 title  "7.5 (B)" with linespoints ls 3,\
+"results40-2.csv" using ($2==8 ? $3:1/0):7 title "8 (B)" with linespoints ls 4
