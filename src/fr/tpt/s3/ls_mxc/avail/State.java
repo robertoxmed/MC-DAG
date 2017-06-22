@@ -1,6 +1,5 @@
 package fr.tpt.s3.ls_mxc.avail;
 
-
 public class State {
 	
 	private String task;
@@ -8,6 +7,15 @@ public class State {
 	private boolean produced;
 	private Transition t;
 	private int id;
+	private int c_t;
+	
+	public State (int id, String t, int m) {
+		setId(id);
+		setTask(t);
+		setMode(m);
+		setProduced(false);
+		t = null;
+	}
 	
 	public String getTask() {
 		return task;
@@ -38,5 +46,13 @@ public class State {
 	}
 	public void setId(int id) {
 		this.id = id;
+	}
+
+	public int getC_t() {
+		return c_t;
+	}
+
+	public void setC_t(int c_t) {
+		this.c_t = c_t;
 	}
 }

@@ -45,6 +45,9 @@ public class Node {
 	private int cpFromNode_LO;
 	private int cpFromNode_HI;
 	
+	// Used for DAG availability analysis
+	private double fProb;
+	
 	/**
 	 * Constructors
 	 */
@@ -127,6 +130,13 @@ public class Node {
 			return max;
 		}
 			
+	}
+	
+	public boolean isExitNode() {
+		if (this.getSnd_edges().size() == 0)
+			return true;
+		else
+			return false;
 	}
 
 	
@@ -234,6 +244,14 @@ public class Node {
 
 	public void setWeight_B(int weight_B) {
 		this.weight_B = weight_B;
+	}
+
+	public double getfProb() {
+		return fProb;
+	}
+
+	public void setfProb(double fProb) {
+		this.fProb = fProb;
 	}
 
 }

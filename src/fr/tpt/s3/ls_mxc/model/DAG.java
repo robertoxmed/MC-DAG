@@ -140,6 +140,17 @@ public class DAG {
 		return null;
 	}
 
+	public Node getNodebyName(String name){
+		Iterator<Node> it = Nodes.iterator();
+		while(it.hasNext()){
+			Node n = it.next();
+			if (n.getName().equalsIgnoreCase(name))
+				return n; 
+		}
+		return null;
+	}
+
+	
 	public Set<Node> getNodes_HI() {
 		return Nodes_HI;
 	}
