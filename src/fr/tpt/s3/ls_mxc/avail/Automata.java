@@ -1,6 +1,7 @@
 package fr.tpt.s3.ls_mxc.avail;
 
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import fr.tpt.s3.ls_mxc.model.DAG;
@@ -32,17 +33,21 @@ public class Automata {
 		this.nb_cores = nb_cores;
 		this.setS_LO(S_LO);
 		this.setS_HI(S_HI);
+		this.setD(d);
+		this.lo_sched = new LinkedList<State>();
+		this.hi_sched = new LinkedList<State>();
 	}
 	
 	// Calculate completion time of tasks and create a new state
 	public void calcCompTime (String task) {
 		int c_t = 0;
-		for (int i = 0; i < nb_cores; i++){
-			for (int j = 0; j < deadline; j++) {
+		for (int i = 0; i < deadline; i++){
+			for (int j = 0; j < nb_cores; j++) {
 				if (S_LO[i][j].contentEquals(task))
-					c_t = j;
+					c_t = i;
 			}
 		}
+		System.out.println("Completion of "+ task +" "+c_t);
 		Node n = d.getNodebyName(task);
 		State s;
 		if (n.getC_HI() != 0)
@@ -78,7 +83,7 @@ public class Automata {
 				if (s2.getMode() == 1)
 					idx++;
 			}
-				
+			l.add(idx, s);
 		} else {
 			int cur_ct = c_t;
 			while (is.hasNext() && cur_ct == c_t) {
@@ -86,6 +91,7 @@ public class Automata {
 				cur_ct = s2.getC_t();
 				idx++;
 			}
+			l.add(idx, s);
 		}
 	}
 	
