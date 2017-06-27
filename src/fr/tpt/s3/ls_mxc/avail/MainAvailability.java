@@ -108,7 +108,19 @@ System.out.println("========== LS Alloc BEGIN ==========");
 		Automata auto = new Automata(alloc_problem.getS_LO(), alloc_problem.getS_HI(),
 						the_dag, alloc_problem.getDeadline(), alloc_problem.getNb_cores());
 		
-		auto.calcCompTime("A");
+		auto.calcCompTimeLO("A");
+		auto.calcCompTimeLO("B");
+		auto.calcCompTimeLO("C");
+		auto.calcCompTimeLO("D");
+		auto.calcCompTimeLO("E");
+		
+		auto.printLOList();
+		
+		auto.calcCompTimeHI("A");
+		auto.calcCompTimeHI("B");
+		auto.calcCompTimeHI("D");
+		
+		auto.printHIList();
 	}
 
 }

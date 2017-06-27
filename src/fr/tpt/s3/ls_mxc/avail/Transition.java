@@ -2,17 +2,21 @@ package fr.tpt.s3.ls_mxc.avail;
 
 public class Transition {
 	// Failure probability
-	private Double p;
 	private State src;
 	private State destOk;
 	private State destFail;
+	private double p;
 	
-	public Double getP() {
-		return p;
+	/**
+	 * Constructor the Transitions object
+	 */
+	public Transition (State src, State destOk, State destFail) {
+		this.setSrc(src);
+		this.setDestOk(destOk);
+		this.setDestFail(destFail);
 	}
-	public void setP(Double p) {
-		this.p = p;
-	}
+	
+
 	public State getSrc() {
 		return src;
 	}
@@ -30,6 +34,16 @@ public class Transition {
 	}
 	public void setDestFail(State destFail) {
 		this.destFail = destFail;
+	}
+
+
+	public double getP() {
+		return p;
+	}
+
+
+	public void setP(double p) {
+		this.p = p;
 	}
 	
 	

@@ -23,11 +23,10 @@ public class Automata {
 	private String S_HI[][];
 	private DAG d;
 
-	/*
+	/**
 	 *  Constructor of the Automata, needs the LO, HI tables,
 	 *  the DAG with the data dependencies, deadline and number of cores
 	 */
-	
 	public Automata (String S_LO[][], String S_HI[][], DAG d, int ded, int nb_cores) {
 		this.deadline = ded;
 		this.nb_cores = nb_cores;
@@ -38,8 +37,12 @@ public class Automata {
 		this.hi_sched = new LinkedList<State>();
 	}
 	
+	/**
+	 * Automata functions (creation of states + linking)
+	 */
+	
 	// Calculate completion time of tasks and create a new state
-	public void calcCompTime (String task) {
+	public void calcCompTimeLO (String task) {
 		int c_t = 0;
 		for (int i = 0; i < deadline; i++){
 			for (int j = 0; j < nb_cores; j++) {
@@ -47,16 +50,41 @@ public class Automata {
 					c_t = i;
 			}
 		}
-		System.out.println("Completion of "+ task +" "+c_t);
+
 		Node n = d.getNodebyName(task);
 		State s;
-		if (n.getC_HI() != 0)
-			s = new State(nb_states, task, 1);
-		else
-			s = new State(nb_states, task, 0);
+
+		s = new State(nb_states++, task, 0);
+		s.setC_t(c_t);
+	
 		addWithTime(lo_sched, n, s, c_t);
 	}
 	
+	// Calculate completion time of tasks and create a new state HI mode
+	public void calcCompTimeHI (String task) {
+		int c_t = 0;
+		for (int i = 0; i < deadline; i++){
+			for (int j = 0; j < nb_cores; j++) {
+				if (S_HI[i][j].contentEquals(task))
+					c_t = i;
+			}
+		}
+
+		Node n = d.getNodebyName(task);
+		State s;
+		s = new State(nb_states++, task, 1);
+		s.setC_t(c_t);
+
+		addWithTime(hi_sched, n, s, c_t);
+	}
+	
+	/**
+	 * Procedure that adds the state to a list in the right order.
+	 * @param l
+	 * @param n
+	 * @param s
+	 * @param c_t
+	 */
 	public void addWithTime(List<State> l, Node n, State s, int c_t) {
 		int idx = 0;
 		Iterator<State> is = l.iterator();
@@ -93,9 +121,87 @@ public class Automata {
 			}
 			l.add(idx, s);
 		}
+		
 	}
 	
-	// This procedures creates the automata
+	/**
+	 * Procedure links the states by creating Transitions objects
+	 * after the scheduling lists were created.
+	 */
+	public void linkStates() {
+		
+		Iterator<State> it = hi_sched.iterator();
+		Iterator<State> it2 = hi_sched.iterator();
+
+		// Construct the HI zone of the automata
+		State s2 = it2.next(); 
+		while (it2.hasNext()) {
+			State s = it.next();
+			if (it2.hasNext()) {
+				s2 = it2.next();
+				Transition t = new Transition(s, s2, null);
+				getH_transitions().add(t);
+			}
+		}
+		
+		
+		it = lo_sched.iterator();
+		it2 = lo_sched.iterator();
+		s2 = it2.next();
+		while (it2.hasNext()) {
+			State s = it.next();
+			if (it2.hasNext()) {
+				s2 = it2.next();
+				Transition t;
+				if (s.getMode() == 1) { // If it's a HI task
+					// Find the HI task that corresponds to s
+					State S = findStateHI(s.getTask());
+					t = new Transition(s, s2, S);
+					t.setP(d.getNodebyName(s.getTask()).getfProb());
+				} else { // It is a LO task
+					t = new Transition(s, s2, s2);
+					t.setP(d.getNodebyName(s.getTask()).getfProb());
+				}
+				getL_transitions().add(t);
+			}
+		}
+		
+		// Add final transition in HI mode (recovery mechanism)
+		State s0 = lo_sched.get(0);
+		State Sf = hi_sched.get(hi_sched.size() - 1);
+		Transition t = new Transition(Sf, s0, null);
+		getH_transitions().add(t);
+		
+		// Add final transitions in LO mode
+		// We need to add 2^n transitions depending on the number of outputs
+		
+		
+	}
+	
+	/**
+	 * Finds the corresponding state of a HI task in HI automata zone
+	 * @param task
+	 * @return
+	 */
+	public State findStateHI(String task) {
+		State ret = null;
+		boolean found = false;
+		
+		Iterator<State> it = hi_sched.iterator();
+		while (it.hasNext() && !found) {
+			State s = it.next();
+			if (s.getTask().contentEquals(task)) {
+				ret = s;
+				found = true;
+			}
+		}
+		
+		return ret;
+	}
+	
+	/**
+	 *  This procedures prints the automata
+	 */
 	public void createAutomata () {
 		System.out.println("module proc");
 		System.out.println("\t s : [0..50] init 0");
@@ -130,6 +236,29 @@ public class Automata {
 		
 		System.out.println("end module");
 	}
+	
+	/**
+	 * Print functions
+	 */
+	public void printLOList() {
+		Iterator<State> it = lo_sched.iterator();
+		while (it.hasNext()){
+			System.out.print(it.next().getTask()+ " ");
+		}		
+		System.out.println(" ");
+	}
+	
+	public void printHIList() {
+		Iterator<State> it = hi_sched.iterator();
+		while (it.hasNext()){
+			System.out.print(it.next().getTask()+ " ");
+		}
+		System.out.println(" ");
+	}
+	
+	/**
+	 * Getters and setters
+	 */
 	
 	public List<Double> getF_prob() {
 		return f_prob;
