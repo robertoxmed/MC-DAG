@@ -33,11 +33,13 @@ public class DAG {
 	
 	private Set<Node> Nodes;
 	private Set<Node> Nodes_HI;
+	private Set<Node> LO_outs;
 	private int critPath;
 	
 	public DAG() {
 		Nodes = new HashSet<Node>();
 		Nodes_HI = new HashSet<Node>();
+		setLO_outs(new HashSet<Node>());
 	}
 	
 	/**
@@ -118,6 +120,30 @@ public class DAG {
 		return cp;
 	}
 	
+	/**
+	 * Sets HI nodes in the corresponding set
+	 */
+	public void setHINodes() {
+		Iterator<Node> in = this.getNodes().iterator();
+		while (in.hasNext()) {
+			Node n = in.next();
+			if (n.getC_HI() != 0)
+				this.getNodes_HI().add(n);
+		}
+	}
+	
+	/**
+	 * Searches for the LO outputs in the DAG
+	 */
+	public void calcLOouts() {
+		Iterator<Node> in = this.getNodes().iterator();
+		while (in.hasNext()) {
+			Node n = in.next();
+			if (n.getSnd_edges().size() == 0 &&
+					n.getC_HI() == 0)
+				this.getLO_outs().add(n);
+		}
+	}
 	
 	/**
 	 * Getters & Setters
@@ -175,6 +201,14 @@ public class DAG {
 
 	public void setCritPath(int critPath) {
 		this.critPath = critPath;
+	}
+
+	public Set<Node> getLO_outs() {
+		return LO_outs;
+	}
+
+	public void setLO_outs(Set<Node> lO_outs) {
+		LO_outs = lO_outs;
 	}
 
 	

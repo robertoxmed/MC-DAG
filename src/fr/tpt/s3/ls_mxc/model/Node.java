@@ -32,7 +32,6 @@ public class Node {
 	private boolean sink;
 	private boolean sinkinHI;
 	
-
 	private int weight_LO;
 	private int weight_HI;
 	private int weight_B;
@@ -132,11 +131,33 @@ public class Node {
 			
 	}
 	
+	/**
+	 * Tests if the node is an exit node
+	 * @return
+	 */
 	public boolean isExitNode() {
 		if (this.getSnd_edges().size() == 0)
 			return true;
 		else
 			return false;
+	}
+	
+	/**
+	 * Returns all LOpredecessors of a node
+	 * @return
+	 */
+	public Set<Node> getLOPred() {
+		HashSet<Node> result = new HashSet<Node>();
+		Iterator<Edge> ie = this.getRcv_edges().iterator();
+		
+		while (ie.hasNext()){
+			Edge e = ie.next();
+			if (e.getSrc().getC_HI() == 0) {
+				result.add(e.getSrc());
+				result.addAll(e.getSrc().getLOPred());
+			}
+		}
+		return result;
 	}
 
 	

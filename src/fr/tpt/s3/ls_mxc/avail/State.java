@@ -8,7 +8,6 @@ public class State {
 	private Transition t;
 	private int id;
 	private int c_t;
-	private double p;
 	
 	public State (int id, String t, int m) {
 		setId(id);

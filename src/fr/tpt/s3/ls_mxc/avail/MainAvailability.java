@@ -43,6 +43,9 @@ System.out.println("========== LS Alloc BEGIN ==========");
 		the_dag.getNodes().add(D);
 		the_dag.getNodes().add(E);
 		
+		the_dag.setHINodes();
+		the_dag.calcLOouts();
+		
 		LS alloc_problem = new LS(9, 2, the_dag);
 		
 		// Set booleans for sink and source
@@ -58,10 +61,7 @@ System.out.println("========== LS Alloc BEGIN ==========");
 		E.checkifSource();
 		B.checkifSinkinHI();
 		
-		/*
-		 * HLFET Levels
-		 */
-		
+		// HLFET Levels
 		alloc_problem.calcWeights(0); // Weights in LO mode
 		int[] w_lo = alloc_problem.getWeights_LO();
 		
@@ -105,22 +105,18 @@ System.out.println("========== LS Alloc BEGIN ==========");
 		
 		System.out.println("------------- Construction of the Automata -------------");
 		
-		Automata auto = new Automata(alloc_problem.getS_LO(), alloc_problem.getS_HI(),
-						the_dag, alloc_problem.getDeadline(), alloc_problem.getNb_cores());
+		// Set failure probabilities
+		A.setfProb(0.001);
+		B.setfProb(0.001);
+		C.setfProb(0.01);
+		D.setfProb(0.001);
+		E.setfProb(0.01);
 		
-		auto.calcCompTimeLO("A");
-		auto.calcCompTimeLO("B");
-		auto.calcCompTimeLO("C");
-		auto.calcCompTimeLO("D");
-		auto.calcCompTimeLO("E");
 		
-		auto.printLOList();
+		Automata auto = new Automata(alloc_problem, the_dag);
 		
-		auto.calcCompTimeHI("A");
-		auto.calcCompTimeHI("B");
-		auto.calcCompTimeHI("D");
 		
-		auto.printHIList();
+		auto.createAutomata();
 	}
 
 }
