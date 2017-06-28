@@ -1,5 +1,6 @@
 package fr.tpt.s3.ls_mxc.avail;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,8 +16,9 @@ public class Automata {
 	private List<State> lo_sched;
 	private List<State> hi_sched;
 	private List<Transition> l_transitions;
+	private List<Transition> f_transitions;
 	private List<Transition> h_transitions;
-	private List<Set<Boolean>> l_outs_b;
+	private List<Set<AutoBoolean>> l_outs_b;
 
 	private LS ls;
 	private DAG d;
@@ -31,8 +33,9 @@ public class Automata {
 		this.lo_sched = new LinkedList<State>();
 		this.hi_sched = new LinkedList<State>();
 		this.l_transitions = new LinkedList<Transition>();
+		this.setF_transitions(new LinkedList<Transition>());
 		this.h_transitions = new LinkedList<Transition>();
-		this.l_outs_b = new LinkedList<Set<Boolean>>();
+		this.l_outs_b = new LinkedList<Set<AutoBoolean>>();
 	}
 	
 	/**
@@ -125,6 +128,47 @@ public class Automata {
 	}
 	
 	/**
+	 * Finds the corresponding state of a LO task in LO automata zone
+	 * @param task
+	 * @return
+	 */
+	public State findStateLO(String task) {
+		State ret = null;
+		boolean found = false;
+		
+		Iterator<State> it = lo_sched.iterator();
+		while (it.hasNext() && !found) {
+			State s = it.next();
+			if (s.getTask().contentEquals(task)) {
+				ret = s;
+				found = true;
+			}
+		}
+		
+		return ret;
+	}
+	
+	/**
+	 * Finds the corresponding state of a HI task in HI automata zone
+	 * @param task
+	 * @return
+	 */
+	public State findStateHI(String task) {
+		State ret = null;
+		boolean found = false;
+		
+		Iterator<State> it = hi_sched.iterator();
+		while (it.hasNext() && !found) {
+			State s = it.next();
+			if (s.getTask().contentEquals(task)) {
+				ret = s;
+				found = true;
+			}
+		}
+		return ret;
+	}
+	
+	/**
 	 * Procedure that calculates all the sets of booleans
 	 * for each output in the DAG
 	 */
@@ -133,9 +177,17 @@ public class Automata {
 		while (in.hasNext()) {
 			Node n = in.next();
 			Set<Node> nPred = n.getLOPred();
-			System.out.println("Node "+n.getName()+ " Lo size "+nPred.size());
+			
+			// Create the boolean set for the LO output
+			HashSet<AutoBoolean> bSet = new HashSet<AutoBoolean>();
+			Iterator<Node> in2 = nPred.iterator();
+			while (in2.hasNext()) {
+				Node n2 = in2.next();
+				AutoBoolean ab = new AutoBoolean(n2.getName());
+				bSet.add(ab);
+			}
+			l_outs_b.add(bSet);
 		}
-		
 	}
 	
 	/**
@@ -159,6 +211,8 @@ public class Automata {
 		}
 		
 		// Construct the LO zone of the automata
+		State sk = new State(nb_states++, "FinalLO", 0);
+		lo_sched.add(sk);
 		it = lo_sched.iterator();
 		it2 = lo_sched.iterator();
 		s2 = it2.next();
@@ -188,35 +242,28 @@ public class Automata {
 		
 		// Add final transitions in LO mode
 		// We need to add 2^n transitions depending on the number of outputs
-		
-		// Check outputs
-		State sk = lo_sched.get(lo_sched.size() - 1);
-		calcOutputSets();
-
-		Transition t2 = new Transition(sk, s0, s0);
-		t2.setP(d.getNodebyName(sk.getTask()).getfProb());
-		getL_transitions().add(t2);
-	}
 	
-	/**
-	 * Finds the corresponding state of a HI task in HI automata zone
-	 * @param task
-	 * @return
-	 */
-	public State findStateHI(String task) {
-		State ret = null;
-		boolean found = false;
+		calcOutputSets();
 		
-		Iterator<State> it = hi_sched.iterator();
-		while (it.hasNext() && !found) {
-			State s = it.next();
-			if (s.getTask().contentEquals(task)) {
-				ret = s;
-				found = true;
+		int max_depth = l_outs_b.size();
+		int curr = 1;
+		while (curr != max_depth) {
+			
+			for (int i = 0 ; i < curr; i++) {
+				Iterator<Set<AutoBoolean>> ib = l_outs_b.iterator();
+				while (ib.hasNext()) {
+					Set<AutoBoolean> sb = ib.next();
+					Iterator<AutoBoolean> iab = sb.iterator();
+					Transition t2 = new Transition(sk, s0, s0);
+					while (iab.hasNext()) {
+						AutoBoolean ab = iab.next();
+						t2.getbSet().add(ab);
+					}
+					getF_transitions().add(t2);
+				}	
 			}
+			curr++;
 		}
-		
-		return ret;
 	}
 	
 	/**
@@ -257,11 +304,32 @@ public class Automata {
 		Iterator<Transition> it = l_transitions.iterator();
 		while (it.hasNext()) {
 			Transition t = it.next();
-			System.out.println("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
-					+ " -> 1 - "+ t.getP() +" : (s' = " + t.getDestOk().getId() + ") +"
-					+ t.getP() + ": (s' =" + t.getDestFail().getId() +");");
-			
+			if (t.getSrc().getMode() == 1) {
+				System.out.println("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
+						+ " -> 1 - "+ t.getP() +" : (s' = " + t.getDestOk().getId() + ") +"
+						+ t.getP() + ": (s' =" + t.getDestFail().getId() +");");
+			} else { // If it's a LO task we need to update the boolean
+				System.out.println("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
+						+ " -> 1 - "+ t.getP() +" : (s' = " + t.getDestOk().getId() + ") +"
+						+ t.getP() + ": (s' =" + t.getDestFail().getId() +") & ("+t.getSrc().getTask()+"bool' = true));");
+			}
 		}
+		
+		// Create the 2^n transitions for the end of LO
+		Iterator<Transition> itf = f_transitions.iterator();
+		int curr = 0;
+		while (itf.hasNext()) {
+			Transition t = itf.next();
+			System.out.print("\t["+t.getSrc().getTask()+curr+"] s = " + t.getSrc().getId());
+			Iterator<AutoBoolean> ib = t.getbSet().iterator();
+			while(ib.hasNext()) {
+				AutoBoolean ab = ib.next();
+				System.out.print(ab.getTask()+"bool = true");
+			}
+
+			curr++;
+		}
+		
 
 		System.out.println("");
 		// Create the HI scheduling zone
@@ -270,7 +338,6 @@ public class Automata {
 		while (it.hasNext()) {
 			Transition t = it.next();
 			System.out.println("\t["+t.getSrc().getTask()+"_hi] s = " + t.getSrc().getId() + " -> (s' =" + t.getDestOk().getId() +");");
-			
 		}
 		
 		System.out.println("end module;");
@@ -347,11 +414,19 @@ public class Automata {
 		this.ls = ls;
 	}
 
-	public List<Set<Boolean>> getL_outs_b() {
+	public List<Set<AutoBoolean>> getL_outs_b() {
 		return l_outs_b;
 	}
 
-	public void setL_outs_b(List<Set<Boolean>> l_outs_b) {
+	public void setL_outs_b(List<Set<AutoBoolean>> l_outs_b) {
 		this.l_outs_b = l_outs_b;
+	}
+
+	public List<Transition> getF_transitions() {
+		return f_transitions;
+	}
+
+	public void setF_transitions(List<Transition> f_transitions) {
+		this.f_transitions = f_transitions;
 	}
 }

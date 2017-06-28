@@ -4,7 +4,6 @@ public class State {
 	
 	private String task;
 	private int mode;
-	private boolean produced;
 	private Transition t;
 	private int id;
 	private int c_t;
@@ -13,7 +12,6 @@ public class State {
 		setId(id);
 		setTask(t);
 		setMode(m);
-		setProduced(false);
 		t = null;
 	}
 	
@@ -28,12 +26,6 @@ public class State {
 	}
 	public void setMode(int mode) {
 		this.mode = mode;
-	}
-	public boolean isProduced() {
-		return produced;
-	}
-	public void setProduced(boolean produced) {
-		this.produced = produced;
 	}
 	public Transition getT() {
 		return t;

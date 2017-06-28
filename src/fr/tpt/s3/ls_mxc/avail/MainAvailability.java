@@ -111,11 +111,9 @@ System.out.println("========== LS Alloc BEGIN ==========");
 		C.setfProb(0.01);
 		D.setfProb(0.001);
 		E.setfProb(0.01);
-		
-		
+			
 		Automata auto = new Automata(alloc_problem, the_dag);
-		
-		
+				
 		auto.createAutomata();
 	}
 
