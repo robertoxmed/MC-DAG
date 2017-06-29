@@ -1,7 +1,7 @@
 package fr.tpt.s3.ls_mxc.avail;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Transition {
 	// Failure probability
@@ -9,7 +9,7 @@ public class Transition {
 	private State destOk;
 	private State destFail;
 	private double p;
-	private Set<AutoBoolean> bSet;
+	private List<AutoBoolean> bSet;
 	
 	/**
 	 * Constructor the Transitions object
@@ -18,7 +18,7 @@ public class Transition {
 		this.setSrc(src);
 		this.setDestOk(destOk);
 		this.setDestFail(destFail);
-		bSet = new HashSet<AutoBoolean>();
+		bSet = new LinkedList<AutoBoolean>();
 	}
 	
 
@@ -46,10 +46,10 @@ public class Transition {
 	public void setP(double p) {
 		this.p = p;
 	}
-	public Set<AutoBoolean> getbSet() {
+	public List<AutoBoolean> getbSet() {
 		return bSet;
 	}
-	public void setbSet(Set<AutoBoolean> bSet) {
+	public void setbSet(List<AutoBoolean> bSet) {
 		this.bSet = bSet;
 	}
 

@@ -18,7 +18,7 @@ public class Automata {
 	private List<Transition> l_transitions;
 	private List<Transition> f_transitions;
 	private List<Transition> h_transitions;
-	private List<Set<AutoBoolean>> l_outs_b;
+	private List<List<AutoBoolean>> l_outs_b;
 
 	private LS ls;
 	private DAG d;
@@ -35,7 +35,7 @@ public class Automata {
 		this.l_transitions = new LinkedList<Transition>();
 		this.setF_transitions(new LinkedList<Transition>());
 		this.h_transitions = new LinkedList<Transition>();
-		this.l_outs_b = new LinkedList<Set<AutoBoolean>>();
+		this.l_outs_b = new LinkedList<List<AutoBoolean>>();
 	}
 	
 	/**
@@ -179,7 +179,7 @@ public class Automata {
 			Set<Node> nPred = n.getLOPred();
 			
 			// Create the boolean set for the LO output
-			HashSet<AutoBoolean> bSet = new HashSet<AutoBoolean>();
+			LinkedList<AutoBoolean> bSet = new LinkedList<AutoBoolean>();
 			Iterator<Node> in2 = nPred.iterator();
 			while (in2.hasNext()) {
 				Node n2 = in2.next();
@@ -244,25 +244,36 @@ public class Automata {
 		// We need to add 2^n transitions depending on the number of outputs
 	
 		calcOutputSets();
-		
+		boolean finished = false;
 		int max_depth = l_outs_b.size();
-		int curr = 1;
-		while (curr != max_depth) {
-			
-			for (int i = 0 ; i < curr; i++) {
-				Iterator<Set<AutoBoolean>> ib = l_outs_b.iterator();
-				while (ib.hasNext()) {
-					Set<AutoBoolean> sb = ib.next();
-					Iterator<AutoBoolean> iab = sb.iterator();
+		int curr = max_depth;
+		int idx = 0;
+		Iterator<List<AutoBoolean>> ib = l_outs_b.listIterator();
+		
+		System.out.println("Max depth = "+max_depth);
+		
+		while (ib.hasNext()) {
+			List<AutoBoolean> sab0 = ib.next();
+			while (!finished) {
+				int idx2 = idx + 1;
+				// Grab next element(s) when curr depth != 0
+				while (idx2 != l_outs_b.size()) {
 					Transition t2 = new Transition(sk, s0, s0);
-					while (iab.hasNext()) {
-						AutoBoolean ab = iab.next();
-						t2.getbSet().add(ab);
+					t2.getbSet().addAll(sab0);
+					for (int i = idx2; i < curr; i++) {
+						List<AutoBoolean> sab = l_outs_b.get(i);
+						t2.getbSet().addAll(sab);
 					}
-					getF_transitions().add(t2);
-				}	
+					this.f_transitions.add(t2);
+					curr--;
+					idx2++;
+				}
+				if (curr == 0)
+					finished = true;
 			}
-			curr++;
+			max_depth--;
+			curr = max_depth;
+			finished = false;
 		}
 	}
 	
@@ -414,11 +425,11 @@ public class Automata {
 		this.ls = ls;
 	}
 
-	public List<Set<AutoBoolean>> getL_outs_b() {
+	public List<List<AutoBoolean>> getL_outs_b() {
 		return l_outs_b;
 	}
 
-	public void setL_outs_b(List<Set<AutoBoolean>> l_outs_b) {
+	public void setL_outs_b(List<List<AutoBoolean>> l_outs_b) {
 		this.l_outs_b = l_outs_b;
 	}
 
