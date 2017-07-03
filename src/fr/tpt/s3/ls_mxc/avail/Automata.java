@@ -1,6 +1,5 @@
 package fr.tpt.s3.ls_mxc.avail;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -180,6 +179,8 @@ public class Automata {
 			
 			// Create the boolean set for the LO output
 			LinkedList<AutoBoolean> bSet = new LinkedList<AutoBoolean>();
+			AutoBoolean a = new AutoBoolean(n.getName());
+			bSet.add(a);
 			Iterator<Node> in2 = nPred.iterator();
 			while (in2.hasNext()) {
 				Node n2 = in2.next();
@@ -242,7 +243,6 @@ public class Automata {
 		
 		// Add final transitions in LO mode
 		// We need to add 2^n transitions depending on the number of outputs
-	
 		calcOutputSets();
 		boolean finished = false;
 		int max_depth = l_outs_b.size();
@@ -262,6 +262,7 @@ public class Automata {
 					t2.getbSet().addAll(sab0);
 					for (int i = idx2; i < curr; i++) {
 						List<AutoBoolean> sab = l_outs_b.get(i);
+						
 						t2.getbSet().addAll(sab);
 					}
 					this.f_transitions.add(t2);
@@ -305,7 +306,7 @@ public class Automata {
 		Iterator<State> is = lo_sched.iterator();
 		while (is.hasNext()) {
 			State s = is.next();
-			if (s.getMode() == 0) // It is a LO task
+			if (s.getMode() == 0 && !s.getTask().contains("Final")) // It is a LO task
 				System.out.println("\t"+s.getTask()+"bool: bool init false;");
 		}
 		
@@ -322,7 +323,7 @@ public class Automata {
 			} else { // If it's a LO task we need to update the boolean
 				System.out.println("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
 						+ " -> 1 - "+ t.getP() +" : (s' = " + t.getDestOk().getId() + ") +"
-						+ t.getP() + ": (s' =" + t.getDestFail().getId() +") & ("+t.getSrc().getTask()+"bool' = true));");
+						+ t.getP() + ": (s' =" + t.getDestFail().getId() +") & ("+t.getSrc().getTask()+"bool' = true);");
 			}
 		}
 		
@@ -335,16 +336,16 @@ public class Automata {
 			Iterator<AutoBoolean> ib = t.getbSet().iterator();
 			while(ib.hasNext()) {
 				AutoBoolean ab = ib.next();
-				System.out.print(ab.getTask()+"bool = true");
+				System.out.print(" & " + ab.getTask()+"bool = true");
 			}
-
+			System.out.println(" -> (s' = "+t.getDestOk().getId()+");");
 			curr++;
 		}
 		
 
-		System.out.println("");
 		// Create the HI scheduling zone
 		// Need to iterate through transitions
+		System.out.println("");
 		it = h_transitions.iterator();
 		while (it.hasNext()) {
 			Transition t = it.next();
@@ -352,6 +353,29 @@ public class Automata {
 		}
 		
 		System.out.println("end module;");
+		
+		// Create the rewards
+		System.out.println("");
+		in = d.getLO_outs().iterator();
+		while (in.hasNext()) {
+			Node n = in.next();
+			System.out.println("rewards \""+n.getName()+"_cycles\"");
+			it = f_transitions.iterator();
+			int c = 0;
+			while (it.hasNext()) {
+				Transition t = it.next();
+				Iterator<AutoBoolean> iab = t.getbSet().iterator();
+
+				while (iab.hasNext()) {
+					if (iab.next().getTask().contentEquals(n.getName()))
+						System.out.println("\t["+t.getSrc().getTask()+c+"] true : 1;");
+				}
+				c++;
+			}
+			c = 0;
+			System.out.println("endrewards");
+			System.out.println("");
+		}
 	}
 	
 	/**

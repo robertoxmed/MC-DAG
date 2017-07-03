@@ -140,8 +140,9 @@ public class DAG {
 		while (in.hasNext()) {
 			Node n = in.next();
 			if (n.getSnd_edges().size() == 0 &&
-					n.getC_HI() == 0)
+					n.getC_HI() == 0) {
 				this.getLO_outs().add(n);
+			}
 		}
 	}
 	

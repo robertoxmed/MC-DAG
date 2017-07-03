@@ -4,12 +4,12 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Transition {
-	// Failure probability
 	private State src;
 	private State destOk;
 	private State destFail;
 	private double p;
 	private List<AutoBoolean> bSet;
+	private String Name;
 	
 	/**
 	 * Constructor the Transitions object
@@ -51,6 +51,12 @@ public class Transition {
 	}
 	public void setbSet(List<AutoBoolean> bSet) {
 		this.bSet = bSet;
+	}
+	public void setName (String Name) {
+		this.Name = Name;
+	}
+	public String getName() {
+		return Name;
 	}
 
 }
