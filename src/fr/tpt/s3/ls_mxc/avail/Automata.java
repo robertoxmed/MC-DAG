@@ -52,11 +52,12 @@ public class Automata {
 		}
 
 		Node n = d.getNodebyName(task);
-		State s;
-		if (n.getC_HI() !=  0)
+		State s;		
+		if (n.getC_HI() !=  0) {
 			s = new State(nb_states++, task, 1);
-		else
+		} else {
 			s = new State(nb_states++, task, 0);
+		}
 		s.setC_t(c_t);
 	
 		addWithTime(lo_sched, n, s, c_t);
@@ -249,8 +250,6 @@ public class Automata {
 		int curr = max_depth;
 		int idx = 0;
 		Iterator<List<AutoBoolean>> ib = l_outs_b.listIterator();
-		
-		System.out.println("Max depth = "+max_depth);
 		
 		while (ib.hasNext()) {
 			List<AutoBoolean> sab0 = ib.next();

@@ -41,6 +41,7 @@ public class UtilizationGenerator {
 	private double uHIinLO;
 	private int paraDegree;
 	private boolean HtoL;
+	private RandomNumberGenerator rng;
 
 	private int deadline;
 	
@@ -54,6 +55,7 @@ public class UtilizationGenerator {
 		this.setuHIinLO(UHIinLO);
 		this.setParaDegree(para);
 		this.setNbCores(cores);
+		this.rng = new RandomNumberGenerator();
 	}
 
 	
@@ -66,9 +68,7 @@ public class UtilizationGenerator {
 		setGenDAG(new DAG());
 		Set<Node> nodes = new HashSet<Node>();
 		boolean cpReached = false;
-		int rank = 0;
-		Random r = new Random(System.currentTimeMillis());
-		
+		int rank = 0;		
 		// Budgets deduced by utilization and CP
 		int budgetHI = (int) Math.ceil(userCp * userU_HI);
 		int budgetLO = (int) Math.ceil(userCp * userU_LO);		
@@ -82,7 +82,7 @@ public class UtilizationGenerator {
 			Node n = new Node(id, Integer.toString(id), 0, 0);
 			n.setRank(rank);
 			
-			n.setC_HI(r.nextInt(CHIBound) + 2);
+			n.setC_HI(rng.randomUnifInt(1,CHIBound) + 2);
 			
 			
 			// Add egde and update the CP (if not source)
@@ -112,12 +112,12 @@ public class UtilizationGenerator {
 		rank = 0;		
 		while (budgetHI > 0) {
 			// Roll a number of nodes to add to the level
-			int nodesPerRank = r.nextInt(paraDegree);
+			int nodesPerRank = rng.randomUnifInt(1, paraDegree);
 			for (int j=0; j < nodesPerRank && budgetHI > 0; j++) {
 				Node n = new Node(id, Integer.toString(id), 0, 0);
 			
 				// Roll a C_HI and test if budget is left
-				n.setC_HI(r.nextInt(CHIBound) + 2);
+				n.setC_HI(rng.randomUnifInt(1, CHIBound) + 2);
 				if (budgetHI - n.getC_HI() > 0) {
 					budgetHI = budgetHI - n.getC_HI();
 				} else {
@@ -132,7 +132,7 @@ public class UtilizationGenerator {
 						Node src = it_n.next();
 						// Test if the rank of the source is lower and if the CP
 						// is not reached
-						if (r.nextInt(100) <= edgeProb && n.getRank() > src.getRank()
+						if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
 								&& src.getCpFromNode_HI() + n.getC_HI() <= userCp) {
 							Edge e = new Edge(src, n, false);
 							src.getSnd_edges().add(e);
@@ -157,7 +157,7 @@ public class UtilizationGenerator {
 			while (it_n.hasNext()) {
 				Node n = it_n.next();
 				
-				n.setC_LO(r.nextInt(n.getC_LO()) + 1);				
+				n.setC_LO(rng.randomUnifInt(1, n.getC_LO()) + 1);				
 				if (n.getC_LO() == 0)
 					n.setC_LO(1);
 				
@@ -186,13 +186,13 @@ public class UtilizationGenerator {
 		rank = 0;
 		while (budgetLO > 0) {
 			// Roll a number of nodes to add to the level
-			int nodesPerRank = r.nextInt((int)(paraDegree / 2));
+			int nodesPerRank = rng.randomUnifInt(1, ((int)(paraDegree / 2)));
 			for (int j=0; j < nodesPerRank && budgetLO > 0; j++) {
 				Node n = new Node(id, Integer.toString(id), 0, 0);
 			
 				// Roll a C_HI and test if budget is left
 				n.setC_HI(0);
-				n.setC_LO(r.nextInt(CLOBound) + 1);
+				n.setC_LO(rng.randomUnifInt(1, CLOBound) + 1);
 				if (n.getC_LO() == 0)
 					n.setC_LO(1); // Minimal execution time
 				
@@ -210,7 +210,7 @@ public class UtilizationGenerator {
 						Node src = it.next();
 						// Test if the rank of the source is lower and if the CP
 						// is not reached
-						if (r.nextInt(100) <= edgeProb && n.getRank() > src.getRank()
+						if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
 								&& src.getCpFromNode_LO() + n.getC_LO() <= userCp &&
 								allowedCommunitcation(src, n)) {
 							Edge e = new Edge(src, n, false);
@@ -231,7 +231,7 @@ public class UtilizationGenerator {
 		if (rank == 1) {
 			Node n = new Node(id, Integer.toString(id), 0, 0);
 			n.setC_HI(0);
-			n.setC_LO(r.nextInt(1) + 1);
+			n.setC_LO(rng.randomUnifInt(1, 1) + 1);
 			
 			Iterator<Node> it = nodes.iterator();
 			while (it.hasNext()) {
@@ -241,7 +241,7 @@ public class UtilizationGenerator {
 					Edge e = new Edge(src, n, false);
 					src.getSnd_edges().add(e);
 					n.getRcv_edges().add(e);
-				} else if (r.nextInt(100) <= edgeProb && n.getRank() > src.getRank()
+				} else if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
 						&& src.getCpFromNode_LO() + n.getC_LO() <= userCp &&
 						allowedCommunitcation(src, n)) {
 					Edge e = new Edge(src, n, false);
