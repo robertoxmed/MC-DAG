@@ -46,6 +46,7 @@ public class Node {
 	
 	// Used for DAG availability analysis
 	private double fProb;
+	private boolean fMechanism;
 	
 	/**
 	 * Constructors
@@ -273,6 +274,14 @@ public class Node {
 
 	public void setfProb(double fProb) {
 		this.fProb = fProb;
+	}
+
+	public boolean isfMechanism() {
+		return fMechanism;
+	}
+
+	public void setfMechanism(boolean fMechanism) {
+		this.fMechanism = fMechanism;
 	}
 
 }

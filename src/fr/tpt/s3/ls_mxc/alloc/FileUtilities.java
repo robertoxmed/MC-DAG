@@ -121,9 +121,8 @@ public class FileUtilities {
 				for (int j = 0; j < dep.length; j++){
 					if (dep[j].contains("1")){
 						Node src = d.getNodebyID(j);
+						@SuppressWarnings("unused")
 						Edge e = new Edge(src, n, false);
-						src.getSnd_edges().add(e);
-						n.getRcv_edges().add(e);
 					}
 				}
 				line = br.readLine();

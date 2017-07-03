@@ -1,4 +1,22 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Roberto Medina
+ * Written by Roberto Medina (rmedina@telecom-paristech.fr)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
 package fr.tpt.s3.ls_mxc.avail;
+
+import java.util.Iterator;
 
 import fr.tpt.s3.ls_mxc.alloc.LS;
 import fr.tpt.s3.ls_mxc.alloc.SchedulingException;
@@ -8,58 +26,61 @@ import fr.tpt.s3.ls_mxc.model.Node;
 
 public class MainAvailability {
 	
+	@SuppressWarnings("unused")
 	public static void main (String[] argv) {
 		
-System.out.println("========== LS Alloc BEGIN ==========");
+		System.out.println("========== LS Alloc BEGIN ==========");
 		
 		/*
 		 * Example of DAG
 		 */
-		Node A = new Node(0, "A", 3, 3);
-		Node B = new Node(1, "B", 2, 4);
-		Node C = new Node(2, "C", 3, 0);
-		Node D = new Node(3, "D", 3, 5);
-		Node E = new Node(4, "E", 1, 0);
+		Node Avoid = new Node(0, "Avoid", 3, 0);
+		Node Nav = new Node(1, "Nav", 5, 6);
+		Node VotA = new Node(2, "VotA", 1, 1);
+		Node Stab = new Node(3, "Stab", 2, 4);
+		Node VotH = new Node(4, "VotH", 1, 1);
+		Node Log = new Node(5, "Log", 2, 0);
+		Node Shar = new Node(6, "Shar", 3, 0);
+		Node Video = new Node(7, "Video", 6, 0);
+		Node GPS = new Node(8, "GPS", 2, 0);
+		Node Rec = new Node(9, "Rec", 2, 0);
 		
-		Edge e1 = new Edge(A, B, false);
-		Edge e2 = new Edge(B, C, false);
-		Edge e3 = new Edge(D, B, false);
-		Edge e4 = new Edge(B, E, false);
-		
-		A.getSnd_edges().add(e1);
-		B.getRcv_edges().add(e1);
-		B.getSnd_edges().add(e2);
-		C.getRcv_edges().add(e2);
-		D.getSnd_edges().add(e3);
-		B.getRcv_edges().add(e3);
-		B.getSnd_edges().add(e4);
-		E.getRcv_edges().add(e4);
+		Edge e0 = new Edge(Avoid, VotA, false);
+		Edge e1 = new Edge(VotA, Nav, false);
+		Edge e2 = new Edge(Nav, Stab, false);
+		Edge e3 = new Edge(Stab, VotH, false);
+		Edge e4 = new Edge(VotA, Log, false);
+		Edge e5 = new Edge(Nav, Log, false);
+		Edge e6 = new Edge(Stab, Log, false);
+		Edge e7 = new Edge(Log, Shar, false);
+		Edge e8 = new Edge(GPS, Rec, false);
 		
 		DAG the_dag = new DAG();
 		
-		the_dag.getNodes().add(A);
-		the_dag.getNodes().add(B);
-		the_dag.getNodes().add(C);
-		the_dag.getNodes().add(D);
-		the_dag.getNodes().add(E);
+		the_dag.getNodes().add(Avoid);
+		the_dag.getNodes().add(VotA);
+		the_dag.getNodes().add(Nav);
+		the_dag.getNodes().add(Stab);
+		the_dag.getNodes().add(VotH);
+		the_dag.getNodes().add(Log);
+		the_dag.getNodes().add(Shar);
+		the_dag.getNodes().add(Video);
+		the_dag.getNodes().add(GPS);
+		the_dag.getNodes().add(Rec);
 		
 		the_dag.setHINodes();
 		the_dag.calcLOouts();
 		
-		LS alloc_problem = new LS(9, 2, the_dag);
+		LS alloc_problem = new LS(15, 2, the_dag);
 		
 		// Set booleans for sink and source
-		A.checkifSink();
-		A.checkifSource();
-		B.checkifSink();
-		B.checkifSource();
-		C.checkifSink();
-		C.checkifSource();
-		D.checkifSink();
-		D.checkifSource();
-		E.checkifSink();
-		E.checkifSource();
-		B.checkifSinkinHI();
+		Iterator<Node> in = the_dag.getNodes().iterator();
+		while (in.hasNext()){
+			Node n = in.next();
+			n.checkifSink();
+			n.checkifSinkinHI();
+			n.checkifSource();
+		}
 		
 		// HLFET Levels
 		alloc_problem.calcWeights(0); // Weights in LO mode
@@ -106,15 +127,19 @@ System.out.println("========== LS Alloc BEGIN ==========");
 		System.out.println("------------- Construction of the Automata -------------");
 		
 		// Set failure probabilities
-		A.setfProb(0.001);
-		B.setfProb(0.001);
-		C.setfProb(0.01);
-		D.setfProb(0.001);
-		E.setfProb(0.01);
+		in = the_dag.getNodes().iterator();
+		while (in.hasNext()){
+			Node n = in.next();
+			if (n.getC_HI() == 0)
+				n.setfProb(0.01);
+			else
+				n.setfProb(0.001);
+		}
 			
-		Automata auto = new Automata(alloc_problem, the_dag);
-				
-		auto.createAutomata();
+//		Automata auto = new Automata(alloc_problem, the_dag);
+//				
+//		auto.createAutomata();
+		
 	}
 
 }

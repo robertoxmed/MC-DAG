@@ -37,7 +37,9 @@ public class Edge {
 	 */
 	public Edge(Node s, Node d, boolean v){
 		this.setSrc(s);
+		s.getSnd_edges().add(this);
 		this.setDest(d);
+		d.getRcv_edges().add(this);
 		this.setVisited(v);
 	}
 	
