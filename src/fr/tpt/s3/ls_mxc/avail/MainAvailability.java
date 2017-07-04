@@ -136,9 +136,9 @@ public class MainAvailability {
 				n.setfProb(0.001);
 		}
 			
-//		Automata auto = new Automata(alloc_problem, the_dag);
-//				
-//		auto.createAutomata();
+		Automata auto = new Automata(alloc_problem, the_dag);
+				
+		auto.createAutomata();
 		
 	}
 

@@ -75,7 +75,6 @@ public class Automata {
 			s = new State(nb_states++, task, 0);
 		}
 		s.setC_t(c_t);
-	
 		addWithTime(lo_sched, n, s, c_t);
 	}
 	
@@ -107,40 +106,41 @@ public class Automata {
 	public void addWithTime(List<State> l, Node n, State s, int c_t) {
 		int idx = 0;
 		Iterator<State> is = l.iterator();
-		State s2;
+		State s2 = null;
 		
 		// Iterate until the first task that has the same or a higher completion time
 		while (is.hasNext()) {
 			s2 = is.next();
-			if (s2.getC_t() < c_t)
-				idx++;
-			else
+			if (s2.getC_t() >= c_t)
 				break;
+			else
+				idx++;
 		}
 		
 		// Breaking ties, LO exit nodes first
 		// then HI tasks, then LO tasks
-		if (n.isExitNode() && n.getC_HI() == 0) {
-			l.add(idx, s);
-		} else if (n.getC_HI() != 0) {
-			int cur_ct = c_t;
-			while (is.hasNext() && cur_ct == c_t) {
-				s2 = is.next();
-				cur_ct = s2.getC_t();
-				if (s2.getMode() == 1)
+		if (s2 != null && s2.getC_t() == c_t) {
+			
+			if (n.getC_HI() != 0) {	
+				int cur_ct = c_t;
+				while (is.hasNext() && cur_ct == c_t) {
+					s2 = is.next();
+					cur_ct = s2.getC_t();
+					if (s2.getMode() == 1)
+						idx++;
+				}
+			} else if (n.getC_HI() == 0) {
+				System.out.println("Equality "+n.getName());
+				int cur_ct = c_t;
+				while (is.hasNext() && cur_ct == c_t) {
+					s2 = is.next();
+					cur_ct = s2.getC_t();
 					idx++;
+				}
 			}
-			l.add(idx, s);
-		} else {
-			int cur_ct = c_t;
-			while (is.hasNext() && cur_ct == c_t) {
-				s2 = is.next();
-				cur_ct = s2.getC_t();
-				idx++;
-			}
-			l.add(idx, s);
 		}
-		
+		System.out.println("Task "+n.getName()+" index in list "+idx);
+		l.add(idx,s);
 	}
 	
 	/**
@@ -227,7 +227,7 @@ public class Automata {
 				getH_transitions().add(t);
 			}
 		}
-		
+				
 		// Construct the LO zone of the automata
 		State sk = new State(nb_states++, "FinalLO", 0);
 		lo_sched.add(sk);
@@ -263,36 +263,52 @@ public class Automata {
 		calcOutputSets();
 		boolean finished = false;
 		int max_depth = l_outs_b.size();
-		int curr = max_depth;
+		int curr = max_depth - 1;
 		int idx = 0;
 		Iterator<List<AutoBoolean>> ib = l_outs_b.listIterator();
+		
 		
 		while (ib.hasNext()) {
 			List<AutoBoolean> sab0 = ib.next();
 			while (!finished) {
 				int idx2 = idx + 1;
 				// Grab next element(s) when curr depth != 0
-				while (idx2 != l_outs_b.size()) {
+				while (curr != 0) {
 					Transition t2 = new Transition(sk, s0, s0);
-					t2.getbSet().addAll(sab0);
-					for (int i = idx2; i < curr; i++) {
+					t2.getbSet().addAll(sab0);					
+					for (int i = idx2; i < idx2 + curr; i++) {
 						List<AutoBoolean> sab = l_outs_b.get(i);
-						
 						t2.getbSet().addAll(sab);
 					}
 					this.f_transitions.add(t2);
-					curr--;
-					idx2++;
+					
+					if ((idx2 + curr) == l_outs_b.size()) // Added all the elements 
+						curr--; // Reduce size of the set
+					else // Else move to the next element
+						idx2++;
 				}
-				if (curr == 0)
+
+				if (curr == 0) 
 					finished = true;
 			}
+			idx++;
 			max_depth--;
-			curr = max_depth;
+			curr = max_depth - 1;
 			finished = false;
+		}
+		
+		// Add individual exits
+		ib = l_outs_b.listIterator();
+		while (ib.hasNext()) {
+			List<AutoBoolean> sab0 = ib.next();
+			Transition t2 = new Transition(sk, s0, s0);
+			t2.getbSet().addAll(sab0);
+			this.f_transitions.add(t2);
+
 		}
 	}
 	
+
 	/**
 	 *  This procedures prints the automata
 	 */
@@ -312,7 +328,12 @@ public class Automata {
 			this.calcCompTimeHI(n.getName());
 		}
 		
+		System.out.println("Completition times calculated!");
+		
 		this.linkStates();
+		
+		System.out.println("Linked states!");
+
 		
 		System.out.println("module proc");
 		System.out.println("\ts : [0..50] init 0");
@@ -337,8 +358,8 @@ public class Automata {
 						+ t.getP() + ": (s' =" + t.getDestFail().getId() +");");
 			} else { // If it's a LO task we need to update the boolean
 				System.out.println("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
-						+ " -> 1 - "+ t.getP() +" : (s' = " + t.getDestOk().getId() + ") +"
-						+ t.getP() + ": (s' =" + t.getDestFail().getId() +") & ("+t.getSrc().getTask()+"bool' = true);");
+						+ " -> 1 - "+ t.getP() +" : (s' = " + t.getDestOk().getId() +") & ("+t.getSrc().getTask()+"bool' = true) + "
+						+ t.getP() + ": (s' =" + t.getDestFail().getId() + ");" );
 			}
 		}
 		
