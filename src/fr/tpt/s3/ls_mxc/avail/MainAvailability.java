@@ -135,7 +135,10 @@ public class MainAvailability {
 			else
 				n.setfProb(0.001);
 		}
-			
+		
+		Voter v = new Voter(3, "Avail");
+		v.createVoter();
+		v.printVoter();
 		Automata auto = new Automata(alloc_problem, the_dag);
 				
 		auto.createAutomata();
