@@ -283,6 +283,7 @@ public class Automata {
 						List<AutoBoolean> sab = l_outs_b.get(i);
 						t2.getbSet().addAll(sab);
 					}
+					
 					this.f_transitions.add(t2);
 					
 					if ((idx2 + curr) == l_outs_b.size()) // Added all the elements 
@@ -309,6 +310,26 @@ public class Automata {
 			this.f_transitions.add(t2);
 
 		}
+		
+		// Add false booleans
+		Iterator<Transition> itt = this.f_transitions.iterator();
+		while (itt.hasNext()) {
+			Transition tt = itt.next();
+			ib = l_outs_b.listIterator();
+			while (ib.hasNext() ) {
+				List<AutoBoolean> lab = ib.next();
+				if (!tt.getbSet().containsAll(lab))
+					tt.getfSet().addAll(lab);
+			}
+		}
+		
+		Transition tf = new Transition(sk, s0, s0);
+		ib = l_outs_b.listIterator();
+		while (ib.hasNext() ) {
+			List<AutoBoolean> lab = ib.next();
+			tf.getfSet().addAll(lab);
+		}
+		this.f_transitions.add(tf);
 	}
 	
 
@@ -384,6 +405,11 @@ public class Automata {
 				AutoBoolean ab = ib.next();
 				System.out.print(" & " + ab.getTask()+"bool = true");
 			}
+			Iterator<AutoBoolean> iff = t.getfSet().iterator();
+			while(iff.hasNext()) {
+				AutoBoolean ab = iff.next();
+				System.out.print(" & " + ab.getTask()+"bool = false");
+			}
 			System.out.println(" -> (s' = "+t.getDestOk().getId()+");");
 			curr++;
 		}
@@ -422,6 +448,20 @@ public class Automata {
 			System.out.println("endrewards");
 			System.out.println("");
 		}
+		
+		// Total cycles reward
+		System.out.println("rewards total_cycles\"");
+		it = f_transitions.iterator();
+		int c = 0;
+		while (it.hasNext()) {
+			Transition t = it.next();
+
+			System.out.println("\t["+t.getSrc().getTask()+c+"] true : 1;");
+			c++;
+		}
+		c = 0;
+		System.out.println("endrewards");
+		System.out.println("");
 	}
 	
 	/**

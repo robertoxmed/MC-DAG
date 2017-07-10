@@ -25,6 +25,7 @@ public class Transition {
 	private State destFail;
 	private double p;
 	private List<AutoBoolean> bSet;
+	private List<AutoBoolean> fSet;
 	private String Name;
 	
 	/**
@@ -35,6 +36,7 @@ public class Transition {
 		this.setDestOk(destOk);
 		this.setDestFail(destFail);
 		bSet = new LinkedList<AutoBoolean>();
+		setfSet(new LinkedList<AutoBoolean>());
 	}
 	
 
@@ -73,6 +75,16 @@ public class Transition {
 	}
 	public String getName() {
 		return Name;
+	}
+
+
+	public List<AutoBoolean> getfSet() {
+		return fSet;
+	}
+
+
+	public void setfSet(List<AutoBoolean> fSet) {
+		this.fSet = fSet;
 	}
 
 }
