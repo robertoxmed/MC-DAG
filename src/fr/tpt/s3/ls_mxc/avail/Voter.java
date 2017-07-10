@@ -33,9 +33,11 @@ public class Voter {
 		for (int i = 0; i < nbVot; i++) {
 			for (int j = 0; j < nb_pred; j++) {
 				for (int k = 0; k < width; k++) {
+					String votName = new String(name+i);
+					
 					State src = this.states.get(prev);
-					State s2 = new State(cur++, name, 0);
-					State s3 = new State(cur++, name, 0);
+					State s2 = new State(cur++, votName, 0);
+					State s3 = new State(cur++, votName, 0);
 					this.states.add(s2);
 					this.states.add(s3);
 					Transition t = new Transition(src, s2, s3);
@@ -47,15 +49,18 @@ public class Voter {
 		}
 		
 		int end = cur - 1;
-		
-		for (int i = 1; i <= nb_pred; i++) {
-			int count = 0;
+		int count = nb_pred;
+
+		for (int i = 0; i < nb_pred; i++) {
+			
+			
 			Transition t = null;
 			State src = this.getStates().get(end);
 			// Mark
-			if (i > (nb_pred/2)) {
+			if (count > (nb_pred/2)) {
+				int test = (nb_pred/2) + 1;
 				// Voter failed
-				if (count != (nb_pred/2) + 1){
+				if (count == test){
 					t = new Transition(src, this.getStates().get(0), null);
 					t.setName(name+"_ok");
 				} else { // Voter suceeded
@@ -64,18 +69,18 @@ public class Voter {
 				}
 
 			} else {
-				// Voter failed
-				if (count == (nb_pred/2) - 1){
-					t = new Transition(src, this.getStates().get(0), null);
-					t.setName(name+"_ok");
-				} else { // Voter suceeded
+				int test = (nb_pred/2);
+				if (count == test){
 					t = new Transition(src, this.getStates().get(0), null);
 					t.setName(name+"_failed");
+				} else { 
+					t = new Transition(src, this.getStates().get(0), null);
+					t.setName(name+"_ok");
 				}
 			}
 			f_trans.add(t);
-			count++;
 			end--;
+			count--;
 		}
 		
 	}

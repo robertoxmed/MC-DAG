@@ -71,6 +71,8 @@ public class Automata {
 		State s;		
 		if (n.getC_HI() !=  0) {
 			s = new State(nb_states++, task, 1);
+			if (n.isfMechanism()) // Test if it's a faul tolerant mechanism
+				s.setfMechanism(true);
 		} else {
 			s = new State(nb_states++, task, 0);
 		}
@@ -243,7 +245,8 @@ public class Automata {
 					// Find the HI task that corresponds to s
 					State S = findStateHI(s.getTask());
 					t = new Transition(s, s2, S);
-					t.setP(d.getNodebyName(s.getTask()).getfProb());
+					if(!s.isfMechanism()) // If it's a fault tolerant mechanism
+						t.setP(d.getNodebyName(s.getTask()).getfProb());
 				} else { // It is a LO task
 					t = new Transition(s, s2, s2);
 					t.setP(d.getNodebyName(s.getTask()).getfProb());
@@ -353,9 +356,16 @@ public class Automata {
 		while (it.hasNext()) {
 			Transition t = it.next();
 			if (t.getSrc().getMode() == 1) {
-				System.out.println("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
-						+ " -> 1 - "+ t.getP() +" : (s' = " + t.getDestOk().getId() + ") +"
-						+ t.getP() + ": (s' =" + t.getDestFail().getId() +");");
+				if (! t.getSrc().isfMechanism())
+					System.out.println("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
+							+ " -> 1 - "+ t.getP() +" : (s' = " + t.getDestOk().getId() + ") +"
+							+ t.getP() + ": (s' =" + t.getDestFail().getId() +");");
+				else {
+					System.out.println("\t["+t.getSrc().getTask()+"_ok] s = " + t.getSrc().getId()
+							+ " -> : (s' = " + t.getDestOk().getId() + ");");
+					System.out.println("\t["+t.getSrc().getTask()+"_fail] s = " + t.getSrc().getId()
+							+ " -> : (s' = " + t.getDestFail().getId() + ");");
+				}
 			} else { // If it's a LO task we need to update the boolean
 				System.out.println("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
 						+ " -> 1 - "+ t.getP() +" : (s' = " + t.getDestOk().getId() +") & ("+t.getSrc().getTask()+"bool' = true) + "

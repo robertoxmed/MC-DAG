@@ -20,9 +20,9 @@ public class State {
 	
 	private String task;
 	private int mode;
-	private Transition t;
 	private int id;
 	private int c_t;
+	private boolean fMechanism;
 	
 	public State (int id, String t, int m) {
 		setId(id);
@@ -43,12 +43,6 @@ public class State {
 	public void setMode(int mode) {
 		this.mode = mode;
 	}
-	public Transition getT() {
-		return t;
-	}
-	public void setT(Transition t) {
-		this.t = t;
-	}
 	public int getId() {
 		return id;
 	}
@@ -62,5 +56,13 @@ public class State {
 
 	public void setC_t(int c_t) {
 		this.c_t = c_t;
+	}
+
+	public boolean isfMechanism() {
+		return fMechanism;
+	}
+
+	public void setfMechanism(boolean fMechanism) {
+		this.fMechanism = fMechanism;
 	}
 }

@@ -37,6 +37,7 @@ public class MainAvailability {
 		Node Avoid = new Node(0, "Avoid", 3, 0);
 		Node Nav = new Node(1, "Nav", 5, 6);
 		Node VotA = new Node(2, "VotA", 1, 1);
+		VotA.setfMechanism(true);
 		Node Stab = new Node(3, "Stab", 2, 4);
 		Node VotH = new Node(4, "VotH", 1, 1);
 		Node Log = new Node(5, "Log", 2, 0);
@@ -136,7 +137,7 @@ public class MainAvailability {
 				n.setfProb(0.001);
 		}
 		
-		Voter v = new Voter(3, "Avail");
+		Voter v = new Voter(3, "VotA");
 		v.createVoter();
 		v.printVoter();
 		Automata auto = new Automata(alloc_problem, the_dag);
