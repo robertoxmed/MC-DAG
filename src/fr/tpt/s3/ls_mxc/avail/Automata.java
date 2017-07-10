@@ -141,7 +141,6 @@ public class Automata {
 				}
 			}
 		}
-		System.out.println("Task "+n.getName()+" index in list "+idx);
 		l.add(idx,s);
 	}
 	
@@ -351,12 +350,8 @@ public class Automata {
 			Node n = in.next();
 			this.calcCompTimeHI(n.getName());
 		}
-		
-		System.out.println("Completition times calculated!");
-		
+				
 		this.linkStates();
-		
-		System.out.println("Linked states!");
 
 		
 		System.out.println("module proc");
@@ -383,9 +378,9 @@ public class Automata {
 							+ t.getP() + ": (s' =" + t.getDestFail().getId() +");");
 				else {
 					System.out.println("\t["+t.getSrc().getTask()+"_ok] s = " + t.getSrc().getId()
-							+ " -> : (s' = " + t.getDestOk().getId() + ");");
+							+ " -> (s' = " + t.getDestOk().getId() + ");");
 					System.out.println("\t["+t.getSrc().getTask()+"_fail] s = " + t.getSrc().getId()
-							+ " -> : (s' = " + t.getDestFail().getId() + ");");
+							+ " -> (s' = " + t.getDestFail().getId() + ");");
 				}
 			} else { // If it's a LO task we need to update the boolean
 				System.out.println("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
@@ -450,7 +445,7 @@ public class Automata {
 		}
 		
 		// Total cycles reward
-		System.out.println("rewards total_cycles\"");
+		System.out.println("rewards \"total_cycles\"");
 		it = f_transitions.iterator();
 		int c = 0;
 		while (it.hasNext()) {

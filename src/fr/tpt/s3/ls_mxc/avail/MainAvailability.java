@@ -16,7 +16,10 @@
  *******************************************************************************/
 package fr.tpt.s3.ls_mxc.avail;
 
+import java.io.IOException;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 import fr.tpt.s3.ls_mxc.alloc.LS;
 import fr.tpt.s3.ls_mxc.alloc.SchedulingException;
@@ -27,7 +30,7 @@ import fr.tpt.s3.ls_mxc.model.Node;
 public class MainAvailability {
 	
 	@SuppressWarnings("unused")
-	public static void main (String[] argv) {
+	public static void main (String[] argv) throws IOException {
 		
 		System.out.println("========== LS Alloc BEGIN ==========");
 		
@@ -38,18 +41,16 @@ public class MainAvailability {
 		Node Nav = new Node(1, "Nav", 5, 6);
 		Node VotA = new Node(2, "VotA", 1, 1);
 		VotA.setfMechanism(true);
-		Node Stab = new Node(3, "Stab", 2, 4);
-		Node VotH = new Node(4, "VotH", 1, 1);
-		Node Log = new Node(5, "Log", 2, 0);
-		Node Shar = new Node(6, "Shar", 3, 0);
-		Node Video = new Node(7, "Video", 6, 0);
-		Node GPS = new Node(8, "GPS", 2, 0);
-		Node Rec = new Node(9, "Rec", 2, 0);
+		Node Stab = new Node(3, "Stab", 2, 5);
+		Node Log = new Node(4, "Log", 2, 0);
+		Node Shar = new Node(5, "Shar", 3, 0);
+		Node Video = new Node(6, "Video", 7, 0);
+		Node GPS = new Node(7, "GPS", 2, 0);
+		Node Rec = new Node(8, "Rec", 2, 0);
 		
 		Edge e0 = new Edge(Avoid, VotA, false);
 		Edge e1 = new Edge(VotA, Nav, false);
 		Edge e2 = new Edge(Nav, Stab, false);
-		Edge e3 = new Edge(Stab, VotH, false);
 		Edge e4 = new Edge(VotA, Log, false);
 		Edge e5 = new Edge(Nav, Log, false);
 		Edge e6 = new Edge(Stab, Log, false);
@@ -62,7 +63,6 @@ public class MainAvailability {
 		the_dag.getNodes().add(VotA);
 		the_dag.getNodes().add(Nav);
 		the_dag.getNodes().add(Stab);
-		the_dag.getNodes().add(VotH);
 		the_dag.getNodes().add(Log);
 		the_dag.getNodes().add(Shar);
 		the_dag.getNodes().add(Video);
@@ -144,6 +144,11 @@ public class MainAvailability {
 				
 		auto.createAutomata();
 		
+		List<Voter> lv = new LinkedList<Voter>();
+		lv.add(v);
+		
+		FileUtilities fu = new FileUtilities();
+		fu.writeModelToFile("test.pm", lv, the_dag, auto);	
 	}
 
 }

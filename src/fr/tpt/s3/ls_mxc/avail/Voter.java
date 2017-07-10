@@ -92,18 +92,20 @@ public class Voter {
 		Iterator<Transition> it = this.transitions.iterator();
 		while (it.hasNext()) {
 			Transition t = it.next();
-			System.out.println("\t["+t.getDestOk().getTask()+"_ok] v = "+t.getSrc().getId()+" -> "+t.getDestOk().getId());
-			System.out.println("\t["+t.getDestOk().getTask()+"_fail] v = "+t.getSrc().getId()+" -> "+t.getDestFail().getId());
+			System.out.println("\t["+t.getDestOk().getTask()+"_ok] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestOk().getId()+");");
+			System.out.println("\t["+t.getDestOk().getTask()+"_fail] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestFail().getId()+");");
 			System.out.println("");
 		}
 		
 		it = this.f_trans.iterator();
 		while (it.hasNext()) {
 			Transition t = it.next();
-			System.out.println("\t["+t.getName()+"] v = "+t.getSrc().getId()+" -> "+t.getDestOk().getId());
+			System.out.println("\t["+t.getName()+"] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestOk().getId()+");");
 		}
 		System.out.println("");
 		System.out.println("endmodule");
+		System.out.println("");
+
 	}
 	
 	public int getNbVot() {
