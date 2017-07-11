@@ -212,7 +212,7 @@ public class FileUtilities {
 					while (is.hasNext()) {
 						State s = is.next();
 						if (s.getMode() == 0 && !s.getTask().contains("Final")
-								&& !s.getTask().contains("Init")) // It is a LO task
+								&& !s.getTask().contains("Final")) // It is a LO task
 							out.write(" & ("+s.getTask()+"bool' = false)");
 					}
 					out.write(";\n");

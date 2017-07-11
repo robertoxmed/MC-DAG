@@ -130,15 +130,11 @@ public class Main {
 				n.setfProb(0.001);
 		}
 		
-		Voter v = new Voter(3, "VotA");
-		v.createVoter();
-		v.printVoter();
 		Automata auto = new Automata(alloc_problem, the_dag);
 				
 		auto.createAutomata();
 		
 		List<Voter> lv = new LinkedList<Voter>();
-		lv.add(v);
 		
 		FileUtilities fu = new FileUtilities();
 		fu.writeModelToFile("test.pm", lv, the_dag, auto);	
