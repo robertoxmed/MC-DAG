@@ -68,7 +68,7 @@ public class Automata {
 		}
 
 		Node n = d.getNodebyName(task);
-		State s;		
+		State s;
 		if (n.getC_HI() !=  0) {
 			s = new State(nb_states++, task, 1);
 			if (n.isfMechanism()) // Test if it's a faul tolerant mechanism
@@ -197,12 +197,12 @@ public class Automata {
 			
 			// Create the boolean set for the LO output
 			LinkedList<AutoBoolean> bSet = new LinkedList<AutoBoolean>();
-			AutoBoolean a = new AutoBoolean(n.getName());
+			AutoBoolean a = new AutoBoolean(n.getName(), n.getName());
 			bSet.add(a);
 			Iterator<Node> in2 = nPred.iterator();
 			while (in2.hasNext()) {
 				Node n2 = in2.next();
-				AutoBoolean ab = new AutoBoolean(n2.getName());
+				AutoBoolean ab = new AutoBoolean(n2.getName(),  n.getName());
 				bSet.add(ab);
 			}
 			l_outs_b.add(bSet);
@@ -248,7 +248,8 @@ public class Automata {
 						t.setP(d.getNodebyName(s.getTask()).getfProb());
 				} else { // It is a LO task
 					t = new Transition(s, s2, s2);
-					t.setP(d.getNodebyName(s.getTask()).getfProb());
+					if (s.getC_t() != 0)
+						t.setP(d.getNodebyName(s.getTask()).getfProb());
 				}
 				getL_transitions().add(t);
 			}
@@ -339,6 +340,10 @@ public class Automata {
 		
 		// Calculate completion times for all nodes in LO and HI mode
 		
+		State s0 = new State(nb_states++, "Init", 0);
+		s0.setC_t(0);
+		lo_sched.add(s0);
+		
 		Iterator<Node> in = d.getNodes().iterator();
 		while (in.hasNext()) {
 			Node n = in.next();
@@ -355,7 +360,7 @@ public class Automata {
 
 		
 		System.out.println("module proc");
-		System.out.println("\ts : [0..50] init 0");
+		System.out.println("\ts : [0..50] init "+lo_sched.get(0).getId()+";");
 		
 		// Create all necessary booleans
 		Iterator<State> is = lo_sched.iterator();
@@ -383,9 +388,22 @@ public class Automata {
 							+ " -> (s' = " + t.getDestFail().getId() + ");");
 				}
 			} else { // If it's a LO task we need to update the boolean
-				System.out.println("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
-						+ " -> 1 - "+ t.getP() +" : (s' = " + t.getDestOk().getId() +") & ("+t.getSrc().getTask()+"bool' = true) + "
-						+ t.getP() + ": (s' =" + t.getDestFail().getId() + ");" );
+				if (t.getSrc().getId() == 0) { // Initial state resets booleans
+					System.out.print("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
+							+ " -> (s' = " + t.getDestOk().getId()+")");
+					is = lo_sched.iterator();
+					while (is.hasNext()) {
+						State s = is.next();
+						if (s.getMode() == 0 && !s.getTask().contains("Final")
+								&& !s.getTask().contains("Final")) // It is a LO task
+							System.out.print(" & ("+s.getTask()+"bool' = false)");
+					}
+					System.out.println(";");
+				} else {
+					System.out.println("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
+							+ " -> 1 - "+ t.getP() +" : (s' = " + t.getDestOk().getId() +") & ("+t.getSrc().getTask()+"bool' = true) + "
+							+ t.getP() + ": (s' =" + t.getDestFail().getId() + ");" );
+				}
 			}
 		}
 		

@@ -18,10 +18,12 @@ package fr.tpt.s3.ls_mxc.avail;
 
 public class AutoBoolean {
 	private Boolean b;
+	private String Output;
 	private String Task;
 	
-	public AutoBoolean (String task) {
+	public AutoBoolean (String task, String output) {
 		this.setTask(task);
+		this.setOutput(output);
 	}
 
 	public Boolean getB() {
@@ -38,5 +40,13 @@ public class AutoBoolean {
 
 	public void setTask(String task) {
 		Task = task;
+	}
+
+	public String getOutput() {
+		return Output;
+	}
+
+	public void setOutput(String output) {
+		Output = output;
 	}
 }

@@ -1,18 +1,136 @@
 package fr.tpt.s3.ls_mxc.avail;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Iterator;
 import java.util.List;
 
+import fr.tpt.s3.ls_mxc.alloc.LS;
 import fr.tpt.s3.ls_mxc.model.DAG;
+import fr.tpt.s3.ls_mxc.model.Edge;
 import fr.tpt.s3.ls_mxc.model.Node;
 
 public class FileUtilities {
 
 	public FileUtilities () {}
+	
+	/**
+	 * Reads and inits the data structures
+	 * @param file
+	 * @param ls
+	 */
+	public void ReadAndInit(String file, LS ls, Automata aut, List<Voter> lv) {
+		
+		String line;
+		int nb_nodes = 0;
+		
+		try {
+			// Open file
+			FileInputStream fr = new FileInputStream(file);
+			
+			// Initiate the buffer reader
+			BufferedReader br = new BufferedReader(new InputStreamReader(fr));
+			
+			line = br.readLine();
+			// Read comments and empty lines
+			while ((line.length() == 0) || (line.charAt(0) == '#')) 
+				line = br.readLine();
+			
+			// First line is the nb of nodes
+			line = line.trim();
+			nb_nodes = Integer.parseInt(line);
+			
+			line = br.readLine();
+			// Read comments and empty lines
+			while ((line.length() == 0) || (line.charAt(0) == '#')) 
+				line = br.readLine();
+			
+			// Second line is the number of cores
+			line = line.trim();
+			ls.setNb_cores(Integer.parseInt(line));
+			
+			line = br.readLine();
+			// Read comments and empty lines
+			while ((line.length() == 0) || (line.charAt(0) == '#')) 
+				line = br.readLine();
+			
+			// Third line is the deadline
+			line = line.trim();
+			ls.setDeadline(Integer.parseInt(line));
+			
+			line = br.readLine();
+			// Read comments and empty lines
+			while ((line.length() == 0) || (line.charAt(0) == '#')) 
+				line = br.readLine();
+			
+			// Instantiate the DAG
+			DAG d = new DAG();
+			
+			// C LOs are passed afterwards
+			
+			for(int i = 0; i < nb_nodes; i++){
+				line = line.trim();
+				Node n = new Node(i, Integer.toString(i), 0, 0);
+				n.setC_LO(Integer.parseInt(line));
+				
+				d.getNodes().add(n);
+				line = br.readLine();
+			}
+			
+			// Read comments and empty lines
+			while ((line.length() == 0) || (line.charAt(0) == '#')) 
+				line = br.readLine();
+			
+			// C HIs are passed afterwards
+			for (int i = 0; i < nb_nodes; i++){
+				line = line.trim();
+				
+				Node n = d.getNodebyID(i);
+				n.setC_HI(Integer.parseInt(line));
+				line = br.readLine();
+			}
+			
+			// Read comments and empty lines
+			while ((line.length() == 0) || (line.charAt(0) == '#')) 
+				line = br.readLine();
+
+			// Edges are passed afterwards
+			for (int i = 0; i < nb_nodes; i++){
+				Node n = d.getNodebyID(i);
+				String[] dep = line.split(",");
+				
+				for (int j = 0; j < dep.length; j++){
+					if (dep[j].contains("1")){
+						Node src = d.getNodebyID(j);
+						@SuppressWarnings("unused")
+						Edge e = new Edge(src, n, false);
+					}
+				}
+				line = br.readLine();
+			}
+			
+			// Set the constructed DAG
+			Iterator<Node> it_n = d.getNodes().iterator();
+			while(it_n.hasNext()){
+				Node n = it_n.next();
+				n.checkifSink();
+				n.checkifSource();
+				n.checkifSinkinHI();
+			}
+			
+			ls.setMxcDag(d);
+			br.close();
+			fr.close();
+		} catch(IOException e) {
+			System.out.println("Unable to open file "+file+" exception "+e.getMessage()); 
+		}
+		
+	}
 	
 	
 	public void writeVoters (BufferedWriter out, Voter vot) throws IOException {
@@ -41,15 +159,31 @@ public class FileUtilities {
 	 * @throws IOException 
 	 */
 	public void writeAutomata (BufferedWriter out, Automata a, DAG d) throws IOException {
+	
+		// Write formulas
+		Iterator<List<AutoBoolean>> iab = a.getL_outs_b().iterator();
+		while (iab.hasNext()) {
+			List<AutoBoolean> lab = iab.next();
+			out.write("formula "+lab.get(0).getOutput()+" = ");
+			Iterator<AutoBoolean> ia = lab.iterator();
+			while (ia.hasNext()) {
+				out.write(ia.next().getTask()+"bool");
+				if (ia.hasNext())
+					out.write(" & ");
+			}
+			out.write(";\n");
+		}
+
 		
+		out.write("\n");
 		out.write("module proc\n");
-		out.write("\ts : [0..50] init 0;\n");
+		out.write("\ts : [0..50] init "+a.getLo_sched().get(0).getId()+";\n");
 		
 		// Create all necessary booleans
 		Iterator<State> is = a.getLo_sched().iterator();
 		while (is.hasNext()) {
 			State s = is.next();
-			if (s.getMode() == 0 && !s.getTask().contains("Final")) // It is a LO task
+			if (s.getMode() == 0 && !s.getTask().contains("Final") && !s.getTask().contains("Init")) // It is a LO task
 				out.write("\t"+s.getTask()+"bool: bool init false;\n");
 		}
 		
@@ -71,9 +205,22 @@ public class FileUtilities {
 							+ " -> (s' = " + t.getDestFail().getId() + ");\n");
 				}
 			} else { // If it's a LO task we need to update the boolean
-				out.write("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
-						+ " -> 1 - "+ t.getP() +" : (s' = " + t.getDestOk().getId() +") & ("+t.getSrc().getTask()+"bool' = true) + "
-						+ t.getP() + ": (s' =" + t.getDestFail().getId() + ");\n" );
+				if (t.getSrc().getId() == 0) { // Initial state resets booleans
+					out.write("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
+							+ " -> (s' = " + t.getDestOk().getId()+")");
+					is = a.getLo_sched().iterator();
+					while (is.hasNext()) {
+						State s = is.next();
+						if (s.getMode() == 0 && !s.getTask().contains("Final")
+								&& !s.getTask().contains("Init")) // It is a LO task
+							out.write(" & ("+s.getTask()+"bool' = false)");
+					}
+					out.write(";\n");
+				} else { 
+					out.write("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
+							+ " -> 1 - "+ t.getP() +" : (s' = " + t.getDestOk().getId() +") & ("+t.getSrc().getTask()+"bool' = true) + "
+							+ t.getP() + ": (s' =" + t.getDestFail().getId() + ");\n" );
+				}
 			}
 		}
 		
@@ -86,12 +233,12 @@ public class FileUtilities {
 			Iterator<AutoBoolean> ib = t.getbSet().iterator();
 			while(ib.hasNext()) {
 				AutoBoolean ab = ib.next();
-				out.write(" & " + ab.getTask()+"bool = true");
+				out.write(" & " + ab.getOutput()+" = true");
 			}
 			Iterator<AutoBoolean> iff = t.getfSet().iterator();
 			while(iff.hasNext()) {
 				AutoBoolean ab = iff.next();
-				out.write(" & " + ab.getTask()+"bool = false");
+				out.write(" & " + ab.getOutput()+" = false");
 			}
 			out.write(" -> (s' = "+t.getDestOk().getId()+");\n");
 			curr++;
@@ -106,7 +253,7 @@ public class FileUtilities {
 			out.write("\t["+t.getSrc().getTask()+"_hi] s = " + t.getSrc().getId() + " -> (s' =" + t.getDestOk().getId() +");\n");
 		}
 		
-		out.write("end module;\n");
+		out.write("endmodule\n");
 				
 		// Create the rewards
 		out.write("\n");
@@ -118,10 +265,10 @@ public class FileUtilities {
 			int c = 0;
 			while (it.hasNext()) {
 				Transition t = it.next();
-				Iterator<AutoBoolean> iab = t.getbSet().iterator();
+				Iterator<AutoBoolean> iab2 = t.getbSet().iterator();
 
-				while (iab.hasNext()) {
-					if (iab.next().getTask().contentEquals(n.getName()))
+				while (iab2.hasNext()) {
+					if (iab2.next().getTask().contentEquals(n.getName()))
 						out.write("\t["+t.getSrc().getTask()+c+"] true : 1;\n");
 				}
 				c++;
@@ -140,7 +287,7 @@ public class FileUtilities {
 			out.write("\t["+t.getSrc().getTask()+c+"] true : 1;\n");
 			c++;
 		}
-		c = 0;
+		out.write("\t["+a.getH_transitions().get(a.getH_transitions().size() - 1).getSrc().getTask()+"_hi] true : 1;\n");
 		out.write("endrewards\n");
 		out.write("\n");
 	}
