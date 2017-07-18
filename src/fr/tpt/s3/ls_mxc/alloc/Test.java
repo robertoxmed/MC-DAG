@@ -18,7 +18,7 @@ package fr.tpt.s3.ls_mxc.alloc;
 
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
-import fr.tpt.s3.ls_mxc.model.Node;
+import fr.tpt.s3.ls_mxc.model.Actor;
 
 public class Test {
 	
@@ -29,16 +29,16 @@ public class Test {
 		/*
 		 * Example of DAG
 		 */
-		Node A = new Node(0, "A", 3, 3);
-		Node B = new Node(1, "B", 2, 4);
-		Node C = new Node(2, "C", 3, 0);
-		Node D = new Node(3, "D", 3, 5);
-		Node E = new Node(4, "E", 1, 0);
+		Actor A = new Actor(0, "A", 3, 3);
+		Actor B = new Actor(1, "B", 2, 4);
+		Actor C = new Actor(2, "C", 3, 0);
+		Actor D = new Actor(3, "D", 3, 5);
+		Actor E = new Actor(4, "E", 1, 0);
 		
-		Edge e1 = new Edge(A, B, false);
-		Edge e2 = new Edge(B, C, false);
-		Edge e3 = new Edge(D, B, false);
-		Edge e4 = new Edge(B, E, false);
+		Edge e1 = new Edge(A, B);
+		Edge e2 = new Edge(B, C);
+		Edge e3 = new Edge(D, B);
+		Edge e4 = new Edge(B, E);
 		
 		A.getSnd_edges().add(e1);
 		B.getRcv_edges().add(e1);

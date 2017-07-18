@@ -9,7 +9,7 @@ import fr.tpt.s3.ls_mxc.alloc.LS;
 import fr.tpt.s3.ls_mxc.alloc.SchedulingException;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
-import fr.tpt.s3.ls_mxc.model.Node;
+import fr.tpt.s3.ls_mxc.model.Actor;
 
 public class Main {
 		
@@ -21,29 +21,29 @@ public class Main {
 		/*
 		 * Example of DAG
 		 */
-		Node A = new Node(0, "At", 2, 3);
-		Node B = new Node(1, "Bt", 2, 0);
-		Node C = new Node(2, "Ct", 2, 0);
-		Node D = new Node(3, "Dt", 2, 0);
-		Node E = new Node(4, "Et", 2, 0);
-		Node F = new Node(5, "Ft", 2, 0);
-		Node G = new Node(6, "Gt", 2, 0);
-		Node H = new Node(7, "Ht", 2, 0);
-		Node I = new Node(8, "It", 2, 0);
-		Node J = new Node(9, "Jt", 2, 0);
-		Node K = new Node(10, "Kt", 2, 0);
-		Node L = new Node(11, "Lt", 2, 0);
-		Node M = new Node(12, "Mt", 2, 0);
-		Node N = new Node(13, "Nt", 2, 0);
+		Actor A = new Actor(0, "At", 2, 3);
+		Actor B = new Actor(1, "Bt", 2, 0);
+		Actor C = new Actor(2, "Ct", 2, 0);
+		Actor D = new Actor(3, "Dt", 2, 0);
+		Actor E = new Actor(4, "Et", 2, 0);
+		Actor F = new Actor(5, "Ft", 2, 0);
+		Actor G = new Actor(6, "Gt", 2, 0);
+		Actor H = new Actor(7, "Ht", 2, 0);
+		Actor I = new Actor(8, "It", 2, 0);
+		Actor J = new Actor(9, "Jt", 2, 0);
+		Actor K = new Actor(10, "Kt", 2, 0);
+		Actor L = new Actor(11, "Lt", 2, 0);
+		Actor M = new Actor(12, "Mt", 2, 0);
+		Actor N = new Actor(13, "Nt", 2, 0);
 		
-		Edge e0 = new Edge(A, B, false);
-		Edge e1 = new Edge(B, C, false);
-		Edge e2 = new Edge(C, D, false);
-		Edge e3 = new Edge(E, F, false);
-		Edge e4 = new Edge(F, G, false);
-		Edge e5 = new Edge(H, I, false);
-		Edge e6 = new Edge(K, L, false);
-		Edge e7 = new Edge(L, M, false);
+		Edge e0 = new Edge(A, B);
+		Edge e1 = new Edge(B, C);
+		Edge e2 = new Edge(C, D);
+		Edge e3 = new Edge(E, F);
+		Edge e4 = new Edge(F, G);
+		Edge e5 = new Edge(H, I);
+		Edge e6 = new Edge(K, L);
+		Edge e7 = new Edge(L, M);
 		
 		DAG the_dag = new DAG();
 		
@@ -68,9 +68,9 @@ public class Main {
 		LS alloc_problem = new LS(16, 2, the_dag);
 		
 		// Set booleans for sink and source
-		Iterator<Node> in = the_dag.getNodes().iterator();
+		Iterator<Actor> in = the_dag.getNodes().iterator();
 		while (in.hasNext()){
-			Node n = in.next();
+			Actor n = in.next();
 			n.checkifSink();
 			n.checkifSinkinHI();
 			n.checkifSource();
@@ -123,18 +123,20 @@ public class Main {
 		// Set failure probabilities
 		in = the_dag.getNodes().iterator();
 		while (in.hasNext()){
-			Node n = in.next();
+			Actor n = in.next();
 			if (n.getC_HI() == 0)
 				n.setfProb(0.01);
 			else
 				n.setfProb(0.001);
 		}
-		
+		Voter v = new Voter(3, "VotA");
+		v.createVoter();
 		Automata auto = new Automata(alloc_problem, the_dag);
 				
 		auto.createAutomata();
 		
 		List<Voter> lv = new LinkedList<Voter>();
+		lv.add(v);
 		
 		FileUtilities fu = new FileUtilities();
 		fu.writeModelToFile("test.pm", lv, the_dag, auto);	

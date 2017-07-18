@@ -27,7 +27,7 @@ import java.util.Iterator;
 
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
-import fr.tpt.s3.ls_mxc.model.Node;
+import fr.tpt.s3.ls_mxc.model.Actor;
 
 /**
  * Utility class to read and write from/to files
@@ -89,7 +89,7 @@ public class FileUtilities {
 			
 			for(int i = 0; i < nb_nodes; i++){
 				line = line.trim();
-				Node n = new Node(i, Integer.toString(i), 0, 0);
+				Actor n = new Actor(i, Integer.toString(i), 0, 0);
 				n.setC_LO(Integer.parseInt(line));
 				
 				d.getNodes().add(n);
@@ -104,7 +104,7 @@ public class FileUtilities {
 			for (int i = 0; i < nb_nodes; i++){
 				line = line.trim();
 				
-				Node n = d.getNodebyID(i);
+				Actor n = d.getNodebyID(i);
 				n.setC_HI(Integer.parseInt(line));
 				line = br.readLine();
 			}
@@ -115,23 +115,23 @@ public class FileUtilities {
 
 			// Edges are passed afterwards
 			for (int i = 0; i < nb_nodes; i++){
-				Node n = d.getNodebyID(i);
+				Actor n = d.getNodebyID(i);
 				String[] dep = line.split(",");
 				
 				for (int j = 0; j < dep.length; j++){
 					if (dep[j].contains("1")){
-						Node src = d.getNodebyID(j);
+						Actor src = d.getNodebyID(j);
 						@SuppressWarnings("unused")
-						Edge e = new Edge(src, n, false);
+						Edge e = new Edge(src, n);
 					}
 				}
 				line = br.readLine();
 			}
 			
 			// Set the constructed DAG
-			Iterator<Node> it_n = d.getNodes().iterator();
+			Iterator<Actor> it_n = d.getNodes().iterator();
 			while(it_n.hasNext()){
-				Node n = it_n.next();
+				Actor n = it_n.next();
 				n.checkifSink();
 				n.checkifSource();
 				n.checkifSinkinHI();

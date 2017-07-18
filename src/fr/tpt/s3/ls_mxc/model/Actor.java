@@ -20,7 +20,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-public class Node {
+
+public class Actor {
+	
+	static final short LO = 0;
+	static final short HI = 1;
 	
 	private int id;
 	private String name;
@@ -51,7 +55,7 @@ public class Node {
 	/**
 	 * Constructors
 	 */
-	public Node(int id, String name, int c_lo, int c_hi){
+	public Actor(int id, String name, int c_lo, int c_hi){
 		this.setId(id);
 		this.setC_LO(c_lo);
 		this.setC_HI(c_hi);
@@ -82,7 +86,7 @@ public class Node {
 		
 		while (it_e.hasNext()){
 			Edge e = it_e.next();
-			Node dst = e.getDest();
+			Actor dst = e.getDest();
 			if (dst.getC_HI() != 0) {
 				this.setSinkinHI(false);
 				break;
@@ -147,8 +151,8 @@ public class Node {
 	 * Returns all LOpredecessors of a node
 	 * @return
 	 */
-	public Set<Node> getLOPred() {
-		HashSet<Node> result = new HashSet<Node>();
+	public Set<Actor> getLOPred() {
+		HashSet<Actor> result = new HashSet<Actor>();
 		Iterator<Edge> ie = this.getRcv_edges().iterator();
 		
 		while (ie.hasNext()){

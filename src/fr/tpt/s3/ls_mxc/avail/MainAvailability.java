@@ -25,7 +25,7 @@ import fr.tpt.s3.ls_mxc.alloc.LS;
 import fr.tpt.s3.ls_mxc.alloc.SchedulingException;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
-import fr.tpt.s3.ls_mxc.model.Node;
+import fr.tpt.s3.ls_mxc.model.Actor;
 
 public class MainAvailability {
 	
@@ -37,25 +37,25 @@ public class MainAvailability {
 		/*
 		 * Example of DAG
 		 */
-		Node Avoid = new Node(0, "Avoid", 3, 0);
-		Node Nav = new Node(1, "Nav", 5, 6);
-		Node VotA = new Node(2, "VotA", 1, 1);
+		Actor Avoid = new Actor(0, "Avoid", 3, 0);
+		Actor Nav = new Actor(1, "Nav", 5, 6);
+		Actor VotA = new Actor(2, "VotA", 1, 1);
 		VotA.setfMechanism(true);
-		Node Stab = new Node(3, "Stab", 2, 5);
-		Node Log = new Node(4, "Log", 2, 0);
-		Node Shar = new Node(5, "Shar", 3, 0);
-		Node Video = new Node(6, "Video", 7, 0);
-		Node GPS = new Node(7, "GPS", 2, 0);
-		Node Rec = new Node(8, "Rec", 2, 0);
+		Actor Stab = new Actor(3, "Stab", 2, 5);
+		Actor Log = new Actor(4, "Log", 2, 0);
+		Actor Shar = new Actor(5, "Shar", 3, 0);
+		Actor Video = new Actor(6, "Video", 7, 0);
+		Actor GPS = new Actor(7, "GPS", 2, 0);
+		Actor Rec = new Actor(8, "Rec", 2, 0);
 		
-		Edge e0 = new Edge(Avoid, VotA, false);
-		Edge e1 = new Edge(VotA, Nav, false);
-		Edge e2 = new Edge(Nav, Stab, false);
-		Edge e4 = new Edge(VotA, Log, false);
-		Edge e5 = new Edge(Nav, Log, false);
-		Edge e6 = new Edge(Stab, Log, false);
-		Edge e7 = new Edge(Log, Shar, false);
-		Edge e8 = new Edge(GPS, Rec, false);
+		Edge e0 = new Edge(Avoid, VotA);
+		Edge e1 = new Edge(VotA, Nav);
+		Edge e2 = new Edge(Nav, Stab);
+		Edge e4 = new Edge(VotA, Log);
+		Edge e5 = new Edge(Nav, Log);
+		Edge e6 = new Edge(Stab, Log);
+		Edge e7 = new Edge(Log, Shar);
+		Edge e8 = new Edge(GPS, Rec);
 		
 		DAG the_dag = new DAG();
 		
@@ -75,9 +75,9 @@ public class MainAvailability {
 		LS alloc_problem = new LS(15, 2, the_dag);
 		
 		// Set booleans for sink and source
-		Iterator<Node> in = the_dag.getNodes().iterator();
+		Iterator<Actor> in = the_dag.getNodes().iterator();
 		while (in.hasNext()){
-			Node n = in.next();
+			Actor n = in.next();
 			n.checkifSink();
 			n.checkifSinkinHI();
 			n.checkifSource();
@@ -130,7 +130,7 @@ public class MainAvailability {
 		// Set failure probabilities
 		in = the_dag.getNodes().iterator();
 		while (in.hasNext()){
-			Node n = in.next();
+			Actor n = in.next();
 			if (n.getC_HI() == 0)
 				n.setfProb(0.01);
 			else

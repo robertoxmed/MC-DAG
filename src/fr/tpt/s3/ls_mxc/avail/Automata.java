@@ -23,7 +23,7 @@ import java.util.Set;
 
 import fr.tpt.s3.ls_mxc.alloc.LS;
 import fr.tpt.s3.ls_mxc.model.DAG;
-import fr.tpt.s3.ls_mxc.model.Node;
+import fr.tpt.s3.ls_mxc.model.Actor;
 
 public class Automata {
 
@@ -67,7 +67,7 @@ public class Automata {
 			}
 		}
 
-		Node n = d.getNodebyName(task);
+		Actor n = d.getNodebyName(task);
 		State s;
 		if (n.getC_HI() !=  0) {
 			s = new State(nb_states++, task, 1);
@@ -90,7 +90,7 @@ public class Automata {
 			}
 		}
 
-		Node n = d.getNodebyName(task);
+		Actor n = d.getNodebyName(task);
 		State s;
 		s = new State(nb_states++, task, 0);
 		s.setC_t(c_t);
@@ -105,7 +105,7 @@ public class Automata {
 	 * @param s
 	 * @param c_t
 	 */
-	public void addWithTime(List<State> l, Node n, State s, int c_t) {
+	public void addWithTime(List<State> l, Actor n, State s, int c_t) {
 		int idx = 0;
 		Iterator<State> is = l.iterator();
 		State s2 = null;
@@ -190,18 +190,18 @@ public class Automata {
 	 * for each output in the DAG
 	 */
 	public void calcOutputSets() {
-		Iterator<Node> in = d.getLO_outs().iterator();
+		Iterator<Actor> in = d.getLO_outs().iterator();
 		while (in.hasNext()) {
-			Node n = in.next();
-			Set<Node> nPred = n.getLOPred();
+			Actor n = in.next();
+			Set<Actor> nPred = n.getLOPred();
 			
 			// Create the boolean set for the LO output
 			LinkedList<AutoBoolean> bSet = new LinkedList<AutoBoolean>();
 			AutoBoolean a = new AutoBoolean(n.getName(), n.getName());
 			bSet.add(a);
-			Iterator<Node> in2 = nPred.iterator();
+			Iterator<Actor> in2 = nPred.iterator();
 			while (in2.hasNext()) {
-				Node n2 = in2.next();
+				Actor n2 = in2.next();
 				AutoBoolean ab = new AutoBoolean(n2.getName(),  n.getName());
 				bSet.add(ab);
 			}
@@ -344,15 +344,15 @@ public class Automata {
 		s0.setC_t(0);
 		lo_sched.add(s0);
 		
-		Iterator<Node> in = d.getNodes().iterator();
+		Iterator<Actor> in = d.getNodes().iterator();
 		while (in.hasNext()) {
-			Node n = in.next();
+			Actor n = in.next();
 			this.calcCompTimeLO(n.getName());
 		}
 		
 		in = d.getNodes_HI().iterator();
 		while (in.hasNext()) {
-			Node n = in.next();
+			Actor n = in.next();
 			this.calcCompTimeHI(n.getName());
 		}
 				

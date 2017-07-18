@@ -18,8 +18,6 @@ package fr.tpt.s3.ls_mxc.model;
 
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 import fr.tpt.s3.ls_mxc.alloc.LS;
@@ -31,72 +29,17 @@ import fr.tpt.s3.ls_mxc.alloc.LS;
  */
 public class DAG {
 	
-	private Set<Node> Nodes;
-	private Set<Node> Nodes_HI;
-	private Set<Node> LO_outs;
+	private Set<Actor> Nodes;
+	private Set<Actor> Nodes_HI;
+	private Set<Actor> LO_outs;
 	private int critPath;
 	
 	public DAG() {
-		Nodes = new HashSet<Node>();
-		Nodes_HI = new HashSet<Node>();
-		setLO_outs(new HashSet<Node>());
+		Nodes = new HashSet<Actor>();
+		Nodes_HI = new HashSet<Actor>();
+		setLO_outs(new HashSet<Actor>());
 	}
 	
-	/**
-	 * Utility methods
-	 */
-	public List<Node> topoSort() {
-		List<Node> sort_nodes = new LinkedList<Node>();
-		// Set of nodes with no incoming edges
-		Set<Node> not_visited = this.getNodes();
-		
-		
-		// Initialize the topo sort with source nodes
-		Iterator<Node> it_n = Nodes.iterator();
-		while (it_n.hasNext()) {
-			Node n = it_n.next();
-			if (n.isSource())
-				not_visited.add(n);
-			
-			// Initialize edges to not visited
-			Iterator<Edge> it_s = n.getSnd_edges().iterator();
-			Iterator<Edge> it_r = n.getSnd_edges().iterator();
-			while (it_s.hasNext()){
-				it_s.next().setVisited(false);
-			}
-			while (it_r.hasNext()){
-				it_r.next().setVisited(false);
-			}
-		}
-		
-		Iterator<Node> it_n2 = not_visited.iterator();
-		while (it_n2.hasNext()) {
-			// Add the node to the list -> all its parents are in the list
-			Node n = it_n2.next();
-			sort_nodes.add(n);
-			not_visited.remove(n);
-			
-			// Check destination nodes and see if their parents were visited
-			Iterator<Edge> it_e = n.getSnd_edges().iterator();
-			while (it_e.hasNext()) {
-				Edge e = it_e.next();
-				e.setVisited(true);
-				Node m = e.getDest();
-				
-				Iterator<Edge> it_e2 = m.getRcv_edges().iterator();
-				boolean add_m = true;
-				while(it_e2.hasNext()) {
-					if(!it_e2.next().isVisited()) {
-						add_m = false;
-						break;
-					}
-				}
-				if (add_m)
-					not_visited.add(m);
-			}
-		}
-		return sort_nodes;
-	}
 	
 	/**
 	 * Method to get the critical Path.
@@ -124,9 +67,9 @@ public class DAG {
 	 * Sets HI nodes in the corresponding set
 	 */
 	public void setHINodes() {
-		Iterator<Node> in = this.getNodes().iterator();
+		Iterator<Actor> in = this.getNodes().iterator();
 		while (in.hasNext()) {
-			Node n = in.next();
+			Actor n = in.next();
 			if (n.getC_HI() != 0)
 				this.getNodes_HI().add(n);
 		}
@@ -136,9 +79,9 @@ public class DAG {
 	 * Searches for the LO outputs in the DAG
 	 */
 	public void calcLOouts() {
-		Iterator<Node> in = this.getNodes().iterator();
+		Iterator<Actor> in = this.getNodes().iterator();
 		while (in.hasNext()) {
-			Node n = in.next();
+			Actor n = in.next();
 			if (n.getSnd_edges().size() == 0 &&
 					n.getC_HI() == 0) {
 				this.getLO_outs().add(n);
@@ -150,27 +93,27 @@ public class DAG {
 	 * Getters & Setters
 	 * 
 	 */
-	public Set<Node> getNodes() {
+	public Set<Actor> getNodes() {
 		return Nodes;
 	}
-	public void setNodes(Set<Node> nodes) {
+	public void setNodes(Set<Actor> nodes) {
 		Nodes = nodes;
 	}
 	
-	public Node getNodebyID(int id){
-		Iterator<Node> it = Nodes.iterator();
+	public Actor getNodebyID(int id){
+		Iterator<Actor> it = Nodes.iterator();
 		while(it.hasNext()){
-			Node n = it.next();
+			Actor n = it.next();
 			if (n.getId() == id)
 				return n; 
 		}
 		return null;
 	}
 
-	public Node getNodebyName(String name){
-		Iterator<Node> it = Nodes.iterator();
+	public Actor getNodebyName(String name){
+		Iterator<Actor> it = Nodes.iterator();
 		while(it.hasNext()){
-			Node n = it.next();
+			Actor n = it.next();
 			if (n.getName().equalsIgnoreCase(name))
 				return n; 
 		}
@@ -178,18 +121,18 @@ public class DAG {
 	}
 
 	
-	public Set<Node> getNodes_HI() {
+	public Set<Actor> getNodes_HI() {
 		return Nodes_HI;
 	}
 
-	public void setNodes_HI(Set<Node> nodes_HI) {
+	public void setNodes_HI(Set<Actor> nodes_HI) {
 		Nodes_HI = nodes_HI;
 	}
 	
-	public Node getNodeHIbyID(int id){
-		Iterator<Node> it = Nodes_HI.iterator();
+	public Actor getNodeHIbyID(int id){
+		Iterator<Actor> it = Nodes_HI.iterator();
 		while(it.hasNext()){
-			Node n = it.next();
+			Actor n = it.next();
 			if (n.getId() == id)
 				return n; 
 		}
@@ -204,11 +147,11 @@ public class DAG {
 		this.critPath = critPath;
 	}
 
-	public Set<Node> getLO_outs() {
+	public Set<Actor> getLO_outs() {
 		return LO_outs;
 	}
 
-	public void setLO_outs(Set<Node> lO_outs) {
+	public void setLO_outs(Set<Actor> lO_outs) {
 		LO_outs = lO_outs;
 	}
 

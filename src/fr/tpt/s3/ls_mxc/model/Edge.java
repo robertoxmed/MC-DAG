@@ -24,47 +24,34 @@ package fr.tpt.s3.ls_mxc.model;
 public class Edge {
 	
 	// One edge has a src and a destination
-	private Node src;
-	private Node dest;
-	
-	private boolean visited;
-	
-	// To include cost in further implementations
-	// private int cost;
+	private Actor src;
+	private Actor dest;
+
 	
 	/**
 	 * Constructor for the Edge
 	 */
-	public Edge(Node s, Node d, boolean v){
+	public Edge(Actor s, Actor d){
 		this.setSrc(s);
 		s.getSnd_edges().add(this);
 		this.setDest(d);
 		d.getRcv_edges().add(this);
-		this.setVisited(v);
 	}
 	
 	/**
 	 * Getters & Setters	
 	 * 
 	 */
-	public Node getSrc() {
+	public Actor getSrc() {
 		return src;
 	}
-	public void setSrc(Node src) {
+	public void setSrc(Actor src) {
 		this.src = src;
 	}
-	public Node getDest() {
+	public Actor getDest() {
 		return dest;
 	}
-	public void setDest(Node dest) {
+	public void setDest(Actor dest) {
 		this.dest = dest;
 	}
-	public boolean isVisited() {
-		return visited;
-	}
-	public void setVisited(boolean visited) {
-		this.visited = visited;
-	}
-	
-
 }
