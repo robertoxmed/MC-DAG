@@ -5,7 +5,6 @@ import java.io.File;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.apache.commons.cli.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Node;
@@ -17,15 +16,16 @@ import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
 import fr.tpt.s3.ls_mxc.model.Actor;
 
-public class Parser {
+public class MCParser {
 
 	private String inputFile;
 	private String outputFile;
+	// Only references do not have to be instantiated
 	private DAG dag;
 	private LS ls;
 	private Automata auto;
 	
-	public Parser () { }
+	public MCParser () { }
 	
 	public void readXML () {
 		try {
@@ -33,11 +33,10 @@ public class Parser {
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 			Document doc = dBuilder.parse(iFile);
-			doc.getDocumentElement().normalize();
+			doc.getDocumentElement().normalize();	
 			
 			// Instantiate the DAG
 			int nb_actors = 0;
-			dag = new DAG();
 			
 			// List of actors in the DAG
 			NodeList nList = doc.getElementsByTagName("actor");
@@ -86,43 +85,18 @@ public class Parser {
 		}
 	}
 	
+	/**
+	 * Writes the scheduling tables
+	 */
+	public void writeSched () {
+		
+	}
 	
-	
-	
-	public void main (String[] args) {
+	/**
+	 * Writes a model for the PRISM model checker
+	 */
+	public void writePRISM () {
 		
-		/* Parse all options */
-		Options options = new Options();
-		
-		Option input = new Option("i", "input", true, "input file path");
-		input.setRequired(true);
-		options.addOption(input);
-		
-		Option output = new Option("o", "output", true, "output file");
-		output.setRequired(false);
-		options.addOption(output);
-		
-		CommandLineParser parser = new DefaultParser();
-		HelpFormatter formatter = new HelpFormatter();
-		CommandLine cmd;
-		
-		try {
-			cmd = parser.parse(options, args);
-		} catch (ParseException e) {
-			System.out.println(e.getMessage());
-			formatter.printHelp("MC-DAG", options);
-			
-			System.exit(1);
-			return;
-		}
-		
-		this.setInputFile(cmd.getOptionValue("input"));
-		this.setOutputFile(cmd.getOptionValue("output"));
-		
-		/* Parse the input file */
-		readXML();
-		ls = new LS();
-		ls.setMxcDag(dag);
 	}
 	
 	/* Getters and setters */

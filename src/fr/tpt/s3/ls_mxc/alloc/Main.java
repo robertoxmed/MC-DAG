@@ -20,6 +20,9 @@ import java.io.IOException;
 
 import org.apache.commons.cli.*;
 
+import fr.tpt.s3.ls_mxc.model.DAG;
+import fr.tpt.s3.ls_mxc.parser.MCParser;
+
 /**
  * Main class to build the Jar for the allocation problem
  */
@@ -63,11 +66,15 @@ public class Main {
 		
 		/* =============== Read from file and try to solve ================ */
 		
-		FileUtilities fu = new FileUtilities();
-		
+		MCParser mcp = new MCParser();
+		DAG dag = new DAG();
 		LS ls = new LS();
+		mcp.setDag(dag);
+		mcp.setLs(ls);
 		
-		fu.ReadAndInit(inputFilePath, ls);
+		// This creates the dag
+		mcp.readXML();
+		ls.setMxcDag(dag);
 		
 		try {
 			ls.Alloc_All();
