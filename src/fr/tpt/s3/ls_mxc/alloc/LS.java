@@ -646,12 +646,12 @@ public class LS {
 	 */
 	public void Alloc_All() throws SchedulingException{
 		
-		this.calcWeights(1);
+		this.calcWeights(Actor.HI);
 		this.Alloc_HI();
 		
 		//this.printS_HI();
 		
-		this.calcWeights(0);
+		this.calcWeights(Actor.LO);
 		this.Alloc_LO();
 	}
 	

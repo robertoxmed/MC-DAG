@@ -23,8 +23,8 @@ import java.util.Set;
 
 public class Actor {
 	
-	static final short LO = 0;
-	static final short HI = 1;
+	public static final short LO = 0;
+	public static final short HI = 1;
 	
 	private int id;
 	private String name;

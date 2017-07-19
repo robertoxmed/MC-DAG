@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mcsystem>
+	<mcdag name="UAV" deadline="150">
+		
+		<actor name="Avoid">
+			<clo>30</clo>
+			<chi>0</chi>
+		</actor>
+		<actor name="Nav">
+			<clo>50</clo>
+			<chi>70</chi>
+		</actor>
+		<actor name="Stab">
+			<clo>20</clo>
+			<chi>50</chi>
+		</actor>
+		<actor name="Log">
+			<clo>20</clo>
+			<chi>0</chi>
+		</actor>
+		<actor name="Shar">
+			<clo>30</clo>
+			<chi>0</chi>
+		</actor>
+		<actor name="Video">
+			<clo>60</clo>
+			<chi>0</chi>
+		</actor>
+		<actor name="GPS">
+			<clo>20</clo>
+			<chi>0</chi>
+		</actor>
+		<actor name="Rec">
+			<clo>20</clo>
+			<chi>0</chi>
+		</actor>
+
+		<ftm name="VotA">
+			<clo>10</clo>
+			<chi>10</chi>
+		</ftm>
+
+		<ports>
+			<port name="p1" srcActor="Avoid" dstActor="VotA"/>
+			<port name="p2" srcActor="VotA" dstActor="Nav"/>
+			<port name="p3" srcActor="Nav" dstActor="Stab"/>
+			<port name="p4" srcActor="Nav" dstActor="Log"/>
+			<port name="p5" srcActor="VotA" dstActor="Log"/>
+			<port name="p6" srcActor="Stab" dstActor="Log"/>
+			<port name="p7" srcActor="Log" dstActor="Shar"/>
+			<port name="p8" srcActor="GPS" dstActor="Rec"/>
+		</ports>
+	</mcdag>
+	<cores number="2"/>
+</mcsystem>

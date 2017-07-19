@@ -33,6 +33,7 @@ public class DAG {
 	private Set<Actor> Nodes_HI;
 	private Set<Actor> LO_outs;
 	private int critPath;
+	private int deadline;
 	
 	public DAG() {
 		Nodes = new HashSet<Actor>();
@@ -169,6 +170,14 @@ public class DAG {
 
 	public void setLO_outs(Set<Actor> lO_outs) {
 		LO_outs = lO_outs;
+	}
+
+	public int getDeadline() {
+		return deadline;
+	}
+
+	public void setDeadline(int deadline) {
+		this.deadline = deadline;
 	}
 
 	

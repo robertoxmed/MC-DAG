@@ -26,7 +26,7 @@ import fr.tpt.s3.ls_mxc.parser.MCParser;
 /**
  * Main class to build the Jar for the allocation problem
  */
-public class Main {
+public class MainAlloc {
 
 	/**
 	 * 

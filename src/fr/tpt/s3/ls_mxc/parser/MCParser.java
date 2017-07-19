@@ -57,8 +57,14 @@ public class MCParser {
 			File iFile = new File(inputFile);
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+			
+			// Root element
 			Document doc = dBuilder.parse(iFile);
-			doc.getDocumentElement().normalize();	
+			doc.getDocumentElement().normalize();
+			
+			NodeList eList = doc.getElementsByTagName("mcdag");
+			Element eDag = (Element) eList.item(0);
+			dag.setDeadline(Integer.parseInt(eDag.getAttribute("deadline")));
 			
 			// Instantiate the DAG
 			int nb_actors = 0;
@@ -99,8 +105,8 @@ public class MCParser {
 					Element e = (Element) n;
 					// Creating the edge adds it to the corresponding nodes
 					@SuppressWarnings("unused")
-					Edge ed = new Edge(dag.getNodebyName(e.getElementsByTagName("src").item(0).getTextContent()),
-									   dag.getNodebyName(e.getElementsByTagName("src").item(0).getTextContent()));
+					Edge ed = new Edge(dag.getNodebyName(e.getAttribute("srcActor")),
+									   dag.getNodebyName(e.getAttribute("dstActor")));
 				}
 			}
 			

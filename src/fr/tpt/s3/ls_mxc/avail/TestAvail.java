@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Roberto Medina
+ * Written by Roberto Medina (rmedina@telecom-paristech.fr)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
 package fr.tpt.s3.ls_mxc.avail;
 
 import java.io.IOException;
@@ -11,8 +27,8 @@ import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
 import fr.tpt.s3.ls_mxc.model.Actor;
 
-public class Main {
-		
+public class TestAvail {
+	
 	@SuppressWarnings("unused")
 	public static void main (String[] argv) throws IOException {
 		
@@ -21,60 +37,41 @@ public class Main {
 		/*
 		 * Example of DAG
 		 */
-		Actor A = new Actor(0, "At", 2, 3);
-		Actor B = new Actor(1, "Bt", 2, 0);
-		Actor C = new Actor(2, "Ct", 2, 0);
-		Actor D = new Actor(3, "Dt", 2, 0);
-		Actor E = new Actor(4, "Et", 2, 0);
-		Actor F = new Actor(5, "Ft", 2, 0);
-		Actor G = new Actor(6, "Gt", 2, 0);
-		Actor H = new Actor(7, "Ht", 2, 0);
-		Actor I = new Actor(8, "It", 2, 0);
-		Actor J = new Actor(9, "Jt", 2, 0);
-		Actor K = new Actor(10, "Kt", 2, 0);
-		Actor L = new Actor(11, "Lt", 2, 0);
-		Actor M = new Actor(12, "Mt", 2, 0);
-		Actor N = new Actor(13, "Nt", 2, 0);
+		Actor Avoid = new Actor(0, "Avoid", 3, 0);
+		Actor Nav = new Actor(1, "Nav", 5, 6);
+		Actor VotA = new Actor(2, "VotA", 1, 1);
+		VotA.setfMechanism(true);
+		Actor Stab = new Actor(3, "Stab", 2, 5);
+		Actor Log = new Actor(4, "Log", 2, 0);
+		Actor Shar = new Actor(5, "Shar", 3, 0);
+		Actor Video = new Actor(6, "Video", 7, 0);
+		Actor GPS = new Actor(7, "GPS", 2, 0);
+		Actor Rec = new Actor(8, "Rec", 2, 0);
 		
-		Edge e0 = new Edge(A, B);
-		Edge e1 = new Edge(B, C);
-		Edge e2 = new Edge(C, D);
-		Edge e3 = new Edge(E, F);
-		Edge e4 = new Edge(F, G);
-		Edge e5 = new Edge(H, I);
-		Edge e6 = new Edge(K, L);
-		Edge e7 = new Edge(L, M);
+		Edge e0 = new Edge(Avoid, VotA);
+		Edge e1 = new Edge(VotA, Nav);
+		Edge e2 = new Edge(Nav, Stab);
+		Edge e4 = new Edge(VotA, Log);
+		Edge e5 = new Edge(Nav, Log);
+		Edge e6 = new Edge(Stab, Log);
+		Edge e7 = new Edge(Log, Shar);
+		Edge e8 = new Edge(GPS, Rec);
 		
 		DAG the_dag = new DAG();
 		
-		the_dag.getNodes().add(A);
-		the_dag.getNodes().add(B);
-		the_dag.getNodes().add(C);
-		the_dag.getNodes().add(D);
-		the_dag.getNodes().add(E);
-		the_dag.getNodes().add(F);
-		the_dag.getNodes().add(G);
-		the_dag.getNodes().add(H);
-		the_dag.getNodes().add(I);
-		the_dag.getNodes().add(J);
-		the_dag.getNodes().add(K);
-		the_dag.getNodes().add(L);
-		the_dag.getNodes().add(M);
-		the_dag.getNodes().add(N);
-
-		the_dag.setHINodes();
-		the_dag.calcLOouts();
+		the_dag.getNodes().add(Avoid);
+		the_dag.getNodes().add(VotA);
+		the_dag.getNodes().add(Nav);
+		the_dag.getNodes().add(Stab);
+		the_dag.getNodes().add(Log);
+		the_dag.getNodes().add(Shar);
+		the_dag.getNodes().add(Video);
+		the_dag.getNodes().add(GPS);
+		the_dag.getNodes().add(Rec);
 		
-		LS alloc_problem = new LS(16, 2, the_dag);
+		the_dag.sanityChecks();
 		
-		// Set booleans for sink and source
-		Iterator<Actor> in = the_dag.getNodes().iterator();
-		while (in.hasNext()){
-			Actor n = in.next();
-			n.checkifSink();
-			n.checkifSinkinHI();
-			n.checkifSource();
-		}
+		LS alloc_problem = new LS(15, 2, the_dag);
 		
 		// HLFET Levels
 		alloc_problem.calcWeights(0); // Weights in LO mode
@@ -121,7 +118,7 @@ public class Main {
 		System.out.println("------------- Construction of the Automata -------------");
 		
 		// Set failure probabilities
-		in = the_dag.getNodes().iterator();
+		Iterator <Actor> in = the_dag.getNodes().iterator();
 		while (in.hasNext()){
 			Actor n = in.next();
 			if (n.getC_HI() == 0)
@@ -129,8 +126,10 @@ public class Main {
 			else
 				n.setfProb(0.001);
 		}
+		
 		FTM v = new FTM(3, "VotA");
 		v.createVoter();
+		v.printVoter();
 		Automata auto = new Automata(alloc_problem, the_dag);
 				
 		auto.createAutomata();
@@ -141,7 +140,5 @@ public class Main {
 		FileUtilities fu = new FileUtilities();
 		fu.writeModelToFile("test.pm", lv, the_dag, auto);	
 	}
-
-
 
 }
