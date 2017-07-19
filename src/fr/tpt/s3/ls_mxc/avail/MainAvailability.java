@@ -56,15 +56,16 @@ public class MainAvailability {
 		LS ls = new LS();
 		Automata auto = new Automata(ls, dag);
 		MCParser mcp = new MCParser(inputFilePath, outputFilePath, dag, ls);
-		ls.setMxcDag(dag);
 		mcp.readXML();
+		ls.setDeadline(dag.getDeadline());
 		
 		try {
-			ls.Alloc_All();
+			ls.AllocAll();
 		} catch (SchedulingException e) {
 			e.getMessage();
 		}
 		ls.printS_HI();
+		ls.printS_LO();
 		System.out.println("Finished exec");
 
 	}

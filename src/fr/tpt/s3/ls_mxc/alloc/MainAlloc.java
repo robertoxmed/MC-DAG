@@ -75,7 +75,7 @@ public class MainAlloc {
 		ls.setMxcDag(dag);
 		
 		try {
-			ls.Alloc_All();
+			ls.AllocAll();
 		} catch (SchedulingException se) {
 			System.out.println(se.getMessage());
 			

@@ -96,7 +96,7 @@ public class TestAvail {
 		 */
 		
 		try {
-			alloc_problem.Alloc_HI();
+			alloc_problem.AllocHI();
 		} catch (SchedulingException e) {
 			System.out.println(e.getMessage());
 		}
@@ -106,7 +106,7 @@ public class TestAvail {
 		System.out.println("-----------------------------------------");
 
 		try {
-			alloc_problem.Alloc_LO();
+			alloc_problem.AllocLO();
 		} catch (SchedulingException e) {
 			System.out.println(e.getMessage());
 		}

@@ -47,6 +47,7 @@ public class MCParser {
 		setOutputFile(oFile);
 		setDag(dag);
 		setLs(ls);
+		ls.setMxcDag(dag);
 	}
 	
 	/**
@@ -110,6 +111,10 @@ public class MCParser {
 				}
 			}
 			
+			NodeList cList = doc.getElementsByTagName("cores");
+			Element c = (Element) cList.item(0);
+			ls.setNbCores(Integer.parseInt(c.getAttribute("number")));
+			dag.sanityChecks();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

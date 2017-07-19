@@ -34,10 +34,10 @@ import fr.tpt.s3.ls_mxc.model.Actor;
 public class LS {
 	
 	// DAG to be scheduled
-	private DAG mxc_dag;
+	private DAG mcDag;
 	
 	// Architecture, only nb cores atm
-	private int nb_cores;
+	private int nbCores;
 	private int deadline;
 	
 	// Weights to calculate HLFET levels
@@ -65,7 +65,7 @@ public class LS {
 	 */
 	public LS(int dln, int cores, DAG d){
 		this.setDeadline(dln);
-		this.setNb_cores(cores);
+		this.setNbCores(cores);
 		this.setMxcDag(d);
 	}
 	
@@ -76,10 +76,10 @@ public class LS {
 	 */
 	public void calcWeights(int mode) {
 		
-		weights_LO = new int[mxc_dag.getNodes().size()];
-		weights_HI = new int[mxc_dag.getNodes().size()];
+		weights_LO = new int[mcDag.getNodes().size()];
+		weights_HI = new int[mcDag.getNodes().size()];
 		
-		Iterator<Actor> it_n = mxc_dag.getNodes().iterator();
+		Iterator<Actor> it_n = mcDag.getNodes().iterator();
 		while(it_n.hasNext()){
 			Actor n = it_n.next();
 			if(mode == 0) { // LO mode
@@ -96,14 +96,14 @@ public class LS {
 	 */
 	public void calcWeightsB() {
 		
-		weights_B = new int[mxc_dag.getNodes().size()];
+		weights_B = new int[mcDag.getNodes().size()];
 		
-		Iterator<Actor> it_n = mxc_dag.getNodes().iterator();
+		Iterator<Actor> it_n = mcDag.getNodes().iterator();
 		while(it_n.hasNext()){
 			Actor n = it_n.next();
 			if (n.getC_HI() !=  0) {
-				weights_B[n.getId()] = HLFET_level(n, 0) + mxc_dag.getCritPath()*2; // Add constant
-				n.setWeight_B(n.getWeight_LO()+mxc_dag.getCritPath()*2);
+				weights_B[n.getId()] = HLFET_level(n, 0) + mcDag.getCritPath()*2; // Add constant
+				n.setWeight_B(n.getWeight_LO()+mcDag.getCritPath()*2);
 			} else {
 				weights_B[n.getId()] = HLFET_level(n, 0);
 			}
@@ -166,23 +166,23 @@ public class LS {
 	 * for HI tasks in HI mode.
 	 * @throws SchedulingException
 	 */
-	public void Alloc_HI() throws SchedulingException{
+	public void AllocHI() throws SchedulingException{
 		
 		/* =============================================
 		 *  Initialization of variables used by the method & class
 		 ================================================*/
-		S_HI = new String[deadline][nb_cores];
+		S_HI = new String[deadline][nbCores];
 		// Initialize with 0s
-		for (int c = 0; c < nb_cores; c++) {
+		for (int c = 0; c < nbCores; c++) {
 			for(int t = 0; t < deadline; t++) {
 				S_HI[t][c] = "-";
 			}
 		}
 			
-		Start_HI = new int[mxc_dag.getNodes().size()];
-		int[] t_hi = new int[mxc_dag.getNodes().size()];
+		Start_HI = new int[mcDag.getNodes().size()];
+		int[] t_hi = new int[mcDag.getNodes().size()];
 		
-		Iterator<Actor> it_n = mxc_dag.getNodes().iterator(); 
+		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
 		// Ready list of tasks that have their dependencies met
 		LinkedList<Actor> ready_hi = new LinkedList<Actor>();
 		// List of recently finished tasks -> to activate new ones
@@ -225,7 +225,7 @@ public class LS {
 //				throw se;
 //			}
 			
-			for(int c = 0; c < nb_cores; c++) {
+			for(int c = 0; c < nbCores; c++) {
 				if (li_it.hasNext()){
 					Actor n = li_it.next(); // Get head of the list
 					S_HI[t][c] = n.getName(); // Give the slot to the task
@@ -276,21 +276,21 @@ public class LS {
 	 * Needs to be called after Alloc_HI.
 	 * @throws SchedulingException
 	 */
-	public void Alloc_LO() throws SchedulingException{
+	public void AllocLO() throws SchedulingException{
 		/* =============================================
 		 *  Initialization of variables used by the method
 		 ================================================*/
-		S_LO = new String[deadline][nb_cores];
+		S_LO = new String[deadline][nbCores];
 		// Initialize with 0s
-		for (int c = 0; c < nb_cores; c++) {
+		for (int c = 0; c < nbCores; c++) {
 			for(int t = 0; t < deadline; t++) {
 				S_LO[t][c] = "-";
 			}
 		}
 			
-		int[] t_lo = new int[mxc_dag.getNodes().size()];
+		int[] t_lo = new int[mcDag.getNodes().size()];
 		
-		Iterator<Actor> it_n = mxc_dag.getNodes().iterator(); 
+		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
 		// Ready list of tasks that have their dependencies met
 		LinkedList<Actor> ready_lo = new LinkedList<Actor>();
 		// List of recently finished tasks -> to activate new ones
@@ -325,7 +325,7 @@ public class LS {
 		ListIterator<Actor> li_it = ready_lo.listIterator();
 		for(int t = 0; t < deadline; t++){
 			// For each slot check if it's an WC activation time
-			if (! checkFreeSlot(t_lo, mxc_dag.getNodes().size(), (deadline - t) * nb_cores)){
+			if (! checkFreeSlot(t_lo, mcDag.getNodes().size(), (deadline - t) * nbCores)){
 				SchedulingException se = new SchedulingException("Alloc LO : Not enough slot lefts");
 				throw se;
 			}
@@ -333,7 +333,7 @@ public class LS {
 			checkStartHI(ready_lo, t, Start_HI, t_lo);
 			
 			
-			for(int c = 0; c < nb_cores; c++) {
+			for(int c = 0; c < nbCores; c++) {
 				if (li_it.hasNext()){
 					Actor n = li_it.next(); // Get head of the list
 					
@@ -386,17 +386,17 @@ public class LS {
 		/* =============================================
 		 *  Initialization of variables used by the method
 		 ================================================*/
-		S_B = new String[deadline][nb_cores];
+		S_B = new String[deadline][nbCores];
 		// Initialize with 0s
-		for (int c = 0; c < nb_cores; c++) {
+		for (int c = 0; c < nbCores; c++) {
 			for(int t = 0; t < deadline; t++) {
 				S_B[t][c] = "-";
 			}
 		}
 			
-		int[] t_lo = new int[mxc_dag.getNodes().size()];
+		int[] t_lo = new int[mcDag.getNodes().size()];
 		
-		Iterator<Actor> it_n = mxc_dag.getNodes().iterator(); 
+		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
 		// Ready list of tasks that have their dependencies met
 		LinkedList<Actor> ready_lo = new LinkedList<Actor>();
 		// List of recently finished tasks -> to activate new ones
@@ -430,12 +430,12 @@ public class LS {
 		ListIterator<Actor> li_it = ready_lo.listIterator();
 		for(int t = 0; t < deadline; t++){
 			// For each slot check if it's an WC activation time
-			if (! checkFreeSlot(t_lo, mxc_dag.getNodes().size(), (deadline - t) * nb_cores)){
+			if (! checkFreeSlot(t_lo, mcDag.getNodes().size(), (deadline - t) * nbCores)){
 				SchedulingException se = new SchedulingException("Alloc B : Not enough slot lefts");
 				throw se;
 			}			
 			
-			for(int c = 0; c < nb_cores; c++) {
+			for(int c = 0; c < nbCores; c++) {
 				if (li_it.hasNext()){
 					Actor n = li_it.next(); // Get head of the list
 					
@@ -490,7 +490,7 @@ public class LS {
 	 */
 	public boolean checkStartHI(LinkedList<Actor> ready_lo, int t, int[] start_hi, int[] t_lo){
 		boolean ret = false;
-		Iterator<Actor> it_n = mxc_dag.getNodes().iterator();
+		Iterator<Actor> it_n = mcDag.getNodes().iterator();
 		while (it_n.hasNext()){
 			Actor n = it_n.next();
 			if (start_hi[n.getId()] == t && t_lo[n.getId()] != 0 && n.getC_HI() != 0){
@@ -606,7 +606,7 @@ public class LS {
 	 * Prints the S_HI table & start times
 	 */
 	public void printS_HI(){
-		for (int c = 0; c < nb_cores; c++) {
+		for (int c = 0; c < nbCores; c++) {
 			for(int t = 0; t < deadline; t++) {
 				System.out.print(S_HI[t][c]+" | ");
 			}
@@ -620,7 +620,7 @@ public class LS {
 	 * Prints the S_LO table
 	 */
 	public void printS_LO(){
-		for (int c = 0; c < nb_cores; c++) {
+		for (int c = 0; c < nbCores; c++) {
 			for(int t = 0; t < deadline; t++) {
 				System.out.print(S_LO[t][c]+" | ");
 			}
@@ -632,7 +632,7 @@ public class LS {
 	 * Prints the S_HLFET_HI LO table table
 	 */
 	public void printS_HLFETHI(){
-		for (int c = 0; c < nb_cores; c++) {
+		for (int c = 0; c < nbCores; c++) {
 			for(int t = 0; t < deadline; t++) {
 				System.out.print(S_HLFET_HI[t][c]+" | ");
 			}
@@ -644,15 +644,13 @@ public class LS {
 	 * Does the whole allocaiton
 	 * @throws SchedulingException 
 	 */
-	public void Alloc_All() throws SchedulingException{
-		
+	public void AllocAll() throws SchedulingException{
+		System.out.println("AllocAll > "+this.getDeadline()+" cores "+this.getNbCores());
 		this.calcWeights(Actor.HI);
-		this.Alloc_HI();
-		
-		//this.printS_HI();
+		this.AllocHI();
 		
 		this.calcWeights(Actor.LO);
-		this.Alloc_LO();
+		this.AllocLO();
 	}
 	
 	public void CheckBaruah() throws SchedulingException{
@@ -690,17 +688,17 @@ public class LS {
 		/* =============================================
 		 *  Initialization of variables used by the method
 		 ================================================*/
-		S_HLFET = new String[deadline][nb_cores];
+		S_HLFET = new String[deadline][nbCores];
 		// Initialize with 0s
-		for (int c = 0; c < nb_cores; c++) {
+		for (int c = 0; c < nbCores; c++) {
 			for(int t = 0; t < deadline; t++) {
 				S_HLFET[t][c] = "-";
 			}
 		}
 			
-		int[] t_lo = new int[mxc_dag.getNodes().size()];
+		int[] t_lo = new int[mcDag.getNodes().size()];
 		
-		Iterator<Actor> it_n = mxc_dag.getNodes().iterator(); 
+		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
 		// Ready list of tasks that have their dependencies met
 		LinkedList<Actor> ready_lo = new LinkedList<Actor>();
 		// List of recently finished tasks -> to activate new ones
@@ -734,12 +732,12 @@ public class LS {
 		ListIterator<Actor> li_it = ready_lo.listIterator();
 		for(int t = 0; t < deadline; t++){
 			// For each slot check if it's an WC activation time
-			if (! checkFreeSlot(t_lo, mxc_dag.getNodes().size(), (deadline - t) * nb_cores)){
+			if (! checkFreeSlot(t_lo, mcDag.getNodes().size(), (deadline - t) * nbCores)){
 				return false;
 			}
 			
 			
-			for(int c = 0; c < nb_cores; c++) {
+			for(int c = 0; c < nbCores; c++) {
 				if (li_it.hasNext()){
 					Actor n = li_it.next(); // Get head of the list
 					
@@ -788,17 +786,17 @@ public class LS {
 		/* =============================================
 		 *  Initialization of variables used by the method
 		 ================================================*/
-		S_HLFET_HI = new String[deadline][nb_cores];
+		S_HLFET_HI = new String[deadline][nbCores];
 		// Initialize with 0s
-		for (int c = 0; c < nb_cores; c++) {
+		for (int c = 0; c < nbCores; c++) {
 			for(int t = 0; t < deadline; t++) {
 				S_HLFET_HI[t][c] = "-";
 			}
 		}
 			
-		int[] t_hi = new int[mxc_dag.getNodes().size()];
+		int[] t_hi = new int[mcDag.getNodes().size()];
 		
-		Iterator<Actor> it_n = mxc_dag.getNodes().iterator(); 
+		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
 		// Ready list of tasks that have their dependencies met
 		LinkedList<Actor> ready_hi = new LinkedList<Actor>();
 		// List of recently finished tasks -> to activate new ones
@@ -835,11 +833,11 @@ public class LS {
 		for(int t = 0 ; t < deadline ; t++){
 			
 			//Check if there is enough slots to finish executing tasks
-			if (! checkFreeSlot(t_hi, mxc_dag.getNodes().size(), (deadline - t) * nb_cores)){
+			if (! checkFreeSlot(t_hi, mcDag.getNodes().size(), (deadline - t) * nbCores)){
 				return false;
 			}
 			
-			for(int c = 0; c < nb_cores; c++) {
+			for(int c = 0; c < nbCores; c++) {
 				if (li_it.hasNext()){
 					Actor n = li_it.next(); // Get head of the list
 					S_HLFET_HI[t][c] = n.getName(); // Give the slot to the task
@@ -892,18 +890,18 @@ public class LS {
 	 * Getters & Setters
 	 */
 	public void setMxcDag(DAG d){
-		this.mxc_dag = d;
+		this.mcDag = d;
 	}
 	public DAG getMxcDag(){
-		return this.mxc_dag;
+		return this.mcDag;
 	}
 	
-	public int getNb_cores() {
-		return nb_cores;
+	public int getNbCores() {
+		return nbCores;
 	}
 
-	public void setNb_cores(int nb_cores) {
-		this.nb_cores = nb_cores;
+	public void setNbCores(int nb_cores) {
+		this.nbCores = nb_cores;
 	}
 
 	public int getDeadline() {

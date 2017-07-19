@@ -61,7 +61,7 @@ public class Automata {
 	public void calcCompTimeLO (String task) {
 		int c_t = 0;
 		for (int i = 0; i < ls.getDeadline(); i++){
-			for (int j = 0; j < ls.getNb_cores(); j++) {
+			for (int j = 0; j < ls.getNbCores(); j++) {
 				if (ls.getS_LO()[i][j].contentEquals(task))
 					c_t = i;
 			}
@@ -84,7 +84,7 @@ public class Automata {
 	public void calcCompTimeHI (String task) {
 		int c_t = 0;
 		for (int i = 0; i < ls.getDeadline(); i++){
-			for (int j = 0; j < ls.getNb_cores(); j++) {
+			for (int j = 0; j < ls.getNbCores(); j++) {
 				if (ls.getS_HI()[i][j].contentEquals(task))
 					c_t = i;
 			}
