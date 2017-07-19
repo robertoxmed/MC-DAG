@@ -66,11 +66,9 @@ public class Main {
 		
 		/* =============== Read from file and try to solve ================ */
 		
-		MCParser mcp = new MCParser();
 		DAG dag = new DAG();
 		LS ls = new LS();
-		mcp.setDag(dag);
-		mcp.setLs(ls);
+		MCParser mcp = new MCParser(inputFilePath, outputFilePath, dag, ls);
 		
 		// This creates the dag
 		mcp.readXML();
@@ -97,7 +95,7 @@ public class Main {
 		// User specified a file to write to
 		if (outputFilePath != null) {
 			try {
-				fu.writeToFile(outputFilePath, ls);
+				mcp.writeSched();
 			} catch (IOException ie) {
 				System.out.println("Write to file " + ie.getMessage());
 				System.exit(3);

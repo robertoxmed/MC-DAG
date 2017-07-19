@@ -1,139 +1,23 @@
 package fr.tpt.s3.ls_mxc.avail;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
+
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
+
 import java.util.Iterator;
 import java.util.List;
 
-import fr.tpt.s3.ls_mxc.alloc.LS;
 import fr.tpt.s3.ls_mxc.model.DAG;
-import fr.tpt.s3.ls_mxc.model.Edge;
 import fr.tpt.s3.ls_mxc.model.Actor;
 
 public class FileUtilities {
 
 	public FileUtilities () {}
 	
-	/**
-	 * Reads and inits the data structures
-	 * @param file
-	 * @param ls
-	 */
-	public void ReadAndInit(String file, LS ls, Automata aut, List<Voter> lv) {
-		
-		String line;
-		int nb_nodes = 0;
-		
-		try {
-			// Open file
-			FileInputStream fr = new FileInputStream(file);
-			
-			// Initiate the buffer reader
-			BufferedReader br = new BufferedReader(new InputStreamReader(fr));
-			
-			line = br.readLine();
-			// Read comments and empty lines
-			while ((line.length() == 0) || (line.charAt(0) == '#')) 
-				line = br.readLine();
-			
-			// First line is the nb of nodes
-			line = line.trim();
-			nb_nodes = Integer.parseInt(line);
-			
-			line = br.readLine();
-			// Read comments and empty lines
-			while ((line.length() == 0) || (line.charAt(0) == '#')) 
-				line = br.readLine();
-			
-			// Second line is the number of cores
-			line = line.trim();
-			ls.setNb_cores(Integer.parseInt(line));
-			
-			line = br.readLine();
-			// Read comments and empty lines
-			while ((line.length() == 0) || (line.charAt(0) == '#')) 
-				line = br.readLine();
-			
-			// Third line is the deadline
-			line = line.trim();
-			ls.setDeadline(Integer.parseInt(line));
-			
-			line = br.readLine();
-			// Read comments and empty lines
-			while ((line.length() == 0) || (line.charAt(0) == '#')) 
-				line = br.readLine();
-			
-			// Instantiate the DAG
-			DAG d = new DAG();
-			
-			// C LOs are passed afterwards
-			
-			for(int i = 0; i < nb_nodes; i++){
-				line = line.trim();
-				Actor n = new Actor(i, Integer.toString(i), 0, 0);
-				n.setC_LO(Integer.parseInt(line));
-				
-				d.getNodes().add(n);
-				line = br.readLine();
-			}
-			
-			// Read comments and empty lines
-			while ((line.length() == 0) || (line.charAt(0) == '#')) 
-				line = br.readLine();
-			
-			// C HIs are passed afterwards
-			for (int i = 0; i < nb_nodes; i++){
-				line = line.trim();
-				
-				Actor n = d.getNodebyID(i);
-				n.setC_HI(Integer.parseInt(line));
-				line = br.readLine();
-			}
-			
-			// Read comments and empty lines
-			while ((line.length() == 0) || (line.charAt(0) == '#')) 
-				line = br.readLine();
-
-			// Edges are passed afterwards
-			for (int i = 0; i < nb_nodes; i++){
-				Actor n = d.getNodebyID(i);
-				String[] dep = line.split(",");
-				
-				for (int j = 0; j < dep.length; j++){
-					if (dep[j].contains("1")){
-						Actor src = d.getNodebyID(j);
-						@SuppressWarnings("unused")
-						Edge e = new Edge(src, n);
-					}
-				}
-				line = br.readLine();
-			}
-			
-			// Set the constructed DAG
-			Iterator<Actor> it_n = d.getNodes().iterator();
-			while(it_n.hasNext()){
-				Actor n = it_n.next();
-				n.checkifSink();
-				n.checkifSource();
-				n.checkifSinkinHI();
-			}
-			
-			ls.setMxcDag(d);
-			br.close();
-			fr.close();
-		} catch(IOException e) {
-			System.out.println("Unable to open file "+file+" exception "+e.getMessage()); 
-		}
-		
-	}
 	
-	
-	public void writeVoters (BufferedWriter out, Voter vot) throws IOException {
+	public void writeVoters (BufferedWriter out, FTM vot) throws IOException {
 		
 		out.write("module voter\n");
 		out.write("\tv: [0..20] init 0;\n");
@@ -293,7 +177,7 @@ public class FileUtilities {
 	}
 	
 	
-	public void writeModelToFile(String filename, List<Voter> voters, DAG d, Automata aut) throws IOException {
+	public void writeModelToFile(String filename, List<FTM> voters, DAG d, Automata aut) throws IOException {
 		
 		BufferedWriter out = null;
 		try {
@@ -303,8 +187,9 @@ public class FileUtilities {
 			out = new BufferedWriter(fstream);
 			
 			out.write("dtmc\n\n");
+			out.write("const int D;\n\n");
 			
-			Iterator<Voter> iv = voters.iterator();
+			Iterator<FTM> iv = voters.iterator();
 			while (iv.hasNext()) {
 				writeVoters(out, iv.next());
 			}

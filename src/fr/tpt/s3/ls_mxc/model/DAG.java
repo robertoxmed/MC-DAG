@@ -40,6 +40,22 @@ public class DAG {
 		setLO_outs(new HashSet<Actor>());
 	}
 	
+	/**
+	 * Method to set all flags once the DAG has been instantiated
+	 * and initialized
+	 */
+	public void sanityChecks () {
+		this.setHINodes();
+		this.calcLOouts();
+		Iterator<Actor> in = this.getNodes().iterator();
+		while (in.hasNext()){
+			Actor n = in.next();
+			n.checkifSink();
+			n.checkifSinkinHI();
+			n.checkifSource();
+		}
+	}
+	
 	
 	/**
 	 * Method to get the critical Path.

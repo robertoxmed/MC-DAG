@@ -4,7 +4,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class Voter {
+public class FTM {
 	// Nb of voters need to be odd to have a majority
 	private int nbVot;
 	private String name;
@@ -12,7 +12,7 @@ public class Voter {
 	private List<Transition> transitions;
 	private List<Transition> f_trans;
 
-	public Voter (int nb_vot, String name) {
+	public FTM (int nb_vot, String name) {
 		this.nbVot = nb_vot;
 		this.name = name;
 		this.states = new LinkedList<State>();

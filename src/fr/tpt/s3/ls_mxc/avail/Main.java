@@ -129,13 +129,13 @@ public class Main {
 			else
 				n.setfProb(0.001);
 		}
-		Voter v = new Voter(3, "VotA");
+		FTM v = new FTM(3, "VotA");
 		v.createVoter();
 		Automata auto = new Automata(alloc_problem, the_dag);
 				
 		auto.createAutomata();
 		
-		List<Voter> lv = new LinkedList<Voter>();
+		List<FTM> lv = new LinkedList<FTM>();
 		lv.add(v);
 		
 		FileUtilities fu = new FileUtilities();

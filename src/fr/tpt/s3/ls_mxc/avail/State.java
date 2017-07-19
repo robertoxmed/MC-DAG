@@ -18,7 +18,7 @@ package fr.tpt.s3.ls_mxc.avail;
 
 public class State {
 	
-	private String task;
+	private String name;
 	private int mode;
 	private int id;
 	private int c_t;
@@ -32,10 +32,10 @@ public class State {
 	}
 	
 	public String getTask() {
-		return task;
+		return name;
 	}
 	public void setTask(String task) {
-		this.task = task;
+		this.name = task;
 	}
 	public int getMode() {
 		return mode;

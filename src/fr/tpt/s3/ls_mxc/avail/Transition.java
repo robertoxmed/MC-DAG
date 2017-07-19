@@ -20,6 +20,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Transition {
+	
 	private State src;
 	private State destOk;
 	private State destFail;

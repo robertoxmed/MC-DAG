@@ -33,8 +33,8 @@ public class Edge {
 	 */
 	public Edge(Actor s, Actor d){
 		this.setSrc(s);
-		s.getSnd_edges().add(this);
 		this.setDest(d);
+		s.getSnd_edges().add(this);
 		d.getRcv_edges().add(this);
 	}
 	

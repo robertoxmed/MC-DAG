@@ -69,19 +69,9 @@ public class MainAvailability {
 		the_dag.getNodes().add(GPS);
 		the_dag.getNodes().add(Rec);
 		
-		the_dag.setHINodes();
-		the_dag.calcLOouts();
+		the_dag.sanityChecks();
 		
 		LS alloc_problem = new LS(15, 2, the_dag);
-		
-		// Set booleans for sink and source
-		Iterator<Actor> in = the_dag.getNodes().iterator();
-		while (in.hasNext()){
-			Actor n = in.next();
-			n.checkifSink();
-			n.checkifSinkinHI();
-			n.checkifSource();
-		}
 		
 		// HLFET Levels
 		alloc_problem.calcWeights(0); // Weights in LO mode
@@ -128,7 +118,7 @@ public class MainAvailability {
 		System.out.println("------------- Construction of the Automata -------------");
 		
 		// Set failure probabilities
-		in = the_dag.getNodes().iterator();
+		Iterator <Actor> in = the_dag.getNodes().iterator();
 		while (in.hasNext()){
 			Actor n = in.next();
 			if (n.getC_HI() == 0)
@@ -137,14 +127,14 @@ public class MainAvailability {
 				n.setfProb(0.001);
 		}
 		
-		Voter v = new Voter(3, "VotA");
+		FTM v = new FTM(3, "VotA");
 		v.createVoter();
 		v.printVoter();
 		Automata auto = new Automata(alloc_problem, the_dag);
 				
 		auto.createAutomata();
 		
-		List<Voter> lv = new LinkedList<Voter>();
+		List<FTM> lv = new LinkedList<FTM>();
 		lv.add(v);
 		
 		FileUtilities fu = new FileUtilities();
