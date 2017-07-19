@@ -64,12 +64,7 @@ public class MainAvailability {
 		} catch (SchedulingException e) {
 			e.getMessage();
 		}
-		ls.printS_HI();
-		ls.printS_LO();
-		System.out.println("Finished exec");
 
 	}
-
-
 
 }

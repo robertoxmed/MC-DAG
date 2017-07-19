@@ -29,15 +29,15 @@ import fr.tpt.s3.ls_mxc.alloc.LS;
  */
 public class DAG {
 	
-	private Set<Actor> Nodes;
-	private Set<Actor> Nodes_HI;
-	private Set<Actor> LO_outs;
+	private Set<Actor> nodes;
+	private Set<Actor> nodesHI;
+	private Set<Actor> loOuts;
 	private int critPath;
 	private int deadline;
 	
 	public DAG() {
-		Nodes = new HashSet<Actor>();
-		Nodes_HI = new HashSet<Actor>();
+		nodes = new HashSet<Actor>();
+		nodesHI = new HashSet<Actor>();
 		setLO_outs(new HashSet<Actor>());
 	}
 	
@@ -111,14 +111,14 @@ public class DAG {
 	 * 
 	 */
 	public Set<Actor> getNodes() {
-		return Nodes;
+		return nodes;
 	}
-	public void setNodes(Set<Actor> nodes) {
-		Nodes = nodes;
+	public void setNodes(Set<Actor> Nodes) {
+		nodes = Nodes;
 	}
 	
 	public Actor getNodebyID(int id){
-		Iterator<Actor> it = Nodes.iterator();
+		Iterator<Actor> it = nodes.iterator();
 		while(it.hasNext()){
 			Actor n = it.next();
 			if (n.getId() == id)
@@ -128,7 +128,7 @@ public class DAG {
 	}
 
 	public Actor getNodebyName(String name){
-		Iterator<Actor> it = Nodes.iterator();
+		Iterator<Actor> it = nodes.iterator();
 		while(it.hasNext()){
 			Actor n = it.next();
 			if (n.getName().equalsIgnoreCase(name))
@@ -139,15 +139,15 @@ public class DAG {
 
 	
 	public Set<Actor> getNodes_HI() {
-		return Nodes_HI;
+		return nodesHI;
 	}
 
 	public void setNodes_HI(Set<Actor> nodes_HI) {
-		Nodes_HI = nodes_HI;
+		nodesHI = nodes_HI;
 	}
 	
 	public Actor getNodeHIbyID(int id){
-		Iterator<Actor> it = Nodes_HI.iterator();
+		Iterator<Actor> it = nodesHI.iterator();
 		while(it.hasNext()){
 			Actor n = it.next();
 			if (n.getId() == id)
@@ -165,11 +165,11 @@ public class DAG {
 	}
 
 	public Set<Actor> getLO_outs() {
-		return LO_outs;
+		return loOuts;
 	}
 
 	public void setLO_outs(Set<Actor> lO_outs) {
-		LO_outs = lO_outs;
+		loOuts = lO_outs;
 	}
 
 	public int getDeadline() {

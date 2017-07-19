@@ -28,13 +28,14 @@ import fr.tpt.s3.ls_mxc.model.Actor;
 public class Automata {
 
 	private int nb_states;
-	private List<State> lo_sched;
-	private List<State> hi_sched;
-	private List<Transition> l_transitions;
-	private List<Transition> f_transitions;
-	private List<Transition> h_transitions;
+	private List<State> loSched;
+	private List<State> hiSched;
+	private List<Transition> loTrans;
+	private List<Transition> finTrans;
+	private List<Transition> hiTrans;
+	private List<FTM> ftms;
 	private List<List<AutoBoolean>> l_outs_b;
-
+	
 	private LS ls;
 	private DAG d;
 
@@ -45,11 +46,11 @@ public class Automata {
 	public Automata (LS ls, DAG d) {
 		this.setD(d);
 		this.setLs(ls);
-		this.lo_sched = new LinkedList<State>();
-		this.hi_sched = new LinkedList<State>();
-		this.l_transitions = new LinkedList<Transition>();
+		this.loSched = new LinkedList<State>();
+		this.hiSched = new LinkedList<State>();
+		this.loTrans = new LinkedList<Transition>();
 		this.setF_transitions(new LinkedList<Transition>());
-		this.h_transitions = new LinkedList<Transition>();
+		this.hiTrans = new LinkedList<Transition>();
 		this.l_outs_b = new LinkedList<List<AutoBoolean>>();
 	}
 	
@@ -77,7 +78,7 @@ public class Automata {
 			s = new State(nb_states++, task, 0);
 		}
 		s.setC_t(c_t);
-		addWithTime(lo_sched, n, s, c_t);
+		addWithTime(loSched, n, s, c_t);
 	}
 	
 	// Calculate completion time of tasks and create a new state HI mode
@@ -95,7 +96,7 @@ public class Automata {
 		s = new State(nb_states++, task, 0);
 		s.setC_t(c_t);
 
-		addWithTime(hi_sched, n, s, c_t);
+		addWithTime(hiSched, n, s, c_t);
 	}
 	
 	/**
@@ -153,7 +154,7 @@ public class Automata {
 		State ret = null;
 		boolean found = false;
 		
-		Iterator<State> it = lo_sched.iterator();
+		Iterator<State> it = loSched.iterator();
 		while (it.hasNext() && !found) {
 			State s = it.next();
 			if (s.getTask().contentEquals(task)) {
@@ -174,7 +175,7 @@ public class Automata {
 		State ret = null;
 		boolean found = false;
 		
-		Iterator<State> it = hi_sched.iterator();
+		Iterator<State> it = hiSched.iterator();
 		while (it.hasNext() && !found) {
 			State s = it.next();
 			if (s.getTask().contentEquals(task)) {
@@ -215,8 +216,8 @@ public class Automata {
 	 */
 	public void linkStates() {
 		
-		Iterator<State> it = hi_sched.iterator();
-		Iterator<State> it2 = hi_sched.iterator();
+		Iterator<State> it = hiSched.iterator();
+		Iterator<State> it2 = hiSched.iterator();
 
 		// Construct the HI zone of the automata
 		State s2 = it2.next(); 
@@ -231,9 +232,9 @@ public class Automata {
 				
 		// Construct the LO zone of the automata
 		State sk = new State(nb_states++, "FinalLO", 0);
-		lo_sched.add(sk);
-		it = lo_sched.iterator();
-		it2 = lo_sched.iterator();
+		loSched.add(sk);
+		it = loSched.iterator();
+		it2 = loSched.iterator();
 		s2 = it2.next();
 		while (it2.hasNext()) {
 			State s = it.next();
@@ -256,8 +257,8 @@ public class Automata {
 		}
 		
 		// Add final transition in HI mode (recovery mechanism)
-		State s0 = lo_sched.get(0);
-		State Sf = hi_sched.get(hi_sched.size() - 1);
+		State s0 = loSched.get(0);
+		State Sf = hiSched.get(hiSched.size() - 1);
 		Transition t = new Transition(Sf, s0, null);
 		getH_transitions().add(t);
 		
@@ -270,7 +271,7 @@ public class Automata {
 		int idx = 0;
 		Iterator<List<AutoBoolean>> ib = l_outs_b.listIterator();
 		
-		
+		// TODO: Review the linked probabilities
 		while (ib.hasNext()) {
 			List<AutoBoolean> sab0 = ib.next();
 			while (!finished) {
@@ -284,7 +285,7 @@ public class Automata {
 						t2.getbSet().addAll(sab);
 					}
 					
-					this.f_transitions.add(t2);
+					this.finTrans.add(t2);
 					
 					if ((idx2 + curr) == l_outs_b.size()) // Added all the elements 
 						curr--; // Reduce size of the set
@@ -307,12 +308,12 @@ public class Automata {
 			List<AutoBoolean> sab0 = ib.next();
 			Transition t2 = new Transition(sk, s0, s0);
 			t2.getbSet().addAll(sab0);
-			this.f_transitions.add(t2);
+			this.finTrans.add(t2);
 
 		}
 		
 		// Add false booleans
-		Iterator<Transition> itt = this.f_transitions.iterator();
+		Iterator<Transition> itt = this.finTrans.iterator();
 		while (itt.hasNext()) {
 			Transition tt = itt.next();
 			ib = l_outs_b.listIterator();
@@ -329,7 +330,7 @@ public class Automata {
 			List<AutoBoolean> lab = ib.next();
 			tf.getfSet().addAll(lab);
 		}
-		this.f_transitions.add(tf);
+		this.finTrans.add(tf);
 	}
 	
 
@@ -342,7 +343,7 @@ public class Automata {
 		
 		State s0 = new State(nb_states++, "Init", 0);
 		s0.setC_t(0);
-		lo_sched.add(s0);
+		loSched.add(s0);
 		
 		Iterator<Actor> in = d.getNodes().iterator();
 		while (in.hasNext()) {
@@ -363,7 +364,7 @@ public class Automata {
 	 * Print functions
 	 */
 	public void printLOList() {
-		Iterator<State> it = lo_sched.iterator();
+		Iterator<State> it = loSched.iterator();
 		while (it.hasNext()){
 			System.out.print(it.next().getTask()+ " ");
 		}		
@@ -371,7 +372,7 @@ public class Automata {
 	}
 	
 	public void printHIList() {
-		Iterator<State> it = hi_sched.iterator();
+		Iterator<State> it = hiSched.iterator();
 		while (it.hasNext()){
 			System.out.print(it.next().getTask()+ " ");
 		}
@@ -383,35 +384,35 @@ public class Automata {
 	 */
 
 	public List<State> getLo_sched() {
-		return lo_sched;
+		return loSched;
 	}
 
 	public void setLo_sched(List<State> lo_sched) {
-		this.lo_sched = lo_sched;
+		this.loSched = lo_sched;
 	}
 
 	public List<State> getHi_sched() {
-		return hi_sched;
+		return hiSched;
 	}
 
 	public void setHi_sched(List<State> hi_sched) {
-		this.hi_sched = hi_sched;
+		this.hiSched = hi_sched;
 	}
 
 	public List<Transition> getL_transitions() {
-		return l_transitions;
+		return loTrans;
 	}
 
 	public void setL_transitions(List<Transition> l_transitions) {
-		this.l_transitions = l_transitions;
+		this.loTrans = l_transitions;
 	}
 
 	public List<Transition> getH_transitions() {
-		return h_transitions;
+		return hiTrans;
 	}
 
 	public void setH_transitions(List<Transition> h_transitions) {
-		this.h_transitions = h_transitions;
+		this.hiTrans = h_transitions;
 	}
 
 	public DAG getD() {
@@ -439,10 +440,18 @@ public class Automata {
 	}
 
 	public List<Transition> getF_transitions() {
-		return f_transitions;
+		return finTrans;
 	}
 
 	public void setF_transitions(List<Transition> f_transitions) {
-		this.f_transitions = f_transitions;
+		this.finTrans = f_transitions;
+	}
+
+	public List<FTM> getFtms() {
+		return ftms;
+	}
+
+	public void setFtms(List<FTM> ftms) {
+		this.ftms = ftms;
 	}
 }

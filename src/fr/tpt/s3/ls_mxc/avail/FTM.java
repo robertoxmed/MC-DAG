@@ -10,14 +10,14 @@ public class FTM {
 	private String name;
 	private List<State> states;
 	private List<Transition> transitions;
-	private List<Transition> f_trans;
+	private List<Transition> finTrans;
 
 	public FTM (int nb_vot, String name) {
 		this.nbVot = nb_vot;
 		this.name = name;
 		this.states = new LinkedList<State>();
 		this.transitions = new LinkedList<Transition>();
-		this.f_trans = new LinkedList<Transition>();
+		this.finTrans = new LinkedList<Transition>();
 	}
 	
 	public void createVoter () {
@@ -78,7 +78,7 @@ public class FTM {
 					t.setName(name+"_ok");
 				}
 			}
-			f_trans.add(t);
+			finTrans.add(t);
 			end--;
 			count--;
 		}
@@ -97,7 +97,7 @@ public class FTM {
 			System.out.println("");
 		}
 		
-		it = this.f_trans.iterator();
+		it = this.finTrans.iterator();
 		while (it.hasNext()) {
 			Transition t = it.next();
 			System.out.println("\t["+t.getName()+"] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestOk().getId()+");");
@@ -141,10 +141,10 @@ public class FTM {
 	}
 
 	public List<Transition> getF_trans() {
-		return f_trans;
+		return finTrans;
 	}
 
 	public void setF_trans(List<Transition> f_trans) {
-		this.f_trans = f_trans;
+		this.finTrans = f_trans;
 	}
 }
