@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -35,6 +34,7 @@ import fr.tpt.s3.ls_mxc.alloc.LS;
 import fr.tpt.s3.ls_mxc.avail.AutoBoolean;
 import fr.tpt.s3.ls_mxc.avail.Automata;
 import fr.tpt.s3.ls_mxc.avail.FTM;
+import fr.tpt.s3.ls_mxc.avail.Formula;
 import fr.tpt.s3.ls_mxc.avail.State;
 import fr.tpt.s3.ls_mxc.avail.Transition;
 import fr.tpt.s3.ls_mxc.model.DAG;
@@ -175,11 +175,11 @@ public class MCParser {
 			
 			
 			// Write formulas
-			Iterator<List<AutoBoolean>> iab = auto.getL_outs_b().iterator();
+			Iterator<Formula> iab = auto.getL_outs_b().iterator();
 			while (iab.hasNext()) {
-				List<AutoBoolean> lab = iab.next();
-				out.write("formula "+lab.get(0).getOutput()+" = ");
-				Iterator<AutoBoolean> ia = lab.iterator();
+				Formula form = iab.next();
+				out.write("formula "+form.getName()+" = ");
+				Iterator<AutoBoolean> ia = form.getLab().iterator();
 				while (ia.hasNext()) {
 					out.write(ia.next().getTask()+"bool");
 					if (ia.hasNext())
@@ -245,15 +245,15 @@ public class MCParser {
 			while (itf.hasNext()) {
 				Transition t = itf.next();
 				out.write("\t["+t.getSrc().getTask()+curr+"] s = " + t.getSrc().getId());
-				Iterator<AutoBoolean> ib = t.getbSet().iterator();
+				Iterator<Formula> ib = t.getbSet().iterator();
 				while(ib.hasNext()) {
-					AutoBoolean ab = ib.next();
-					out.write(" & " + ab.getOutput()+" = true");
+					Formula ab = ib.next();
+					out.write(" & " + ab.getName()+" = true");
 				}
-				Iterator<AutoBoolean> iff = t.getfSet().iterator();
+				Iterator<Formula> iff = t.getfSet().iterator();
 				while(iff.hasNext()) {
-					AutoBoolean ab = iff.next();
-					out.write(" & " + ab.getOutput()+" = false");
+					Formula ab = iff.next();
+					out.write(" & " + ab.getName()+" = false");
 				}
 				out.write(" -> (s' = "+t.getDestOk().getId()+");\n");
 				curr++;
@@ -272,7 +272,7 @@ public class MCParser {
 					
 			// Create the rewards
 			out.write("\n");
-			Iterator<Actor> in = dag.getLO_outs().iterator();
+			Iterator<Actor> in = dag.getLoOuts().iterator();
 			while (in.hasNext()) {
 				Actor n = in.next();
 				out.write("rewards \""+n.getName()+"_cycles\"\n");
@@ -280,10 +280,10 @@ public class MCParser {
 				int c = 0;
 				while (it.hasNext()) {
 					Transition t = it.next();
-					Iterator<AutoBoolean> iab2 = t.getbSet().iterator();
+					Iterator<Formula> iab2 = t.getbSet().iterator();
 
 					while (iab2.hasNext()) {
-						if (iab2.next().getTask().contentEquals(n.getName()))
+						if (iab2.next().getName().contentEquals(n.getName()))
 							out.write("\t["+t.getSrc().getTask()+c+"] true : 1;\n");
 					}
 					c++;

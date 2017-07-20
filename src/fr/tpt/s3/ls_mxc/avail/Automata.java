@@ -34,7 +34,7 @@ public class Automata {
 	private List<Transition> finTrans;
 	private List<Transition> hiTrans;
 	private List<FTM> ftms;
-	private List<List<AutoBoolean>> l_outs_b;
+	private List<Formula> loOutsForm;
 	
 	private LS ls;
 	private DAG d;
@@ -52,7 +52,7 @@ public class Automata {
 		this.setF_transitions(new LinkedList<Transition>());
 		this.hiTrans = new LinkedList<Transition>();
 		this.ftms = new LinkedList<FTM>();
-		this.l_outs_b = new LinkedList<List<AutoBoolean>>();
+		this.loOutsForm = new LinkedList<Formula>();
 	}
 	
 	/**
@@ -191,25 +191,29 @@ public class Automata {
 	
 	/**
 	 * Procedure that calculates all the sets of booleans
-	 * for each output in the DAG
+	 * for each output formula in the DAG
 	 */
 	public void calcOutputSets() {
-		Iterator<Actor> in = d.getLO_outs().iterator();
+		Iterator<Actor> in = d.getLoOuts().iterator();
 		while (in.hasNext()) {
 			Actor n = in.next();
+			
+			// Create the Formula
+			LinkedList<AutoBoolean> bSet = new LinkedList<AutoBoolean>();
+			Formula f = new Formula(n.getName(), bSet);
+			
 			Set<Actor> nPred = n.getLOPred();
 			
 			// Create the boolean set for the LO output
-			LinkedList<AutoBoolean> bSet = new LinkedList<AutoBoolean>();
 			AutoBoolean a = new AutoBoolean(n.getName(), n.getName());
 			bSet.add(a);
 			Iterator<Actor> in2 = nPred.iterator();
 			while (in2.hasNext()) {
 				Actor n2 = in2.next();
-				AutoBoolean ab = new AutoBoolean(n2.getName(),  n.getName());
+				AutoBoolean ab = new AutoBoolean(n2.getName(), n.getName());
 				bSet.add(ab);
 			}
-			l_outs_b.add(bSet);
+			loOutsForm.add(f);
 		}
 	}
 	
@@ -268,70 +272,41 @@ public class Automata {
 		// Add final transitions in LO mode
 		// We need to add 2^n transitions depending on the number of outputs
 		calcOutputSets();
-		boolean finished = false;
-		int max_depth = l_outs_b.size();
-		int curr = max_depth - 1;
+		int curr = 1; // Number or elements
 		int idx = 0;
-		Iterator<List<AutoBoolean>> ib = l_outs_b.listIterator();
+		Iterator<Formula> iform = loOutsForm.listIterator();
 		
 		// TODO: Review the linked probabilities
-		while (ib.hasNext()) {
-			List<AutoBoolean> sab0 = ib.next();
-			while (!finished) {
-				int idx2 = idx + 1;
-				// Grab next element(s) when curr depth != 0
-				while (curr != 0) {
-					Transition t2 = new Transition(sk, s0, s0);
-					t2.getbSet().addAll(sab0);					
-					for (int i = idx2; i < idx2 + curr; i++) {
-						List<AutoBoolean> sab = l_outs_b.get(i);
-						t2.getbSet().addAll(sab);
-					}
-					
-					this.finTrans.add(t2);
-					
-					if ((idx2 + curr) == l_outs_b.size()) // Added all the elements 
-						curr--; // Reduce size of the set
-					else // Else move to the next element
-						idx2++;
+		while (curr != loOutsForm.size()) {
+			while (idx + curr != loOutsForm.size()) {
+				Transition tform = new Transition(sk, s0, s0);
+				for (int i = idx; i < idx + curr; i++) {
+					tform.getbSet().add(loOutsForm.get(i));
 				}
-
-				if (curr == 0) 
-					finished = true;
+				finTrans.add(tform);
+				idx++;
 			}
-			idx++;
-			max_depth--;
-			curr = max_depth - 1;
-			finished = false;
-		}
-		
-		// Add individual exits
-		ib = l_outs_b.listIterator();
-		while (ib.hasNext()) {
-			List<AutoBoolean> sab0 = ib.next();
-			Transition t2 = new Transition(sk, s0, s0);
-			t2.getbSet().addAll(sab0);
-			this.finTrans.add(t2);
-
+			idx = 0;
+			curr++;
 		}
 		
 		// Add false booleans
 		Iterator<Transition> itt = this.finTrans.iterator();
 		while (itt.hasNext()) {
 			Transition tt = itt.next();
-			ib = l_outs_b.listIterator();
-			while (ib.hasNext() ) {
-				List<AutoBoolean> lab = ib.next();
-				if (!tt.getbSet().containsAll(lab))
-					tt.getfSet().addAll(lab);
+			iform = loOutsForm.listIterator();
+			while (iform.hasNext() ) {
+				Formula lab = iform.next();
+				if (!tt.getbSet().contains(lab))
+					tt.getfSet().add(lab);
 			}
 		}
 		
 		Transition tf = new Transition(sk, s0, s0);
-		ib = l_outs_b.listIterator();
-		while (ib.hasNext() ) {
-			List<AutoBoolean> lab = ib.next();
-			tf.getfSet().addAll(lab);
+		iform = loOutsForm.listIterator();
+		while (iform.hasNext() ) {
+			Formula lab = iform.next();
+			tf.getfSet().add(lab);
 		}
 		this.finTrans.add(tf);
 	}
@@ -436,12 +411,12 @@ public class Automata {
 		this.ls = ls;
 	}
 
-	public List<List<AutoBoolean>> getL_outs_b() {
-		return l_outs_b;
+	public List<Formula> getL_outs_b() {
+		return loOutsForm;
 	}
 
-	public void setL_outs_b(List<List<AutoBoolean>> l_outs_b) {
-		this.l_outs_b = l_outs_b;
+	public void setL_outs_b(List<Formula> l_outs_b) {
+		this.loOutsForm = l_outs_b;
 	}
 
 	public List<Transition> getF_transitions() {

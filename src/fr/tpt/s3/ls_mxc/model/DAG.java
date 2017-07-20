@@ -38,7 +38,7 @@ public class DAG {
 	public DAG() {
 		nodes = new HashSet<Actor>();
 		nodesHI = new HashSet<Actor>();
-		setLO_outs(new HashSet<Actor>());
+		setLoOuts(new HashSet<Actor>());
 	}
 	
 	/**
@@ -101,7 +101,7 @@ public class DAG {
 			Actor n = in.next();
 			if (n.getSnd_edges().size() == 0 &&
 					n.getC_HI() == 0) {
-				this.getLO_outs().add(n);
+				this.getLoOuts().add(n);
 			}
 		}
 	}
@@ -164,11 +164,11 @@ public class DAG {
 		this.critPath = critPath;
 	}
 
-	public Set<Actor> getLO_outs() {
+	public Set<Actor> getLoOuts() {
 		return loOuts;
 	}
 
-	public void setLO_outs(Set<Actor> lO_outs) {
+	public void setLoOuts(Set<Actor> lO_outs) {
 		loOuts = lO_outs;
 	}
 

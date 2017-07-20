@@ -17,7 +17,6 @@
 package fr.tpt.s3.ls_mxc.avail;
 
 public class AutoBoolean {
-	private Boolean b;
 	private String Output;
 	private String Task;
 	
@@ -26,13 +25,6 @@ public class AutoBoolean {
 		this.setOutput(output);
 	}
 
-	public Boolean getB() {
-		return b;
-	}
-
-	public void setB(Boolean b) {
-		this.b = b;
-	}
 
 	public String getTask() {
 		return Task;

@@ -25,8 +25,8 @@ public class Transition {
 	private State destOk;
 	private State destFail;
 	private double p;
-	private List<AutoBoolean> bSet;
-	private List<AutoBoolean> fSet;
+	private List<Formula> bSet;
+	private List<Formula> fSet;
 	private String Name;
 	
 	/**
@@ -36,8 +36,8 @@ public class Transition {
 		this.setSrc(src);
 		this.setDestOk(destOk);
 		this.setDestFail(destFail);
-		bSet = new LinkedList<AutoBoolean>();
-		setfSet(new LinkedList<AutoBoolean>());
+		bSet = new LinkedList<Formula>();
+		setfSet(new LinkedList<Formula>());
 	}
 	
 
@@ -65,10 +65,10 @@ public class Transition {
 	public void setP(double p) {
 		this.p = p;
 	}
-	public List<AutoBoolean> getbSet() {
+	public List<Formula> getbSet() {
 		return bSet;
 	}
-	public void setbSet(List<AutoBoolean> bSet) {
+	public void setbSet(List<Formula> bSet) {
 		this.bSet = bSet;
 	}
 	public void setName (String Name) {
@@ -77,14 +77,12 @@ public class Transition {
 	public String getName() {
 		return Name;
 	}
-
-
-	public List<AutoBoolean> getfSet() {
+	public List<Formula> getfSet() {
 		return fSet;
 	}
 
 
-	public void setfSet(List<AutoBoolean> fSet) {
+	public void setfSet(List<Formula> fSet) {
 		this.fSet = fSet;
 	}
 
