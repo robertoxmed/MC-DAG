@@ -16,6 +16,8 @@
  *******************************************************************************/
 package fr.tpt.s3.ls_mxc.avail;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,7 +36,7 @@ public class Automata {
 	private List<Transition> finTrans;
 	private List<Transition> hiTrans;
 	private List<FTM> ftms;
-	private List<Formula> loOutsForm;
+	private Set<Formula> loOutsForm;
 	
 	private LS ls;
 	private DAG d;
@@ -52,7 +54,7 @@ public class Automata {
 		this.setF_transitions(new LinkedList<Transition>());
 		this.hiTrans = new LinkedList<Transition>();
 		this.ftms = new LinkedList<FTM>();
-		this.loOutsForm = new LinkedList<Formula>();
+		this.loOutsForm = new HashSet<Formula>();
 	}
 	
 	/**
@@ -217,6 +219,26 @@ public class Automata {
 		}
 	}
 	
+	public static <T> Set<Set<T>> powerSet(Set<T> originalSet) {
+	    Set<Set<T>> sets = new HashSet<Set<T>>();
+	    if (originalSet.isEmpty()) {
+	        sets.add(new HashSet<T>());
+	        return sets;
+	    }
+	    List<T> list = new ArrayList<T>(originalSet);
+	    T head = list.get(0);
+	    Set<T> rest = new HashSet<T>(list.subList(1, list.size())); 
+	    for (Set<T> set : powerSet(rest)) {
+	        Set<T> newSet = new HashSet<T>();
+	        newSet.add(head);
+	        newSet.addAll(set);
+	        sets.add(newSet);
+	        sets.add(set);
+	    }       
+	    return sets;
+	}  
+	
+	
 	/**
 	 * Procedure links the states by creating Transitions objects
 	 * after the scheduling lists were created.
@@ -272,43 +294,30 @@ public class Automata {
 		// Add final transitions in LO mode
 		// We need to add 2^n transitions depending on the number of outputs
 		calcOutputSets();
-		int curr = 1; // Number or elements
-		int idx = 0;
-		Iterator<Formula> iform = loOutsForm.listIterator();
-		
+				
 		// TODO: Review the linked probabilities
-		while (curr != loOutsForm.size()) {
-			while (idx + curr != loOutsForm.size()) {
-				Transition tform = new Transition(sk, s0, s0);
-				for (int i = idx; i < idx + curr; i++) {
-					tform.getbSet().add(loOutsForm.get(i));
-				}
-				finTrans.add(tform);
-				idx++;
-			}
-			idx = 0;
-			curr++;
+		for (Set<Formula> s : powerSet(loOutsForm)) {
+			Transition tform = new Transition(sk, s0, s0);
+			Iterator<Formula> iform = s.iterator();
+			while (iform.hasNext())
+				tform.getbSet().add(iform.next());
+			finTrans.add(tform);
 		}
-		
+
+		Iterator<Formula> iform = loOutsForm.iterator();
+
 		// Add false booleans
 		Iterator<Transition> itt = this.finTrans.iterator();
 		while (itt.hasNext()) {
 			Transition tt = itt.next();
-			iform = loOutsForm.listIterator();
+			iform = loOutsForm.iterator();
 			while (iform.hasNext() ) {
 				Formula lab = iform.next();
 				if (!tt.getbSet().contains(lab))
 					tt.getfSet().add(lab);
 			}
 		}
-		
-		Transition tf = new Transition(sk, s0, s0);
-		iform = loOutsForm.listIterator();
-		while (iform.hasNext() ) {
-			Formula lab = iform.next();
-			tf.getfSet().add(lab);
-		}
-		this.finTrans.add(tf);
+	
 	}
 	
 
@@ -317,10 +326,7 @@ public class Automata {
 	 */
 	public void createAutomata () {
 		
-		// Calculate completion times for all nodes in LO and HI mode
-		
-		this.calcOutputSets();
-		
+		// Calculate completion times for all nodes in LO and HI mode		
 		State s0 = new State(nbStates++, "Init", 0);
 		s0.setCompTime(0);
 		loSched.add(s0);
@@ -411,11 +417,11 @@ public class Automata {
 		this.ls = ls;
 	}
 
-	public List<Formula> getL_outs_b() {
+	public Set<Formula> getL_outs_b() {
 		return loOutsForm;
 	}
 
-	public void setL_outs_b(List<Formula> l_outs_b) {
+	public void setL_outs_b(Set<Formula> l_outs_b) {
 		this.loOutsForm = l_outs_b;
 	}
 
