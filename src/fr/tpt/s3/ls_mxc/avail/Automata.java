@@ -27,7 +27,7 @@ import fr.tpt.s3.ls_mxc.model.Actor;
 
 public class Automata {
 
-	private int nb_states;
+	private int nbStates;
 	private List<State> loSched;
 	private List<State> hiSched;
 	private List<Transition> loTrans;
@@ -51,6 +51,7 @@ public class Automata {
 		this.loTrans = new LinkedList<Transition>();
 		this.setF_transitions(new LinkedList<Transition>());
 		this.hiTrans = new LinkedList<Transition>();
+		this.ftms = new LinkedList<FTM>();
 		this.l_outs_b = new LinkedList<List<AutoBoolean>>();
 	}
 	
@@ -71,13 +72,16 @@ public class Automata {
 		Actor n = d.getNodebyName(task);
 		State s;
 		if (n.getC_HI() !=  0) {
-			s = new State(nb_states++, task, 1);
-			if (n.isfMechanism()) // Test if it's a faul tolerant mechanism
+			s = new State(nbStates++, task, Actor.HI);
+			if (n.isfMechanism()) { // Test if it's a fault tolerant mechanism
 				s.setfMechanism(true);
+				FTM ftm = new FTM(3, n.getName());
+				ftms.add(ftm);
+			}
 		} else {
-			s = new State(nb_states++, task, 0);
+			s = new State(nbStates++, task, Actor.LO);
 		}
-		s.setC_t(c_t);
+		s.setCompTime(c_t);
 		addWithTime(loSched, n, s, c_t);
 	}
 	
@@ -93,8 +97,8 @@ public class Automata {
 
 		Actor n = d.getNodebyName(task);
 		State s;
-		s = new State(nb_states++, task, 0);
-		s.setC_t(c_t);
+		s = new State(nbStates++, task, Actor.HI);
+		s.setCompTime(c_t);
 
 		addWithTime(hiSched, n, s, c_t);
 	}
@@ -114,7 +118,7 @@ public class Automata {
 		// Iterate until the first task that has the same or a higher completion time
 		while (is.hasNext()) {
 			s2 = is.next();
-			if (s2.getC_t() >= c_t)
+			if (s2.getCompTime() >= c_t)
 				break;
 			else
 				idx++;
@@ -122,22 +126,21 @@ public class Automata {
 		
 		// Breaking ties, LO exit nodes first
 		// then HI tasks, then LO tasks
-		if (s2 != null && s2.getC_t() == c_t) {
+		if (s2 != null && s2.getCompTime() == c_t) {
 			
 			if (n.getC_HI() != 0) {	
 				int cur_ct = c_t;
 				while (is.hasNext() && cur_ct == c_t) {
 					s2 = is.next();
-					cur_ct = s2.getC_t();
-					if (s2.getMode() == 1)
+					cur_ct = s2.getCompTime();
+					if (s2.getMode() == Actor.HI)
 						idx++;
 				}
 			} else if (n.getC_HI() == 0) {
-				System.out.println("Equality "+n.getName());
 				int cur_ct = c_t;
 				while (is.hasNext() && cur_ct == c_t) {
 					s2 = is.next();
-					cur_ct = s2.getC_t();
+					cur_ct = s2.getCompTime();
 					idx++;
 				}
 			}
@@ -231,7 +234,7 @@ public class Automata {
 		}
 				
 		// Construct the LO zone of the automata
-		State sk = new State(nb_states++, "FinalLO", 0);
+		State sk = new State(nbStates++, "FinalLO", 0);
 		loSched.add(sk);
 		it = loSched.iterator();
 		it2 = loSched.iterator();
@@ -249,7 +252,7 @@ public class Automata {
 						t.setP(d.getNodebyName(s.getTask()).getfProb());
 				} else { // It is a LO task
 					t = new Transition(s, s2, s2);
-					if (s.getC_t() != 0)
+					if (s.getCompTime() != 0)
 						t.setP(d.getNodebyName(s.getTask()).getfProb());
 				}
 				getL_transitions().add(t);
@@ -335,14 +338,16 @@ public class Automata {
 	
 
 	/**
-	 *  This procedures prints the automata
+	 *  This procedures creates the automata for the PRISM model
 	 */
 	public void createAutomata () {
 		
 		// Calculate completion times for all nodes in LO and HI mode
 		
-		State s0 = new State(nb_states++, "Init", 0);
-		s0.setC_t(0);
+		this.calcOutputSets();
+		
+		State s0 = new State(nbStates++, "Init", 0);
+		s0.setCompTime(0);
 		loSched.add(s0);
 		
 		Iterator<Actor> in = d.getNodes().iterator();

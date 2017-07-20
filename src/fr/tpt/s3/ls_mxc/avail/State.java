@@ -21,7 +21,7 @@ public class State {
 	private String name;
 	private int mode;
 	private int id;
-	private int c_t;
+	private int compTime;
 	private boolean fMechanism;
 	
 	public State (int id, String t, int m) {
@@ -50,12 +50,12 @@ public class State {
 		this.id = id;
 	}
 
-	public int getC_t() {
-		return c_t;
+	public int getCompTime() {
+		return compTime;
 	}
 
-	public void setC_t(int c_t) {
-		this.c_t = c_t;
+	public void setCompTime(int c_t) {
+		this.compTime = c_t;
 	}
 
 	public boolean isfMechanism() {

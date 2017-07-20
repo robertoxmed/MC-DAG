@@ -1,43 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mcsystem>
-	<mcdag name="UAV" deadline="150">
+	<mcdag name="UAV" deadline="15">
 		
 		<actor name="Avoid">
-			<clo>30</clo>
+			<clo>3</clo>
 			<chi>0</chi>
+			<fprob>0.01</fprob>
 		</actor>
 		<actor name="Nav">
-			<clo>50</clo>
+			<clo>5</clo>
 			<chi>70</chi>
+			<fprob>0.001</fprob>
 		</actor>
 		<actor name="Stab">
-			<clo>20</clo>
-			<chi>50</chi>
+			<clo>2</clo>
+			<chi>5</chi>
+			<fprob>0.001</fprob>
 		</actor>
 		<actor name="Log">
-			<clo>20</clo>
+			<clo>2</clo>
 			<chi>0</chi>
+			<fprob>0.01</fprob>
 		</actor>
 		<actor name="Shar">
-			<clo>30</clo>
+			<clo>3</clo>
 			<chi>0</chi>
+			<fprob>0.01</fprob>
 		</actor>
 		<actor name="Video">
-			<clo>60</clo>
+			<clo>6</clo>
 			<chi>0</chi>
+			<fprob>0.01</fprob>
 		</actor>
 		<actor name="GPS">
-			<clo>20</clo>
+			<clo>2</clo>
 			<chi>0</chi>
+			<fprob>0.01</fprob>
 		</actor>
 		<actor name="Rec">
-			<clo>20</clo>
+			<clo>2</clo>
 			<chi>0</chi>
+			<fprob>0.01</fprob>
 		</actor>
 
 		<ftm name="VotA">
-			<clo>10</clo>
-			<chi>10</chi>
+			<clo>1</clo>
+			<chi>1</chi>
 		</ftm>
 
 		<ports>

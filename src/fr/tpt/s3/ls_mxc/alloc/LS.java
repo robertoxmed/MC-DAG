@@ -645,7 +645,6 @@ public class LS {
 	 * @throws SchedulingException 
 	 */
 	public void AllocAll() throws SchedulingException{
-		System.out.println("AllocAll > "+this.getDeadline()+" cores "+this.getNbCores());
 		this.calcWeights(Actor.HI);
 		this.AllocHI();
 		

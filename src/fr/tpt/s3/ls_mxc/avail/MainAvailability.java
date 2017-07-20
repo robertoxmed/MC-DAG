@@ -64,6 +64,10 @@ public class MainAvailability {
 		} catch (SchedulingException e) {
 			e.getMessage();
 		}
+		
+		auto.createAutomata();
+		mcp.setAuto(auto);
+		mcp.writePRISM();
 
 	}
 
