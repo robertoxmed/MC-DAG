@@ -17,7 +17,6 @@ import fr.tpt.s3.ls_mxc.parser.MCParser;
 
 public class MainAvailability {
 		
-	@SuppressWarnings("unused")
 	public static void main (String[] args) throws IOException {
 		
 		/* ============================ Command line ================= */
@@ -45,7 +44,6 @@ public class MainAvailability {
 			System.exit(1);
 			return;
 		}
-		
 		
 		String inputFilePath = cmd.getOptionValue("input");
 		String outputFilePath = cmd.getOptionValue("output");

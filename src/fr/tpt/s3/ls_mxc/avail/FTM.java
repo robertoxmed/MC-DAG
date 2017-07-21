@@ -4,10 +4,13 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import fr.tpt.s3.ls_mxc.model.Actor;
+
 public class FTM {
 	// Nb of voters need to be odd to have a majority
 	private int nbVot;
 	private String name;
+	private Actor votTask;
 	private List<State> states;
 	private List<Transition> transitions;
 	private List<Transition> finTrans;
@@ -33,7 +36,7 @@ public class FTM {
 		for (int i = 0; i < nbVot; i++) {
 			for (int j = 0; j < nb_pred; j++) {
 				for (int k = 0; k < width; k++) {
-					String votName = new String(name+i);
+					String votName = (votTask.getName()+i);
 					
 					State src = this.states.get(prev);
 					State s2 = new State(cur++, votName, 0);
@@ -85,6 +88,10 @@ public class FTM {
 		
 	}
 	
+	
+	public void createMKFirm() {
+		
+	}
 	
 	public void printVoter () {
 		System.out.println("module voter");
@@ -146,5 +153,13 @@ public class FTM {
 
 	public void setF_trans(List<Transition> f_trans) {
 		this.finTrans = f_trans;
+	}
+
+	public Actor getVotTask() {
+		return votTask;
+	}
+
+	public void setVotTask(Actor votTask) {
+		this.votTask = votTask;
 	}
 }

@@ -99,7 +99,7 @@ public class DAG {
 		Iterator<Actor> in = this.getNodes().iterator();
 		while (in.hasNext()) {
 			Actor n = in.next();
-			if (n.getSnd_edges().size() == 0 &&
+			if (n.getSndEdges().size() == 0 &&
 					n.getC_HI() == 0) {
 				this.getLoOuts().add(n);
 			}

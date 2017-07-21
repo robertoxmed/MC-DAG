@@ -102,6 +102,9 @@ public class MCParser {
 										Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
 										Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
 					a.setfMechanism(true);
+					a.setVotTask(e.getElementsByTagName("vtask").item(0).getTextContent());
+					dag.getNodebyName(e.getElementsByTagName("vtask").item(0).getTextContent()).setVoted(true);
+					a.setNbReplicas(Integer.parseInt(e.getElementsByTagName("replicas").item(0).getTextContent()));
 					dag.getNodes().add(a);
 				}
 			}
@@ -154,9 +157,11 @@ public class MCParser {
 			Iterator<FTM> iftm = auto.getFtms().iterator();
 			while (iftm.hasNext() ) {
 				FTM ftm = iftm.next();
-				out.write("module voter\n");
+				ftm.createVoter();
+				out.write("module "+ftm.getName()+"\n");
 				out.write("\tv: [0..20] init 0;\n");
 				Iterator<Transition> it = ftm.getTransitions().iterator();
+				int i = 0;
 				while (it.hasNext()) {
 					Transition t = it.next();
 					out.write("\t["+t.getDestOk().getTask()+"_ok] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestOk().getId()+");\n");
@@ -171,6 +176,18 @@ public class MCParser {
 				}
 				out.write("endmodule\n");
 				out.write("\n");
+				
+				// Create replicas if it is a voter
+				for (i = 0; i < ftm.getNbVot(); i++) {
+					out.write("module "+ftm.getVotTask().getName()+i+"\n");
+					out.write("\tv"+i+": [0..2] init 0;\n");
+					out.write("\t["+ftm.getVotTask().getName()+i+"_run] v"+i+" = 0 ->  1 - "+ftm.getVotTask().getfProb()+" : (v"+i+"' = 1) + "+" \n");
+					out.write("\t["+ftm.getVotTask().getName()+i+"_ok] v"+i+" = 1 -> (v"+i+"' = 0);\n");
+					out.write("\t["+ftm.getVotTask().getName()+i+"_fail] v"+i+" = 2 -> (v"+i+"' = 0);\n");
+
+					out.write("endmodule\n");
+					out.write("\n");
+				}
 			}
 			
 			
@@ -192,7 +209,7 @@ public class MCParser {
 			
 			// Write Processor Module
 			out.write("module proc\n");
-			out.write("\ts : [0..50] init "+auto.getLo_sched().get(0).getId()+";\n");
+			out.write("\ts : [0.."+auto.getNbStates()+"] init "+auto.getLo_sched().get(0).getId()+";\n");
 			
 			// Create all necessary booleans
 			Iterator<State> is = auto.getLo_sched().iterator();

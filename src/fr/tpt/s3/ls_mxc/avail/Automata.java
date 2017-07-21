@@ -78,7 +78,10 @@ public class Automata {
 			if (n.isfMechanism()) { // Test if it's a fault tolerant mechanism
 				s.setfMechanism(true);
 				FTM ftm = new FTM(3, n.getName());
+				ftm.setNbVot(n.getNbReplicas());
+				ftm.setVotTask(d.getNodebyName(n.getVotTask()));
 				ftms.add(ftm);
+				
 			}
 		} else {
 			s = new State(nbStates++, task, Actor.LO);
@@ -439,5 +442,12 @@ public class Automata {
 
 	public void setFtms(List<FTM> ftms) {
 		this.ftms = ftms;
+	}
+	public int getNbStates() {
+		return nbStates;
+	}
+
+	public void setNbStates(int nbStates) {
+		this.nbStates = nbStates;
 	}
 }

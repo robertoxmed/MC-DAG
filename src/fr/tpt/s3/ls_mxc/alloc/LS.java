@@ -135,9 +135,9 @@ public class LS {
 		}
 		
 		// General case,  
-		int[] tmp_max = new int[n.getSnd_edges().size()];
+		int[] tmp_max = new int[n.getSndEdges().size()];
 		
-		Iterator<Edge> ie = n.getSnd_edges().iterator();
+		Iterator<Edge> ie = n.getSndEdges().iterator();
 		int i = 0;
 		while (ie.hasNext()) {
 			
@@ -520,7 +520,7 @@ public class LS {
 	public void checkActivation(LinkedList<Actor> l_r, ListIterator<Actor> li_r, Actor n, int[] t_hi, int mode){
 		
 		// Check all successors
-		Iterator<Edge> it_e = n.getSnd_edges().iterator();
+		Iterator<Edge> it_e = n.getSndEdges().iterator();
 		while (it_e.hasNext()){
 			Edge e = it_e.next();
 			Actor suc = e.getDest();
@@ -532,7 +532,7 @@ public class LS {
 				break;
 			}
 			
-			Iterator<Edge> it_e_rcv = suc.getRcv_edges().iterator();
+			Iterator<Edge> it_e_rcv = suc.getRcvEdges().iterator();
 			while (it_e_rcv.hasNext()){ // For each successor we check its dependencies
 				
 				Edge e2 = it_e_rcv.next();
@@ -566,7 +566,7 @@ public class LS {
 	public void checkActivationHI(LinkedList<Actor> l_r, ListIterator<Actor> li_r, Actor n, int[] t_hi){
 		
 		// Check all successors
-		Iterator<Edge> it_e = n.getRcv_edges().iterator();
+		Iterator<Edge> it_e = n.getRcvEdges().iterator();
 		while (it_e.hasNext()){
 			Edge e = it_e.next();
 			Actor pred = e.getSrc();
@@ -578,7 +578,7 @@ public class LS {
 				break;
 			}
 			
-			Iterator<Edge> it_e_rcv = pred.getSnd_edges().iterator();
+			Iterator<Edge> it_e_rcv = pred.getSndEdges().iterator();
 			while (it_e_rcv.hasNext()){ // For each successor we check if it has been executed
 				
 				Edge e2 = it_e_rcv.next();

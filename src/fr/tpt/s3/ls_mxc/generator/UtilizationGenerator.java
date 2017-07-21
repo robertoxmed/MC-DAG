@@ -88,8 +88,8 @@ public class UtilizationGenerator {
 			// Add egde and update the CP (if not source)
 			if (id != 0) {
 				Edge e = new Edge(last, n);
-				last.getSnd_edges().add(e);
-				n.getRcv_edges().add(e);
+				last.getSndEdges().add(e);
+				n.getRcvEdges().add(e);
 			}
 			
 			nodes.add(n);
@@ -135,8 +135,8 @@ public class UtilizationGenerator {
 						if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
 								&& src.getCpFromNode_HI() + n.getC_HI() <= userCp) {
 							Edge e = new Edge(src, n);
-							src.getSnd_edges().add(e);
-							n.getRcv_edges().add(e);
+							src.getSndEdges().add(e);
+							n.getRcvEdges().add(e);
 						}
 					}
 				}
@@ -214,8 +214,8 @@ public class UtilizationGenerator {
 								&& src.getCpFromNode_LO() + n.getC_LO() <= userCp &&
 								allowedCommunitcation(src, n)) {
 							Edge e = new Edge(src, n);
-							src.getSnd_edges().add(e);
-							n.getRcv_edges().add(e);
+							src.getSndEdges().add(e);
+							n.getRcvEdges().add(e);
 						}
 					}
 				}
@@ -239,14 +239,14 @@ public class UtilizationGenerator {
 				
 				if (src.getC_HI() == 0) {
 					Edge e = new Edge(src, n);
-					src.getSnd_edges().add(e);
-					n.getRcv_edges().add(e);
+					src.getSndEdges().add(e);
+					n.getRcvEdges().add(e);
 				} else if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
 						&& src.getCpFromNode_LO() + n.getC_LO() <= userCp &&
 						allowedCommunitcation(src, n)) {
 					Edge e = new Edge(src, n);
-					src.getSnd_edges().add(e);
-					n.getRcv_edges().add(e);
+					src.getSndEdges().add(e);
+					n.getRcvEdges().add(e);
 				}
 			}
 			nodes.add(n);
@@ -315,8 +315,8 @@ public class UtilizationGenerator {
 						if (r.nextInt(100) <= edgeProb && n.getRank() > src.getRank()
 								&& src.getCpFromNode_HI() + n.getC_HI() <= userCp) {
 							Edge e = new Edge(src, n);
-							src.getSnd_edges().add(e);
-							n.getRcv_edges().add(e);
+							src.getSndEdges().add(e);
+							n.getRcvEdges().add(e);
 							if (src.getCpFromNode_HI() + n.getC_HI() == userCp) {
 								cpReached = true;
 							}
@@ -395,8 +395,8 @@ public class UtilizationGenerator {
 								&& src.getCpFromNode_LO() + n.getC_LO() <= userCp &&
 								allowedCommunitcation(src, n)) {
 							Edge e = new Edge(src, n);
-							src.getSnd_edges().add(e);
-							n.getRcv_edges().add(e);
+							src.getSndEdges().add(e);
+							n.getRcvEdges().add(e);
 							if (src.getCpFromNode_HI() + n.getC_HI() == userCp) {
 								cpReached = true;
 							}
@@ -424,14 +424,14 @@ public class UtilizationGenerator {
 				
 				if (src.getC_HI() == 0) {
 					Edge e = new Edge(src, n);
-					src.getSnd_edges().add(e);
-					n.getRcv_edges().add(e);
+					src.getSndEdges().add(e);
+					n.getRcvEdges().add(e);
 				} else if (r.nextInt(100) <= edgeProb && n.getRank() > src.getRank()
 						&& src.getCpFromNode_LO() + n.getC_LO() <= userCp &&
 						allowedCommunitcation(src, n)) {
 					Edge e = new Edge(src, n);
-					src.getSnd_edges().add(e);
-					n.getRcv_edges().add(e);
+					src.getSndEdges().add(e);
+					n.getRcvEdges().add(e);
 				}
 			}
 			nodes.add(n);
@@ -460,8 +460,8 @@ public class UtilizationGenerator {
 			n.setC_HI(0);
 			n.setC_LO(userCp - node_max.getCpFromNode_LO());
 			Edge e = new Edge(node_max, n);
-			node_max.getSnd_edges().add(e);
-			n.getRcv_edges().add(e);
+			node_max.getSndEdges().add(e);
+			n.getRcvEdges().add(e);
 			
 			n.CPfromNode(0);
 			nodes.add(n);
@@ -541,7 +541,7 @@ public class UtilizationGenerator {
 			Actor n = it_n.next();
 			
 			// It is an independent node with no edges
-			if (n.getRcv_edges().size() == 0 && n.getSnd_edges().size() == 0) {
+			if (n.getRcvEdges().size() == 0 && n.getSndEdges().size() == 0) {
 				Iterator<Actor> it_n2 = genDAG.getNodes().iterator();
 				while (it_n2.hasNext() && added == false) {
 					if (mode == 0) {
@@ -550,8 +550,8 @@ public class UtilizationGenerator {
 								allowedCommunitcation(n, n2) &&
 								n.getCpFromNode_LO() + n2.getC_LO() <= userCp){
 							Edge e = new Edge(n, n2);
-							n.getSnd_edges().add(e);
-							n2.getRcv_edges().add(e);
+							n.getSndEdges().add(e);
+							n2.getRcvEdges().add(e);
 							added = true;
 							if ((n.getC_HI() == 0 && n2.getC_HI() != 0) ||
 									(n.getC_HI() != 0 && n2.getC_HI() == 0))
@@ -561,8 +561,8 @@ public class UtilizationGenerator {
 								allowedCommunitcation(n2,n) &&
 								n2.getCpFromNode_LO() + n.getC_LO() <= userCp) {
 							Edge e = new Edge(n2, n);
-							n.getRcv_edges().add(e);
-							n2.getSnd_edges().add(e);
+							n.getRcvEdges().add(e);
+							n2.getSndEdges().add(e);
 							added = true;
 							if ((n.getC_HI() == 0 && n2.getC_HI() != 0) ||
 									(n.getC_HI() != 0 && n2.getC_HI() == 0))
@@ -575,16 +575,16 @@ public class UtilizationGenerator {
 								allowedCommunitcation(n, n2) &&
 								n.getCpFromNode_HI() + n2.getC_HI() <= userCp){
 							Edge e = new Edge(n, n2);
-							n.getSnd_edges().add(e);
-							n2.getRcv_edges().add(e);
+							n.getSndEdges().add(e);
+							n2.getRcvEdges().add(e);
 							added = true;
 							n.CPfromNode(mode);
 						} else if (n.getRank() > n2.getRank() &&
 								allowedCommunitcation(n2,n) &&
 								n2.getCpFromNode_HI() + n.getC_HI() <= userCp) {
 							Edge e = new Edge(n2, n);
-							n.getRcv_edges().add(e);
-							n2.getSnd_edges().add(e);
+							n.getRcvEdges().add(e);
+							n2.getSndEdges().add(e);
 							added = true;
 							n.CPfromNode(mode);
 						}
@@ -621,8 +621,8 @@ public class UtilizationGenerator {
 					allowedCommunitcation(hi, lo) &&
 					hi.getCpFromNode_LO() + lo.getC_LO() <= userCp) {
 				Edge e = new Edge(hi, lo);
-				hi.getSnd_edges().add(e);
-				lo.getRcv_edges().add(e);
+				hi.getSndEdges().add(e);
+				lo.getRcvEdges().add(e);
 				lo.CPfromNode(0);
 				this.setHtoL(true);
 			}
@@ -641,7 +641,7 @@ public class UtilizationGenerator {
 		while (it_n.hasNext()){
 			Actor n = it_n.next();
 			
-			Iterator<Edge> it_e = n.getRcv_edges().iterator();
+			Iterator<Edge> it_e = n.getRcvEdges().iterator();
 			while (it_e.hasNext()){
 				Edge e = it_e.next();
 				adjMatrix[e.getDest().getId()][e.getSrc().getId()] = 1;
