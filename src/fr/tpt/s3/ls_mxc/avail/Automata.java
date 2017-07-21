@@ -84,7 +84,10 @@ public class Automata {
 				
 			}
 		} else {
+			
 			s = new State(nbStates++, task, Actor.LO);
+			if (n.isVoted())
+				s.setVoted(true);
 		}
 		s.setCompTime(c_t);
 		addWithTime(loSched, n, s, c_t);
@@ -273,16 +276,20 @@ public class Automata {
 			if (it2.hasNext()) {
 				s2 = it2.next();
 				Transition t;
-				if (s.getMode() == 1) { // If it's a HI task
+				if (s.getMode() == Actor.HI) { // If it's a HI task
 					// Find the HI task that corresponds to s
 					State S = findStateHI(s.getTask());
 					t = new Transition(s, s2, S);
 					if(!s.isfMechanism()) // If it's a fault tolerant mechanism
 						t.setP(d.getNodebyName(s.getTask()).getfProb());
 				} else { // It is a LO task
-					t = new Transition(s, s2, s2);
-					if (s.getCompTime() != 0)
-						t.setP(d.getNodebyName(s.getTask()).getfProb());
+					if (s.isVoted()) {
+						t = new Transition(s, s2, s2);
+					} else {
+						t = new Transition(s, s2, s2);
+						if (s.getCompTime() != 0)
+							t.setP(d.getNodebyName(s.getTask()).getfProb());
+					}
 				}
 				getL_transitions().add(t);
 			}

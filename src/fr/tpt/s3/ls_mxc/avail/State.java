@@ -23,6 +23,7 @@ public class State {
 	private int id;
 	private int compTime;
 	private boolean fMechanism;
+	private boolean isVoted;
 	
 	public State (int id, String t, int m) {
 		setId(id);
@@ -64,5 +65,13 @@ public class State {
 
 	public void setfMechanism(boolean fMechanism) {
 		this.fMechanism = fMechanism;
+	}
+
+	public boolean isVoted() {
+		return isVoted;
+	}
+
+	public void setVoted(boolean isVoted) {
+		this.isVoted = isVoted;
 	}
 }

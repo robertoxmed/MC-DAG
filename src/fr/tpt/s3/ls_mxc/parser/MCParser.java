@@ -181,7 +181,7 @@ public class MCParser {
 				for (i = 0; i < ftm.getNbVot(); i++) {
 					out.write("module "+ftm.getVotTask().getName()+i+"\n");
 					out.write("\tv"+i+": [0..2] init 0;\n");
-					out.write("\t["+ftm.getVotTask().getName()+i+"_run] v"+i+" = 0 ->  1 - "+ftm.getVotTask().getfProb()+" : (v"+i+"' = 1) + "+" \n");
+					out.write("\t["+ftm.getVotTask().getName()+i+"_run] v"+i+" = 0 ->  1 - "+ftm.getVotTask().getfProb()+" : (v"+i+"' = 1) + "+ftm.getVotTask().getfProb()+" : (v"+i+"' = 2);\n");
 					out.write("\t["+ftm.getVotTask().getName()+i+"_ok] v"+i+" = 1 -> (v"+i+"' = 0);\n");
 					out.write("\t["+ftm.getVotTask().getName()+i+"_fail] v"+i+" = 2 -> (v"+i+"' = 0);\n");
 
@@ -225,7 +225,7 @@ public class MCParser {
 			Iterator<Transition> it = auto.getL_transitions().iterator();
 			while (it.hasNext()) {
 				Transition t = it.next();
-				if (t.getSrc().getMode() == 1) {
+				if (t.getSrc().getMode() == Actor.HI) {
 					if (! t.getSrc().isfMechanism())
 						out.write("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
 								+ " -> 1 - "+ t.getP() +" : (s' = " + t.getDestOk().getId() + ") +"
@@ -248,6 +248,9 @@ public class MCParser {
 								out.write(" & ("+s.getTask()+"bool' = false)");
 						}
 						out.write(";\n");
+					} else if (t.getSrc().isVoted()){
+						out.write("\t["+t.getSrc().getTask()+"0_run] s = " + t.getSrc().getId()
+								+ " -> (s' = " + t.getDestOk().getId() +");\n" );
 					} else { 
 						out.write("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
 								+ " -> 1 - "+ t.getP() +" : (s' = " + t.getDestOk().getId() +") & ("+t.getSrc().getTask()+"bool' = true) + "

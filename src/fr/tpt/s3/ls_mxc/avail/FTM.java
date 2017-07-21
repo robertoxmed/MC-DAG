@@ -68,14 +68,14 @@ public class FTM {
 					t.setName(name+"_ok");
 				} else { // Voter suceeded
 					t = new Transition(src, this.getStates().get(0), null);
-					t.setName(name+"_failed");
+					t.setName(name+"_fail");
 				}
 
 			} else {
 				int test = (nb_pred/2);
 				if (count == test){
 					t = new Transition(src, this.getStates().get(0), null);
-					t.setName(name+"_failed");
+					t.setName(name+"_fail");
 				} else { 
 					t = new Transition(src, this.getStates().get(0), null);
 					t.setName(name+"_ok");
