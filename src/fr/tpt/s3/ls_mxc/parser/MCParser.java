@@ -45,13 +45,15 @@ public class MCParser {
 
 	private String inputFile;
 	private String outputFile;
+	private String outSchedFile;
 	// Only references do not have to be instantiated
 	private DAG dag;
 	private LS ls;
 	private Automata auto;
 	
-	public MCParser (String iFile, String oFile, DAG dag, LS ls) {
+	public MCParser (String iFile, String oSFile, String oFile, DAG dag, LS ls) {
 		setInputFile(iFile);
+		setOutSchedFile(oSFile);
 		setOutputFile(oFile);
 		setDag(dag);
 		setLs(ls);
@@ -421,6 +423,14 @@ public class MCParser {
 
 	public void setAuto(Automata auto) {
 		this.auto = auto;
+	}
+
+	public String getOutSchedFile() {
+		return outSchedFile;
+	}
+
+	public void setOutSchedFile(String outSchedFile) {
+		this.outSchedFile = outSchedFile;
 	}
 
 }
