@@ -139,6 +139,43 @@ public class MCParser {
 		
 	}
 	
+	
+	
+	/**
+	 * Writes the properties to check by PRISM
+	 * @throws IOException
+	 */
+	private void writePCTL () throws IOException {
+		BufferedWriter out = null;
+		try {
+			String fileName = getOutputFile();
+			int pos = fileName.lastIndexOf(".");
+			if (pos > 0) {
+			    fileName = fileName.substring(0, pos);
+			}
+			File f = new File(fileName+".pctl");
+			f.createNewFile();
+			FileWriter fstream = new FileWriter(f);
+			out = new BufferedWriter(fstream);
+			
+			// Write total cycles
+			out.write("// Total Cycles\n");
+			out.write("R{\"total_cycles\"}=? [ C <= D ]\n\n");
+			
+			// Write properties for all LO outputs
+			for (Actor aout : dag.getLoOuts()) {
+				out.write("(R{\""+aout.getName()+"_cycles\"}=? [ C <= D ])/(R{\"total_cycles\"}=? [ C <= D ])\n\n");
+			}
+			
+		} catch (IOException e) {
+			System.out.println(e.getMessage());
+		} finally {
+			if (out != null)
+				out.close();
+		}
+				
+	}
+	
 	/**
 	 * Writes a model for the PRISM model checker
 	 */
@@ -324,7 +361,9 @@ public class MCParser {
 			}
 			out.write("\t["+auto.getH_transitions().get(auto.getH_transitions().size() - 1).getSrc().getTask()+"_hi] true : 1;\n");
 			out.write("endrewards\n");
-			out.write("\n");		
+			out.write("\n");
+			
+			writePCTL();
 		} catch (IOException ie){
 			System.out.println(ie.getMessage());
 		} finally {
