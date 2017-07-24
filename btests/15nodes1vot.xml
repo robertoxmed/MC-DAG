@@ -84,11 +84,12 @@
 			<port name="p1" srcActor="At" dstActor="Bt"/>
 			<port name="p2" srcActor="Bt" dstActor="Ct"/>
 			<port name="p3" srcActor="Ct" dstActor="Dt"/>
-			<port name="p4" srcActor="Et" dstActor="Ft"/>
+			<port name="p4" srcActor="Et" dstActor="VotE"/>
 			<port name="p5" srcActor="Ft" dstActor="Gt"/>
 			<port name="p6" srcActor="Ht" dstActor="It"/>
 			<port name="p7" srcActor="Kt" dstActor="Lt"/>
 			<port name="p8" srcActor="Lt" dstActor="Mt"/>
+			<port name="p9" srcActor="VotE" dstActor="Ft"/>
 		</ports>
 	</mcdag>
 	<cores number="2"/>
