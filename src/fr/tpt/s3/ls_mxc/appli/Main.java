@@ -29,6 +29,7 @@ import org.apache.commons.cli.ParseException;
 import fr.tpt.s3.ls_mxc.alloc.LS;
 import fr.tpt.s3.ls_mxc.alloc.SchedulingException;
 import fr.tpt.s3.ls_mxc.avail.Automata;
+import fr.tpt.s3.ls_mxc.model.Actor;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.parser.MCParser;
 
@@ -93,6 +94,10 @@ public class Main {
 		try {
 			ls.AllocAll();
 			if (debug) {
+				System.out.println("========== Weights ===============");
+				ls.printW(Actor.LO);
+				ls.printW(Actor.HI);
+				System.out.println("========== Scheduling tables ===============");
 				ls.printS_HI();
 				ls.printS_LO();
 			}

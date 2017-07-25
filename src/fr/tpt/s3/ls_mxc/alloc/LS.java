@@ -602,6 +602,24 @@ public class LS {
 		}
 	}
 	
+	/*
+	 * Debuggin functions
+	 */
+	
+	public void printW(int mode) {
+		for (int i = 0; i < getMxcDag().getNodes().size(); i++) {
+			if (mode == Actor.HI ) {
+				if (getMxcDag().getNodebyID(i).getC_HI() != 0)
+					System.out.println("Weight HI "+getMxcDag().getNodebyID(i)+" = "+weights_HI[i]);
+			} else {
+				System.out.println("Weight LO "+getMxcDag().getNodebyID(i)+" = "+weights_LO[i]);
+			}
+				
+		}
+
+		
+	}
+	
 	/**
 	 * Prints the S_HI table & start times
 	 */
@@ -656,8 +674,6 @@ public class LS {
 		// Check if schedulable by Baruah
 		this.calcWeightsB();
 		this.Alloc_B();
-	
-		//this.printS_LO();
 	}
 	
 	/**
