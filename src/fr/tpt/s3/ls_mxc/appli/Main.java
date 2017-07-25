@@ -94,12 +94,13 @@ public class Main {
 		try {
 			ls.AllocAll();
 			if (debug) {
-				System.out.println("========== Weights ===============");
-				ls.printW(Actor.LO);
-				ls.printW(Actor.HI);
+
 				System.out.println("========== Scheduling tables ===============");
 				ls.printS_HI();
 				ls.printS_LO();
+				System.out.println("========== Weights ===============");
+				ls.printW(Actor.LO);
+				ls.printW(Actor.HI);
 			}
 		} catch (SchedulingException e) {
 			e.getMessage();

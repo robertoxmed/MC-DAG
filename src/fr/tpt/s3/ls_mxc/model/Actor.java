@@ -214,16 +214,16 @@ public class Actor {
 	public void setSndEdges(Set<Edge> snd_edges) {
 		this.sndEdges = snd_edges;
 	}
-	public int getWeight_LO(){
+	public int getWeightLO(){
 		return this.wLO;
 	}
-	public void setWeight_LO(int w_lo){
+	public void setWeightLO(int w_lo){
 		this.wLO = w_lo;
 	}
-	public int getWeight_HI(){
+	public int getWeightHI(){
 		return this.wHI;
 	}
-	public void setWeight_HI(int w_hi){
+	public void setWeightHI(int w_hi){
 		this.wHI = w_hi;
 	}
 

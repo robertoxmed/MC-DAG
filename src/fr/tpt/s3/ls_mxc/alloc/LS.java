@@ -83,10 +83,10 @@ public class LS {
 		while(it_n.hasNext()){
 			Actor n = it_n.next();
 			if(mode == 0) { // LO mode
-				weights_LO[n.getId()] = HLFET_level(n, mode);
+				weights_LO[n.getId()] = calcHLFETLevel(n, mode);
 				
 			} else { // HI Mode
-				weights_HI[n.getId()] = HLFET_level(n, mode);
+				weights_HI[n.getId()] = calcHLFETLevel(n, mode);
 			}
 		}
 	}
@@ -102,10 +102,10 @@ public class LS {
 		while(it_n.hasNext()){
 			Actor n = it_n.next();
 			if (n.getC_HI() !=  0) {
-				weights_B[n.getId()] = HLFET_level(n, 0) + mcDag.getCritPath()*2; // Add constant
-				n.setWeight_B(n.getWeight_LO()+mcDag.getCritPath()*2);
+				weights_B[n.getId()] = calcHLFETLevel(n, 0) + mcDag.getCritPath()*2; // Add constant
+				n.setWeight_B(n.getWeightLO()+mcDag.getCritPath()*2);
 			} else {
-				weights_B[n.getId()] = HLFET_level(n, 0);
+				weights_B[n.getId()] = calcHLFETLevel(n, 0);
 			}
 
 			
@@ -119,22 +119,20 @@ public class LS {
 	 * @param mode Mode of the graph
 	 * @return Level of the Node in the graph
 	 */
-	public int HLFET_level(Actor n, int mode) {
+	public int calcHLFETLevel(Actor n, int mode) {
 		
 		int max = 0;
 		
 		// Final case the node is a sink
-		if (n.isSink()){
-			if (mode == 0) { // LO mode
-				n.setWeight_LO(n.getC_LO());
-				return n.getC_LO();
-			} else {
-				n.setWeight_HI(n.getC_HI());
-				return n.getC_HI();
-			}
+		if (n.isSink() && mode == Actor.LO){
+			n.setWeightLO(n.getC_LO());
+			return n.getC_LO();
+		} else if (n.isSinkinHI() && mode == Actor.HI) {
+			n.setWeightHI(n.getC_HI());
+			return n.getC_HI();
 		}
 		
-		// General case,  
+		// General case
 		int[] tmp_max = new int[n.getSndEdges().size()];
 		
 		Iterator<Edge> ie = n.getSndEdges().iterator();
@@ -142,7 +140,7 @@ public class LS {
 		while (ie.hasNext()) {
 			
 			Edge e = ie.next();
-			tmp_max[i] = HLFET_level(e.getDest(), mode); 
+			tmp_max[i] = calcHLFETLevel(e.getDest(), mode); 
 			i++;
 		}
 		
@@ -151,11 +149,11 @@ public class LS {
 				max = tmp_max[j];
 		}
 		
-		if (mode == 0) { // LO mode
-			n.setWeight_LO(max + n.getC_LO());
+		if (mode == Actor.LO) { // LO mode
+			n.setWeightLO(max + n.getC_LO());
 			return max + n.getC_LO();
 		} else {
-			n.setWeight_HI(max + n.getC_HI());
+			n.setWeightHI(max + n.getC_HI());
 			return max + n.getC_HI();
 		}
 	}
@@ -167,7 +165,7 @@ public class LS {
 	 * @throws SchedulingException
 	 */
 	public void AllocHI() throws SchedulingException{
-		
+		this.calcWeights(Actor.HI);
 		/* =============================================
 		 *  Initialization of variables used by the method & class
 		 ================================================*/
@@ -194,7 +192,7 @@ public class LS {
 			Actor n = it_n.next();
 			if (n.getC_HI() != 0) {
 				t_hi[n.getId()] = n.getC_HI();
-				if (n.isSinkinHI()) {// At the beginning only exit nodes are added
+				if (n.isSinkinHI()) { // At the beginning only exit nodes are added
 					ready_hi.add(n);
 				}
 			}
@@ -204,8 +202,8 @@ public class LS {
 		Collections.sort(ready_hi, new Comparator<Actor>() {
 			@Override
 			public int compare(Actor n1, Actor n2) {
-				if (n2.getWeight_HI()- n1.getWeight_HI() != 0)
-					return n1.getWeight_HI()- n2.getWeight_HI();
+				if (n2.getWeightHI()- n1.getWeightHI() != 0)
+					return n1.getWeightHI()- n2.getWeightHI();
 				else
 					return n1.getId() - n2.getId();
 			}
@@ -220,10 +218,10 @@ public class LS {
 		for(int t = deadline - 1; t >= 0 ; t--){
 			
 			// Check if there is enough slots to finish executing tasks
-//			if (! checkFreeSlot(t_hi, mxc_dag.getNodes().size(), (t+1) * nb_cores)){
-//				SchedulingException se = new SchedulingException("Alloc HI : Not enough slot lefts");
-//				throw se;
-//			}
+			if (! checkFreeSlot(t_hi, getMxcDag().getNodes().size(), (t+1) * nbCores)){
+				SchedulingException se = new SchedulingException("Alloc HI : Not enough slot lefts");
+				throw se;
+			}
 			
 			for(int c = 0; c < nbCores; c++) {
 				if (li_it.hasNext()){
@@ -253,9 +251,9 @@ public class LS {
 					Collections.sort(ready_hi, new Comparator<Actor>() {
 						@Override
 						public int compare(Actor n1, Actor n2) {
-							if (n2.getWeight_HI()- n1.getWeight_HI() < 0 ||
-									n2.getWeight_HI()- n1.getWeight_HI() > 0)
-								return n1.getWeight_HI()- n2.getWeight_HI();
+							if (n2.getWeightHI()- n1.getWeightHI() < 0 ||
+									n2.getWeightHI()- n1.getWeightHI() > 0)
+								return n1.getWeightHI()- n2.getWeightHI();
 							else
 								return n1.getId() - n2.getId();
 						}
@@ -310,8 +308,8 @@ public class LS {
 		Collections.sort(ready_lo, new Comparator<Actor>() {
 			@Override
 			public int compare(Actor n1, Actor n2) {
-				if (n2.getWeight_LO() - n1.getWeight_LO() !=0)
-					return n2.getWeight_LO() - n1.getWeight_LO();
+				if (n2.getWeightLO() - n1.getWeightLO() !=0)
+					return n2.getWeightLO() - n1.getWeightLO();
 				else
 					return n2.getId() - n1.getId();
 			}
@@ -361,8 +359,8 @@ public class LS {
 					Collections.sort(ready_lo, new Comparator<Actor>() {
 						@Override
 						public int compare(Actor n1, Actor n2) {
-							if (n2.getWeight_LO() - n1.getWeight_LO() !=0)
-								return n2.getWeight_LO() - n1.getWeight_LO();
+							if (n2.getWeightLO() - n1.getWeightLO() !=0)
+								return n2.getWeightLO() - n1.getWeightLO();
 							else
 								return n2.getId() - n1.getId();
 						}
@@ -494,12 +492,12 @@ public class LS {
 		while (it_n.hasNext()){
 			Actor n = it_n.next();
 			if (start_hi[n.getId()] == t && t_lo[n.getId()] != 0 && n.getC_HI() != 0){
-				n.setWeight_LO(Integer.MAX_VALUE);
+				n.setWeightLO(Integer.MAX_VALUE);
 				Collections.sort(ready_lo, new Comparator<Actor>() {
 					@Override
 					public int compare(Actor n1, Actor n2) {
-						if (n2.getWeight_LO() - n1.getWeight_LO() !=0)
-							return n2.getWeight_LO() - n1.getWeight_LO();
+						if (n2.getWeightLO() - n1.getWeightLO() !=0)
+							return n2.getWeightLO() - n1.getWeightLO();
 						else
 							return n2.getId() - n1.getId();
 					}
@@ -610,9 +608,9 @@ public class LS {
 		for (int i = 0; i < getMxcDag().getNodes().size(); i++) {
 			if (mode == Actor.HI ) {
 				if (getMxcDag().getNodebyID(i).getC_HI() != 0)
-					System.out.println("Weight HI "+getMxcDag().getNodebyID(i)+" = "+weights_HI[i]);
+					System.out.println("Weight HI "+getMxcDag().getNodebyID(i).getName()+" = "+getMxcDag().getNodebyID(i).getWeightHI());
 			} else {
-				System.out.println("Weight LO "+getMxcDag().getNodebyID(i)+" = "+weights_LO[i]);
+				System.out.println("Weight LO "+getMxcDag().getNodebyID(i).getName()+" = "+weights_LO[i]);
 			}
 				
 		}
@@ -699,7 +697,7 @@ public class LS {
 	
 	public boolean HLFETSchedulable() {
 
-		this.calcWeights(0);
+		this.calcWeights(Actor.LO);
 		/* =============================================
 		 *  Initialization of variables used by the method
 		 ================================================*/
@@ -732,8 +730,8 @@ public class LS {
 		Collections.sort(ready_lo, new Comparator<Actor>() {
 			@Override
 			public int compare(Actor n1, Actor n2) {
-				if (n2.getWeight_LO() - n1.getWeight_LO() != 0)
-					return n2.getWeight_LO()- n1.getWeight_LO();
+				if (n2.getWeightLO() - n1.getWeightLO() != 0)
+					return n2.getWeightLO()- n1.getWeightLO();
 				else
 					return n2.getId() - n1.getId();
 			}
@@ -780,8 +778,8 @@ public class LS {
 					Collections.sort(ready_lo, new Comparator<Actor>() {
 						@Override
 						public int compare(Actor n1, Actor n2) {
-							if (n2.getWeight_LO() - n1.getWeight_LO() != 0)
-								return n2.getWeight_LO()- n1.getWeight_LO();
+							if (n2.getWeightLO() - n1.getWeightLO() != 0)
+								return n2.getWeightLO()- n1.getWeightLO();
 							else
 								return n2.getId() - n1.getId();
 						}
@@ -832,8 +830,8 @@ public class LS {
 		Collections.sort(ready_hi, new Comparator<Actor>() {
 			@Override
 			public int compare(Actor n1, Actor n2) {
-				if (n2.getWeight_HI()- n1.getWeight_HI() != 0)
-					return n2.getWeight_HI()- n1.getWeight_HI();
+				if (n2.getWeightHI()- n1.getWeightHI() != 0)
+					return n2.getWeightHI()- n1.getWeightHI();
 				else
 					return n2.getId() - n1.getId();
 			}
@@ -879,8 +877,8 @@ public class LS {
 					Collections.sort(ready_hi, new Comparator<Actor>() {
 						@Override
 						public int compare(Actor n1, Actor n2) {
-							if (n2.getWeight_HI()- n1.getWeight_HI() != 0)
-								return n2.getWeight_HI()- n1.getWeight_HI();
+							if (n2.getWeightHI()- n1.getWeightHI() != 0)
+								return n2.getWeightHI()- n1.getWeightHI();
 							else
 								return n2.getId() - n1.getId();
 						}

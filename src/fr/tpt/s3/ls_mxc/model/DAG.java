@@ -71,10 +71,10 @@ public class DAG {
 		ls.calcWeights(1);
 		
 		for(int i = 0; i < this.getNodes().size(); i++) {
-			if (cp < this.getNodebyID(i).getWeight_LO())
-				cp = this.getNodebyID(i).getWeight_LO();
-			if (cp < this.getNodebyID(i).getWeight_HI())
-				cp = this.getNodebyID(i).getWeight_HI();
+			if (cp < this.getNodebyID(i).getWeightLO())
+				cp = this.getNodebyID(i).getWeightLO();
+			if (cp < this.getNodebyID(i).getWeightHI())
+				cp = this.getNodebyID(i).getWeightHI();
 		}
 		this.setCritPath(cp);
 		return cp;
