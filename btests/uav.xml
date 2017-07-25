@@ -9,7 +9,7 @@
 		</actor>
 		<actor name="Nav">
 			<clo>5</clo>
-			<chi>70</chi>
+			<chi>7</chi>
 			<fprob>0.001</fprob>
 		</actor>
 		<actor name="Stab">
@@ -43,9 +43,11 @@
 			<fprob>0.01</fprob>
 		</actor>
 
-		<ftm name="VotA">
+		<ftm name="VotA" type="voter">
 			<clo>1</clo>
 			<chi>1</chi>
+			<vtask>Avoid</vtask>
+			<replicas>3</replicas>
 		</ftm>
 
 		<ports>
