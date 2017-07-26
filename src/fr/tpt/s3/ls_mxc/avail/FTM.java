@@ -16,6 +16,7 @@
  *******************************************************************************/
 package fr.tpt.s3.ls_mxc.avail;
 
+import java.util.BitSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -30,9 +31,33 @@ public class FTM {
 	private List<State> states;
 	private List<Transition> transitions;
 	private List<Transition> finTrans;
+	
+	// Used to create a MK firm mechanism
+	private int m;
+	private int k;
 
+	/**
+	 * Consturctor for a Voter FTM.
+	 * @param nb_vot
+	 * @param name
+	 */
 	public FTM (int nb_vot, String name) {
 		this.nbVot = nb_vot;
+		this.name = name;
+		this.states = new LinkedList<State>();
+		this.transitions = new LinkedList<Transition>();
+		this.finTrans = new LinkedList<Transition>();
+	}
+	
+	/**
+	 * Constructor for a M-K firm mechanism.
+	 * @param m
+	 * @param k
+	 * @param name
+	 */
+	public FTM (int m, int k, String name) {
+		this.setM(m);
+		this.setK(k);
 		this.name = name;
 		this.states = new LinkedList<State>();
 		this.transitions = new LinkedList<Transition>();
@@ -104,14 +129,128 @@ public class FTM {
 		
 	}
 	
-	
-	public void createMKFirm() {
-		
+	/**
+	 * Finds a state with the id given as a paremeter.
+	 * @param id
+	 * @return
+	 */
+	private State getStateByID(int id) {
+		for (State s : getStates()) {
+			if (s.getId() == id)
+				return s;
+		}
+		return null;
 	}
+	
+	/**
+	 * Converts an int to a BitSet.
+	 * @param k
+	 * @return
+	 */
+	private BitSet convert(int k) {
+		int idx = 0;
+
+		BitSet bs = new BitSet(this.getK()+1);
+		
+		while (k != 0) {
+			if (k % 2 != 0) {
+				bs.set(idx);
+			}
+			idx++;
+			k = k >>> 1;
+		}
+		return bs;
+	}
+	
+	/**
+	 * Converts a BitSet into an int.
+	 * @param bs
+	 * @return
+	 */
+	private int convert(BitSet bs) {
+		int ret = 0;
+		for (int i = 0; i < getK(); i++) {
+			ret += bs.get(i) ? (1 << i) : 0;
+		}
+		return ret;
+	}
+	
+	private BitSet shiftLeft (BitSet bs) {
+		BitSet ret = new BitSet(getK());
+		for (int i = 0; i < getK() - 1; i++) {
+			if (bs.get(i))
+				ret.set(i+1);
+		}
+		return ret;
+	}
+
+	
+	/**
+	 * Creates a M-k firm automaton
+	 */
+	public void createMKFirm() {
+		BitSet bs = null;
+		
+		// K is the depth of the buffer
+		for (int i = 0; i < (int)Math.pow(2, getK()); i++) {
+			State s = new State(i, getName(), Actor.HI);
+			getStates().add(s);
+		}
+		
+		// Add the transitions between the states
+		for (State is : getStates()) {
+			// Check what happens when the bit operator is applied
+			// Shift to the right + 1
+			int calc = 0;
+			bs = convert(is.getId());
+			BitSet shifted = new BitSet(getK());
+			if (is.getId() != 0) {
+				shifted = shiftLeft(bs);
+			}
+			shifted.set(0);
+			calc = convert(shifted);
+			
+			State dst = getStateByID(calc);
+			Transition t1 = new Transition(is, dst, null);
+			t1.setName(getName()+"_end_ok");
+			getTransitions().add(t1);
+			
+			// Shift to the right + 0
+			shifted = bs;
+			if (is.getId() != 0) {
+				shifted = shiftLeft(bs);
+			}
+			calc = convert(shifted);
+			
+			dst = getStateByID(calc);
+			Transition t0 = new Transition(is, dst, null);
+			t0.setName(getName()+"_end_fail");
+			getTransitions().add(t0);
+		}
+		
+		// M number of bites that need to be 1
+		for (State is : getStates()) {
+			// Add final transitions
+			bs = convert(is.getId());
+
+			Transition tf = new Transition(is, is, null);
+			
+			if (bs.cardinality() == getM())
+				tf.setName(getName()+"_ok");
+			else
+				tf.setName(getName()+"_fail");
+			
+			getFinTrans().add(tf);
+		}
+	}
+	
+	/*
+	 * Debuggin functions
+	 */
 	
 	public void printVoter () {
 		System.out.println("module voter");
-		System.out.println("\tv: [0..20] init 0;");
+		System.out.println("\tv: [0..20] init 0");
 		Iterator<Transition> it = this.transitions.iterator();
 		while (it.hasNext()) {
 			Transition t = it.next();
@@ -130,6 +269,21 @@ public class FTM {
 		System.out.println("");
 
 	}
+	
+	public void printMKFirm ( ) {
+		System.out.println("module "+getM()+"-"+getK()+"firm");
+		System.out.println("\tv: [0.."+getStates().size()+"] init 0;");
+		for (Transition t : getTransitions())
+			System.out.println("\t["+t.getName()+"] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestOk().getId()+");");
+		
+		System.out.println("");
+		for (Transition t : getFinTrans()) 
+			System.out.println("\t["+t.getName()+"] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestOk().getId()+");");
+	}
+	
+	/*
+	 * Getters + Setters
+	 */
 	
 	public int getNbVot() {
 		return nbVot;
@@ -163,14 +317,6 @@ public class FTM {
 		this.states = states;
 	}
 
-	public List<Transition> getF_trans() {
-		return finTrans;
-	}
-
-	public void setF_trans(List<Transition> f_trans) {
-		this.finTrans = f_trans;
-	}
-
 	public Actor getVotTask() {
 		return votTask;
 	}
@@ -178,4 +324,28 @@ public class FTM {
 	public void setVotTask(Actor votTask) {
 		this.votTask = votTask;
 	}
+	public List<Transition> getFinTrans() {
+		return finTrans;
+	}
+
+	public void setFinTrans(List<Transition> finTrans) {
+		this.finTrans = finTrans;
+	}
+
+	public int getM() {
+		return m;
+	}
+
+	public void setM(int m) {
+		this.m = m;
+	}
+
+	public int getK() {
+		return k;
+	}
+
+	public void setK(int k) {
+		this.k = k;
+	}
+
 }

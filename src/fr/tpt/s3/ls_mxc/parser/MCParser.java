@@ -208,7 +208,7 @@ public class MCParser {
 					out.write("\n");
 				}
 				
-				it = ftm.getF_trans().iterator();
+				it = ftm.getFinTrans().iterator();
 				while (it.hasNext()) {
 					Transition t = it.next();
 					out.write("\t["+t.getName()+"] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestOk().getId()+");\n");
