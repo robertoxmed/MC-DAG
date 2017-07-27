@@ -25,6 +25,7 @@ public class State {
 	private boolean fMechanism;
 	private short fMechType;
 	private boolean isVoted;
+	private boolean isSynched;
 	
 	public State (int id, String t, int m) {
 		setId(id);
@@ -82,5 +83,13 @@ public class State {
 
 	public void setfMechType(short fMechType) {
 		this.fMechType = fMechType;
+	}
+
+	public boolean isSynched() {
+		return isSynched;
+	}
+
+	public void setSynched(boolean isSynched) {
+		this.isSynched = isSynched;
 	}
 }

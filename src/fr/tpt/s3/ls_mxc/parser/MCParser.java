@@ -326,6 +326,9 @@ public class MCParser {
 					} else if (t.getSrc().isVoted()){
 						out.write("\t["+t.getSrc().getTask()+"0_run] s = " + t.getSrc().getId()
 								+ " -> (s' = " + t.getDestOk().getId() +");\n" );
+					} else if (t.getSrc().isSynched()) {
+						out.write("\t["+t.getSrc().getTask()+"] s = " + t.getSrc().getId()
+								+ " -> (s' = " + t.getDestOk().getId() +");\n" );
 					} else { 
 						out.write("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
 								+ " -> 1 - "+ t.getP() +" : (s' = " + t.getDestOk().getId() +") & ("+t.getSrc().getTask()+"bool' = true) + "

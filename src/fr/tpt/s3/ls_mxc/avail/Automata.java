@@ -166,6 +166,16 @@ public class Automata {
 			}
 		}
 		l.add(idx,s);
+		if (n.isfMechanism() && n.getfMechType() == Actor.MKFIRM) {
+			State s0 = new State(nbStates++, n.getName()+"_ok", Actor.LO);
+			State s1 = new State(nbStates++, n.getName()+"_fail", Actor.LO);
+			s0.setCompTime(c_t);
+			s1.setCompTime(c_t);
+			s0.setSynched(true);
+			s1.setSynched(true);
+			l.add(idx+1, s0);
+			l.add(idx+2, s1);
+		}
 	}
 	
 	/**
@@ -295,7 +305,7 @@ public class Automata {
 					if(!s.isfMechanism()) // If it's a fault tolerant mechanism
 						t.setP(d.getNodebyName(s.getTask()).getfProb());
 				} else { // It is a LO task
-					if (s.isVoted()) {
+					if (s.isVoted() || s.isSynched()) {
 						t = new Transition(s, s2, s2);
 					} else {
 						t = new Transition(s, s2, s2);
