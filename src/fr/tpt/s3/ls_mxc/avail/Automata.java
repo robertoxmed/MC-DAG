@@ -77,17 +77,29 @@ public class Automata {
 			s = new State(nbStates++, task, Actor.HI);
 			if (n.isfMechanism()) { // Test if it's a fault tolerant mechanism
 				s.setfMechanism(true);
-				FTM ftm = new FTM(3, n.getName());
-				ftm.setNbVot(n.getNbReplicas());
-				ftm.setVotTask(d.getNodebyName(n.getVotTask()));
-				ftms.add(ftm);
-				
+				if (n.getfMechType() == Actor.VOTER) {
+					FTM ftm = new FTM(3, n.getName());
+					ftm.setNbVot(n.getNbReplicas());
+					ftm.setVotTask(d.getNodebyName(n.getVotTask()));
+					ftm.setType(Actor.VOTER);
+					ftm.createVoter();
+					ftms.add(ftm);
+				}
 			}
 		} else {
 			
 			s = new State(nbStates++, task, Actor.LO);
 			if (n.isVoted())
 				s.setVoted(true);
+			if (n.getfMechType() == Actor.MKFIRM) {
+				FTM ftm = null;
+				s.setfMechanism(true);
+				ftm = new FTM(n.getM(), n.getK(), n.getName());
+				ftm.setVotTask(n);
+				ftm.setType(Actor.MKFIRM);				
+				ftm.createMKFirm();
+				ftms.add(ftm);
+			}
 		}
 		s.setCompTime(c_t);
 		addWithTime(loSched, n, s, c_t);

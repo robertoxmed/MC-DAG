@@ -29,7 +29,6 @@ import org.apache.commons.cli.ParseException;
 import fr.tpt.s3.ls_mxc.alloc.LS;
 import fr.tpt.s3.ls_mxc.alloc.SchedulingException;
 import fr.tpt.s3.ls_mxc.avail.Automata;
-import fr.tpt.s3.ls_mxc.avail.FTM;
 import fr.tpt.s3.ls_mxc.model.Actor;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.parser.MCParser;
@@ -106,10 +105,6 @@ public class Main {
 		} catch (SchedulingException e) {
 			e.getMessage();
 		}
-		
-		FTM mktest = new FTM(2, 4, "Test");
-		mktest.createMKFirm();
-		mktest.printMKFirm();
 		
 		auto.createAutomata();
 		mcp.setAuto(auto);

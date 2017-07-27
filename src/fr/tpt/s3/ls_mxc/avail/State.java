@@ -17,12 +17,13 @@
 package fr.tpt.s3.ls_mxc.avail;
 
 public class State {
-	
+
 	private String name;
 	private int mode;
 	private int id;
 	private int compTime;
 	private boolean fMechanism;
+	private short fMechType;
 	private boolean isVoted;
 	
 	public State (int id, String t, int m) {
@@ -73,5 +74,13 @@ public class State {
 
 	public void setVoted(boolean isVoted) {
 		this.isVoted = isVoted;
+	}
+
+	public short getfMechType() {
+		return fMechType;
+	}
+
+	public void setfMechType(short fMechType) {
+		this.fMechType = fMechType;
 	}
 }

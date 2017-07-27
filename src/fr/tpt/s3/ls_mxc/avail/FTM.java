@@ -35,6 +35,8 @@ public class FTM {
 	// Used to create a MK firm mechanism
 	private int m;
 	private int k;
+	
+	private short type;
 
 	/**
 	 * Consturctor for a Voter FTM.
@@ -346,6 +348,14 @@ public class FTM {
 
 	public void setK(int k) {
 		this.k = k;
+	}
+
+	public short getType() {
+		return type;
+	}
+
+	public void setType(short type) {
+		this.type = type;
 	}
 
 }

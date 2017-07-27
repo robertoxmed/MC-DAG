@@ -26,6 +26,9 @@ public class Actor {
 	public static final short LO = 0;
 	public static final short HI = 1;
 	
+	public static final short VOTER = 2;
+	public static final short MKFIRM = 3;
+	
 	private int id;
 	private String name;
 	
@@ -52,8 +55,11 @@ public class Actor {
 	private double fProb;
 	private String votTask;
 	private boolean fMechanism;
+	private short fMechType;
 	private boolean isVoted;
 	private int nbReplicas;
+	private int M;
+	private int K;
 	
 	/**
 	 * Constructors
@@ -313,6 +319,30 @@ public class Actor {
 
 	public void setVoted(boolean isVoted) {
 		this.isVoted = isVoted;
+	}
+
+	public short getfMechType() {
+		return fMechType;
+	}
+
+	public void setfMechType(short fMechType) {
+		this.fMechType = fMechType;
+	}
+
+	public int getM() {
+		return M;
+	}
+
+	public void setM(int m) {
+		M = m;
+	}
+
+	public int getK() {
+		return K;
+	}
+
+	public void setK(int k) {
+		K = k;
 	}
 
 }

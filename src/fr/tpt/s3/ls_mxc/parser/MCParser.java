@@ -100,14 +100,26 @@ public class MCParser {
 				Node n = ftList.item(i);
 				if (n.getNodeType() == Node.ELEMENT_NODE) {
 					Element e = (Element) n;
-					Actor a = new Actor(nb_actors++, e.getAttribute("name"),
-										Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
-										Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
-					a.setfMechanism(true);
-					a.setVotTask(e.getElementsByTagName("vtask").item(0).getTextContent());
-					dag.getNodebyName(e.getElementsByTagName("vtask").item(0).getTextContent()).setVoted(true);
-					a.setNbReplicas(Integer.parseInt(e.getElementsByTagName("replicas").item(0).getTextContent()));
-					dag.getNodes().add(a);
+					if (e.getAttribute("type").contains("voter")) {
+						Actor a = new Actor(nb_actors++, e.getAttribute("name"),
+											Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
+											Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
+						a.setfMechanism(true);
+						a.setfMechType(Actor.VOTER);
+						a.setVotTask(e.getElementsByTagName("vtask").item(0).getTextContent());
+						dag.getNodebyName(e.getElementsByTagName("vtask").item(0).getTextContent()).setVoted(true);
+						a.setNbReplicas(Integer.parseInt(e.getElementsByTagName("replicas").item(0).getTextContent()));
+						dag.getNodes().add(a);
+					} else if (e.getAttribute("type").contains("mkfirm")) {
+						Actor a = dag.getNodebyName(e.getAttribute("name"));
+						a.setfMechanism(true);
+						a.setfMechType(Actor.MKFIRM);
+						a.setM(Integer.parseInt(e.getElementsByTagName("m").item(0).getTextContent()));
+						a.setK(Integer.parseInt(e.getElementsByTagName("k").item(0).getTextContent()));
+						a.setVoted(true);
+					} else {
+						System.out.println("Uknown FTM");
+					}
 				}
 			}
 			
@@ -196,36 +208,60 @@ public class MCParser {
 			Iterator<FTM> iftm = auto.getFtms().iterator();
 			while (iftm.hasNext() ) {
 				FTM ftm = iftm.next();
-				ftm.createVoter();
-				out.write("module "+ftm.getName()+"\n");
-				out.write("\tv: [0..20] init 0;\n");
-				Iterator<Transition> it = ftm.getTransitions().iterator();
-				int i = 0;
-				while (it.hasNext()) {
-					Transition t = it.next();
-					out.write("\t["+t.getDestOk().getTask()+"_ok] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestOk().getId()+");\n");
-					out.write("\t["+t.getDestOk().getTask()+"_fail] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestFail().getId()+");\n");
-					out.write("\n");
-				}
+				if (ftm.getType() == Actor.VOTER) {
+					out.write("module "+ftm.getName()+"\n");
+					out.write("\tv: [0..20] init 0;\n");
+					Iterator<Transition> it = ftm.getTransitions().iterator();
+					int i = 0;
+					while (it.hasNext()) {
+						Transition t = it.next();
+						out.write("\t["+t.getDestOk().getTask()+"_ok] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestOk().getId()+");\n");
+						out.write("\t["+t.getDestOk().getTask()+"_fail] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestFail().getId()+");\n");
+						out.write("\n");
+					}
 				
-				it = ftm.getFinTrans().iterator();
-				while (it.hasNext()) {
-					Transition t = it.next();
-					out.write("\t["+t.getName()+"] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestOk().getId()+");\n");
-				}
-				out.write("endmodule\n");
-				out.write("\n");
-				
-				// Create replicas if it is a voter
-				for (i = 0; i < ftm.getNbVot(); i++) {
-					out.write("module "+ftm.getVotTask().getName()+i+"\n");
-					out.write("\tv"+i+": [0..2] init 0;\n");
-					out.write("\t["+ftm.getVotTask().getName()+i+"_run] v"+i+" = 0 ->  1 - "+ftm.getVotTask().getfProb()+" : (v"+i+"' = 1) + "+ftm.getVotTask().getfProb()+" : (v"+i+"' = 2);\n");
-					out.write("\t["+ftm.getVotTask().getName()+i+"_ok] v"+i+" = 1 -> (v"+i+"' = 0);\n");
-					out.write("\t["+ftm.getVotTask().getName()+i+"_fail] v"+i+" = 2 -> (v"+i+"' = 0);\n");
-
+					it = ftm.getFinTrans().iterator();
+					while (it.hasNext()) {
+						Transition t = it.next();
+						out.write("\t["+t.getName()+"] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestOk().getId()+");\n");
+					}
 					out.write("endmodule\n");
 					out.write("\n");
+				
+					// Create replicas if it is a voter
+					for (i = 0; i < ftm.getNbVot(); i++) {
+						out.write("module "+ftm.getVotTask().getName()+i+"\n");
+						out.write("\tv"+i+": [0..2] init 0;\n");
+						out.write("\t["+ftm.getVotTask().getName()+i+"_run] v"+i+" = 0 ->  1 - "+ftm.getVotTask().getfProb()+" : (v"+i+"' = 1) + "+ftm.getVotTask().getfProb()+" : (v"+i+"' = 2);\n");
+						out.write("\t["+ftm.getVotTask().getName()+i+"_ok] v"+i+" = 1 -> (v"+i+"' = 0);\n");
+						out.write("\t["+ftm.getVotTask().getName()+i+"_fail] v"+i+" = 2 -> (v"+i+"' = 0);\n");
+
+						out.write("endmodule\n");
+						out.write("\n");
+					}
+				} else if (ftm.getType() == Actor.MKFIRM) {
+					int fstate = ftm.getStates().size() - 1;
+					out.write("module "+ftm.getM()+"-"+ftm.getK()+"firm\n");
+					out.write("\tv: [0.."+ftm.getStates().size()+"] init "+fstate+";\n");
+					for (Transition t : ftm.getTransitions())
+						out.write("\t["+t.getName()+"] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestOk().getId()+");\n");
+					
+					out.write("\n");
+					for (Transition t : ftm.getFinTrans()) 
+						out.write("\t["+t.getName()+"] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestOk().getId()+");\n");
+					
+					out.write("endmodule\n\n");
+					
+					// Write the indepedent module for the task
+					out.write("module "+ftm.getVotTask().getName()+"\n");
+					out.write("\tt"+": [0..2] init 0;\n");
+					out.write("\t["+ftm.getVotTask().getName()+"0_run] t = 0 ->  1 - "+ftm.getVotTask().getfProb()+" : (t' = 1) + "+ftm.getVotTask().getfProb()+" : (t' = 2);\n");
+					out.write("\t["+ftm.getVotTask().getName()+"_end_ok] t = 1 -> (t' = 0);\n");
+					out.write("\t["+ftm.getVotTask().getName()+"_end_fail] t = 2 -> (t' = 0);\n");
+					out.write("endmodule\n");
+					out.write("\n");
+				} else {
+					System.out.print("Uknown Voting mechanism");
 				}
 			}
 			
