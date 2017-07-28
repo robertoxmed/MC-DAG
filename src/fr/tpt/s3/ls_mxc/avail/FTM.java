@@ -237,7 +237,7 @@ public class FTM {
 
 			Transition tf = new Transition(is, is, null);
 			
-			if (bs.cardinality() == getM())
+			if (bs.cardinality() >= getM())
 				tf.setName(getName()+"_ok");
 			else
 				tf.setName(getName()+"_fail");

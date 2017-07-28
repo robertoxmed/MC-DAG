@@ -241,7 +241,7 @@ public class MCParser {
 					}
 				} else if (ftm.getType() == Actor.MKFIRM) {
 					int fstate = ftm.getStates().size() - 1;
-					out.write("module "+ftm.getM()+"-"+ftm.getK()+"firm\n");
+					out.write("module "+ftm.getName()+"firm\n");
 					out.write("\tv: [0.."+ftm.getStates().size()+"] init "+fstate+";\n");
 					for (Transition t : ftm.getTransitions())
 						out.write("\t["+t.getName()+"] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestOk().getId()+");\n");
@@ -287,16 +287,15 @@ public class MCParser {
 			out.write("\ts : [0.."+auto.getNbStates()+"] init "+auto.getLo_sched().get(0).getId()+";\n");
 			
 			// Create all necessary booleans
-			Iterator<State> is = auto.getLo_sched().iterator();
-			while (is.hasNext()) {
-				State s = is.next();
-				if (s.getMode() == 0 && !s.getTask().contains("Final") && !s.getTask().contains("Init")) // It is a LO task
-					out.write("\t"+s.getTask()+"bool: bool init false;\n");
+			for (Actor a : dag.getNodes()) {
+				if (a.getC_HI() == 0) // It is a LO task
+					out.write("\t"+a.getName()+"bool: bool init false;\n");
 			}
 			
 			System.out.println("");
 			
 			// Create the LO scheduling zone
+			Iterator<State> is = null;
 			Iterator<Transition> it = auto.getL_transitions().iterator();
 			while (it.hasNext()) {
 				Transition t = it.next();
@@ -327,7 +326,9 @@ public class MCParser {
 						out.write("\t["+t.getSrc().getTask()+"0_run] s = " + t.getSrc().getId()
 								+ " -> (s' = " + t.getDestOk().getId() +");\n" );
 					} else if (t.getSrc().isSynched()) {
-						out.write("\t["+t.getSrc().getTask()+"] s = " + t.getSrc().getId()
+						out.write("\t["+t.getSrc().getTask()+"_ok] s = " + t.getSrc().getId()
+								+ " -> (s' = " + t.getDestOk().getId() +") & ("+t.getSrc().getTask()+"bool' = true);\n" );
+						out.write("\t["+t.getSrc().getTask()+"_fail] s = " + t.getSrc().getId()
 								+ " -> (s' = " + t.getDestOk().getId() +");\n" );
 					} else { 
 						out.write("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
