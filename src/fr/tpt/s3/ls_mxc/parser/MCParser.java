@@ -24,7 +24,12 @@ import java.util.Iterator;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
+import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Node;
@@ -150,7 +155,60 @@ public class MCParser {
 	 * Writes the scheduling tables
 	 */
 	public void writeSched () throws IOException {
-		
+		try {
+			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+			Document doc = dBuilder.newDocument();
+			
+			// Root element
+			Element rootElement = doc.createElement("sched");
+			doc.appendChild(rootElement);
+			
+			// SHI table
+			Element shi = doc.createElement("shi");
+			rootElement.appendChild(shi);
+			for (int i = 0; i < ls.getNbCores(); i++) {
+				Element core = doc.createElement("core");
+				Attr attrCoreNb = doc.createAttribute("number");
+				attrCoreNb.setNodeValue(String.valueOf(i));
+				core.setAttributeNode(attrCoreNb);
+				for (int j = 0; j < ls.getDeadline(); j++) {
+					Element slot = doc.createElement("slot");
+					Attr slotNb = doc.createAttribute("slot");
+					slotNb.setNodeValue(String.valueOf(j));
+					slot.appendChild(doc.createTextNode(ls.getS_HI()[j][i]));
+					core.appendChild(slot);
+				}
+				shi.appendChild(core);
+			}
+			
+			// SLO table
+			Element slo = doc.createElement("slo");
+			rootElement.appendChild(slo);
+			for (int i = 0; i < ls.getNbCores(); i++) {
+				Element core = doc.createElement("core");
+				Attr attrCoreNb = doc.createAttribute("number");
+				attrCoreNb.setNodeValue(String.valueOf(i));
+				core.setAttributeNode(attrCoreNb);
+				for (int j = 0; j < ls.getDeadline(); j++) {
+					Element slot = doc.createElement("slot");
+					Attr slotNb = doc.createAttribute("slot");
+					slotNb.setNodeValue(String.valueOf(j));
+					slot.appendChild(doc.createTextNode(ls.getS_LO()[j][i]));
+					core.appendChild(slot);
+				}
+				slo.appendChild(core);
+			}
+			
+			// Write the content
+			TransformerFactory tFactory = TransformerFactory.newInstance();
+			Transformer trans = tFactory.newTransformer();
+			DOMSource dSource = new DOMSource(doc);
+			StreamResult sResult = new StreamResult(new File(outSchedFile));
+			trans.transform(dSource, sResult);
+		} catch (Exception ie) {
+			ie.printStackTrace();
+		}
 	}
 	
 	

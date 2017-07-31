@@ -109,6 +109,6 @@ public class Main {
 		auto.createAutomata();
 		mcp.setAuto(auto);
 		mcp.writePRISM();
-
+		mcp.writeSched();
 	}
 }
