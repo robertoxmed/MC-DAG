@@ -104,11 +104,19 @@ public class Main {
 			}
 		} catch (SchedulingException e) {
 			e.getMessage();
+			System.exit(20);
 		}
 		
-		auto.createAutomata();
-		mcp.setAuto(auto);
-		mcp.writePRISM();
-		mcp.writeSched();
+		/* =============== Write results ================ */
+		
+		if (outSchedFilePath != null)
+			mcp.writeSched();
+		if (outPrismFilePath != null) {
+			auto.createAutomata();
+			mcp.setAuto(auto);
+			mcp.writePRISM();
+		}
+			
+		
 	}
 }
