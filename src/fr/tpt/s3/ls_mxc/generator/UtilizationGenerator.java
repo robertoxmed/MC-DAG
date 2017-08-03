@@ -710,16 +710,6 @@ public class UtilizationGenerator {
 		}
 	}
 	
-
-	/**
-	 * 
-	 * @param filename
-	 * @throws IOException
-	 */
-	public void toDZN(String filename) throws IOException {
-		
-	}
-
 	/**
 	 * Getters and setters
 	 */

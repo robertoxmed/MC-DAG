@@ -24,6 +24,7 @@ import java.util.Iterator;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -42,6 +43,7 @@ import fr.tpt.s3.ls_mxc.avail.FTM;
 import fr.tpt.s3.ls_mxc.avail.Formula;
 import fr.tpt.s3.ls_mxc.avail.State;
 import fr.tpt.s3.ls_mxc.avail.Transition;
+import fr.tpt.s3.ls_mxc.generator.UtilizationGenerator;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
 import fr.tpt.s3.ls_mxc.model.Actor;
@@ -51,10 +53,12 @@ public class MCParser {
 	private String inputFile;
 	private String outputFile;
 	private String outSchedFile;
+	private String outGenFile;
 	// Only references do not have to be instantiated
 	private DAG dag;
 	private LS ls;
 	private Automata auto;
+	private UtilizationGenerator ug;
 	
 	public MCParser (String iFile, String oSFile, String oFile, DAG dag, LS ls) {
 		setInputFile(iFile);
@@ -63,6 +67,11 @@ public class MCParser {
 		setDag(dag);
 		setLs(ls);
 		ls.setMxcDag(dag);
+	}
+	
+	public MCParser (String oGFile, UtilizationGenerator ug) {
+		setOutGenFile(oGFile);
+		setUg(ug);
 	}
 	
 	/**
@@ -176,6 +185,7 @@ public class MCParser {
 					Element slot = doc.createElement("slot");
 					Attr slotNb = doc.createAttribute("slot");
 					slotNb.setNodeValue(String.valueOf(j));
+					slot.setAttributeNodeNS(slotNb);
 					slot.appendChild(doc.createTextNode(ls.getS_HI()[j][i]));
 					core.appendChild(slot);
 				}
@@ -194,6 +204,7 @@ public class MCParser {
 					Element slot = doc.createElement("slot");
 					Attr slotNb = doc.createAttribute("slot");
 					slotNb.setNodeValue(String.valueOf(j));
+					slot.setAttributeNodeNS(slotNb);
 					slot.appendChild(doc.createTextNode(ls.getS_LO()[j][i]));
 					core.appendChild(slot);
 				}
@@ -205,6 +216,8 @@ public class MCParser {
 			Transformer trans = tFactory.newTransformer();
 			DOMSource dSource = new DOMSource(doc);
 			StreamResult sResult = new StreamResult(new File(outSchedFile));
+			trans.setOutputProperty(OutputKeys.INDENT, "yes");
+			trans.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
 			trans.transform(dSource, sResult);
 		} catch (Exception ie) {
 			ie.printStackTrace();
@@ -472,6 +485,82 @@ public class MCParser {
 		}
 	}
 	
+	/**
+	 * Writes the generated DAG to a file
+	 * @throws IOException
+	 */
+	public void writeGennedDAG () throws IOException {
+		
+		try {
+			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+			Document doc = dBuilder.newDocument();
+			
+			// Root element (MC System)
+			Element rootElement = doc.createElement("mcsystem");
+			doc.appendChild(rootElement);
+			
+			// MC DAG
+			Element mcdag = doc.createElement("mcdag");
+			Attr dagName = doc.createAttribute("name");
+			dagName.setValue("genned-"+ug.getUserU_LO()+"-"+ug.getUserU_HI()+"-ed-"+ug.getEdgeProb());
+			Attr dagDead = doc.createAttribute("deadline");
+			dagDead.setValue(String.valueOf(ug.getGenDAG().getDeadline()));
+			mcdag.setAttributeNodeNS(dagName);
+			mcdag.setAttributeNode(dagDead);
+			rootElement.appendChild(mcdag);
+			
+			// Actors
+			for (Actor a : ug.getGenDAG().getNodes()) {
+				Element actor = doc.createElement("actor");
+				Attr actorNb = doc.createAttribute("name");
+				actorNb.setNodeValue(a.getName());
+				actor.setAttributeNode(actorNb);
+				// Add Ci HI and LO
+				Element chi = doc.createElement("chi");
+				chi.appendChild(doc.createTextNode(String.valueOf(a.getC_HI())));
+				Element clo = doc.createElement("clo");
+				clo.appendChild(doc.createTextNode(String.valueOf(a.getC_LO())));
+				actor.appendChild(chi);
+				actor.appendChild(clo);
+				mcdag.appendChild(actor);
+			}
+			
+			// Ports
+			Element edges = doc.createElement("ports");
+			int counter = 0;
+			for (Actor a : ug.getGenDAG().getNodes()) {
+				if (a.getSndEdges().size() != 0)  {
+					for (Edge e : a.getSndEdges()) {
+						Element edge = doc.createElement("port");
+						Attr portName = doc.createAttribute("name");
+						portName.setValue("p"+counter);
+						counter++;
+						Attr portSrc = doc.createAttribute("srcActor");
+						portSrc.setValue(e.getSrc().getName());
+						Attr portDst = doc.createAttribute("dstActor");
+						portDst.setValue(e.getDest().getName());
+						edge.setAttributeNode(portSrc);
+						edge.setAttributeNode(portDst);
+						edges.appendChild(edge);
+					}
+				}
+			}
+			mcdag.appendChild(edges);
+			
+			// Write the content
+			TransformerFactory tFactory = TransformerFactory.newInstance();
+			Transformer trans = tFactory.newTransformer();
+			DOMSource dSource = new DOMSource(doc);
+			StreamResult sResult = new StreamResult(new File(outGenFile));
+			trans.setOutputProperty(OutputKeys.INDENT, "yes");
+			trans.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+			trans.transform(dSource, sResult);
+		} catch (Exception ie) {
+			ie.printStackTrace();
+		}
+	}
+	
 	/* Getters and setters */
 	
 	public String getInputFile() {
@@ -529,6 +618,22 @@ public class MCParser {
 
 	public void setOutSchedFile(String outSchedFile) {
 		this.outSchedFile = outSchedFile;
+	}
+
+	public String getOutGenFile() {
+		return outGenFile;
+	}
+
+	public void setOutGenFile(String outGenFile) {
+		this.outGenFile = outGenFile;
+	}
+
+	public UtilizationGenerator getUg() {
+		return ug;
+	}
+
+	public void setUg(UtilizationGenerator ug) {
+		this.ug = ug;
 	}
 
 }

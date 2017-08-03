@@ -22,6 +22,7 @@ import java.util.Random;
 import org.apache.commons.cli.*;
 
 import fr.tpt.s3.ls_mxc.alloc.LS;
+import fr.tpt.s3.ls_mxc.parser.MCParser;
 
 /**
  * Main for the Graph generator interface
@@ -70,12 +71,7 @@ public class MainGenerator {
 		
 		Option o_out = new Option("o", "output", true, "Output file for the DAG");
 		o_out.setRequired(true);
-		options.addOption(o_out);
-		
-		Option o_dznout = new Option("d", "dzn_output", true, "Output file for the DAG in DZN format");
-		o_dznout.setRequired(false);
-		options.addOption(o_dznout);
-		
+		options.addOption(o_out);	
 		
 		CommandLineParser parser = new DefaultParser();
 		HelpFormatter formatter = new HelpFormatter();
@@ -91,8 +87,6 @@ public class MainGenerator {
 			return;
 		}
 		
-		String outputDZN = cmd.getOptionValue("dzn_output");
-
 		double userHI = Double.parseDouble(cmd.getOptionValue("hi_utilization"));
 		double userLO = Double.parseDouble(cmd.getOptionValue("lo_utilization"));
 		double UserHIinLO = Double.parseDouble(cmd.getOptionValue("hi_lo_utilization"));
@@ -107,8 +101,9 @@ public class MainGenerator {
 		
 		
 		UtilizationGenerator ug = new UtilizationGenerator(userLO, userHI, cp, edgeProb, UserHIinLO, para, cores);
-		
 		Random r = new Random();
+		
+		MCParser mcp = new MCParser(output, ug);
 		
 		if (r.nextInt(10)%2 == 0)
 			ug.GenenrateGraph();
@@ -127,7 +122,7 @@ public class MainGenerator {
 		}
 		// Generate the file used for the list scheduling
 		try {
-			ug.toFile(output);
+			mcp.writeGennedDAG();
 		} catch (IOException e) {
 			System.out.println("To file from generator " + e.getMessage());
 			
@@ -135,16 +130,5 @@ public class MainGenerator {
 			return;
 		}
 		
-		// Generate the file used for the CSP
-		if (outputDZN != null) {
-			try {
-				ug.toDZN(outputDZN);
-			} catch (IOException e) {
-				System.out.println("To DZN from generator " + e.getMessage());
-			
-				System.exit(1);
-				return;
-			}
-		}
 	}
 }
