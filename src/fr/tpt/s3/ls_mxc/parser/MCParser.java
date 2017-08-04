@@ -505,7 +505,7 @@ public class MCParser {
 			Attr dagName = doc.createAttribute("name");
 			dagName.setValue("genned-"+ug.getUserU_LO()+"-"+ug.getUserU_HI()+"-ed-"+ug.getEdgeProb());
 			Attr dagDead = doc.createAttribute("deadline");
-			dagDead.setValue(String.valueOf(ug.getGenDAG().getDeadline()));
+			dagDead.setValue(String.valueOf(ug.getDeadline()));
 			mcdag.setAttributeNodeNS(dagName);
 			mcdag.setAttributeNode(dagDead);
 			rootElement.appendChild(mcdag);
@@ -540,6 +540,7 @@ public class MCParser {
 						portSrc.setValue(e.getSrc().getName());
 						Attr portDst = doc.createAttribute("dstActor");
 						portDst.setValue(e.getDest().getName());
+						edge.setAttributeNode(portName);
 						edge.setAttributeNode(portSrc);
 						edge.setAttributeNode(portDst);
 						edges.appendChild(edge);

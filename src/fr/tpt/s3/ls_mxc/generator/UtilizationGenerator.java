@@ -16,13 +16,8 @@
  *******************************************************************************/
 package fr.tpt.s3.ls_mxc.generator;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Random;
 import java.util.Set;
 
 import fr.tpt.s3.ls_mxc.model.DAG;
@@ -45,7 +40,6 @@ public class UtilizationGenerator {
 
 	private int deadline;
 	
-	private int[][] adjMatrix;
 
 	public UtilizationGenerator (double U_LO, double U_HI, int cp, int edgeProb, double UHIinLO, int para, int cores) {
 		this.setUserU_LO(U_LO);
@@ -93,7 +87,7 @@ public class UtilizationGenerator {
 			}
 			
 			nodes.add(n);
-			n.CPfromNode(1);
+			n.CPfromNode(Actor.HI);
 			last = n;
 			rank++;
 			id++;
@@ -142,7 +136,7 @@ public class UtilizationGenerator {
 				}
 				n.setC_LO(n.getC_HI());
 				nodes.add(n);
-				n.CPfromNode(1);
+				n.CPfromNode(Actor.HI);
 				id++;
 			}
 			rank++;
@@ -169,10 +163,10 @@ public class UtilizationGenerator {
 		
 		it_n = nodes.iterator();
 		while (it_n.hasNext()){
-			it_n.next().CPfromNode(0);
+			it_n.next().CPfromNode(Actor.LO);
 		}
 				
-		graphSanityCheck(1);
+		graphSanityCheck(Actor.HI);
 		
 		// Add LO nodes
 		actualBudget = 0;
@@ -220,7 +214,7 @@ public class UtilizationGenerator {
 					}
 				}
 				nodes.add(n);
-				n.CPfromNode(0);
+				n.CPfromNode(Actor.LO);
 				id++;
 			}
 
@@ -229,9 +223,7 @@ public class UtilizationGenerator {
 		
 		// Have at least a 2 rank LO graph by adding one extra LO node
 		if (rank == 1) {
-			Actor n = new Actor(id, Integer.toString(id), 0, 0);
-			n.setC_HI(0);
-			n.setC_LO(rng.randomUnifInt(1, 1) + 1);
+			Actor n = new Actor(id, Integer.toString(id), 0, 1);;
 			
 			Iterator<Actor> it = nodes.iterator();
 			while (it.hasNext()) {
@@ -250,7 +242,7 @@ public class UtilizationGenerator {
 				}
 			}
 			nodes.add(n);
-			n.CPfromNode(0);
+			n.CPfromNode(Actor.LO);
 			id++;
 		}
 		
@@ -262,10 +254,9 @@ public class UtilizationGenerator {
 		}
 		
 		setNbNodes(id + 1);
-		graphSanityCheck(0);
+		graphSanityCheck(Actor.LO);
 		genDAG.setNodes(nodes);
 		setDeadline(genDAG.calcCriticalPath());
-		createAdjMatrix();
 	}
 	
 	
@@ -279,7 +270,6 @@ public class UtilizationGenerator {
 		Set<Actor> nodes = new HashSet<Actor>();
 		boolean cpReached = false;
 		int rank = 0;
-		Random r = new Random(System.currentTimeMillis());
 		
 		// Budgets deduced by utilization and CP
 		int budgetHI = (int) Math.ceil(userCp * userU_HI);
@@ -292,12 +282,12 @@ public class UtilizationGenerator {
 		rank = 0;		
 		while (budgetHI > 0) {
 			// Roll a number of nodes to add to the level
-			int nodesPerRank = r.nextInt(paraDegree);
+			int nodesPerRank = rng.randomUnifInt(1,paraDegree);
 			for (int j=0; j < nodesPerRank && budgetHI > 0; j++) {
 				Actor n = new Actor(id, Integer.toString(id), 0, 0);
 			
 				// Roll a C_HI and test if budget is left
-				n.setC_HI(r.nextInt(CHIBound) + 2);
+				n.setC_HI(rng.randomUnifInt(2, CHIBound));
 				if (budgetHI - n.getC_HI() > 0) {
 					budgetHI = budgetHI - n.getC_HI();
 				} else {
@@ -312,7 +302,7 @@ public class UtilizationGenerator {
 						Actor src = it_n.next();
 						// Test if the rank of the source is lower and if the CP
 						// is not reached
-						if (r.nextInt(100) <= edgeProb && n.getRank() > src.getRank()
+						if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
 								&& src.getCpFromNode_HI() + n.getC_HI() <= userCp) {
 							Edge e = new Edge(src, n);
 							src.getSndEdges().add(e);
@@ -325,7 +315,7 @@ public class UtilizationGenerator {
 				}
 				n.setC_LO(n.getC_HI());
 				nodes.add(n);
-				n.CPfromNode(1);
+				n.CPfromNode(Actor.HI);
 				id++;
 			}
 			rank++;
@@ -340,7 +330,7 @@ public class UtilizationGenerator {
 			while (it_n.hasNext()) {
 				Actor n = it_n.next();
 				
-				n.setC_LO(r.nextInt(n.getC_LO()) + 1);				
+				n.setC_LO(rng.randomUnifInt(1, n.getC_LO()));				
 				actualBudget = actualBudget - n.getC_LO();
 				if (actualBudget < 0)
 					actualBudget = 0;
@@ -349,10 +339,10 @@ public class UtilizationGenerator {
 		
 		it_n = nodes.iterator();
 		while (it_n.hasNext()){
-			it_n.next().CPfromNode(0);
+			it_n.next().CPfromNode(Actor.LO);
 		}
 				
-		graphSanityCheck(1);
+		graphSanityCheck(Actor.HI);
 		
 		// Add LO nodes
 		actualBudget = 0;
@@ -367,13 +357,13 @@ public class UtilizationGenerator {
 		rank = 0;
 		while (budgetLO > 0) {
 			// Roll a number of nodes to add to the level
-			int nodesPerRank = r.nextInt((int)(paraDegree / 2));
+			int nodesPerRank = rng.randomUnifInt(1, (int)(paraDegree / 2));
 			for (int j=0; j < nodesPerRank && budgetLO > 0; j++) {
 				Actor n = new Actor(id, Integer.toString(id), 0, 0);
 			
 				// Roll a C_HI and test if budget is left
 				n.setC_HI(0);
-				n.setC_LO(r.nextInt(CLOBound) + 1);
+				n.setC_LO(rng.randomUnifInt(1, CLOBound));
 				if (n.getC_LO() == 0)
 					n.setC_LO(1); // Minimal execution time
 				
@@ -391,7 +381,7 @@ public class UtilizationGenerator {
 						Actor src = it.next();
 						// Test if the rank of the source is lower and if the CP
 						// is not reached
-						if (r.nextInt(100) <= edgeProb && n.getRank() > src.getRank()
+						if (rng.randomUnifInt(1,100) <= edgeProb && n.getRank() > src.getRank()
 								&& src.getCpFromNode_LO() + n.getC_LO() <= userCp &&
 								allowedCommunitcation(src, n)) {
 							Edge e = new Edge(src, n);
@@ -405,7 +395,7 @@ public class UtilizationGenerator {
 					}
 				}
 				nodes.add(n);
-				n.CPfromNode(0);
+				n.CPfromNode(Actor.LO);
 				id++;
 			}
 
@@ -414,9 +404,7 @@ public class UtilizationGenerator {
 		
 		// Have at least a 2 rank LO graph by adding one extra LO node
 		if (rank == 1) {
-			Actor n = new Actor(id, Integer.toString(id), 0, 0);
-			n.setC_HI(0);
-			n.setC_LO(r.nextInt(1) + 1);
+			Actor n = new Actor(id, Integer.toString(id), 0, 1);
 			
 			Iterator<Actor> it = nodes.iterator();
 			while (it.hasNext()) {
@@ -426,7 +414,7 @@ public class UtilizationGenerator {
 					Edge e = new Edge(src, n);
 					src.getSndEdges().add(e);
 					n.getRcvEdges().add(e);
-				} else if (r.nextInt(100) <= edgeProb && n.getRank() > src.getRank()
+				} else if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
 						&& src.getCpFromNode_LO() + n.getC_LO() <= userCp &&
 						allowedCommunitcation(src, n)) {
 					Edge e = new Edge(src, n);
@@ -435,7 +423,7 @@ public class UtilizationGenerator {
 				}
 			}
 			nodes.add(n);
-			n.CPfromNode(0);
+			n.CPfromNode(Actor.LO);
 			id++;
 		}
 		
@@ -463,7 +451,7 @@ public class UtilizationGenerator {
 			node_max.getSndEdges().add(e);
 			n.getRcvEdges().add(e);
 			
-			n.CPfromNode(0);
+			n.CPfromNode(Actor.LO);
 			nodes.add(n);
 			id++;
 		}
@@ -475,12 +463,9 @@ public class UtilizationGenerator {
 			n.checkifSource();
 		}
 		
-		
-		setNbNodes(id + 1);
-		graphSanityCheck(0);
+		graphSanityCheck(Actor.LO);
 		genDAG.setNodes(nodes);
 		setDeadline(genDAG.calcCriticalPath());
-		createAdjMatrix();
 	}
 	
 	/**
@@ -533,7 +518,7 @@ public class UtilizationGenerator {
 	 * Sanity check for the graph:
 	 * 	- Each node has to have at least one edge
 	 */
-	public void graphSanityCheck(int mode) {
+	public void graphSanityCheck(short mode) {
 		boolean added = false;
 		Iterator<Actor> it_n = genDAG.getNodes().iterator();
 		
@@ -544,7 +529,7 @@ public class UtilizationGenerator {
 			if (n.getRcvEdges().size() == 0 && n.getSndEdges().size() == 0) {
 				Iterator<Actor> it_n2 = genDAG.getNodes().iterator();
 				while (it_n2.hasNext() && added == false) {
-					if (mode == 0) {
+					if (mode == Actor.LO) {
 						Actor n2 = it_n2.next(); 
 						if (n.getRank() < n2.getRank() &&
 								allowedCommunitcation(n, n2) &&
@@ -623,90 +608,9 @@ public class UtilizationGenerator {
 				Edge e = new Edge(hi, lo);
 				hi.getSndEdges().add(e);
 				lo.getRcvEdges().add(e);
-				lo.CPfromNode(0);
+				lo.CPfromNode(Actor.LO);
 				this.setHtoL(true);
 			}
-		}
-	}
-	
-	/**
-	 * Creates the matrix to be written in the files
-	 */
-	public void createAdjMatrix(){
-		adjMatrix = new int[nbNodes][];
-		for (int i = 0; i < nbNodes; i++)
-			adjMatrix[i] = new int[nbNodes];
-		
-		Iterator<Actor> it_n = genDAG.getNodes().iterator();
-		while (it_n.hasNext()){
-			Actor n = it_n.next();
-			
-			Iterator<Edge> it_e = n.getRcvEdges().iterator();
-			while (it_e.hasNext()){
-				Edge e = it_e.next();
-				adjMatrix[e.getDest().getId()][e.getSrc().getId()] = 1;
-			}
-		}
-	}
-	
-	/**
-	 * 
-	 * @param filename
-	 * @throws IOException
-	 */
-	public void toFile(String filename) throws IOException {
-		BufferedWriter out = null;
-		try {
-			File f = new File(filename);
-			f.createNewFile();
-			FileWriter fstream = new FileWriter(f);
-			out = new BufferedWriter(fstream);
-			
-			// Write number of nodes
-			out.write("#NbNodes\n");
-			out.write(Integer.toString(this.getNbNodes() - 1) + "\n\n");
-			
-			// Write number of cores
-			out.write("#NbCores\n");
-			out.write(Integer.toString(this.getNbCores()) + "\n\n");
-			
-			// Write number of cores
-			out.write("#Deadline\n");
-			out.write(Integer.toString(this.getDeadline()) + "\n\n");
-			
-			//Write C LOs
-			out.write("#C_LO\n");
-			for (int i = 0; i < nbNodes - 1; i++) {
-				Actor n = genDAG.getNodebyID(i);
-				out.write(Integer.toString(n.getC_LO()) + "\n");
-			}
-			out.write("\n");
-			
-			//Write C HIs
-			out.write("#C_HI\n");
-			for (int i = 0; i < nbNodes - 1; i++) {
-				Actor n = genDAG.getNodebyID(i);
-				out.write(Integer.toString(n.getC_HI()) + "\n");
-			}
-			out.write("\n");
-			
-			//Write precedence matrix
-			out.write("#Pred\n");
-			for (int i = 0; i < nbNodes - 1; i++) {
-				for (int j = 0; j < nbNodes - 1; j++){
-					out.write(Integer.toString(adjMatrix[i][j]));
-					if (j < nbNodes - 2)
-						out.write(",");
-				}
-				out.write("\n");
-			}
-			out.write("\n");
-			
-		}catch (IOException e){
-			System.out.print("To File : " + e.getMessage());
-		}finally{
-			if(out != null)
-				out.close();
 		}
 	}
 	
@@ -796,8 +700,7 @@ public class UtilizationGenerator {
 	public boolean isHtoL() {
 		return HtoL;
 	}
-
-
+	
 	public void setHtoL(boolean htoL) {
 		HtoL = htoL;
 	}

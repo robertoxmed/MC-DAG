@@ -99,7 +99,6 @@ public class MainGenerator {
 		
 		/* ============================= Generator parameters ============================= */
 		
-		
 		UtilizationGenerator ug = new UtilizationGenerator(userLO, userHI, cp, edgeProb, UserHIinLO, para, cores);
 		Random r = new Random();
 		
@@ -123,8 +122,9 @@ public class MainGenerator {
 		// Generate the file used for the list scheduling
 		try {
 			mcp.writeGennedDAG();
+			System.out.println("Written generated DAG");
 		} catch (IOException e) {
-			System.out.println("To file from generator " + e.getMessage());
+			System.out.println("Failed to write the XML file in the generator " + e.getMessage());
 			
 			System.exit(1);
 			return;

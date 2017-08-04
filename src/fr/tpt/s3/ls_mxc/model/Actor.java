@@ -109,7 +109,7 @@ public class Actor {
 	 * @param mode
 	 * @return
 	 */
-	public int CPfromNode (int mode) {
+	public int CPfromNode (short mode) {
 		
 		if (this.getRcvEdges().size() == 0) {
 			if (mode == 0) {
@@ -125,7 +125,7 @@ public class Actor {
 			Iterator<Edge> it_e = this.getRcvEdges().iterator();
 			while (it_e.hasNext()){
 				Edge e = it_e.next();
-				if (mode == 0) {
+				if (mode == Actor.LO) {
 					tmp = e.getSrc().getCpFromNode_LO();
 					if (max < tmp)
 						max = tmp;
