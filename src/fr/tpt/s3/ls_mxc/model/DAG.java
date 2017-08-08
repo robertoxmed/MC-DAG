@@ -57,7 +57,6 @@ public class DAG {
 		}
 	}
 	
-	
 	/**
 	 * Method to get the critical Path.
 	 * Needs to be called after getting HLFET levels.
