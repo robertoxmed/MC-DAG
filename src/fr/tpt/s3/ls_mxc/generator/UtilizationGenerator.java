@@ -76,7 +76,7 @@ public class UtilizationGenerator {
 			Actor n = new Actor(id, Integer.toString(id), 0, 0);
 			n.setRank(rank);
 			
-			n.setC_HI(rng.randomUnifInt(1,CHIBound) + 2);
+			n.setCHI(rng.randomUnifInt(1,CHIBound) + 2);
 			
 			
 			// Add egde and update the CP (if not source)
@@ -92,15 +92,15 @@ public class UtilizationGenerator {
 			rank++;
 			id++;
 			
-			if (toCP - n.getC_HI() > 0) {
-				toCP = toCP  - n.getC_HI();
-				budgetHI = budgetHI - n.getC_HI();
+			if (toCP - n.getCHI() > 0) {
+				toCP = toCP  - n.getCHI();
+				budgetHI = budgetHI - n.getCHI();
 			} else {
-				n.setC_HI(toCP);
-				budgetHI = budgetHI - n.getC_HI();
+				n.setCHI(toCP);
+				budgetHI = budgetHI - n.getCHI();
 				cpReached = true;
 			}
-			n.setC_LO(n.getC_HI());
+			n.setCLO(n.getCHI());
 		}		
 		// Generate the other HI nodes and the arcs
 		rank = 0;		
@@ -111,11 +111,11 @@ public class UtilizationGenerator {
 				Actor n = new Actor(id, Integer.toString(id), 0, 0);
 			
 				// Roll a C_HI and test if budget is left
-				n.setC_HI(rng.randomUnifInt(1, CHIBound) + 2);
-				if (budgetHI - n.getC_HI() > 0) {
-					budgetHI = budgetHI - n.getC_HI();
+				n.setCHI(rng.randomUnifInt(1, CHIBound) + 2);
+				if (budgetHI - n.getCHI() > 0) {
+					budgetHI = budgetHI - n.getCHI();
 				} else {
-					n.setC_HI(budgetHI);
+					n.setCHI(budgetHI);
 					budgetHI = 0;
 				}
 				
@@ -127,14 +127,14 @@ public class UtilizationGenerator {
 						// Test if the rank of the source is lower and if the CP
 						// is not reached
 						if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
-								&& src.getCpFromNode_HI() + n.getC_HI() <= userCp) {
+								&& src.getCpFromNode_HI() + n.getCHI() <= userCp) {
 							Edge e = new Edge(src, n);
 							src.getSndEdges().add(e);
 							n.getRcvEdges().add(e);
 						}
 					}
 				}
-				n.setC_LO(n.getC_HI());
+				n.setCLO(n.getCHI());
 				nodes.add(n);
 				n.CPfromNode(Actor.HI);
 				id++;
@@ -151,11 +151,11 @@ public class UtilizationGenerator {
 			while (it_n.hasNext()) {
 				Actor n = it_n.next();
 				
-				n.setC_LO(rng.randomUnifInt(1, n.getC_LO()) + 1);				
-				if (n.getC_LO() == 0)
-					n.setC_LO(1);
+				n.setCLO(rng.randomUnifInt(1, n.getCLO()) + 1);				
+				if (n.getCLO() == 0)
+					n.setCLO(1);
 				
-				actualBudget = actualBudget - n.getC_LO();
+				actualBudget = actualBudget - n.getCLO();
 				if (actualBudget < 0)
 					actualBudget = 0;
 			}
@@ -172,7 +172,7 @@ public class UtilizationGenerator {
 		actualBudget = 0;
 		it_n = nodes.iterator();
 		while (it_n.hasNext()) {
-			actualBudget += it_n.next().getC_LO();
+			actualBudget += it_n.next().getCLO();
 		}
 			
 		budgetLO = budgetLO - actualBudget;
@@ -185,15 +185,15 @@ public class UtilizationGenerator {
 				Actor n = new Actor(id, Integer.toString(id), 0, 0);
 			
 				// Roll a C_HI and test if budget is left
-				n.setC_HI(0);
-				n.setC_LO(rng.randomUnifInt(1, CLOBound) + 1);
-				if (n.getC_LO() == 0)
-					n.setC_LO(1); // Minimal execution time
+				n.setCHI(0);
+				n.setCLO(rng.randomUnifInt(1, CLOBound) + 1);
+				if (n.getCLO() == 0)
+					n.setCLO(1); // Minimal execution time
 				
-				if (budgetLO - n.getC_LO() > 0) {
-					budgetLO = budgetLO - n.getC_LO();
+				if (budgetLO - n.getCLO() > 0) {
+					budgetLO = budgetLO - n.getCLO();
 				} else {
-					n.setC_LO(budgetLO);
+					n.setCLO(budgetLO);
 					budgetLO = 0;
 				}
 				
@@ -205,7 +205,7 @@ public class UtilizationGenerator {
 						// Test if the rank of the source is lower and if the CP
 						// is not reached
 						if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
-								&& src.getCpFromNode_LO() + n.getC_LO() <= userCp &&
+								&& src.getCpFromNode_LO() + n.getCLO() <= userCp &&
 								allowedCommunitcation(src, n)) {
 							Edge e = new Edge(src, n);
 							src.getSndEdges().add(e);
@@ -229,12 +229,12 @@ public class UtilizationGenerator {
 			while (it.hasNext()) {
 				Actor src = it.next();
 				
-				if (src.getC_HI() == 0) {
+				if (src.getCHI() == 0) {
 					Edge e = new Edge(src, n);
 					src.getSndEdges().add(e);
 					n.getRcvEdges().add(e);
 				} else if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
-						&& src.getCpFromNode_LO() + n.getC_LO() <= userCp &&
+						&& src.getCpFromNode_LO() + n.getCLO() <= userCp &&
 						allowedCommunitcation(src, n)) {
 					Edge e = new Edge(src, n);
 					src.getSndEdges().add(e);
@@ -287,11 +287,11 @@ public class UtilizationGenerator {
 				Actor n = new Actor(id, Integer.toString(id), 0, 0);
 			
 				// Roll a C_HI and test if budget is left
-				n.setC_HI(rng.randomUnifInt(2, CHIBound));
-				if (budgetHI - n.getC_HI() > 0) {
-					budgetHI = budgetHI - n.getC_HI();
+				n.setCHI(rng.randomUnifInt(2, CHIBound));
+				if (budgetHI - n.getCHI() > 0) {
+					budgetHI = budgetHI - n.getCHI();
 				} else {
-					n.setC_HI(budgetHI);
+					n.setCHI(budgetHI);
 					budgetHI = 0;
 				}
 				
@@ -303,17 +303,17 @@ public class UtilizationGenerator {
 						// Test if the rank of the source is lower and if the CP
 						// is not reached
 						if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
-								&& src.getCpFromNode_HI() + n.getC_HI() <= userCp) {
+								&& src.getCpFromNode_HI() + n.getCHI() <= userCp) {
 							Edge e = new Edge(src, n);
 							src.getSndEdges().add(e);
 							n.getRcvEdges().add(e);
-							if (src.getCpFromNode_HI() + n.getC_HI() == userCp) {
+							if (src.getCpFromNode_HI() + n.getCHI() == userCp) {
 								cpReached = true;
 							}
 						}
 					}
 				}
-				n.setC_LO(n.getC_HI());
+				n.setCLO(n.getCHI());
 				nodes.add(n);
 				n.CPfromNode(Actor.HI);
 				id++;
@@ -330,8 +330,8 @@ public class UtilizationGenerator {
 			while (it_n.hasNext()) {
 				Actor n = it_n.next();
 				
-				n.setC_LO(rng.randomUnifInt(1, n.getC_LO()));				
-				actualBudget = actualBudget - n.getC_LO();
+				n.setCLO(rng.randomUnifInt(1, n.getCLO()));				
+				actualBudget = actualBudget - n.getCLO();
 				if (actualBudget < 0)
 					actualBudget = 0;
 			}
@@ -348,7 +348,7 @@ public class UtilizationGenerator {
 		actualBudget = 0;
 		it_n = nodes.iterator();
 		while (it_n.hasNext()) {
-			actualBudget += it_n.next().getC_LO();
+			actualBudget += it_n.next().getCLO();
 		}
 			
 		budgetLO = budgetLO - actualBudget;
@@ -362,15 +362,15 @@ public class UtilizationGenerator {
 				Actor n = new Actor(id, Integer.toString(id), 0, 0);
 			
 				// Roll a C_HI and test if budget is left
-				n.setC_HI(0);
-				n.setC_LO(rng.randomUnifInt(1, CLOBound));
-				if (n.getC_LO() == 0)
-					n.setC_LO(1); // Minimal execution time
+				n.setCHI(0);
+				n.setCLO(rng.randomUnifInt(1, CLOBound));
+				if (n.getCLO() == 0)
+					n.setCLO(1); // Minimal execution time
 				
-				if (budgetLO - n.getC_LO() > 0) {
-					budgetLO = budgetLO - n.getC_LO();
+				if (budgetLO - n.getCLO() > 0) {
+					budgetLO = budgetLO - n.getCLO();
 				} else {
-					n.setC_LO(budgetLO);
+					n.setCLO(budgetLO);
 					budgetLO = 0;
 				}
 				
@@ -382,12 +382,12 @@ public class UtilizationGenerator {
 						// Test if the rank of the source is lower and if the CP
 						// is not reached
 						if (rng.randomUnifInt(1,100) <= edgeProb && n.getRank() > src.getRank()
-								&& src.getCpFromNode_LO() + n.getC_LO() <= userCp &&
+								&& src.getCpFromNode_LO() + n.getCLO() <= userCp &&
 								allowedCommunitcation(src, n)) {
 							Edge e = new Edge(src, n);
 							src.getSndEdges().add(e);
 							n.getRcvEdges().add(e);
-							if (src.getCpFromNode_HI() + n.getC_HI() == userCp) {
+							if (src.getCpFromNode_HI() + n.getCHI() == userCp) {
 								cpReached = true;
 							}
 								
@@ -410,12 +410,12 @@ public class UtilizationGenerator {
 			while (it.hasNext()) {
 				Actor src = it.next();
 				
-				if (src.getC_HI() == 0) {
+				if (src.getCHI() == 0) {
 					Edge e = new Edge(src, n);
 					src.getSndEdges().add(e);
 					n.getRcvEdges().add(e);
 				} else if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
-						&& src.getCpFromNode_LO() + n.getC_LO() <= userCp &&
+						&& src.getCpFromNode_LO() + n.getCLO() <= userCp &&
 						allowedCommunitcation(src, n)) {
 					Edge e = new Edge(src, n);
 					src.getSndEdges().add(e);
@@ -445,8 +445,8 @@ public class UtilizationGenerator {
 			}
 			
 			// Roll a C_HI and test if budget is left
-			n.setC_HI(0);
-			n.setC_LO(userCp - node_max.getCpFromNode_LO());
+			n.setCHI(0);
+			n.setCLO(userCp - node_max.getCpFromNode_LO());
 			Edge e = new Edge(node_max, n);
 			node_max.getSndEdges().add(e);
 			n.getRcvEdges().add(e);
@@ -476,7 +476,7 @@ public class UtilizationGenerator {
 	public boolean allHIareMin (Set<Actor> nodes) {
 		Iterator<Actor> it = nodes.iterator();
 		while (it.hasNext()){
-			if (it.next().getC_LO() != 1)
+			if (it.next().getCLO() != 1)
 				return false;
 		}
 		return true;
@@ -494,8 +494,8 @@ public class UtilizationGenerator {
 		
 		while (it_n.hasNext()) {
 			Actor n = it_n.next();
-			sumChi += n.getC_HI();
-			sumClo += n.getC_LO();
+			sumChi += n.getCHI();
+			sumClo += n.getCLO();
 		}
 		
 		if (sumChi >= sumClo)
@@ -507,8 +507,8 @@ public class UtilizationGenerator {
 	}
 	
 	public boolean allowedCommunitcation (Actor src, Actor dest) {
-		if ((src.getC_HI() > 0 && dest.getC_HI() >= 0) ||
-		(src.getC_HI() == 0 && dest.getC_HI() == 0))
+		if ((src.getCHI() > 0 && dest.getCHI() >= 0) ||
+		(src.getCHI() == 0 && dest.getCHI() == 0))
 			return true;
 		
 		return false;	
@@ -533,24 +533,24 @@ public class UtilizationGenerator {
 						Actor n2 = it_n2.next(); 
 						if (n.getRank() < n2.getRank() &&
 								allowedCommunitcation(n, n2) &&
-								n.getCpFromNode_LO() + n2.getC_LO() <= userCp){
+								n.getCpFromNode_LO() + n2.getCLO() <= userCp){
 							Edge e = new Edge(n, n2);
 							n.getSndEdges().add(e);
 							n2.getRcvEdges().add(e);
 							added = true;
-							if ((n.getC_HI() == 0 && n2.getC_HI() != 0) ||
-									(n.getC_HI() != 0 && n2.getC_HI() == 0))
+							if ((n.getCHI() == 0 && n2.getCHI() != 0) ||
+									(n.getCHI() != 0 && n2.getCHI() == 0))
 								this.setHtoL(true);
 							n2.CPfromNode(mode);
 						} else if (n.getRank() > n2.getRank() &&
 								allowedCommunitcation(n2,n) &&
-								n2.getCpFromNode_LO() + n.getC_LO() <= userCp) {
+								n2.getCpFromNode_LO() + n.getCLO() <= userCp) {
 							Edge e = new Edge(n2, n);
 							n.getRcvEdges().add(e);
 							n2.getSndEdges().add(e);
 							added = true;
-							if ((n.getC_HI() == 0 && n2.getC_HI() != 0) ||
-									(n.getC_HI() != 0 && n2.getC_HI() == 0))
+							if ((n.getCHI() == 0 && n2.getCHI() != 0) ||
+									(n.getCHI() != 0 && n2.getCHI() == 0))
 								this.setHtoL(true);
 							n.CPfromNode(mode);
 						}
@@ -558,7 +558,7 @@ public class UtilizationGenerator {
 						Actor n2 = it_n2.next(); 
 						if (n.getRank() < n2.getRank() &&
 								allowedCommunitcation(n, n2) &&
-								n.getCpFromNode_HI() + n2.getC_HI() <= userCp){
+								n.getCpFromNode_HI() + n2.getCHI() <= userCp){
 							Edge e = new Edge(n, n2);
 							n.getSndEdges().add(e);
 							n2.getRcvEdges().add(e);
@@ -566,7 +566,7 @@ public class UtilizationGenerator {
 							n.CPfromNode(mode);
 						} else if (n.getRank() > n2.getRank() &&
 								allowedCommunitcation(n2,n) &&
-								n2.getCpFromNode_HI() + n.getC_HI() <= userCp) {
+								n2.getCpFromNode_HI() + n.getCHI() <= userCp) {
 							Edge e = new Edge(n2, n);
 							n.getRcvEdges().add(e);
 							n2.getSndEdges().add(e);
@@ -589,7 +589,7 @@ public class UtilizationGenerator {
 
 			while (it_n.hasNext()) { // Find a HI task
 				Actor n = it_n.next();
-				if (n.getRank() < 2 && n.getC_HI() > 0) {
+				if (n.getRank() < 2 && n.getCHI() > 0) {
 					hi = n;
 				}
 			}
@@ -597,14 +597,14 @@ public class UtilizationGenerator {
 			it_n = genDAG.getNodes().iterator();
 			while (it_n.hasNext()) { // Find a HI task
 				Actor n = it_n.next();
-				if (n.getRank() > 2 && n.getC_HI() == 0) {
+				if (n.getRank() > 2 && n.getCHI() == 0) {
 					lo = n;
 				}
 			}
 
 			if (hi.getRank() < lo.getRank() &&
 					allowedCommunitcation(hi, lo) &&
-					hi.getCpFromNode_LO() + lo.getC_LO() <= userCp) {
+					hi.getCpFromNode_LO() + lo.getCLO() <= userCp) {
 				Edge e = new Edge(hi, lo);
 				hi.getSndEdges().add(e);
 				lo.getRcvEdges().add(e);

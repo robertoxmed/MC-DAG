@@ -32,6 +32,7 @@ public class DAG {
 	private Set<Actor> nodes;
 	private Set<Actor> nodesHI;
 	private Set<Actor> loOuts;
+	private Set<Actor> sinks;
 	private int critPath;
 	private int deadline;
 	
@@ -86,7 +87,7 @@ public class DAG {
 		Iterator<Actor> in = this.getNodes().iterator();
 		while (in.hasNext()) {
 			Actor n = in.next();
-			if (n.getC_HI() != 0)
+			if (n.getCHI() != 0)
 				this.getNodes_HI().add(n);
 		}
 	}
@@ -99,7 +100,7 @@ public class DAG {
 		while (in.hasNext()) {
 			Actor n = in.next();
 			if (n.getSndEdges().size() == 0 &&
-					n.getC_HI() == 0) {
+					n.getCHI() == 0) {
 				this.getLoOuts().add(n);
 			}
 		}
@@ -177,6 +178,14 @@ public class DAG {
 
 	public void setDeadline(int deadline) {
 		this.deadline = deadline;
+	}
+
+	public Set<Actor> getSinks() {
+		return sinks;
+	}
+
+	public void setSinks(Set<Actor> sinks) {
+		this.sinks = sinks;
 	}
 
 	

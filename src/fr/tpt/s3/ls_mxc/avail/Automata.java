@@ -73,7 +73,7 @@ public class Automata {
 
 		Actor n = d.getNodebyName(task);
 		State s;
-		if (n.getC_HI() !=  0) {
+		if (n.getCHI() !=  0) {
 			s = new State(nbStates++, task, Actor.HI);
 			if (n.isfMechanism()) { // Test if it's a fault tolerant mechanism
 				s.setfMechanism(true);
@@ -148,7 +148,7 @@ public class Automata {
 		// then HI tasks, then LO tasks
 		if (s2 != null && s2.getCompTime() == c_t) {
 			
-			if (n.getC_HI() != 0) {	
+			if (n.getCHI() != 0) {	
 				int cur_ct = c_t;
 				while (is.hasNext() && cur_ct == c_t) {
 					s2 = is.next();
@@ -156,7 +156,7 @@ public class Automata {
 					if (s2.getMode() == Actor.HI)
 						idx++;
 				}
-			} else if (n.getC_HI() == 0) {
+			} else if (n.getCHI() == 0) {
 				int cur_ct = c_t;
 				while (is.hasNext() && cur_ct == c_t) {
 					s2 = is.next();

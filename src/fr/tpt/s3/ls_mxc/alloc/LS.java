@@ -101,7 +101,7 @@ public class LS {
 		Iterator<Actor> it_n = mcDag.getNodes().iterator();
 		while(it_n.hasNext()){
 			Actor n = it_n.next();
-			if (n.getC_HI() !=  0) {
+			if (n.getCHI() !=  0) {
 				weights_B[n.getId()] = calcHLFETLevel(n, 0) + mcDag.getCritPath()*2; // Add constant
 				n.setWeight_B(n.getWeightLO()+mcDag.getCritPath()*2);
 			} else {
@@ -125,11 +125,11 @@ public class LS {
 		
 		// Final case the node is a sink
 		if (n.isSink() && mode == Actor.LO){
-			n.setWeightLO(n.getC_LO());
-			return n.getC_LO();
+			n.setWeightLO(n.getCLO());
+			return n.getCLO();
 		} else if (n.isSinkinHI() && mode == Actor.HI) {
-			n.setWeightHI(n.getC_HI());
-			return n.getC_HI();
+			n.setWeightHI(n.getCHI());
+			return n.getCHI();
 		}
 		
 		// General case
@@ -150,11 +150,11 @@ public class LS {
 		}
 		
 		if (mode == Actor.LO) { // LO mode
-			n.setWeightLO(max + n.getC_LO());
-			return max + n.getC_LO();
+			n.setWeightLO(max + n.getCLO());
+			return max + n.getCLO();
 		} else {
-			n.setWeightHI(max + n.getC_HI());
-			return max + n.getC_HI();
+			n.setWeightHI(max + n.getCHI());
+			return max + n.getCHI();
 		}
 	}
 	
@@ -190,8 +190,8 @@ public class LS {
 		// Add HI nodes to the list
 		while(it_n.hasNext()){
 			Actor n = it_n.next();
-			if (n.getC_HI() != 0) {
-				t_hi[n.getId()] = n.getC_HI();
+			if (n.getCHI() != 0) {
+				t_hi[n.getId()] = n.getCHI();
 				if (n.isSinkinHI()) { // At the beginning only exit nodes are added
 					ready_hi.add(n);
 				}
@@ -298,7 +298,7 @@ public class LS {
 		// Add LO nodes to the list
 		while(it_n.hasNext()){
 			Actor n = it_n.next();
-			t_lo[n.getId()] = n.getC_LO();
+			t_lo[n.getId()] = n.getCLO();
 			if (n.isSource()) // At the beginning only source nodes are added
 				ready_lo.add(n);
 		}
@@ -404,7 +404,7 @@ public class LS {
 		// Add LO nodes to the list
 		while(it_n.hasNext()){
 			Actor n = it_n.next();
-			t_lo[n.getId()] = n.getC_LO();
+			t_lo[n.getId()] = n.getCLO();
 			if (n.isSource()) // At the beginning only source nodes are added
 				ready_lo.add(n);
 		}
@@ -491,7 +491,7 @@ public class LS {
 		Iterator<Actor> it_n = mcDag.getNodes().iterator();
 		while (it_n.hasNext()){
 			Actor n = it_n.next();
-			if (start_hi[n.getId()] == t && t_lo[n.getId()] != 0 && n.getC_HI() != 0){
+			if (start_hi[n.getId()] == t && t_lo[n.getId()] != 0 && n.getCHI() != 0){
 				n.setWeightLO(Integer.MAX_VALUE);
 				Collections.sort(ready_lo, new Comparator<Actor>() {
 					@Override
@@ -525,7 +525,7 @@ public class LS {
 			boolean ready = true;
 			boolean add = true;
 			
-			if (mode == 1 && suc.getC_HI() == 0) { // Don't activate LO tasks in HI mode
+			if (mode == 1 && suc.getCHI() == 0) { // Don't activate LO tasks in HI mode
 				ready = false;
 				break;
 			}
@@ -571,7 +571,7 @@ public class LS {
 			boolean ready = true;
 			boolean add = true;
 			
-			if (pred.getC_HI() == 0) { // Don't activate LO tasks in HI mode
+			if (pred.getCHI() == 0) { // Don't activate LO tasks in HI mode
 				ready = false;
 				break;
 			}
@@ -607,7 +607,7 @@ public class LS {
 	public void printW(int mode) {
 		for (int i = 0; i < getMxcDag().getNodes().size(); i++) {
 			if (mode == Actor.HI ) {
-				if (getMxcDag().getNodebyID(i).getC_HI() != 0)
+				if (getMxcDag().getNodebyID(i).getCHI() != 0)
 					System.out.println("Weight HI "+getMxcDag().getNodebyID(i).getName()+" = "+getMxcDag().getNodebyID(i).getWeightHI());
 			} else {
 				System.out.println("Weight LO "+getMxcDag().getNodebyID(i).getName()+" = "+weights_LO[i]);
@@ -721,7 +721,7 @@ public class LS {
 		// Add LO nodes to the list
 		while(it_n.hasNext()){
 			Actor n = it_n.next();
-			t_lo[n.getId()] = n.getC_LO();
+			t_lo[n.getId()] = n.getCLO();
 			if (n.isSource()) // At the beginning only source nodes are added
 				ready_lo.add(n);
 		}
@@ -819,8 +819,8 @@ public class LS {
 		// Add HI nodes to the list
 		while(it_n.hasNext()){
 			Actor n = it_n.next();
-			if (n.getC_HI() != 0) {
-				t_hi[n.getId()] = n.getC_HI();
+			if (n.getCHI() != 0) {
+				t_hi[n.getId()] = n.getCHI();
 				if (n.isSource()) // At the beginning only source nodes are added
 					ready_hi.add(n);
 			}

@@ -61,13 +61,19 @@ public class Actor {
 	private int M;
 	private int K;
 	
+	// Used for multi dag scheduling
+	private int urgencyLO;
+	private int urgencyHI;
+	private int earDeadLO;
+	private int earDeadHI;
+	
 	/**
 	 * Constructors
 	 */
 	public Actor(int id, String name, int c_lo, int c_hi){
 		this.setId(id);
-		this.setC_LO(c_lo);
-		this.setC_HI(c_hi);
+		this.setCLO(c_lo);
+		this.setCHI(c_hi);
 		this.setName(name);
 		this.setSink(false);
 		this.setSource(false);
@@ -96,7 +102,7 @@ public class Actor {
 		while (it_e.hasNext()){
 			Edge e = it_e.next();
 			Actor dst = e.getDest();
-			if (dst.getC_HI() != 0) {
+			if (dst.getCHI() != 0) {
 				this.setSinkinHI(false);
 				break;
 			}
@@ -114,10 +120,10 @@ public class Actor {
 		if (this.getRcvEdges().size() == 0) {
 			if (mode == 0) {
 				this.setCpFromNode_LO(cLO);
-				return this.getC_LO();
+				return this.getCLO();
 			} else {
 				this.setCpFromNode_HI(cHI);
-				return this.getC_HI();
+				return this.getCHI();
 			}
 		} else {
 			int max = 0;
@@ -136,9 +142,9 @@ public class Actor {
 				}
 			}
 			if (mode == 0)
-				this.setCpFromNode_LO(max + this.getC_LO());
+				this.setCpFromNode_LO(max + this.getCLO());
 			else
-				this.setCpFromNode_HI(max + this.getC_HI());
+				this.setCpFromNode_HI(max + this.getCHI());
 			
 			return max;
 		}
@@ -166,7 +172,7 @@ public class Actor {
 		
 		while (ie.hasNext()){
 			Edge e = ie.next();
-			if (e.getSrc().getC_HI() == 0) {
+			if (e.getSrc().getCHI() == 0) {
 				result.add(e.getSrc());
 				result.addAll(e.getSrc().getLOPred());
 			}
@@ -178,16 +184,16 @@ public class Actor {
 	/**
 	 *  Getters & Setters
 	 */
-	public int getC_LO() {
+	public int getCLO() {
 		return cLO;
 	}
-	public void setC_LO(int c_LO) {
+	public void setCLO(int c_LO) {
 		cLO = c_LO;
 	}
-	public int getC_HI() {
+	public int getCHI() {
 		return cHI;
 	}
-	public void setC_HI(int c_HI) {
+	public void setCHI(int c_HI) {
 		cHI = c_HI;
 	}
 	public boolean isSource() {
@@ -343,6 +349,38 @@ public class Actor {
 
 	public void setK(int k) {
 		K = k;
+	}
+
+	public int getUrgencyHI() {
+		return urgencyHI;
+	}
+
+	public void setUrgencyHI(int urgencyHI) {
+		this.urgencyHI = urgencyHI;
+	}
+
+	public int getUrgencyLO() {
+		return urgencyLO;
+	}
+
+	public void setUrgencyLO(int urgencyLO) {
+		this.urgencyLO = urgencyLO;
+	}
+
+	public int getEarDeadLO() {
+		return earDeadLO;
+	}
+
+	public void setEarDeadLO(int earDeadLO) {
+		this.earDeadLO = earDeadLO;
+	}
+
+	public int getEarDeadHI() {
+		return earDeadHI;
+	}
+
+	public void setEarDeadHI(int earDeadHI) {
+		this.earDeadHI = earDeadHI;
 	}
 
 }

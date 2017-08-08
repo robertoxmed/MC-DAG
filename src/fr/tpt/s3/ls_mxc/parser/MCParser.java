@@ -359,7 +359,7 @@ public class MCParser {
 			
 			// Create all necessary booleans
 			for (Actor a : dag.getNodes()) {
-				if (a.getC_HI() == 0) // It is a LO task
+				if (a.getCHI() == 0) // It is a LO task
 					out.write("\t"+a.getName()+"bool: bool init false;\n");
 			}
 			
@@ -518,9 +518,9 @@ public class MCParser {
 				actor.setAttributeNode(actorNb);
 				// Add Ci HI and LO
 				Element chi = doc.createElement("chi");
-				chi.appendChild(doc.createTextNode(String.valueOf(a.getC_HI())));
+				chi.appendChild(doc.createTextNode(String.valueOf(a.getCHI())));
 				Element clo = doc.createElement("clo");
-				clo.appendChild(doc.createTextNode(String.valueOf(a.getC_LO())));
+				clo.appendChild(doc.createTextNode(String.valueOf(a.getCLO())));
 				actor.appendChild(chi);
 				actor.appendChild(clo);
 				mcdag.appendChild(actor);
