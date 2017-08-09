@@ -1,6 +1,7 @@
 package fr.tpt.s3.ls_mxc.alloc;
 
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,10 +29,14 @@ public class MultiDAG {
 	private String sHI[][];
 	
 	// LSAIs of HI tasks
-	private int startHI[];
+	private Hashtable<String, Integer> startHI;
 	
 	// Max deadline
 	private int maxD;
+	
+	// Remaining time for all nodes
+	private Hashtable<String, Integer> remainTLO;
+	private Hashtable<String, Integer> remainTHI;
 	
 	/**
 	 * Constructor of the Multi DAG scheduler
@@ -41,20 +46,22 @@ public class MultiDAG {
 	public MultiDAG (Set<DAG> sd, int cores) {
 		setMcDags(sd);
 		setNbCores(cores);
+		startHI = new Hashtable<>();
+		remainTLO = new Hashtable<>();
+		remainTHI = new Hashtable<>();
 	}
 	
 	/**
-	 * Allocates the scheduling tables
+	 * Allocates the scheduling tables & the LSAIs
 	 */
 	private void initTables () {
-		
 		maxD = 0;
 		// Look for the maximum deadline
 		for (DAG d : getMcDags()) {
 			if (d.getDeadline() > maxD)
-				maxD = d.getDeadline();
+				maxD = d.getDeadline();				
 		}
-		
+	
 		setsHI(new String[maxD][getNbCores()]);
 		setsLO(new String[maxD][getNbCores()]);
 	}
@@ -125,7 +132,7 @@ public class MultiDAG {
 			Iterator<Actor> ia = la.iterator();
 			while (ia.hasNext() ) {
 				Actor t = ia.next();
-				if (t.getUrgencyHI() < a.getUrgencyHI())
+				if (t.getUrgencyHI() > a.getUrgencyHI())
 					idx++;
 				else
 					break;
@@ -149,12 +156,27 @@ public class MultiDAG {
 	 * @param sched
 	 * @return
 	 */
-	private boolean okDataDepend(Actor a, List<Actor> sched) {
+	private boolean okDataDepend (Actor a, List<Actor> sched) {
 		for(Edge e : a.getRcvEdges()) {
 			if (!sched.contains(e.getSrc()))
 				return false;
 		}
 		return true;
+	}
+	
+	/**
+	 * Inits the remaining time to be allocated to each Actor
+	 */
+	private void initRemainT () {
+		
+		for (DAG d : getMcDags()) {
+			for (Actor a : d.getNodes()) {
+				if (a.getCHI() != 0)
+					remainTHI.put(a.getName(), a.getCHI());
+				
+				remainTLO.put(a.getName(), a.getCLO());
+			}
+		}
 	}
 
 	/**
@@ -175,16 +197,30 @@ public class MultiDAG {
 		
 		// Allocate all slots of the HI scheduling table
 		ListIterator<Actor> lit = lHI.listIterator();
-		for (int s = 0; s < maxD; s ++) {
+		boolean found = false;
+		for (int s = maxD - 1; s >= 0; s--) {
 			
 			for (int c = 0; c < getNbCores(); c++) {
-				if (lit.hasNext()) {
-					Actor a = lit.next();
-					if (okDataDepend(a, sched)) {
-						sHI[s][c] = a.getName();
+				// Find a ready task in the HI list
+				Actor a = null;
+				while (!found) {
+					if (lit.hasNext()) {
+						a = lit.next();
+						if (okDataDepend(a, sched) && !sched.contains(a))
+							found = true;
 					}
 				}
+				sHI[s][c] = a.getName();
+				int val = remainTHI.get(a.getName());
+				val--;
+				if (val == 0) {
+						startHI.put(a.getName(), s);
+						sched.add(a);
+						lit.remove();
+					}
+				remainTHI.put(a.getName(), val);
 			}
+			lit = lHI.listIterator(lHI.size());
 		}
 	}
 	
@@ -203,9 +239,50 @@ public class MultiDAG {
 	public void allocAll () throws SchedulingException {
 		initTables();
 		calcWeights();
+		initRemainT();
 		allocHI();
 		allocLO();
 	}
+	
+	/*
+	 * Debugging functions
+	 */
+	/**
+	 * Prints urgency values for the multi DAG scheduling
+	 */
+	public void printUrgencies () {
+		for (DAG d : getMcDags()) {
+			for (Actor a : d.getNodes()) {
+				System.out.println("DAG "+d.getId()+"; Actor "+a.getName()
+									+"; Urgency HI "+a.getUrgencyHI()+"; Urgency LO "+a.getUrgencyLO());
+			}
+		}
+	}
+	
+	/**
+	 * Prints the HI scheduling table
+	 */
+	public void printSHI () {
+		for (int s = 0; s < maxD; s++) {
+			for (int c = 0; c < getNbCores(); c++) {
+				System.out.print(sHI[s][c]+" | ");
+			}
+			System.out.print("\n");
+		}
+	}
+	
+	/**
+	 * Prints the LO scheduling table
+	 */
+	public void printSLO () {
+		for (int s = 0; s < maxD; s++) {
+			for (int c = 0; c < getNbCores(); c++) {
+				System.out.print(sLO[s][c]+" | ");
+			}
+			System.out.print("\n");
+		}
+	}
+	
 	
 	/*
 	 * Getters and setters
@@ -241,15 +318,6 @@ public class MultiDAG {
 	public void setsHI(String[][] sHI) {
 		this.sHI = sHI;
 	}
-
-	public int[] getStartHI() {
-		return startHI;
-	}
-
-	public void setStartHI(int[] startHI) {
-		this.startHI = startHI;
-	}
-
 
 	public List<Actor> getlLO() {
 		return lLO;

@@ -84,12 +84,14 @@ public class Main {
 		
 		/* =============== Read from file and try to solve ================ */
 		
-		DAG dag = new DAG();
+		DAG dags[] = null;
 		LS ls = new LS();
-		Automata auto = new Automata(ls, dag);
-		MCParser mcp = new MCParser(inputFilePath, outSchedFilePath, outPrismFilePath, dag, ls);
+		
+		MCParser mcp = new MCParser(inputFilePath, outSchedFilePath, outPrismFilePath, dags);
 		mcp.readXML();
-		ls.setDeadline(dag.getDeadline());
+		@SuppressWarnings("null")
+		Automata auto = new Automata(ls, dags[0]);
+		ls.setDeadline(dags[0].getDeadline());
 		
 		try {
 			ls.AllocAll();

@@ -37,6 +37,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.Element;
 
 import fr.tpt.s3.ls_mxc.alloc.LS;
+import fr.tpt.s3.ls_mxc.alloc.MultiDAG;
 import fr.tpt.s3.ls_mxc.avail.AutoBoolean;
 import fr.tpt.s3.ls_mxc.avail.Automata;
 import fr.tpt.s3.ls_mxc.avail.FTM;
@@ -55,18 +56,18 @@ public class MCParser {
 	private String outSchedFile;
 	private String outGenFile;
 	// Only references do not have to be instantiated
-	private DAG dag;
+	private DAG[] dags;
 	private LS ls;
+	private MultiDAG mdagsched;
 	private Automata auto;
 	private UtilizationGenerator ug;
 	
-	public MCParser (String iFile, String oSFile, String oFile, DAG dag, LS ls) {
+	public MCParser (String iFile, String oSFile, String oFile, DAG[] dags) {
 		setInputFile(iFile);
 		setOutSchedFile(oSFile);
 		setOutputFile(oFile);
-		setDag(dag);
+		setDags(dags);
 		setLs(ls);
-		ls.setMxcDag(dag);
 	}
 	
 	public MCParser (String oGFile, UtilizationGenerator ug) {
@@ -88,73 +89,77 @@ public class MCParser {
 			doc.getDocumentElement().normalize();
 			
 			NodeList eList = doc.getElementsByTagName("mcdag");
-			Element eDag = (Element) eList.item(0);
-			dag.setDeadline(Integer.parseInt(eDag.getAttribute("deadline")));
+			for (int d = 0; d < eList.getLength(); d++) {
+				Element eDag = (Element) eList.item(d);
+				dags[d]	= new DAG();
+				dags[d].setDeadline(Integer.parseInt(eDag.getAttribute("deadline")));
+				
 			
-			// Instantiate the DAG
-			int nb_actors = 0;
-			
-			// List of actors in the DAG
-			NodeList nList = doc.getElementsByTagName("actor");
-			for (int i = 0; i < nList.getLength(); i++) {
-				Node n = nList.item(i);
-				if (n.getNodeType() == Node.ELEMENT_NODE) {
-					Element e = (Element) n;
-					Actor a = new Actor(nb_actors++, e.getAttribute("name"),
-										Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
-										Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
-					a.setfProb(Double.parseDouble(e.getElementsByTagName("fprob").item(0).getTextContent()));
-					dag.getNodes().add(a);
-				}
-			}
-			
-			// List of fault tolerance mechanisms
-			NodeList ftList = doc.getElementsByTagName("ftm");
-			for (int i = 0; i < ftList.getLength(); i++) {
-				Node n = ftList.item(i);
-				if (n.getNodeType() == Node.ELEMENT_NODE) {
-					Element e = (Element) n;
-					if (e.getAttribute("type").contains("voter")) {
+				// Instantiate the DAG
+				int nb_actors = 0;
+				
+				// List of actors in the DAG
+				NodeList nList = doc.getElementsByTagName("actor");
+				for (int i = 0; i < nList.getLength(); i++) {
+					Node n = nList.item(i);
+					if (n.getNodeType() == Node.ELEMENT_NODE) {
+						Element e = (Element) n;
 						Actor a = new Actor(nb_actors++, e.getAttribute("name"),
 											Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
 											Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
-						a.setfMechanism(true);
-						a.setfMechType(Actor.VOTER);
-						a.setVotTask(e.getElementsByTagName("vtask").item(0).getTextContent());
-						dag.getNodebyName(e.getElementsByTagName("vtask").item(0).getTextContent()).setVoted(true);
-						a.setNbReplicas(Integer.parseInt(e.getElementsByTagName("replicas").item(0).getTextContent()));
-						dag.getNodes().add(a);
-					} else if (e.getAttribute("type").contains("mkfirm")) {
-						Actor a = dag.getNodebyName(e.getAttribute("name"));
-						a.setfMechanism(true);
-						a.setfMechType(Actor.MKFIRM);
-						a.setM(Integer.parseInt(e.getElementsByTagName("m").item(0).getTextContent()));
-						a.setK(Integer.parseInt(e.getElementsByTagName("k").item(0).getTextContent()));
-						a.setVoted(true);
-					} else {
-						System.out.println("Uknown FTM");
+						a.setfProb(Double.parseDouble(e.getElementsByTagName("fprob").item(0).getTextContent()));
+						dags[d].getNodes().add(a);
 					}
 				}
-			}
-			
-			// List of connections
-			NodeList ports = doc.getElementsByTagName("ports");
-			NodeList pList = ports.item(0).getChildNodes();
-			for (int i = 0; i < pList.getLength(); i++) {
-				Node n = pList.item(i);
-				if (n.getNodeType() == Node.ELEMENT_NODE) {
-					Element e = (Element) n;
-					// Creating the edge adds it to the corresponding nodes
-					@SuppressWarnings("unused")
-					Edge ed = new Edge(dag.getNodebyName(e.getAttribute("srcActor")),
-									   dag.getNodebyName(e.getAttribute("dstActor")));
+				
+				// List of fault tolerance mechanisms
+				NodeList ftList = doc.getElementsByTagName("ftm");
+				for (int i = 0; i < ftList.getLength(); i++) {
+					Node n = ftList.item(i);
+					if (n.getNodeType() == Node.ELEMENT_NODE) {
+						Element e = (Element) n;
+						if (e.getAttribute("type").contains("voter")) {
+							Actor a = new Actor(nb_actors++, e.getAttribute("name"),
+												Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
+												Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
+							a.setfMechanism(true);
+							a.setfMechType(Actor.VOTER);
+							a.setVotTask(e.getElementsByTagName("vtask").item(0).getTextContent());
+							dags[d].getNodebyName(e.getElementsByTagName("vtask").item(0).getTextContent()).setVoted(true);
+							a.setNbReplicas(Integer.parseInt(e.getElementsByTagName("replicas").item(0).getTextContent()));
+							dags[d].getNodes().add(a);
+						} else if (e.getAttribute("type").contains("mkfirm")) {
+							Actor a = dags[d].getNodebyName(e.getAttribute("name"));
+							a.setfMechanism(true);
+							a.setfMechType(Actor.MKFIRM);
+							a.setM(Integer.parseInt(e.getElementsByTagName("m").item(0).getTextContent()));
+							a.setK(Integer.parseInt(e.getElementsByTagName("k").item(0).getTextContent()));
+							a.setVoted(true);
+						} else {
+							System.out.println("Uknown FTM");
+						}
+					}
 				}
+				
+				// List of connections
+				NodeList ports = doc.getElementsByTagName("ports");
+				NodeList pList = ports.item(0).getChildNodes();
+				for (int i = 0; i < pList.getLength(); i++) {
+					Node n = pList.item(i);
+					if (n.getNodeType() == Node.ELEMENT_NODE) {
+						Element e = (Element) n;
+						// Creating the edge adds it to the corresponding nodes
+						@SuppressWarnings("unused")
+						Edge ed = new Edge(dags[d].getNodebyName(e.getAttribute("srcActor")),
+								dags[d].getNodebyName(e.getAttribute("dstActor")));
+					}
+				}
+				
+				NodeList cList = doc.getElementsByTagName("cores");
+				Element c = (Element) cList.item(0);
+				ls.setNbCores(Integer.parseInt(c.getAttribute("number")));
+				dags[d].sanityChecks();
 			}
-			
-			NodeList cList = doc.getElementsByTagName("cores");
-			Element c = (Element) cList.item(0);
-			ls.setNbCores(Integer.parseInt(c.getAttribute("number")));
-			dag.sanityChecks();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -248,8 +253,10 @@ public class MCParser {
 			out.write("R{\"total_cycles\"}=? [ C <= D ]\n\n");
 			
 			// Write properties for all LO outputs
-			for (Actor aout : dag.getLoOuts()) {
-				out.write("(R{\""+aout.getName()+"_cycles\"}=? [ C <= D ])/(R{\"total_cycles\"}=? [ C <= D ])\n\n");
+			for (DAG d : dags) {
+				for (Actor aout : d.getLoOuts()) {
+					out.write("(R{\""+aout.getName()+"_cycles\"}=? [ C <= D ])/(R{\"total_cycles\"}=? [ C <= D ])\n\n");
+				}
 			}
 			
 		} catch (IOException e) {
@@ -358,7 +365,7 @@ public class MCParser {
 			out.write("\ts : [0.."+auto.getNbStates()+"] init "+auto.getLo_sched().get(0).getId()+";\n");
 			
 			// Create all necessary booleans
-			for (Actor a : dag.getNodes()) {
+			for (Actor a : dags[0].getNodes()) {
 				if (a.getCHI() == 0) // It is a LO task
 					out.write("\t"+a.getName()+"bool: bool init false;\n");
 			}
@@ -442,7 +449,7 @@ public class MCParser {
 					
 			// Create the rewards
 			out.write("\n");
-			Iterator<Actor> in = dag.getLoOuts().iterator();
+			Iterator<Actor> in = dags[0].getLoOuts().iterator();
 			while (in.hasNext()) {
 				Actor n = in.next();
 				out.write("rewards \""+n.getName()+"_cycles\"\n");
@@ -583,17 +590,6 @@ public class MCParser {
 		this.outputFile = outputFile;
 	}
 
-
-	public DAG getDag() {
-		return dag;
-	}
-
-
-	public void setDag(DAG dag) {
-		this.dag = dag;
-	}
-
-
 	public LS getLs() {
 		return ls;
 	}
@@ -635,6 +631,22 @@ public class MCParser {
 
 	public void setUg(UtilizationGenerator ug) {
 		this.ug = ug;
+	}
+	
+	public DAG[] getDags() {
+		return dags;
+	}
+
+	public void setDags(DAG[] dags) {
+		this.dags = dags;
+	}
+
+	public MultiDAG getMdagsched() {
+		return mdagsched;
+	}
+
+	public void setMdagsched(MultiDAG mdagsched) {
+		this.mdagsched = mdagsched;
 	}
 
 }

@@ -29,6 +29,7 @@ import fr.tpt.s3.ls_mxc.alloc.LS;
  */
 public class DAG {
 	
+	private int id;
 	private Set<Actor> nodes;
 	private Set<Actor> nodesHI;
 	private Set<Actor> loOuts;
@@ -186,6 +187,14 @@ public class DAG {
 
 	public void setSinks(Set<Actor> sinks) {
 		this.sinks = sinks;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
 	}
 
 	
