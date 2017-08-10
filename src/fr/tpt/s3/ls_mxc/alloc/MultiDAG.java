@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Roberto Medina
+ * Written by Roberto Medina (rmedina@telecom-paristech.fr)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
 package fr.tpt.s3.ls_mxc.alloc;
 
 import java.util.ArrayList;
@@ -34,6 +50,22 @@ public class MultiDAG {
 	// Max deadline
 	private int maxD;
 	
+	public Hashtable<String, Integer> getStartHI() {
+		return startHI;
+	}
+
+	public void setStartHI(Hashtable<String, Integer> startHI) {
+		this.startHI = startHI;
+	}
+
+	public int getMaxD() {
+		return maxD;
+	}
+
+	public void setMaxD(int maxD) {
+		this.maxD = maxD;
+	}
+
 	// Remaining time for all nodes
 	private Hashtable<String, Integer> remainTLO;
 	private Hashtable<String, Integer> remainTHI;
@@ -62,8 +94,8 @@ public class MultiDAG {
 				maxD = d.getDeadline();				
 		}
 	
-		setsHI(new String[maxD][getNbCores()]);
-		setsLO(new String[maxD][getNbCores()]);
+		sHI = new String[maxD][getNbCores()];
+		sLO = new String[maxD][getNbCores()];
 	}
 	
 	/**
@@ -73,7 +105,10 @@ public class MultiDAG {
 	 * @param mode
 	 * @return
 	 */
-	private void calcWeight (Actor a, int deadline, short mode) {
+	private void calcDAGUrgency (DAG d) {
+		
+		
+		
 		if (a.isExitNode()) {
 			if (mode == Actor.HI) {
 				a.setEarDeadHI(deadline);
@@ -84,6 +119,10 @@ public class MultiDAG {
 			}
 		} else {
 			int min = Integer.MAX_VALUE;
+			
+			
+			
+			
 			if (mode == Actor.HI) {
 				for (Edge e : a.getSndEdges()) {
 					if ((min > e.getDest().getEarDeadHI())
@@ -91,7 +130,7 @@ public class MultiDAG {
 						min = e.getDest().getEarDeadHI();
 				}
 				a.setEarDeadHI(min);
-				a.setUrgencyHI(min - a.getCHI());
+				a.calc(min - a.getCHI());
 			} else {
 				for (Edge e : a.getSndEdges()) {
 					if (min > e.getDest().getEarDeadLO())
@@ -111,12 +150,7 @@ public class MultiDAG {
 	private void calcWeights () {
 		for (DAG d : getMcDags()) {
 			// Go from the sinks to the sources
-			for (Actor a : d.getNodes()) {
-				if (a.getCHI() != 0)
-					calcWeight(a, d.getDeadline(), Actor.HI);
-				
-				calcWeight(a, d.getDeadline(), Actor.LO);
-			}
+			calcDAGUrgency(d);
 		}
 	}
 
@@ -203,23 +237,27 @@ public class MultiDAG {
 			for (int c = 0; c < getNbCores(); c++) {
 				// Find a ready task in the HI list
 				Actor a = null;
-				while (!found) {
-					if (lit.hasNext()) {
-						a = lit.next();
-						if (okDataDepend(a, sched) && !sched.contains(a))
-							found = true;
-					}
+				while (!found && lit.hasNext()) {
+					a = lit.next();
+					if (okDataDepend(a, sched) && !sched.contains(a))
+						found = true;
+	
 				}
-				sHI[s][c] = a.getName();
-				int val = remainTHI.get(a.getName());
-				val--;
-				if (val == 0) {
-						startHI.put(a.getName(), s);
-						sched.add(a);
-						lit.remove();
-					}
-				remainTHI.put(a.getName(), val);
+				if (found) {
+					System.out.println("s = "+s+" c= "+c);
+					sHI[s][c] = a.getName();
+					int val = remainTHI.get(a.getName());
+					val--;
+					if (val == 0) {
+							startHI.put(a.getName(), s);
+							sched.add(a);
+							lit.remove();
+						}
+					remainTHI.put(a.getName(), val);
+				}
+				found = false;
 			}
+			
 			lit = lHI.listIterator(lHI.size());
 		}
 	}
@@ -263,8 +301,8 @@ public class MultiDAG {
 	 * Prints the HI scheduling table
 	 */
 	public void printSHI () {
-		for (int s = 0; s < maxD; s++) {
-			for (int c = 0; c < getNbCores(); c++) {
+		for (int c = 0; c < getNbCores(); c++) {
+			for (int s = 0; s < maxD; s++) {
 				System.out.print(sHI[s][c]+" | ");
 			}
 			System.out.print("\n");
@@ -275,8 +313,8 @@ public class MultiDAG {
 	 * Prints the LO scheduling table
 	 */
 	public void printSLO () {
-		for (int s = 0; s < maxD; s++) {
-			for (int c = 0; c < getNbCores(); c++) {
+		for (int c = 0; c < getNbCores(); c++) {
+			for (int s = 0; s < maxD; s++) {
 				System.out.print(sLO[s][c]+" | ");
 			}
 			System.out.print("\n");
@@ -287,13 +325,6 @@ public class MultiDAG {
 	/*
 	 * Getters and setters
 	 */
-	public Set<DAG> getMcDags() {
-		return mcDags;
-	}
-
-	public void setMcDags(Set<DAG> mcDags) {
-		this.mcDags = mcDags;
-	}
 
 	public int getNbCores() {
 		return nbCores;
@@ -333,6 +364,14 @@ public class MultiDAG {
 
 	public void setlHI(List<Actor> lHI) {
 		this.lHI = lHI;
+	}
+
+	public Set<DAG> getMcDags() {
+		return mcDags;
+	}
+
+	public void setMcDags(Set<DAG> mcDags) {
+		this.mcDags = mcDags;
 	}
 
 	

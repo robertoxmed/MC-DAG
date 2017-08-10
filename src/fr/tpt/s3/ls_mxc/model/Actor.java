@@ -80,6 +80,9 @@ public class Actor {
 		
 		rcvEdges = new HashSet<Edge>();
 		sndEdges = new HashSet<Edge>();
+		
+		urgencyLO = Integer.MAX_VALUE;
+		urgencyHI = Integer.MAX_VALUE;
 	}
 	
 	/**

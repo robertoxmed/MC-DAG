@@ -33,6 +33,7 @@ public class DAG {
 	private Set<Actor> nodes;
 	private Set<Actor> nodesHI;
 	private Set<Actor> loOuts;
+	private Set<Actor> Outs;
 	private Set<Actor> sinks;
 	private int critPath;
 	private int deadline;
@@ -106,6 +107,17 @@ public class DAG {
 			}
 		}
 	}
+	
+	/**
+	 * Gets the outputs of the DAG
+	 */
+	public void calcOuts() {
+		for (Actor a : getNodes()) {
+			if (a.getSndEdges().size() == 0)
+				Outs.add(a);
+		}
+	}
+	
 	
 	/**
 	 * Getters & Setters
@@ -197,5 +209,11 @@ public class DAG {
 		this.id = id;
 	}
 
-	
+	public Set<Actor> getOuts() {
+		return Outs;
+	}
+
+	public void setOuts(Set<Actor> outs) {
+		Outs = outs;
+	}
 }

@@ -17,6 +17,8 @@
 package fr.tpt.s3.ls_mxc.appli;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -27,6 +29,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import fr.tpt.s3.ls_mxc.alloc.LS;
+import fr.tpt.s3.ls_mxc.alloc.MultiDAG;
 import fr.tpt.s3.ls_mxc.alloc.SchedulingException;
 import fr.tpt.s3.ls_mxc.avail.Automata;
 import fr.tpt.s3.ls_mxc.model.Actor;
@@ -84,33 +87,56 @@ public class Main {
 		
 		/* =============== Read from file and try to solve ================ */
 		
-		DAG dags[] = null;
-		LS ls = new LS();
+		Set<DAG> dags = new HashSet<DAG>();
 		
 		MCParser mcp = new MCParser(inputFilePath, outSchedFilePath, outPrismFilePath, dags);
 		mcp.readXML();
-		@SuppressWarnings("null")
-		Automata auto = new Automata(ls, dags[0]);
-		ls.setDeadline(dags[0].getDeadline());
+		LS ls = null;
+		MultiDAG msched = null;
+		Automata auto = null;
 		
-		try {
-			ls.AllocAll();
-			if (debug) {
-
-				System.out.println("========== Scheduling tables ===============");
-				ls.printS_HI();
-				ls.printS_LO();
-				System.out.println("========== Weights ===============");
-				ls.printW(Actor.LO);
-				ls.printW(Actor.HI);
+		if (dags.size() == 1) {
+			DAG dag = dags.iterator().next();
+			ls = new LS();
+			ls.setDeadline(dag.getDeadline());
+			try {
+				ls.AllocAll();
+				if (debug) {
+					System.out.println("========== Scheduling tables ===============");
+					ls.printS_HI();
+					ls.printS_LO();
+					System.out.println("========== Weights ===============");
+					ls.printW(Actor.LO);
+					ls.printW(Actor.HI);
+				}
+				
+				if (outPrismFilePath != null)
+					auto = new Automata(ls, dag);
+			} catch (SchedulingException e) {
+				e.getMessage();
+				System.exit(20);
 			}
-		} catch (SchedulingException e) {
-			e.getMessage();
-			System.exit(20);
+		} else if (dags.size() > 1) {
+			msched = new MultiDAG(dags, mcp.getNbCores());
+			try {
+				msched.allocAll();
+				if (debug) {
+					System.out.println("========== Scheduling tables ===============");
+					System.out.println("Multi dag case.\nNb cores: "+msched.getNbCores()
+										+"; Nb of DAGs: "+msched.getMcDags().size()
+										+"; Max deadline: "+msched.getMaxD());
+					msched.printUrgencies();
+					msched.printSHI();
+				}
+				
+			} catch (SchedulingException e) {
+				e.getMessage();
+				System.exit(30);
+			}
+			
 		}
 		
 		/* =============== Write results ================ */
-		
 		if (outSchedFilePath != null)
 			mcp.writeSched();
 		if (outPrismFilePath != null) {
@@ -118,7 +144,5 @@ public class Main {
 			mcp.setAuto(auto);
 			mcp.writePRISM();
 		}
-			
-		
 	}
 }
