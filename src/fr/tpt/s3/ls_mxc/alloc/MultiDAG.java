@@ -108,39 +108,7 @@ public class MultiDAG {
 	private void calcDAGUrgency (DAG d) {
 		
 		
-		
-		if (a.isExitNode()) {
-			if (mode == Actor.HI) {
-				a.setEarDeadHI(deadline);
-				a.setUrgencyHI(deadline - a.getCHI());
-			} else {
-				a.setEarDeadLO(deadline);
-				a.setUrgencyLO(deadline - a.getCLO());
-			}
-		} else {
-			int min = Integer.MAX_VALUE;
-			
-			
-			
-			
-			if (mode == Actor.HI) {
-				for (Edge e : a.getSndEdges()) {
-					if ((min > e.getDest().getEarDeadHI())
-							&& e.getDest().getCHI() != 0)
-						min = e.getDest().getEarDeadHI();
-				}
-				a.setEarDeadHI(min);
-				a.calc(min - a.getCHI());
-			} else {
-				for (Edge e : a.getSndEdges()) {
-					if (min > e.getDest().getEarDeadLO())
-						min = e.getDest().getEarDeadLO();
-				}
-				a.setEarDeadLO(min);
-				a.setUrgencyLO(min - a.getCLO());
-			}
-			
-		}
+	
 	}
 	
 	

@@ -66,6 +66,8 @@ public class Actor {
 	private int urgencyHI;
 	private int earDeadLO;
 	private int earDeadHI;
+	private boolean visited;
+	
 	
 	/**
 	 * Constructors
@@ -80,9 +82,7 @@ public class Actor {
 		
 		rcvEdges = new HashSet<Edge>();
 		sndEdges = new HashSet<Edge>();
-		
-		urgencyLO = Integer.MAX_VALUE;
-		urgencyHI = Integer.MAX_VALUE;
+	
 	}
 	
 	/**
@@ -354,20 +354,20 @@ public class Actor {
 		K = k;
 	}
 
-	public int getUrgencyHI() {
-		return urgencyHI;
-	}
-
-	public void setUrgencyHI(int urgencyHI) {
-		this.urgencyHI = urgencyHI;
-	}
-
 	public int getUrgencyLO() {
 		return urgencyLO;
 	}
 
 	public void setUrgencyLO(int urgencyLO) {
 		this.urgencyLO = urgencyLO;
+	}
+
+	public int getUrgencyHI() {
+		return urgencyHI;
+	}
+
+	public void setUrgencyHI(int urgencyHI) {
+		this.urgencyHI = urgencyHI;
 	}
 
 	public int getEarDeadLO() {
@@ -385,5 +385,15 @@ public class Actor {
 	public void setEarDeadHI(int earDeadHI) {
 		this.earDeadHI = earDeadHI;
 	}
+
+	public boolean isVisited() {
+		return visited;
+	}
+
+	public void setVisited(boolean visited) {
+		this.visited = visited;
+	}
+
+
 
 }

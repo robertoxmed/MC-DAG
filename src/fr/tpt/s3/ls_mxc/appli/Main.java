@@ -98,7 +98,9 @@ public class Main {
 		if (dags.size() == 1) {
 			DAG dag = dags.iterator().next();
 			ls = new LS();
+			ls.setMxcDag(dag);
 			ls.setDeadline(dag.getDeadline());
+			ls.setNbCores(mcp.getNbCores());
 			try {
 				ls.AllocAll();
 				if (debug) {
@@ -113,6 +115,7 @@ public class Main {
 				if (outPrismFilePath != null)
 					auto = new Automata(ls, dag);
 			} catch (SchedulingException e) {
+				System.out.println("Unable to schedule the example");
 				e.getMessage();
 				System.exit(20);
 			}
@@ -130,6 +133,7 @@ public class Main {
 				}
 				
 			} catch (SchedulingException e) {
+				System.out.println("Unable to schedule the example");
 				e.getMessage();
 				System.exit(30);
 			}
@@ -143,6 +147,7 @@ public class Main {
 			auto.createAutomata();
 			mcp.setAuto(auto);
 			mcp.writePRISM();
+			System.out.println("File written");
 		}
 	}
 }

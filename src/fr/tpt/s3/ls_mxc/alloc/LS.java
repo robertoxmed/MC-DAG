@@ -74,8 +74,7 @@ public class LS {
 	/**
 	 * Calc weights for HLFET for both tables
 	 */
-	public void calcWeights(int mode) {
-		
+	public void calcWeights(int mode) {	
 		weights_LO = new int[mcDag.getNodes().size()];
 		weights_HI = new int[mcDag.getNodes().size()];
 		
@@ -107,8 +106,6 @@ public class LS {
 			} else {
 				weights_B[n.getId()] = calcHLFETLevel(n, 0);
 			}
-
-			
 		}
 	}
 	
@@ -218,10 +215,10 @@ public class LS {
 		for(int t = deadline - 1; t >= 0 ; t--){
 			
 			// Check if there is enough slots to finish executing tasks
-			if (! checkFreeSlot(t_hi, getMxcDag().getNodes().size(), (t+1) * nbCores)){
+			/* if (! checkFreeSlot(t_hi, getMxcDag().getNodes().size(), (t+1) * nbCores)){
 				SchedulingException se = new SchedulingException("Alloc HI : Not enough slot lefts");
 				throw se;
-			}
+			} */
 			
 			for(int c = 0; c < nbCores; c++) {
 				if (li_it.hasNext()){
@@ -662,9 +659,13 @@ public class LS {
 	 */
 	public void AllocAll() throws SchedulingException{
 		this.calcWeights(Actor.HI);
+		this.printW(Actor.HI);
 		this.AllocHI();
+		this.printS_HI();
 		
 		this.calcWeights(Actor.LO);
+		this.printW(Actor.LO);
+
 		this.AllocLO();
 	}
 	
@@ -854,8 +855,6 @@ public class LS {
 				if (li_it.hasNext()){
 					Actor n = li_it.next(); // Get head of the list
 					S_HLFET_HI[t][c] = n.getName(); // Give the slot to the task
-					
-					
 					// Decrement slots left for the task
 					t_hi[n.getId()] = t_hi[n.getId()] - 1;
 				
