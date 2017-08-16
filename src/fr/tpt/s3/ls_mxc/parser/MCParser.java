@@ -291,25 +291,26 @@ public class MCParser {
 			out.write("const int D;\n\n");
 			
 			// Write FTMs
+			int countFtm = 0;
 			Iterator<FTM> iftm = auto.getFtms().iterator();
 			while (iftm.hasNext() ) {
 				FTM ftm = iftm.next();
 				if (ftm.getType() == Actor.VOTER) {
 					out.write("module "+ftm.getName()+"\n");
-					out.write("\tv: [0..20] init 0;\n");
+					out.write("\tv"+countFtm+": [0..20] init 0;\n");
 					Iterator<Transition> it = ftm.getTransitions().iterator();
 					int i = 0;
 					while (it.hasNext()) {
 						Transition t = it.next();
-						out.write("\t["+t.getDestOk().getTask()+"_ok] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestOk().getId()+");\n");
-						out.write("\t["+t.getDestOk().getTask()+"_fail] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestFail().getId()+");\n");
+						out.write("\t["+t.getDestOk().getTask()+"_ok] v"+countFtm+" = "+t.getSrc().getId()+" -> (v"+countFtm+"' = "+t.getDestOk().getId()+");\n");
+						out.write("\t["+t.getDestOk().getTask()+"_fail] v"+countFtm+" = "+t.getSrc().getId()+" -> (v"+countFtm+"' = "+t.getDestFail().getId()+");\n");
 						out.write("\n");
 					}
 				
 					it = ftm.getFinTrans().iterator();
 					while (it.hasNext()) {
 						Transition t = it.next();
-						out.write("\t["+t.getName()+"] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestOk().getId()+");\n");
+						out.write("\t["+t.getName()+"] v"+countFtm+" = "+t.getSrc().getId()+" -> (v"+countFtm+"' = "+t.getDestOk().getId()+");\n");
 					}
 					out.write("endmodule\n");
 					out.write("\n");
@@ -317,10 +318,10 @@ public class MCParser {
 					// Create replicas if it is a voter
 					for (i = 0; i < ftm.getNbVot(); i++) {
 						out.write("module "+ftm.getVotTask().getName()+i+"\n");
-						out.write("\tv"+i+": [0..2] init 0;\n");
-						out.write("\t["+ftm.getVotTask().getName()+i+"_run] v"+i+" = 0 ->  1 - "+ftm.getVotTask().getfProb()+" : (v"+i+"' = 1) + "+ftm.getVotTask().getfProb()+" : (v"+i+"' = 2);\n");
-						out.write("\t["+ftm.getVotTask().getName()+i+"_ok] v"+i+" = 1 -> (v"+i+"' = 0);\n");
-						out.write("\t["+ftm.getVotTask().getName()+i+"_fail] v"+i+" = 2 -> (v"+i+"' = 0);\n");
+						out.write("\tr_"+countFtm+"_"+i+": [0..2] init 0;\n");
+						out.write("\t["+ftm.getVotTask().getName()+i+"_run] r_"+countFtm+"_"+i+" = 0 ->  1 - "+ftm.getVotTask().getfProb()+" : (r_"+countFtm+"_"+i+"' = 1) + "+ftm.getVotTask().getfProb()+" : (r_"+countFtm+"_"+i+"' = 2);\n");
+						out.write("\t["+ftm.getVotTask().getName()+i+"_ok] r_"+countFtm+"_"+i+" = 1 -> (r_"+countFtm+"_"+i+"' = 0);\n");
+						out.write("\t["+ftm.getVotTask().getName()+i+"_fail] r_"+countFtm+"_"+i+" = 2 -> (r_"+countFtm+"_"+i+"' = 0);\n");
 
 						out.write("endmodule\n");
 						out.write("\n");
@@ -349,6 +350,7 @@ public class MCParser {
 				} else {
 					System.out.print("Uknown Voting mechanism");
 				}
+				countFtm++;
 			}
 			
 			
