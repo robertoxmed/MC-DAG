@@ -66,6 +66,9 @@ public class FTM {
 		this.finTrans = new LinkedList<Transition>();
 	}
 	
+	/**
+	 * Creates the voting automaton
+	 */
 	public void createVoter () {
 		int cur = 0;
 		int width = 1;
@@ -98,8 +101,6 @@ public class FTM {
 		int count = nb_pred;
 
 		for (int i = 0; i < nb_pred; i++) {
-			
-			
 			Transition t = null;
 			State src = this.getStates().get(end);
 			// Mark
@@ -128,7 +129,6 @@ public class FTM {
 			end--;
 			count--;
 		}
-		
 	}
 	
 	/**

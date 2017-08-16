@@ -659,13 +659,9 @@ public class LS {
 	 */
 	public void AllocAll() throws SchedulingException{
 		this.calcWeights(Actor.HI);
-		this.printW(Actor.HI);
 		this.AllocHI();
-		this.printS_HI();
 		
 		this.calcWeights(Actor.LO);
-		this.printW(Actor.LO);
-
 		this.AllocLO();
 	}
 	

@@ -298,7 +298,7 @@ public class Automata {
 					// Find the HI task that corresponds to s
 					State S = findStateHI(s.getTask());
 					t = new Transition(s, s2, S);
-					if(!s.isfMechanism()) // If it's a fault tolerant mechanism
+					if(!s.isfMechanism()) // If it's not a fault tolerant mechanism
 						t.setP(d.getNodebyName(s.getTask()).getfProb());
 				} else { // It is a LO task
 					if (s.isVoted()) {
@@ -325,7 +325,6 @@ public class Automata {
 		// We need to add 2^n transitions depending on the number of outputs
 		calcOutputSets();
 				
-		// TODO: Review the linked probabilities
 		for (Set<Formula> s : powerSet(loOutsForm)) {
 			Transition tform = new Transition(sk, s0, s0);
 			Iterator<Formula> iform = s.iterator();

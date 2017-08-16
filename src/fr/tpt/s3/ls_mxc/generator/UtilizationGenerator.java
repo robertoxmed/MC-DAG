@@ -427,7 +427,6 @@ public class UtilizationGenerator {
 			id++;
 		}
 		
-
 		// The Cp wasn't reached we need to add more tasks in LO mode
 		if (!cpReached) {
 			Actor n = new Actor(id, Integer.toString(id), 0, 0);
