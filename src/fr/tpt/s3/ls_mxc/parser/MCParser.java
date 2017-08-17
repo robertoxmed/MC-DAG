@@ -265,6 +265,8 @@ public class MCParser {
 				}
 			}
 			
+			out.write("E[F \"deadlock\"]\n");
+			
 		} catch (IOException e) {
 			System.out.println(e.getMessage());
 		} finally {
@@ -312,6 +314,13 @@ public class MCParser {
 						Transition t = it.next();
 						out.write("\t["+t.getName()+"] v"+countFtm+" = "+t.getSrc().getId()+" -> (v"+countFtm+"' = "+t.getDestOk().getId()+");\n");
 					}
+					
+					// Write reinitialization of Voter due to HI transitions -> avoids deadlock
+					Transition t = auto.getH_transitions().get(auto.getH_transitions().size() - 1);
+					for (i = 0; i < ftm.getStates().size(); i++) {	
+						out.write("\t["+t.getSrc().getTask()+"_hi] v"+countFtm+" = "+i+" -> (v"+countFtm+"' = 0);\n");
+					}
+					
 					out.write("endmodule\n");
 					out.write("\n");
 				
@@ -319,9 +328,13 @@ public class MCParser {
 					for (i = 0; i < ftm.getNbVot(); i++) {
 						out.write("module "+ftm.getVotTask().getName()+i+"\n");
 						out.write("\tr_"+countFtm+"_"+i+": [0..2] init 0;\n");
-						out.write("\t["+ftm.getVotTask().getName()+i+"_run] r_"+countFtm+"_"+i+" = 0 ->  1 - "+ftm.getVotTask().getfProb()+" : (r_"+countFtm+"_"+i+"' = 1) + "+ftm.getVotTask().getfProb()+" : (r_"+countFtm+"_"+i+"' = 2);\n");
+						out.write("\t["+ftm.getVotTask().getName()+"0_run] r_"+countFtm+"_"+i+" = 0 ->  1 - "+ftm.getVotTask().getfProb()+" : (r_"+countFtm+"_"+i+"' = 1) + "+ftm.getVotTask().getfProb()+" : (r_"+countFtm+"_"+i+"' = 2);\n");
 						out.write("\t["+ftm.getVotTask().getName()+i+"_ok] r_"+countFtm+"_"+i+" = 1 -> (r_"+countFtm+"_"+i+"' = 0);\n");
 						out.write("\t["+ftm.getVotTask().getName()+i+"_fail] r_"+countFtm+"_"+i+" = 2 -> (r_"+countFtm+"_"+i+"' = 0);\n");
+						out.write("\t["+t.getSrc().getTask()+"_hi] r_"+countFtm+"_"+i+" = 0 -> (r_"+countFtm+"_"+i+"' = 0);\n");
+						out.write("\t["+t.getSrc().getTask()+"_hi] r_"+countFtm+"_"+i+" = 1 -> (r_"+countFtm+"_"+i+"' = 0);\n");
+						out.write("\t["+t.getSrc().getTask()+"_hi] r_"+countFtm+"_"+i+" = 2 -> (r_"+countFtm+"_"+i+"' = 0);\n");
+
 
 						out.write("endmodule\n");
 						out.write("\n");
