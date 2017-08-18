@@ -99,6 +99,46 @@ public class MultiDAG {
 	}
 	
 	/**
+	 * Gives the urgency of an Actor
+	 * @param a
+	 * @param deadline
+	 * @param mode
+	 * @return
+	 */
+	private int calcActorUrgency (Actor a, int deadline, short mode) {
+		int ret = Integer.MAX_VALUE;
+		
+		if (a.isSink()) {
+			if (mode == Actor.HI) {
+				a.setUrgencyHI(deadline);
+				
+			} else {
+				a.setUrgencyLO(deadline);
+			}
+			ret = deadline;
+		} else {
+			int test = Integer.MAX_VALUE;
+
+			for (Edge e : a.getSndEdges()) {
+				
+				if (mode == Actor.HI)
+					test = e.getDest().getUrgencyHI() - e.getDest().getCHI();
+				else
+					test = e.getDest().getUrgencyLO() - e.getDest().getCLO();
+				
+				if (test < ret)
+					ret = test;
+			}
+			
+			if (mode == Actor.HI)
+				a.setUrgencyHI(ret);
+			else
+				a.setUrgencyLO(ret);
+		}
+		return ret;
+	}
+	
+	/**
 	 * Recursively calculates the weight of an actor
 	 * @param a
 	 * @param deadline
@@ -106,9 +146,13 @@ public class MultiDAG {
 	 * @return
 	 */
 	private void calcDAGUrgency (DAG d) {
-		
-		
-	
+		//TODO: implement Urgency calcs
+		for (Actor a : d.getSinks()) {
+			if (a.getCHI() != 0)
+				calcActorUrgency(a, d.getDeadline(), Actor.HI);
+			calcActorUrgency(a, d.getDeadline(), Actor.LO);
+		}
+			
 	}
 	
 	
