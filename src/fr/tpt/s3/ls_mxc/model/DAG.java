@@ -42,6 +42,7 @@ public class DAG {
 		nodes = new HashSet<Actor>();
 		nodesHI = new HashSet<Actor>();
 		setLoOuts(new HashSet<Actor>());
+		sinks = new HashSet<Actor>();
 	}
 	
 	/**
@@ -55,6 +56,8 @@ public class DAG {
 		while (in.hasNext()){
 			Actor n = in.next();
 			n.checkifSink();
+			if (n.isSink())
+				getSinks().add(n);
 			n.checkifSinkinHI();
 			n.checkifSource();
 		}

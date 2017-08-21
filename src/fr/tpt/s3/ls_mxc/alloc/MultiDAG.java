@@ -49,22 +49,6 @@ public class MultiDAG {
 	
 	// Max deadline
 	private int maxD;
-	
-	public Hashtable<String, Integer> getStartHI() {
-		return startHI;
-	}
-
-	public void setStartHI(Hashtable<String, Integer> startHI) {
-		this.startHI = startHI;
-	}
-
-	public int getMaxD() {
-		return maxD;
-	}
-
-	public void setMaxD(int maxD) {
-		this.maxD = maxD;
-	}
 
 	// Remaining time for all nodes
 	private Hashtable<String, Integer> remainTLO;
@@ -109,22 +93,20 @@ public class MultiDAG {
 		int ret = Integer.MAX_VALUE;
 		
 		if (a.isSink()) {
-			if (mode == Actor.HI) {
-				a.setUrgencyHI(deadline);
-				
-			} else {
-				a.setUrgencyLO(deadline);
-			}
+			if (mode == Actor.HI)
+				a.setUrgencyHI(deadline - a.getCHI());
+			else
+				a.setUrgencyLO(deadline - a.getCLO());
+			
 			ret = deadline;
 		} else {
 			int test = Integer.MAX_VALUE;
 
 			for (Edge e : a.getSndEdges()) {
-				
 				if (mode == Actor.HI)
-					test = e.getDest().getUrgencyHI() - e.getDest().getCHI();
+					test = e.getDest().getUrgencyHI() - a.getCHI();
 				else
-					test = e.getDest().getUrgencyLO() - e.getDest().getCLO();
+					test = e.getDest().getUrgencyLO() - a.getCLO();
 				
 				if (test < ret)
 					ret = test;
@@ -146,13 +128,28 @@ public class MultiDAG {
 	 * @return
 	 */
 	private void calcDAGUrgency (DAG d) {
-		//TODO: implement Urgency calcs
+		// Add a list to add the nodes that have to be visited
+		ArrayList<Actor> toVisit = new ArrayList<>();
+		
 		for (Actor a : d.getSinks()) {
+			toVisit.add(a);
+			a.setVisited(true);
+		}
+		
+		while (toVisit.size() != 0) {
+			Actor a = toVisit.get(0);
 			if (a.getCHI() != 0)
 				calcActorUrgency(a, d.getDeadline(), Actor.HI);
 			calcActorUrgency(a, d.getDeadline(), Actor.LO);
-		}
 			
+			for (Edge e : a.getRcvEdges()) {
+				if (!e.getSrc().isVisited()) {
+					toVisit.add(e.getSrc());
+					e.getSrc().setVisited(true);
+				}
+			}
+			toVisit.remove(0);
+		}
 	}
 	
 	
@@ -214,7 +211,6 @@ public class MultiDAG {
 	 * Inits the remaining time to be allocated to each Actor
 	 */
 	private void initRemainT () {
-		
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
 				if (a.getCHI() != 0)
@@ -256,7 +252,6 @@ public class MultiDAG {
 	
 				}
 				if (found) {
-					System.out.println("s = "+s+" c= "+c);
 					sHI[s][c] = a.getName();
 					int val = remainTHI.get(a.getName());
 					val--;
@@ -386,5 +381,19 @@ public class MultiDAG {
 		this.mcDags = mcDags;
 	}
 
-	
+	public Hashtable<String, Integer> getStartHI() {
+		return startHI;
+	}
+
+	public void setStartHI(Hashtable<String, Integer> startHI) {
+		this.startHI = startHI;
+	}
+
+	public int getMaxD() {
+		return maxD;
+	}
+
+	public void setMaxD(int maxD) {
+		this.maxD = maxD;
+	}
 }
