@@ -67,6 +67,7 @@ public class Actor {
 	private int earDeadLO;
 	private int earDeadHI;
 	private boolean visited;
+	private boolean visitedHI;
 	
 	
 	/**
@@ -85,6 +86,8 @@ public class Actor {
 	
 		urgencyHI = Integer.MAX_VALUE;
 		urgencyLO = Integer.MAX_VALUE;
+		visited = false;
+		visitedHI = false;
 	}
 	
 	/**
@@ -394,6 +397,14 @@ public class Actor {
 
 	public void setVisited(boolean visited) {
 		this.visited = visited;
+	}
+
+	public boolean isVisitedHI() {
+		return visitedHI;
+	}
+
+	public void setVisitedHI(boolean visitedHI) {
+		this.visitedHI = visitedHI;
 	}
 
 

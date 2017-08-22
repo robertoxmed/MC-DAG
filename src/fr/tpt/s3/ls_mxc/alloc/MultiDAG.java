@@ -89,33 +89,43 @@ public class MultiDAG {
 	 * @param mode
 	 * @return
 	 */
-	private int calcActorUrgency (Actor a, int deadline, short mode) {
+	private int calcActorUrgencyLO (Actor a, int deadline, short mode) {
 		int ret = Integer.MAX_VALUE;
 		
 		if (a.isSink()) {
-			if (mode == Actor.HI)
-				a.setUrgencyHI(deadline - a.getCHI());
-			else
-				a.setUrgencyLO(deadline - a.getCLO());
-			
+			a.setUrgencyLO(deadline - a.getCLO());			
 			ret = deadline;
 		} else {
 			int test = Integer.MAX_VALUE;
 
 			for (Edge e : a.getSndEdges()) {
-				if (mode == Actor.HI)
-					test = e.getDest().getUrgencyHI() - a.getCHI();
-				else
-					test = e.getDest().getUrgencyLO() - a.getCLO();
+				test = e.getDest().getUrgencyLO() - a.getCLO();
 				
 				if (test < ret)
 					ret = test;
 			}
+			a.setUrgencyLO(ret);
+		}
+		return ret;
+	}
+	
+	private int calcActorUrgencyHI (Actor a, int deadline, short mode) {
+		int ret = Integer.MAX_VALUE;
+		
+		if (a.isSinkinHI()) {
+			a.setUrgencyHI(deadline - a.getCLO());			
+			ret = deadline;
 			
-			if (mode == Actor.HI)
-				a.setUrgencyHI(ret);
-			else
-				a.setUrgencyLO(ret);
+		} else {
+			int test = Integer.MAX_VALUE;
+
+			for (Edge e : a.getSndEdges()) {
+				test = e.getDest().getUrgencyHI() - a.getCHI();
+				
+				if (test < ret)
+					ret = test;
+			}
+			a.setUrgencyHI(ret);
 		}
 		return ret;
 	}
@@ -130,17 +140,21 @@ public class MultiDAG {
 	private void calcDAGUrgency (DAG d) {
 		// Add a list to add the nodes that have to be visited
 		ArrayList<Actor> toVisit = new ArrayList<>();
+		ArrayList<Actor> toVisitHI = new ArrayList<>();
 		
 		for (Actor a : d.getSinks()) {
 			toVisit.add(a);
 			a.setVisited(true);
 		}
 		
-		while (toVisit.size() != 0) {
+		for (Actor a : d.getSinksHI()) {
+			toVisitHI.add(a);
+			a.setVisitedHI(true);
+		}
+		
+		while (toVisit.size() != 0 && toVisitHI.size() != 0) {
 			Actor a = toVisit.get(0);
-			if (a.getCHI() != 0)
-				calcActorUrgency(a, d.getDeadline(), Actor.HI);
-			calcActorUrgency(a, d.getDeadline(), Actor.LO);
+			calcActorUrgencyLO(a, d.getDeadline(), Actor.LO);
 			
 			for (Edge e : a.getRcvEdges()) {
 				if (!e.getSrc().isVisited()) {
@@ -149,6 +163,19 @@ public class MultiDAG {
 				}
 			}
 			toVisit.remove(0);
+		}
+		
+		while (toVisitHI.size() != 0) {
+			Actor a = toVisitHI.get(0);
+			calcActorUrgencyHI(a, d.getDeadline(), Actor.HI);
+			
+			for (Edge e : a.getRcvEdges()) {
+				if (e.getSrc().getCHI() != 0 && !e.getSrc().isVisitedHI()) {
+					toVisitHI.add(e.getSrc());
+					e.getSrc().setVisitedHI(true);
+				}
+			}
+			toVisitHI.remove(0);
 		}
 	}
 	
