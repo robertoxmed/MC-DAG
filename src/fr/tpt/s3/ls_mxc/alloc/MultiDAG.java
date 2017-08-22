@@ -17,6 +17,7 @@
 package fr.tpt.s3.ls_mxc.alloc;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -224,14 +225,29 @@ public class MultiDAG {
 	 * Checks if predecessors of Actor a has been allocated 
 	 * @param a
 	 * @param sched
-	 * @return
 	 */
-	private boolean okDataDepend (Actor a, List<Actor> sched) {
-		for(Edge e : a.getRcvEdges()) {
-			if (!sched.contains(e.getSrc()))
-				return false;
+	private void checkActivationHI (List<Actor> sched, List<Actor> ready, short mode) {
+		// Check all predecessor of actor a that just finished
+		for (Actor a : sched) {
+			for (Edge e : a.getRcvEdges()) {
+				Actor pred = e.getSrc();
+				boolean add = true;
+			
+				// 	Check all successors of the predecessor
+				for (Edge e2 : pred.getSndEdges()) {
+					if (mode == Actor.HI) {
+						if (e2.getDest().getCHI() != 0 && !sched.contains(e2.getDest()))
+							add = false;
+					} else {
+						if (!sched.contains(e2.getDest()))
+							add = false;
+					}
+				}
+			
+				if (add && !ready.contains(pred) && remainTHI.get(pred.getName()) != 0)
+					ready.add(pred);
+			}
 		}
-		return true;
 	}
 	
 	/**
@@ -247,6 +263,8 @@ public class MultiDAG {
 			}
 		}
 	}
+	
+	
 
 	/**
 	 * Allocates the DAGs in the HI mode and registers LSAIs
@@ -254,45 +272,64 @@ public class MultiDAG {
 	 */
 	public void allocHI () throws SchedulingException {
 		List<Actor> sched = new LinkedList<>();
+		lHI = new ArrayList<Actor>();
 		
-		setlHI(new ArrayList<Actor>());
 		// Add all HI nodes to the list.
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
-				if (a.getCHI() != 0)
-					addInList(lHI, a, Actor.HI);
+				if (a.getCHI() != 0 && a.isSinkinHI())
+					lHI.add(a);
 			}
 		}
 		
+		lHI.sort(new Comparator<Actor>() {
+			@Override
+			public int compare(Actor o1, Actor o2) {
+				if (o1.getUrgencyHI() - o2.getUrgencyHI() != 0)
+					return o1.getUrgencyHI() - o2.getUrgencyHI();
+				else
+					return o1.getId() - o2.getId();
+			}			
+		});
+		
 		// Allocate all slots of the HI scheduling table
 		ListIterator<Actor> lit = lHI.listIterator();
-		boolean found = false;
-		for (int s = maxD - 1; s >= 0; s--) {
-			
+		boolean taskFinished = false;
+		
+		for (int s = maxD - 1; s >= 0; s--) {	
 			for (int c = 0; c < getNbCores(); c++) {
 				// Find a ready task in the HI list
-				Actor a = null;
-				while (!found && lit.hasNext()) {
-					a = lit.next();
-					if (okDataDepend(a, sched) && !sched.contains(a))
-						found = true;
-	
-				}
-				if (found) {
-					sHI[s][c] = a.getName();
+				if (lit.hasNext()) {
+					Actor a = lit.next();
 					int val = remainTHI.get(a.getName());
+					
+					sHI[s][c] = a.getName();
+					System.out.println("Task "+a.getName()+"; exec remain "+val);
 					val--;
+					
 					if (val == 0) {
-							startHI.put(a.getName(), s);
-							sched.add(a);
-							lit.remove();
-						}
+						lit.remove();
+						startHI.put(a.getName(), s);
+						sched.add(a);
+						taskFinished = true;
+					}
 					remainTHI.put(a.getName(), val);
 				}
-				found = false;
 			}
 			
-			lit = lHI.listIterator(lHI.size());
+			if (taskFinished) {
+				checkActivationHI(sched, lHI, Actor.HI);
+				lHI.sort(new Comparator<Actor>() {
+					@Override
+					public int compare(Actor o1, Actor o2) {
+						if (o1.getUrgencyHI() - o2.getUrgencyHI() != 0)
+							return o1.getUrgencyHI() - o2.getUrgencyHI();
+						else
+							return o1.getId() - o2.getId();
+					}			
+				});
+			}
+			lit = lHI.listIterator();
 		}
 	}
 	
@@ -329,6 +366,7 @@ public class MultiDAG {
 									+"; Urgency HI "+a.getUrgencyHI()+"; Urgency LO "+a.getUrgencyLO());
 			}
 		}
+		System.out.println("");
 	}
 	
 	/**
