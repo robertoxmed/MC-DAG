@@ -130,6 +130,7 @@ public class Main {
 										+"; Max deadline: "+msched.getMaxD());
 					msched.printUrgencies();
 					msched.printSHI();
+					msched.printSLO();
 				}
 				
 			} catch (SchedulingException e) {

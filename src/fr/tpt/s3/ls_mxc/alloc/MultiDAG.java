@@ -222,7 +222,7 @@ public class MultiDAG {
 	}
 	
 	/**
-	 * Checks if predecessors of Actor a has been allocated 
+	 * Checks for new activations in the HI mode 
 	 * @param a
 	 * @param sched
 	 */
@@ -246,6 +246,30 @@ public class MultiDAG {
 			
 				if (add && !ready.contains(pred) && remainTHI.get(pred.getName()) != 0)
 					ready.add(pred);
+			}
+		}
+	}
+	
+	/**
+	 * Checks for activations in the LO mode
+	 * @param a
+	 * @param sched
+	 */
+	private void checkActivationLO (List<Actor> sched, List<Actor> ready, short mode) {
+		// Check all predecessor of actor a that just finished
+		for (Actor a : sched) {
+			for (Edge e : a.getSndEdges()) {
+				Actor succ = e.getDest();
+				boolean add = true;
+			
+				// 	Check all successors of the predecessor
+				for (Edge e2 : succ.getRcvEdges()) {
+					if (!sched.contains(e2.getSrc()))
+						add = false;
+				}
+			
+				if (add && !ready.contains(succ) && remainTLO.get(succ.getName()) != 0)
+					ready.add(succ);
 			}
 		}
 	}
@@ -329,6 +353,7 @@ public class MultiDAG {
 					}			
 				});
 			}
+			taskFinished = false;
 			lit = lHI.listIterator();
 		}
 	}
@@ -338,7 +363,67 @@ public class MultiDAG {
 	 * @throws SchedulingException
 	 */
 	public void allocLO () throws SchedulingException {
+		List<Actor> sched = new LinkedList<>();
+		lLO = new ArrayList<Actor>();
 		
+		// Add all HI nodes to the list.
+		for (DAG d : getMcDags()) {
+			for (Actor a : d.getNodes()) {
+				if (a.isSource())
+					lLO.add(a);
+			}
+		}
+		
+		lLO.sort(new Comparator<Actor>() {
+			@Override
+			public int compare(Actor o1, Actor o2) {
+				if (o1.getUrgencyLO() - o2.getUrgencyLO() != 0)
+					return o2.getUrgencyLO() - o1.getUrgencyLO();
+				else
+					return o2.getId() - o1.getId();
+			}			
+		});
+		
+		// Allocate all slots of the LO scheduling table
+		ListIterator<Actor> lit = lLO.listIterator();
+		boolean taskFinished = false;
+		
+		for (int s = 0; s < maxD; s++) {	
+			for (int c = 0; c < getNbCores(); c++) {
+				// Find a ready task in the HI list
+				if (lit.hasNext()) {
+					Actor a = lit.next();
+					int val = remainTLO.get(a.getName());
+					
+					sLO[s][c] = a.getName();
+					System.out.println("Task "+a.getName()+"; exec remain "+val);
+					val--;
+					
+					if (val == 0) {
+						lit.remove();
+						
+						sched.add(a);
+						taskFinished = true;
+					}
+					remainTLO.put(a.getName(), val);
+				}
+			}
+			
+			if (taskFinished) {
+				checkActivationLO(sched, lLO, Actor.LO);
+				lLO.sort(new Comparator<Actor>() {
+					@Override
+					public int compare(Actor o1, Actor o2) {
+						if (o1.getUrgencyLO() - o2.getUrgencyLO() != 0)
+							return o2.getUrgencyLO() - o1.getUrgencyLO();
+						else
+							return o2.getId() - o1.getId();
+					}			
+				});
+			}
+			taskFinished = false;
+			lit = lLO.listIterator();
+		}
 	}
 	
 	/**
@@ -363,7 +448,7 @@ public class MultiDAG {
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
 				System.out.println("DAG "+d.getId()+"; Actor "+a.getName()
-									+"; Urgency HI "+a.getUrgencyHI()+"; Urgency LO "+a.getUrgencyLO());
+									+"; Urgency LO "+a.getUrgencyLO()+"; Urgency HI "+a.getUrgencyHI());
 			}
 		}
 		System.out.println("");
@@ -378,6 +463,12 @@ public class MultiDAG {
 				System.out.print(sHI[s][c]+" | ");
 			}
 			System.out.print("\n");
+		}
+		
+		System.out.print("\n");
+		for (DAG d : getMcDags()) {
+			for (Actor a : d.getNodes_HI())
+				System.out.println("Task "+a.getName()+" activation slot "+getStartHI().get(a.getName()));
 		}
 	}
 	
