@@ -75,7 +75,6 @@ public class DAG {
 			}
 			
 			if (sinkHI && n.getCHI() != 0) {
-				System.out.println("Node "+n.getName()+" is HI sink");
 				getSinksHI().add(n);
 				n.setSinkinHI(true);
 			}

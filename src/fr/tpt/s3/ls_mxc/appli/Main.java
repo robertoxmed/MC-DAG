@@ -122,17 +122,7 @@ public class Main {
 		} else if (dags.size() > 1) {
 			msched = new MultiDAG(dags, mcp.getNbCores());
 			try {
-				msched.allocAll();
-				if (debug) {
-					System.out.println("========== Scheduling tables ===============");
-					System.out.println("Multi dag case.\nNb cores: "+msched.getNbCores()
-										+"; Nb of DAGs: "+msched.getMcDags().size()
-										+"; Max deadline: "+msched.getMaxD());
-					msched.printUrgencies();
-					msched.printSHI();
-					msched.printSLO();
-				}
-				
+				msched.allocAll(debug);
 			} catch (SchedulingException e) {
 				System.out.println("Unable to schedule the example");
 				e.getMessage();
