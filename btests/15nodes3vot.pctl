@@ -1,0 +1,11 @@
+// Total Cycles
+R{"total_cycles"}=? [ C <= D ]
+
+(R{"Nt_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+(R{"Dt_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+(R{"Jt_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+(R{"Gt_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+

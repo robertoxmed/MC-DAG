@@ -1,0 +1,10 @@
+// Total Cycles
+R{"total_cycles"}=? [ C <= D ]
+
+(R{"Shar_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+(R{"Video_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+(R{"Rec_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+E[F "deadlock"]
