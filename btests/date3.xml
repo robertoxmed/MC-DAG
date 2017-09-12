@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mcsystem>
+	<mcdag name="UAV" deadline="45">
+		<actor name="Avoid0">
+			<clo>3</clo>
+			<chi>3</chi>
+			<fprob>0.01</fprob>
+		</actor>
+		<actor name="Nav0">
+			<clo>5</clo>
+			<chi>7</chi>
+			<fprob>0.0001</fprob>
+		</actor>
+		<actor name="Stab0">
+			<clo>2</clo>
+			<chi>5</chi>
+			<fprob>0.00001</fprob>
+		</actor>
+		<actor name="Log0">
+			<clo>2</clo>
+			<chi>0</chi>
+			<fprob>0.01</fprob>
+		</actor>
+		<actor name="Shar0">
+			<clo>3</clo>
+			<chi>0</chi>
+			<fprob>0.01</fprob>
+		</actor>
+		<actor name="Video0">
+			<clo>6</clo>
+			<chi>0</chi>
+			<fprob>0.001</fprob>
+		</actor>
+		<actor name="GPS0">
+			<clo>2</clo>
+			<chi>0</chi>
+			<fprob>0.001</fprob>
+		</actor>
+		<actor name="Rec0">
+			<clo>2</clo>
+			<chi>0</chi>
+			<fprob>0.01</fprob>
+		</actor>
+
+		<actor name="Avoid1">
+			<clo>3</clo>
+			<chi>3</chi>
+			<fprob>0.01</fprob>
+		</actor>
+		<actor name="Nav1">
+			<clo>5</clo>
+			<chi>7</chi>
+			<fprob>0.0001</fprob>
+		</actor>
+		<actor name="Stab1">
+			<clo>2</clo>
+			<chi>5</chi>
+			<fprob>0.00001</fprob>
+		</actor>
+		<actor name="Log1">
+			<clo>2</clo>
+			<chi>0</chi>
+			<fprob>0.01</fprob>
+		</actor>
+		<actor name="Shar1">
+			<clo>3</clo>
+			<chi>0</chi>
+			<fprob>0.01</fprob>
+		</actor>
+		<actor name="Video1">
+			<clo>6</clo>
+			<chi>0</chi>
+			<fprob>0.001</fprob>
+		</actor>
+		<actor name="GPS1">
+			<clo>2</clo>
+			<chi>0</chi>
+			<fprob>0.001</fprob>
+		</actor>
+		<actor name="Rec1">
+			<clo>2</clo>
+			<chi>0</chi>
+			<fprob>0.01</fprob>
+		</actor>
+
+		<actor name="Avoid2">
+			<clo>3</clo>
+			<chi>3</chi>
+			<fprob>0.01</fprob>
+		</actor>
+		<actor name="Nav2">
+			<clo>5</clo>
+			<chi>7</chi>
+			<fprob>0.0001</fprob>
+		</actor>
+		<actor name="Stab2">
+			<clo>2</clo>
+			<chi>5</chi>
+			<fprob>0.00001</fprob>
+		</actor>
+		<actor name="Log2">
+			<clo>2</clo>
+			<chi>0</chi>
+			<fprob>0.01</fprob>
+		</actor>
+		<actor name="Shar2">
+			<clo>3</clo>
+			<chi>0</chi>
+			<fprob>0.01</fprob>
+		</actor>
+		<actor name="Video2">
+			<clo>6</clo>
+			<chi>0</chi>
+			<fprob>0.001</fprob>
+		</actor>
+		<actor name="GPS2">
+			<clo>2</clo>
+			<chi>0</chi>
+			<fprob>0.001</fprob>
+		</actor>
+		<actor name="Rec2">
+			<clo>2</clo>
+			<chi>0</chi>
+			<fprob>0.01</fprob>
+		</actor>
+
+
+
+		<ftm name="Log0" type="mkfirm">
+			<m>1</m>
+			<k>2</k>
+			<vtask>Log0</vtask>
+		</ftm>
+		<ftm name="Log1" type="mkfirm">
+			<m>1</m>
+			<k>2</k>
+			<vtask>Log1</vtask>
+		</ftm>
+		<ftm name="Log2" type="mkfirm">
+			<m>1</m>
+			<k>2</k>
+			<vtask>Log1</vtask>
+		</ftm>
+
+		<ports>
+			<port name="p1" srcActor="Avoid0" dstActor="Nav0"/>
+			<port name="p3" srcActor="Nav0" dstActor="Stab0"/>
+			<port name="p4" srcActor="Nav0" dstActor="Log0"/>
+			<port name="p5" srcActor="Avoid0" dstActor="Log0"/>
+			<port name="p6" srcActor="Stab0" dstActor="Log0"/>
+			<port name="p7" srcActor="Log0" dstActor="Shar0"/>
+			<port name="p8" srcActor="GPS0" dstActor="Rec0"/>
+
+			<port name="p10" srcActor="Avoid1" dstActor="Nav1"/>
+			<port name="p30" srcActor="Nav1" dstActor="Stab1"/>
+			<port name="p40" srcActor="Nav1" dstActor="Log1"/>
+			<port name="p50" srcActor="Avoid1" dstActor="Log1"/>
+			<port name="p60" srcActor="Stab1" dstActor="Log1"/>
+			<port name="p70" srcActor="Log1" dstActor="Shar1"/>
+			<port name="p80" srcActor="GPS1" dstActor="Rec1"/>
+
+			<port name="p12" srcActor="Avoid2" dstActor="Nav2"/>
+			<port name="p32" srcActor="Nav2" dstActor="Stab2"/>
+			<port name="p42" srcActor="Nav2" dstActor="Log2"/>
+			<port name="p52" srcActor="Avoid2" dstActor="Log2"/>
+			<port name="p62" srcActor="Stab2" dstActor="Log2"/>
+			<port name="p72" srcActor="Log2" dstActor="Shar2"/>
+			<port name="p82" srcActor="GPS2" dstActor="Rec2"/>
+		</ports>
+	</mcdag>
+	<cores number="2"/>
+</mcsystem>

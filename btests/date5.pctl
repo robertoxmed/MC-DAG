@@ -1,0 +1,34 @@
+// Total Cycles
+R{"total_cycles"}=? [ C <= D ]
+
+(R{"Shar0_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+(R{"Rec4_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+(R{"Rec1_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+(R{"Rec2_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+(R{"Video4_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+(R{"Rec0_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+(R{"Shar4_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+(R{"Rec3_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+(R{"Shar3_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+(R{"Video1_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+(R{"Shar2_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+(R{"Shar1_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+(R{"Video3_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+(R{"Video2_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+(R{"Video0_cycles"}=? [ C <= D ])/(R{"total_cycles"}=? [ C <= D ])
+
+E[F "deadlock"]

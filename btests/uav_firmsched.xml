@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<sched>
+    <shi>
+        <core number="0">
+            <slot>-</slot>
+            <slot>-</slot>
+            <slot>-</slot>
+            <slot>Nav</slot>
+            <slot>Nav</slot>
+            <slot>Nav</slot>
+            <slot>Nav</slot>
+            <slot>Nav</slot>
+            <slot>Nav</slot>
+            <slot>Nav</slot>
+            <slot>Stab</slot>
+            <slot>Stab</slot>
+            <slot>Stab</slot>
+            <slot>Stab</slot>
+            <slot>Stab</slot>
+        </core>
+        <core number="1">
+            <slot>-</slot>
+            <slot>-</slot>
+            <slot>-</slot>
+            <slot>-</slot>
+            <slot>-</slot>
+            <slot>-</slot>
+            <slot>-</slot>
+            <slot>-</slot>
+            <slot>-</slot>
+            <slot>-</slot>
+            <slot>-</slot>
+            <slot>-</slot>
+            <slot>-</slot>
+            <slot>-</slot>
+            <slot>-</slot>
+        </core>
+    </shi>
+    <slo>
+        <core number="0">
+            <slot>Avoid</slot>
+            <slot>Avoid</slot>
+            <slot>Avoid</slot>
+            <slot>Nav</slot>
+            <slot>Nav</slot>
+            <slot>Nav</slot>
+            <slot>Nav</slot>
+            <slot>Nav</slot>
+            <slot>Stab</slot>
+            <slot>Stab</slot>
+            <slot>Log</slot>
+            <slot>Log</slot>
+            <slot>Shar</slot>
+            <slot>Shar</slot>
+            <slot>Shar</slot>
+        </core>
+        <core number="1">
+            <slot>Video</slot>
+            <slot>Video</slot>
+            <slot>Video</slot>
+            <slot>Video</slot>
+            <slot>Video</slot>
+            <slot>Video</slot>
+            <slot>GPS</slot>
+            <slot>GPS</slot>
+            <slot>Rec</slot>
+            <slot>Rec</slot>
+            <slot>-</slot>
+            <slot>-</slot>
+            <slot>-</slot>
+            <slot>-</slot>
+            <slot>-</slot>
+        </core>
+    </slo>
+</sched>
