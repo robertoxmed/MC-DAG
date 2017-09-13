@@ -172,6 +172,13 @@ public class Automata {
 			s0.setSynched(true);
 			l.add(idx+1, s0);
 		}
+		// If it is an exit LO node
+		if (n.getCHI() == 0 && n.getSndEdges().size() == 0) {
+			State s0 = new State(nbStates++, n.getName(), Actor.LO);
+			s0.setCompTime(c_t);
+			s0.setExit(true);
+			l.add(idx+1, s0);
+		}
 	}
 	
 	/**
@@ -324,28 +331,9 @@ public class Automata {
 		// Add final transitions in LO mode
 		// We need to add 2^n transitions depending on the number of outputs
 		calcOutputSets();
-				
-		for (Set<Formula> s : powerSet(loOutsForm)) {
-			Transition tform = new Transition(sk, s0, s0);
-			Iterator<Formula> iform = s.iterator();
-			while (iform.hasNext())
-				tform.getbSet().add(iform.next());
-			finTrans.add(tform);
-		}
-
-		Iterator<Formula> iform = loOutsForm.iterator();
-
-		// Add false booleans
-		Iterator<Transition> itt = this.finTrans.iterator();
-		while (itt.hasNext()) {
-			Transition tt = itt.next();
-			iform = loOutsForm.iterator();
-			while (iform.hasNext() ) {
-				Formula lab = iform.next();
-				if (!tt.getbSet().contains(lab))
-					tt.getfSet().add(lab);
-			}
-		}
+		
+		Transition tfinal = new Transition(sk, s0, s0);
+		finTrans.add(tfinal);
 	
 	}
 	

@@ -342,22 +342,22 @@ public class MCParser {
 				} else if (ftm.getType() == Actor.MKFIRM) {
 					int fstate = ftm.getStates().size() - 1;
 					out.write("module "+ftm.getName()+"firm\n");
-					out.write("\tv: [0.."+ftm.getStates().size()+"] init "+fstate+";\n");
+					out.write("\tv"+countFtm+": [0.."+ftm.getStates().size()+"] init "+fstate+";\n");
 					for (Transition t : ftm.getTransitions())
-						out.write("\t["+t.getName()+"] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestOk().getId()+");\n");
+						out.write("\t["+t.getName()+"] v"+countFtm+" = "+t.getSrc().getId()+" -> (v"+countFtm+"' = "+t.getDestOk().getId()+");\n");
 					
 					out.write("\n");
 					for (Transition t : ftm.getFinTrans()) 
-						out.write("\t["+t.getName()+"] v = "+t.getSrc().getId()+" -> (v' = "+t.getDestOk().getId()+");\n");
+						out.write("\t["+t.getName()+"] v"+countFtm+" = "+t.getSrc().getId()+" -> (v"+countFtm+"' = "+t.getDestOk().getId()+");\n");
 					
 					out.write("endmodule\n\n");
 					
 					// Write the indepedent module for the task
 					out.write("module "+ftm.getVotTask().getName()+"\n");
-					out.write("\tt"+": [0..2] init 0;\n");
-					out.write("\t["+ftm.getVotTask().getName()+"0_run] t = 0 ->  1 - "+ftm.getVotTask().getfProb()+" : (t' = 1) + "+ftm.getVotTask().getfProb()+" : (t' = 2);\n");
-					out.write("\t["+ftm.getVotTask().getName()+"_end_ok] t = 1 -> (t' = 0);\n");
-					out.write("\t["+ftm.getVotTask().getName()+"_end_fail] t = 2 -> (t' = 0);\n");
+					out.write("\tt"+countFtm+""+": [0..2] init 0;\n");
+					out.write("\t["+ftm.getVotTask().getName()+"0_run] t"+countFtm+" = 0 ->  1 - "+ftm.getVotTask().getfProb()+" : (t"+countFtm+"' = 1) + "+ftm.getVotTask().getfProb()+" : (t"+countFtm+"' = 2);\n");
+					out.write("\t["+ftm.getVotTask().getName()+"_end_ok] t"+countFtm+" = 1 -> (t"+countFtm+"' = 0);\n");
+					out.write("\t["+ftm.getVotTask().getName()+"_end_fail] t"+countFtm+" = 2 -> (t"+countFtm+"' = 0);\n");
 					out.write("endmodule\n");
 					out.write("\n");
 				} else {
@@ -419,7 +419,7 @@ public class MCParser {
 						while (is.hasNext()) {
 							State s = is.next();
 							if (s.getMode() == 0 && !s.getTask().contains("Final")
-									&& !s.getTask().contains("Init")) // It is a LO task
+									&& !s.getTask().contains("Init") && !s.isExit() && !s.isSynched()) // It is a LO task
 								out.write(" & ("+s.getTask()+"bool' = false)");
 						}
 						out.write(";\n");
@@ -431,6 +431,11 @@ public class MCParser {
 								+ " -> (s' = " + t.getDestOk().getId() +") & ("+t.getSrc().getTask()+"bool' = true);\n" );
 						out.write("\t["+t.getSrc().getTask()+"_fail] s = " + t.getSrc().getId()
 								+ " -> (s' = " + t.getDestOk().getId() +");\n" );
+					} else if (t.getSrc().isExit()){
+						out.write("\t["+t.getSrc().getTask()+"_ok] s = " + t.getSrc().getId()+ " & "
+								+t.getSrc().getTask()+" -> (s' = " + t.getDestOk().getId() +");\n" );
+						out.write("\t["+t.getSrc().getTask()+"_fail] s = " + t.getSrc().getId()+ " & "
+								+t.getSrc().getTask()+" = false -> (s' = " + t.getDestOk().getId() +");\n" );
 					} else { 
 						out.write("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
 								+ " -> 1 - "+ t.getP() +" : (s' = " + t.getDestOk().getId() +") & ("+t.getSrc().getTask()+"bool' = true) + "
@@ -476,19 +481,7 @@ public class MCParser {
 			while (in.hasNext()) {
 				Actor n = in.next();
 				out.write("rewards \""+n.getName()+"_cycles\"\n");
-				it = auto.getF_transitions().iterator();
-				int c = 0;
-				while (it.hasNext()) {
-					Transition t = it.next();
-					Iterator<Formula> iab2 = t.getbSet().iterator();
-
-					while (iab2.hasNext()) {
-						if (iab2.next().getName().contentEquals(n.getName()))
-							out.write("\t["+t.getSrc().getTask()+c+"] true : 1;\n");
-					}
-					c++;
-				}
-				c = 0;
+				out.write("\t["+n.getName()+"_ok] true : 1;\n");
 				out.write("endrewards\n");
 				out.write("\n");
 			}
