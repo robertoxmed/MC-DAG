@@ -309,7 +309,8 @@ public class Automata {
 						t.setP(d.getNodebyName(s.getTask()).getfProb());
 				} else { // It is a LO task
 					if (s.isVoted()) {
-						t = new Transition(s, s2, s2);
+						t = new Transition(s,s2, s2);
+						t.setP(d.getNodebyName(s.getTask()).getfProb());
 					} else if (s.isSynched()) {
 						t = new Transition(s, s2, s2);
 					} else {
@@ -385,6 +386,19 @@ public class Automata {
 	/**
 	 * Getters and setters
 	 */
+	
+	public FTM getFTMbyName (String name) {
+		FTM ret = null;
+		boolean found = false;
+		Iterator<FTM> iftm = getFtms().iterator();
+		
+		while (iftm.hasNext() && !found) {
+			FTM f = iftm.next();
+			if (f.getName().contains(name))
+				ret = f;
+		}
+		return ret;
+	}
 
 	public List<State> getLo_sched() {
 		return loSched;

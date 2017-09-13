@@ -287,6 +287,7 @@ public class FTM {
 	 * Getters + Setters
 	 */
 	
+	
 	public int getNbVot() {
 		return nbVot;
 	}

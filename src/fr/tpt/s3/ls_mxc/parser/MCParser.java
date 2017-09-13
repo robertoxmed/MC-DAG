@@ -339,28 +339,28 @@ public class MCParser {
 						out.write("endmodule\n");
 						out.write("\n");
 					}
-				} else if (ftm.getType() == Actor.MKFIRM) {
-					int fstate = ftm.getStates().size() - 1;
-					out.write("module "+ftm.getName()+"firm\n");
-					out.write("\tv"+countFtm+": [0.."+ftm.getStates().size()+"] init "+fstate+";\n");
-					for (Transition t : ftm.getTransitions())
-						out.write("\t["+t.getName()+"] v"+countFtm+" = "+t.getSrc().getId()+" -> (v"+countFtm+"' = "+t.getDestOk().getId()+");\n");
-					
-					out.write("\n");
-					for (Transition t : ftm.getFinTrans()) 
-						out.write("\t["+t.getName()+"] v"+countFtm+" = "+t.getSrc().getId()+" -> (v"+countFtm+"' = "+t.getDestOk().getId()+");\n");
-					
-					out.write("endmodule\n\n");
-					
-					// Write the indepedent module for the task
-					out.write("module "+ftm.getVotTask().getName()+"\n");
-					out.write("\tt"+countFtm+""+": [0..2] init 0;\n");
-					out.write("\t["+ftm.getVotTask().getName()+"0_run] t"+countFtm+" = 0 ->  1 - "+ftm.getVotTask().getfProb()+" : (t"+countFtm+"' = 1) + "+ftm.getVotTask().getfProb()+" : (t"+countFtm+"' = 2);\n");
-					out.write("\t["+ftm.getVotTask().getName()+"_end_ok] t"+countFtm+" = 1 -> (t"+countFtm+"' = 0);\n");
-					out.write("\t["+ftm.getVotTask().getName()+"_end_fail] t"+countFtm+" = 2 -> (t"+countFtm+"' = 0);\n");
-					out.write("endmodule\n");
-					out.write("\n");
-				} else {
+//				}else if (ftm.getType() == Actor.MKFIRM) {
+//					int fstate = ftm.getStates().size() - 1;
+//					out.write("module "+ftm.getName()+"firm\n");
+//					out.write("\tv"+countFtm+": [0.."+ftm.getStates().size()+"] init "+fstate+";\n");
+//					for (Transition t : ftm.getTransitions())
+//						out.write("\t["+t.getName()+"] v"+countFtm+" = "+t.getSrc().getId()+" -> (v"+countFtm+"' = "+t.getDestOk().getId()+");\n");
+//					
+//					out.write("\n");
+//					for (Transition t : ftm.getFinTrans()) 
+//						out.write("\t["+t.getName()+"] v"+countFtm+" = "+t.getSrc().getId()+" -> (v"+countFtm+"' = "+t.getDestOk().getId()+");\n");
+//					
+//					out.write("endmodule\n\n");
+//					
+//					// Write the indepedent module for the task
+//					out.write("module "+ftm.getVotTask().getName()+"\n");
+//					out.write("\tt"+countFtm+""+": [0..2] init 0;\n");
+//					out.write("\t["+ftm.getVotTask().getName()+"0_run] t"+countFtm+" = 0 ->  1 - "+ftm.getVotTask().getfProb()+" : (t"+countFtm+"' = 1) + "+ftm.getVotTask().getfProb()+" : (t"+countFtm+"' = 2);\n");
+//					out.write("\t["+ftm.getVotTask().getName()+"_end_ok] t"+countFtm+" = 1 -> (t"+countFtm+"' = 0);\n");
+//					out.write("\t["+ftm.getVotTask().getName()+"_end_fail] t"+countFtm+" = 2 -> (t"+countFtm+"' = 0);\n");
+//					out.write("endmodule\n");
+//					out.write("\n");
+				} else if (ftm.getType() != Actor.MKFIRM) {
 					System.out.print("Uknown Voting mechanism");
 				}
 				countFtm++;
@@ -393,7 +393,21 @@ public class MCParser {
 					out.write("\t"+a.getName()+"bool: bool init false;\n");
 			}
 			
-			System.out.println("");
+			out.write("\n");
+			
+			// Create MK firms if they exist
+			
+			iftm = auto.getFtms().iterator();
+			while (iftm.hasNext()) {
+				FTM ftm = iftm.next();
+				if (ftm.getType() == Actor.MKFIRM) {
+					for (int i = 0; i < ftm.getK(); i ++) {
+						out.write("\t"+ftm.getName()+"_v"+i+": [0..1] init 1;\n");
+					}
+				}
+			}
+			
+			out.write("\n");
 			
 			// Create the LO scheduling zone
 			Iterator<State> is = null;
@@ -425,12 +439,37 @@ public class MCParser {
 						out.write(";\n");
 					} else if (t.getSrc().isVoted()){
 						out.write("\t["+t.getSrc().getTask()+"0_run] s = " + t.getSrc().getId()
-								+ " -> (s' = " + t.getDestOk().getId() +");\n" );
+								+" -> 1 - "+t.getP()+": (s' = " + t.getDestOk().getId() +") & ");
+						FTM ftm = auto.getFTMbyName(t.getSrc().getTask());
+						for (int i = ftm.getK() - 1 ; i > 0; i--) {
+							out.write("("+ftm.getName()+"_v"+i+"' = "+ftm.getName()+"_v"+(i-1)+") &");
+						}
+						out.write(" ("+ftm.getName()+"_v0' = 1) + "+t.getP()+": (s' = " + t.getDestOk().getId() +") & ");
+						for (int i = ftm.getK() - 1 ; i > 0; i--) {
+							out.write("("+ftm.getName()+"_v"+i+"' = "+ftm.getName()+"_v"+(i-1)+") &");
+						}
+						out.write("("+ftm.getName()+"_v0' =0);\n");
 					} else if (t.getSrc().isSynched()) {
-						out.write("\t["+t.getSrc().getTask()+"_ok] s = " + t.getSrc().getId()
-								+ " -> (s' = " + t.getDestOk().getId() +") & ("+t.getSrc().getTask()+"bool' = true);\n" );
-						out.write("\t["+t.getSrc().getTask()+"_fail] s = " + t.getSrc().getId()
-								+ " -> (s' = " + t.getDestOk().getId() +");\n" );
+						// OK transition
+						out.write("\t["+t.getSrc().getTask()+"_ok] s = " + t.getSrc().getId()+" & ");
+						FTM ftm = auto.getFTMbyName(t.getSrc().getTask());
+						for (int i = 0; i < ftm.getK(); i++) {
+							if (i < ftm.getK() - 1)
+								out.write(ftm.getName()+"_v"+i+" + ");
+							else
+								out.write(ftm.getName()+"_v"+i+" >= "+ftm.getK());
+						}
+						out.write(" -> (s' = " + t.getDestOk().getId() +") & ("+t.getSrc().getTask()+"bool' = true);\n" );
+						
+						// Fail transition
+						out.write("\t["+t.getSrc().getTask()+"_fail] s = " + t.getSrc().getId()+" & ");
+						for (int i = 0; i < ftm.getK(); i++) {
+							if (i < ftm.getK() - 1)
+								out.write(ftm.getName()+"_v"+i+" + ");
+							else
+								out.write(ftm.getName()+"_v"+i+" < "+ftm.getK());
+						}
+						out.write(" -> (s' = " + t.getDestOk().getId() +");\n");
 					} else if (t.getSrc().isExit()){
 						out.write("\t["+t.getSrc().getTask()+"_ok] s = " + t.getSrc().getId()+ " & "
 								+t.getSrc().getTask()+" -> (s' = " + t.getDestOk().getId() +");\n" );
