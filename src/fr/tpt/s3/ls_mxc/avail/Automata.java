@@ -303,7 +303,7 @@ public class Automata {
 				Transition t;
 				if (s.getMode() == Actor.HI) { // If it's a HI task
 					// Find the HI task that corresponds to s
-					State S = findStateHI(s.getTask());
+					State S = hiSched.get(0);
 					t = new Transition(s, s2, S);
 					if(!s.isfMechanism()) // If it's not a fault tolerant mechanism
 						t.setP(d.getNodebyName(s.getTask()).getfProb());
@@ -356,10 +356,12 @@ public class Automata {
 		}
 		
 		in = d.getNodes_HI().iterator();
-		while (in.hasNext()) {
-			Actor n = in.next();
-			this.calcCompTimeHI(n.getName());
-		}
+//		while (in.hasNext()) {
+//			Actor n = in.next();
+//			this.calcCompTimeHI(n.getName());
+//		}
+		State sH = new State(nbStates++, "SHI", 0);
+		hiSched.add(sH);
 				
 		this.linkStates();
 	}

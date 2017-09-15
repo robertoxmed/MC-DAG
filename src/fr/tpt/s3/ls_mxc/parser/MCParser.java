@@ -457,7 +457,7 @@ public class MCParser {
 							if (i < ftm.getK() - 1)
 								out.write(ftm.getName()+"_v"+i+" + ");
 							else
-								out.write(ftm.getName()+"_v"+i+" >= "+ftm.getK());
+								out.write(ftm.getName()+"_v"+i+" >= "+ftm.getM());
 						}
 						out.write(" -> (s' = " + t.getDestOk().getId() +") & ("+t.getSrc().getTask()+"bool' = true);\n" );
 						
@@ -467,7 +467,7 @@ public class MCParser {
 							if (i < ftm.getK() - 1)
 								out.write(ftm.getName()+"_v"+i+" + ");
 							else
-								out.write(ftm.getName()+"_v"+i+" < "+ftm.getK());
+								out.write(ftm.getName()+"_v"+i+" < "+ftm.getM());
 						}
 						out.write(" -> (s' = " + t.getDestOk().getId() +");\n");
 					} else if (t.getSrc().isExit()){
