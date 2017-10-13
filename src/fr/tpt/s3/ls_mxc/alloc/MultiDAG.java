@@ -45,7 +45,7 @@ public class MultiDAG {
 	private String sLO[][];
 	private String sHI[][];
 	
-	// LSAIs of HI tasks
+	// Virtual deadlines of HI tasks
 	private Hashtable<String, Integer> startHI;
 	
 	// Max deadline
@@ -71,7 +71,7 @@ public class MultiDAG {
 	}
 	
 	/**
-	 * Allocates the scheduling tables & the LSAIs
+	 * Allocates the scheduling tables & the virtual deadlines
 	 */
 	private void initTables () {
 		maxD = 0;
@@ -86,39 +86,17 @@ public class MultiDAG {
 	}
 	
 	/**
-	 * Gives the urgency of an Actor
+	 * Gives the laxity of an Actor
 	 * @param a
 	 * @param deadline
 	 * @param mode
 	 * @return
 	 */
-	private int calcActorUrgencyLO (Actor a, int deadline, short mode) {
-		int ret = Integer.MAX_VALUE;
-		
-		if (a.isSink()) {
-			a.setUrgencyLO(deadline - a.getCLO());			
-			ret = deadline;
-		} else {
-			int test = Integer.MAX_VALUE;
-
-			for (Edge e : a.getSndEdges()) {
-				test = e.getDest().getUrgencyLO() - a.getCLO();
-				
-				if (test < ret)
-					ret = test;
-			}
-			a.setUrgencyLO(ret);
-		}
-		return ret;
-	}
-	
 	private int calcActorUrgencyHI (Actor a, int deadline, short mode) {
 		int ret = Integer.MAX_VALUE;
 		
 		if (a.isSinkinHI()) {
-			a.setUrgencyHI(deadline - a.getCLO());			
-			ret = deadline;
-			
+			ret = deadline;			
 		} else {
 			int test = Integer.MAX_VALUE;
 
@@ -128,10 +106,31 @@ public class MultiDAG {
 				if (test < ret)
 					ret = test;
 			}
-			a.setUrgencyHI(ret);
 		}
+		a.setUrgencyHI(ret);
 		return ret;
 	}
+	
+	private int calcActorUrgencyLO (Actor a, int deadline, short mode) {
+		int ret = Integer.MAX_VALUE;
+		
+		if (a.isSink()) {			
+			ret = deadline;
+		} else {
+			int test = Integer.MAX_VALUE;
+
+			for (Edge e : a.getSndEdges()) {
+				test = e.getDest().getUrgencyLO() - a.getCLO();
+				if (test < ret)
+					ret = test;
+			}
+		}
+			
+		a.setUrgencyLO(ret);
+		return ret;
+	}
+	
+
 	
 	/**
 	 * Recursively calculates the weight of an actor
@@ -140,7 +139,7 @@ public class MultiDAG {
 	 * @param mode
 	 * @return
 	 */
-	private void calcDAGUrgency (DAG d) {
+	private void calcVirtualDeadlines (DAG d) {
 		// Add a list to add the nodes that have to be visited
 		ArrayList<Actor> toVisit = new ArrayList<>();
 		ArrayList<Actor> toVisitHI = new ArrayList<>();
@@ -189,7 +188,7 @@ public class MultiDAG {
 	private void calcWeights () {
 		for (DAG d : getMcDags()) {
 			// Go from the sinks to the sources
-			calcDAGUrgency(d);
+			calcVirtualDeadlines(d);
 		}
 	}
 
@@ -268,8 +267,6 @@ public class MultiDAG {
 		}
 	}
 	
-	
-
 	/**
 	 * Allocates the DAGs in the HI mode and registers LSAIs
 	 * @throws SchedulingException
@@ -474,6 +471,23 @@ public class MultiDAG {
 	}
 	
 	/**
+	 * Promotes virtual deadlines of HI tasks once they have been allocated
+	 * in HI criticality mode
+	 */
+	private void promoteVirtualDeadline () {
+		for (DAG d : mcDags ) {
+			for (Actor a : d.getNodes() ) {
+				if (a.getCHI() != 0) {
+					int ret =  a.getUrgencyLO();
+					int test = startHI.get(a.getName());
+					if (test < ret)
+						ret = test;
+				}
+			}
+		}
+	}
+	
+	/**
 	 * Tries to allocate all DAGs in the number of cores given
 	 * @throws SchedulingException
 	 */
@@ -487,6 +501,7 @@ public class MultiDAG {
 		allocHI();
 		if (isDebug())
 			printSHI();
+		promoteVirtualDeadline();
 		allocLO();
 		if (isDebug())
 			printSLO();
