@@ -339,27 +339,6 @@ public class MCParser {
 						out.write("endmodule\n");
 						out.write("\n");
 					}
-//				}else if (ftm.getType() == Actor.MKFIRM) {
-//					int fstate = ftm.getStates().size() - 1;
-//					out.write("module "+ftm.getName()+"firm\n");
-//					out.write("\tv"+countFtm+": [0.."+ftm.getStates().size()+"] init "+fstate+";\n");
-//					for (Transition t : ftm.getTransitions())
-//						out.write("\t["+t.getName()+"] v"+countFtm+" = "+t.getSrc().getId()+" -> (v"+countFtm+"' = "+t.getDestOk().getId()+");\n");
-//					
-//					out.write("\n");
-//					for (Transition t : ftm.getFinTrans()) 
-//						out.write("\t["+t.getName()+"] v"+countFtm+" = "+t.getSrc().getId()+" -> (v"+countFtm+"' = "+t.getDestOk().getId()+");\n");
-//					
-//					out.write("endmodule\n\n");
-//					
-//					// Write the indepedent module for the task
-//					out.write("module "+ftm.getVotTask().getName()+"\n");
-//					out.write("\tt"+countFtm+""+": [0..2] init 0;\n");
-//					out.write("\t["+ftm.getVotTask().getName()+"0_run] t"+countFtm+" = 0 ->  1 - "+ftm.getVotTask().getfProb()+" : (t"+countFtm+"' = 1) + "+ftm.getVotTask().getfProb()+" : (t"+countFtm+"' = 2);\n");
-//					out.write("\t["+ftm.getVotTask().getName()+"_end_ok] t"+countFtm+" = 1 -> (t"+countFtm+"' = 0);\n");
-//					out.write("\t["+ftm.getVotTask().getName()+"_end_fail] t"+countFtm+" = 2 -> (t"+countFtm+"' = 0);\n");
-//					out.write("endmodule\n");
-//					out.write("\n");
 				} else if (ftm.getType() != Actor.MKFIRM) {
 					System.out.print("Uknown Voting mechanism");
 				}
@@ -687,7 +666,6 @@ public class MCParser {
 	public void setUg(UtilizationGenerator ug) {
 		this.ug = ug;
 	}
-	
 
 	public MultiDAG getMdagsched() {
 		return mdagsched;
