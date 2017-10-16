@@ -86,6 +86,7 @@ public class Actor {
 		rcvEdges = new HashSet<Edge>();
 		sndEdges = new HashSet<Edge>();
 	
+		LFTHI = Integer.MAX_VALUE;
 		urgencyHI = Integer.MAX_VALUE;
 		urgencyLO = Integer.MAX_VALUE;
 		visited = false;

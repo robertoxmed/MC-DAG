@@ -107,7 +107,7 @@ public class MultiDAG {
 			int test = Integer.MAX_VALUE;
 
 			for (Edge e : a.getSndEdges()) {
-				test = e.getDest().getLFTHI() - a.getCHI();
+				test = e.getDest().getLFTHI() - e.getDest().getCHI();
 				
 				if (test < ret)
 					ret = test;
@@ -126,7 +126,7 @@ public class MultiDAG {
 			int test = Integer.MAX_VALUE;
 
 			for (Edge e : a.getSndEdges()) {
-				test = e.getDest().getLFTLO() - a.getCLO();
+				test = e.getDest().getLFTLO() - e.getDest().getCLO();
 				if (test < ret)
 					ret = test;
 			}
@@ -154,7 +154,7 @@ public class MultiDAG {
 			a.setVisitedHI(true);
 		}
 		
-		while (toVisit.size() != 0 && toVisitHI.size() != 0) {
+		while (toVisit.size() != 0) {
 			Actor a = toVisit.get(0);
 			calcActorLFTLO(a, d.getDeadline());
 			
