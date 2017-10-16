@@ -28,14 +28,16 @@ import java.util.Set;
 import fr.tpt.s3.ls_mxc.model.Actor;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
+import fr.tpt.s3.ls_mxc.util.MathMCDAG;
 
 public class MultiDAG {
 	
 	// Set of DAGs to be scheduled
 	private Set<DAG> mcDags;
 	
-	// Architecture
+	// Architecture + Hyperperiod
 	private int nbCores;
+	private int hPeriod;
 	
 	// List of DAG nodes to order them
 	private List<Actor> lLO;
@@ -47,9 +49,6 @@ public class MultiDAG {
 	
 	// Virtual deadlines of HI tasks
 	private Hashtable<String, Integer> startHI;
-	
-	// Max deadline
-	private int maxD;
 
 	// Remaining time for all nodes
 	private Hashtable<String, Integer> remainTLO;
@@ -74,15 +73,22 @@ public class MultiDAG {
 	 * Allocates the scheduling tables & the virtual deadlines
 	 */
 	private void initTables () {
-		maxD = 0;
+		int[] input = new int[getMcDags().size()];
+		int i = 0;
+	
 		// Look for the maximum deadline
 		for (DAG d : getMcDags()) {
-			if (d.getDeadline() > maxD)
-				maxD = d.getDeadline();				
+			input[i] = d.getDeadline();
+			i++;
 		}
-	
-		sHI = new String[maxD][getNbCores()];
-		sLO = new String[maxD][getNbCores()];
+		
+		sethPeriod(MathMCDAG.lcm(input));
+		
+		sHI = new String[gethPeriod()][getNbCores()];
+		sLO = new String[gethPeriod()][getNbCores()];
+		
+		if (debug)
+			System.out.println(">> Hyper-period of the graph: "+gethPeriod()+"; tables initialized.");
 	}
 	
 	/**
@@ -92,7 +98,7 @@ public class MultiDAG {
 	 * @param mode
 	 * @return
 	 */
-	private int calcActorUrgencyHI (Actor a, int deadline, short mode) {
+	private int calcActorLFTLO (Actor a, int deadline, short mode) {
 		int ret = Integer.MAX_VALUE;
 		
 		if (a.isSinkinHI()) {
@@ -111,7 +117,7 @@ public class MultiDAG {
 		return ret;
 	}
 	
-	private int calcActorUrgencyLO (Actor a, int deadline, short mode) {
+	private int calcActorLFTHI (Actor a, int deadline, short mode) {
 		int ret = Integer.MAX_VALUE;
 		
 		if (a.isSink()) {			
@@ -130,14 +136,8 @@ public class MultiDAG {
 		return ret;
 	}
 	
-
-	
 	/**
-	 * Recursively calculates the weight of an actor
-	 * @param a
-	 * @param deadline
-	 * @param mode
-	 * @return
+	 * Recursively calculates LFTs of an actor
 	 */
 	private void calcVirtualDeadlines (DAG d) {
 		// Add a list to add the nodes that have to be visited
@@ -156,7 +156,7 @@ public class MultiDAG {
 		
 		while (toVisit.size() != 0 && toVisitHI.size() != 0) {
 			Actor a = toVisit.get(0);
-			calcActorUrgencyLO(a, d.getDeadline(), Actor.LO);
+			calcActorLFTHI(a, d.getDeadline(), Actor.LO);
 			
 			for (Edge e : a.getRcvEdges()) {
 				if (!e.getSrc().isVisited()) {
@@ -169,7 +169,7 @@ public class MultiDAG {
 		
 		while (toVisitHI.size() != 0) {
 			Actor a = toVisitHI.get(0);
-			calcActorUrgencyHI(a, d.getDeadline(), Actor.HI);
+			calcActorLFTLO(a, d.getDeadline(), Actor.HI);
 			
 			for (Edge e : a.getRcvEdges()) {
 				if (e.getSrc().getCHI() != 0 && !e.getSrc().isVisitedHI()) {
@@ -193,11 +193,11 @@ public class MultiDAG {
 	}
 
 	/**
-	 * Checks for new activations in the HI mode 
+	 * Checks for new activations in the HI mode for a given DAG
 	 * @param a
 	 * @param sched
 	 */
-	private void checkActivationHI (List<Actor> sched, List<Actor> ready, short mode) {
+	private void checkActorActivationHI (List<Actor> sched, List<Actor> ready, short mode) {
 		// Check all predecessor of actor a that just finished
 		for (Actor a : sched) {
 			for (Edge e : a.getRcvEdges()) {
@@ -230,7 +230,7 @@ public class MultiDAG {
 	 * @param a
 	 * @param sched
 	 */
-	private void checkActivationLO (List<Actor> sched, List<Actor> ready, short mode) {
+	private void checkActorActivationLO (List<Actor> sched, List<Actor> ready, short mode) {
 		// Check all predecessor of actor a that just finished
 		for (Actor a : sched) {
 			for (Edge e : a.getSndEdges()) {
@@ -252,6 +252,27 @@ public class MultiDAG {
 			}
 		}
 	}
+	
+	/**
+	 * Checks for the activation of a new DAG during the hyper-period
+	 * @param slot
+	 */
+	private void checkDAGActivation (int slot) {
+		for (DAG d : getMcDags()) {
+			// If the slot is a mulitple of the deadline there is a new activation
+			if (slot % d.getDeadline() == 0) {
+				for (Actor a : d.getNodes()) {
+					if (a.getCHI() != 0)
+						remainTHI.put(a.getName(), a.getCHI());
+					remainTLO.put(a.getName(), a.getCLO());
+				}
+				
+				if (isDebug())
+					System.out.println(">> DAG activation at slot "+slot);
+			}
+		}
+	}
+	
 	
 	/**
 	 * Inits the remaining time to be allocated to each Actor
@@ -297,7 +318,8 @@ public class MultiDAG {
 		ListIterator<Actor> lit = lHI.listIterator();
 		boolean taskFinished = false;
 		
-		for (int s = maxD - 1; s >= 0; s--) {	
+		for (int s = hPeriod - 1; s >= 0; s--) {
+			checkDAGActivation(s);
 			for (int c = 0; c < getNbCores(); c++) {
 				// Find a ready task in the HI list
 				if (lit.hasNext()) {
@@ -318,7 +340,7 @@ public class MultiDAG {
 			}
 			
 			if (taskFinished) {
-				checkActivationHI(sched, lHI, Actor.HI);
+				checkActorActivationHI(sched, lHI, Actor.HI);
 				lHI.sort(new Comparator<Actor>() {
 					@Override
 					public int compare(Actor o1, Actor o2) {
@@ -424,7 +446,7 @@ public class MultiDAG {
 		ListIterator<Actor> lit = lLO.listIterator();
 		boolean taskFinished = false;
 		
-		for (int s = 0; s < maxD; s++) {
+		for (int s = 0; s < hPeriod; s++) {
 			// Verify that there are enough slots to continue the scheduling
 			if (!checkDeadlines(s)) {
 				SchedulingException se = new SchedulingException("Alloc LO MultiDAG: Not enough slot left");
@@ -452,7 +474,7 @@ public class MultiDAG {
 			}
 			
 			if (taskFinished) {
-				checkActivationLO(sched, lLO, Actor.LO);
+				checkActorActivationLO(sched, lLO, Actor.LO);
 				lLO.sort(new Comparator<Actor>() {
 					@Override
 					public int compare(Actor o1, Actor o2) {
@@ -528,7 +550,7 @@ public class MultiDAG {
 	 */
 	public void printSHI () {
 		for (int c = 0; c < getNbCores(); c++) {
-			for (int s = 0; s < maxD; s++) {
+			for (int s = 0; s < gethPeriod(); s++) {
 				System.out.print(sHI[s][c]+" | ");
 			}
 			System.out.print("\n");
@@ -546,7 +568,7 @@ public class MultiDAG {
 	 */
 	public void printSLO () {
 		for (int c = 0; c < getNbCores(); c++) {
-			for (int s = 0; s < maxD; s++) {
+			for (int s = 0; s < gethPeriod(); s++) {
 				System.out.print(sLO[s][c]+" | ");
 			}
 			System.out.print("\n");
@@ -614,19 +636,19 @@ public class MultiDAG {
 		this.startHI = startHI;
 	}
 
-	public int getMaxD() {
-		return maxD;
-	}
-
-	public void setMaxD(int maxD) {
-		this.maxD = maxD;
-	}
-
 	public boolean isDebug() {
 		return debug;
 	}
 
 	public void setDebug(boolean debug) {
 		this.debug = debug;
+	}
+
+	public int gethPeriod() {
+		return hPeriod;
+	}
+
+	public void sethPeriod(int hPeriod) {
+		this.hPeriod = hPeriod;
 	}
 }
