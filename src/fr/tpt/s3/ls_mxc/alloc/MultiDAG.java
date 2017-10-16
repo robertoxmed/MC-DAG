@@ -92,13 +92,13 @@ public class MultiDAG {
 	}
 	
 	/**
-	 * Gives the laxity of an Actor
+	 * Gives the LFT of an Actor
 	 * @param a
 	 * @param deadline
 	 * @param mode
 	 * @return
 	 */
-	private int calcActorLFTLO (Actor a, int deadline, short mode) {
+	private int calcActorLFTHI (Actor a, int deadline) {
 		int ret = Integer.MAX_VALUE;
 		
 		if (a.isSinkinHI()) {
@@ -107,17 +107,17 @@ public class MultiDAG {
 			int test = Integer.MAX_VALUE;
 
 			for (Edge e : a.getSndEdges()) {
-				test = e.getDest().getUrgencyHI() - a.getCHI();
+				test = e.getDest().getLFTHI() - a.getCHI();
 				
 				if (test < ret)
 					ret = test;
 			}
 		}
-		a.setUrgencyHI(ret);
+		a.setLFTHI(ret);
 		return ret;
 	}
 	
-	private int calcActorLFTHI (Actor a, int deadline, short mode) {
+	private int calcActorLFTLO (Actor a, int deadline) {
 		int ret = Integer.MAX_VALUE;
 		
 		if (a.isSink()) {			
@@ -126,13 +126,13 @@ public class MultiDAG {
 			int test = Integer.MAX_VALUE;
 
 			for (Edge e : a.getSndEdges()) {
-				test = e.getDest().getUrgencyLO() - a.getCLO();
+				test = e.getDest().getLFTLO() - a.getCLO();
 				if (test < ret)
 					ret = test;
 			}
 		}
 			
-		a.setUrgencyLO(ret);
+		a.setLFTLO(ret);
 		return ret;
 	}
 	
@@ -156,7 +156,7 @@ public class MultiDAG {
 		
 		while (toVisit.size() != 0 && toVisitHI.size() != 0) {
 			Actor a = toVisit.get(0);
-			calcActorLFTHI(a, d.getDeadline(), Actor.LO);
+			calcActorLFTLO(a, d.getDeadline());
 			
 			for (Edge e : a.getRcvEdges()) {
 				if (!e.getSrc().isVisited()) {
@@ -169,7 +169,7 @@ public class MultiDAG {
 		
 		while (toVisitHI.size() != 0) {
 			Actor a = toVisitHI.get(0);
-			calcActorLFTLO(a, d.getDeadline(), Actor.HI);
+			calcActorLFTHI(a, d.getDeadline());
 			
 			for (Edge e : a.getRcvEdges()) {
 				if (e.getSrc().getCHI() != 0 && !e.getSrc().isVisitedHI()) {
@@ -217,9 +217,6 @@ public class MultiDAG {
 			
 				if (add && !ready.contains(pred) && remainTHI.get(pred.getName()) != 0) {
 					ready.add(pred);
-					if (isDebug()) {
-						System.out.println("Activation HI => Task "+pred.getName()+" has been added to the ready list");
-					}
 				}
 			}
 		}
@@ -245,9 +242,6 @@ public class MultiDAG {
 			
 				if (add && !ready.contains(succ) && remainTLO.get(succ.getName()) != 0) {
 					ready.add(succ);
-					if (isDebug()) {
-						System.out.println("Activation LO => Task "+succ.getName()+" has been added to the ready list");
-					}
 				}
 			}
 		}
@@ -289,7 +283,22 @@ public class MultiDAG {
 	}
 	
 	/**
-	 * Allocates the DAGs in the HI mode and registers LSAIs
+	 * Updates the laxity of each actor that is currently activated
+	 * @param list
+	 * @param slot
+	 * @param mode
+	 */
+	private void calcLaxity (List<Actor> list, int slot, short mode) {
+		for (Actor a : list) {
+			if (mode == Actor.HI)
+				a.setUrgencyHI(a.getLFTHI() - slot - remainTHI.get(a.getName()));
+			else
+				a.setUrgencyLO(a.getLFTLO() - slot - remainTHI.get(a.getName()));
+		}
+	}
+	
+	/**
+	 * Allocates the DAGs in the HI mode and registers virtual deadlines
 	 * @throws SchedulingException
 	 */
 	public void allocHI () throws SchedulingException {
@@ -303,7 +312,8 @@ public class MultiDAG {
 					lHI.add(a);
 			}
 		}
-		
+
+		calcLaxity(lHI, 0, Actor.HI);
 		lHI.sort(new Comparator<Actor>() {
 			@Override
 			public int compare(Actor o1, Actor o2) {
@@ -320,7 +330,15 @@ public class MultiDAG {
 		
 		for (int s = hPeriod - 1; s >= 0; s--) {
 			checkDAGActivation(s);
-			for (int c = 0; c < getNbCores(); c++) {
+			
+			if (isDebug()) {
+				System.out.print("@t = "+s+" tasks activated: ");
+				for (Actor a : lHI)
+					System.out.print("laxity "+a.getName()+"-> "+a.getUrgencyHI()+"; ");
+				System.out.println("");
+			}
+			
+			for (int c = getNbCores() - 1; c >= 0; c--) {
 				// Find a ready task in the HI list
 				if (lit.hasNext()) {
 					Actor a = lit.next();
@@ -339,18 +357,20 @@ public class MultiDAG {
 				}
 			}
 			
-			if (taskFinished) {
+			if (taskFinished)
 				checkActorActivationHI(sched, lHI, Actor.HI);
-				lHI.sort(new Comparator<Actor>() {
-					@Override
-					public int compare(Actor o1, Actor o2) {
-						if (o1.getUrgencyHI() - o2.getUrgencyHI() != 0)
-							return o2.getUrgencyHI() - o1.getUrgencyHI();
-						else
-							return o2.getId() - o1.getId();
-					}			
-				});
-			}
+			
+			calcLaxity(lHI, gethPeriod() - s, Actor.HI);
+			lHI.sort(new Comparator<Actor>() {
+				@Override
+				public int compare(Actor o1, Actor o2) {
+					if (o1.getUrgencyHI() - o2.getUrgencyHI() != 0)
+						return o2.getUrgencyHI() - o1.getUrgencyHI();
+					else
+						return o2.getId() - o1.getId();
+				}			
+			});
+			
 			taskFinished = false;
 			lit = lHI.listIterator();
 		}
@@ -539,7 +559,7 @@ public class MultiDAG {
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
 				System.out.println("DAG "+d.getId()+"; Actor "+a.getName()
-									+"; Urgency LO "+a.getUrgencyLO()+"; Urgency HI "+a.getUrgencyHI());
+									+"; LFT LO "+a.getLFTLO()+"; LFT HI "+a.getLFTHI());
 			}
 		}
 		System.out.println("");

@@ -62,6 +62,8 @@ public class Actor {
 	private int K;
 	
 	// Used for multi dag scheduling
+	private int LFTLO;
+	private int LFTHI;
 	private int urgencyLO;
 	private int urgencyHI;
 	private int earDeadLO;
@@ -405,6 +407,22 @@ public class Actor {
 
 	public void setVisitedHI(boolean visitedHI) {
 		this.visitedHI = visitedHI;
+	}
+
+	public int getLFTLO() {
+		return LFTLO;
+	}
+
+	public void setLFTLO(int lFTLO) {
+		LFTLO = lFTLO;
+	}
+
+	public int getLFTHI() {
+		return LFTHI;
+	}
+
+	public void setLFTHI(int lFTHI) {
+		LFTHI = lFTHI;
 	}
 
 
