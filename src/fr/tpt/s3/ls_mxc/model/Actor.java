@@ -62,12 +62,11 @@ public class Actor {
 	private int K;
 	
 	// Used for multi dag scheduling
+	private int graphDead;
 	private int LFTLO;
 	private int LFTHI;
 	private int urgencyLO;
 	private int urgencyHI;
-	private int earDeadLO;
-	private int earDeadHI;
 	private boolean visited;
 	private boolean visitedHI;
 	
@@ -378,22 +377,6 @@ public class Actor {
 		this.urgencyHI = urgencyHI;
 	}
 
-	public int getEarDeadLO() {
-		return earDeadLO;
-	}
-
-	public void setEarDeadLO(int earDeadLO) {
-		this.earDeadLO = earDeadLO;
-	}
-
-	public int getEarDeadHI() {
-		return earDeadHI;
-	}
-
-	public void setEarDeadHI(int earDeadHI) {
-		this.earDeadHI = earDeadHI;
-	}
-
 	public boolean isVisited() {
 		return visited;
 	}
@@ -424,6 +407,14 @@ public class Actor {
 
 	public void setLFTHI(int lFTHI) {
 		LFTHI = lFTHI;
+	}
+
+	public int getGraphDead() {
+		return graphDead;
+	}
+
+	public void setGraphDead(int graphDead) {
+		this.graphDead = graphDead;
 	}
 
 

@@ -18,7 +18,6 @@ package fr.tpt.s3.ls_mxc.alloc;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
@@ -42,13 +41,15 @@ public class MultiDAG {
 	// List of DAG nodes to order them
 	private List<Actor> lLO;
 	private List<Actor> lHI;
+	private Comparator<Actor> lHIComp;
+	private Comparator<Actor> lLOComp;
 	
 	// Scheduling tables
 	private String sLO[][];
 	private String sHI[][];
 	
 	// Virtual deadlines of HI tasks
-	private Hashtable<String, Integer> startHI;
+	private Hashtable<Integer, String> virtualDeadline;
 
 	// Remaining time for all nodes
 	private Hashtable<String, Integer> remainTLO;
@@ -64,9 +65,29 @@ public class MultiDAG {
 	public MultiDAG (Set<DAG> sd, int cores) {
 		setMcDags(sd);
 		setNbCores(cores);
-		startHI = new Hashtable<>();
+		setVirtualDeadline(new Hashtable<>());
 		remainTLO = new Hashtable<>();
 		remainTHI = new Hashtable<>();
+		
+		lHIComp = new Comparator<Actor>() {
+			@Override
+			public int compare(Actor o1, Actor o2) {
+				if (o1.getUrgencyHI() - o2.getUrgencyHI() != 0)
+					return o1.getUrgencyHI() - o2.getUrgencyHI();
+				else
+					return o2.getId() - o1.getId();
+			}			
+		};
+		
+		lLOComp = new Comparator<Actor>() {
+			@Override
+			public int compare(Actor o1, Actor o2) {
+				if (o1.getUrgencyLO() - o2.getUrgencyLO() != 0)
+					return o1.getUrgencyLO() - o2.getUrgencyLO();
+				else
+					return o1.getId() - o2.getId();
+			}		
+		};
 	}
 	
 	/**
@@ -88,7 +109,7 @@ public class MultiDAG {
 		sLO = new String[gethPeriod()][getNbCores()];
 		
 		if (debug)
-			System.out.println(">> Hyper-period of the graph: "+gethPeriod()+"; tables initialized.");
+			System.out.println("DEBUG: Hyper-period of the graph: "+gethPeriod()+"; tables initialized.");
 	}
 	
 	/**
@@ -181,7 +202,6 @@ public class MultiDAG {
 		}
 	}
 	
-	
 	/**
 	 * Calculates weights for tasks depending on the deadline
 	 */
@@ -215,9 +235,8 @@ public class MultiDAG {
 					}
 				}
 			
-				if (add && !ready.contains(pred) && remainTHI.get(pred.getName()) != 0) {
+				if (add && !ready.contains(pred) && remainTHI.get(pred.getName()) != 0)
 					ready.add(pred);
-				}
 			}
 		}
 	}
@@ -240,9 +259,8 @@ public class MultiDAG {
 						add = false;
 				}
 			
-				if (add && !ready.contains(succ) && remainTLO.get(succ.getName()) != 0) {
+				if (add && !ready.contains(succ) && remainTLO.get(succ.getName()) != 0)
 					ready.add(succ);
-				}
 			}
 		}
 	}
@@ -251,18 +269,51 @@ public class MultiDAG {
 	 * Checks for the activation of a new DAG during the hyper-period
 	 * @param slot
 	 */
-	private void checkDAGActivation (int slot) {
+	private void checkDAGActivation (int slot, List<Actor> sched, short mode) {
 		for (DAG d : getMcDags()) {
 			// If the slot is a mulitple of the deadline there is a new activation
 			if (slot % d.getDeadline() == 0) {
+				if (isDebug())
+					System.out.println("DEBUG: DAG activation at slot "+slot);
+				
+				ListIterator<Actor> it = sched.listIterator();
 				for (Actor a : d.getNodes()) {
+					while (it.hasNext()) { // Remove nodes from the sched list
+						Actor a2 = it.next();
+						if (a.getName().contentEquals(a2.getName())) {
+							if (isDebug())
+								System.out.println("DEBUG: removing node "+a2.getName()+" from sched list.");
+							it.remove();
+						}
+					}
+					// Re-init remaining execution time to be allocated
 					if (a.getCHI() != 0)
 						remainTHI.put(a.getName(), a.getCHI());
 					remainTLO.put(a.getName(), a.getCLO());
+					
+					// Promote deadline on newly activated DAGs
+					if (mode == Actor.LO)
+						promoteVirtualDeadline(slot % d.getDeadline());
 				}
+			}
+		}
+	}
+	
+	/**
+	 * Promotes virtual deadlines of HI tasks once they have been allocated
+	 * in HI criticality mode
+	 */
+	private void promoteVirtualDeadline (int slot) {
+		for (DAG d : mcDags ) {
+			for (Actor a : d.getNodes() ) {
+				int ret = Integer.MAX_VALUE;
 				
-				if (isDebug())
-					System.out.println(">> DAG activation at slot "+slot);
+				if (a.getCHI() != 0) {
+					ret =  a.getLFTLO();
+					if (slot < ret)
+						ret = slot;
+				}
+				a.setUrgencyLO(ret);
 			}
 		}
 	}
@@ -276,7 +327,6 @@ public class MultiDAG {
 			for (Actor a : d.getNodes()) {
 				if (a.getCHI() != 0)
 					remainTHI.put(a.getName(), a.getCHI());
-				
 				remainTLO.put(a.getName(), a.getCLO());
 			}
 		}
@@ -290,10 +340,16 @@ public class MultiDAG {
 	 */
 	private void calcLaxity (List<Actor> list, int slot, short mode) {
 		for (Actor a : list) {
-			if (mode == Actor.HI)
+			int relatSlot = slot % a.getGraphDead();
+					
+			if (mode == Actor.HI) { // Laxity in HI mode
 				a.setUrgencyHI(a.getLFTHI() - slot - remainTHI.get(a.getName()));
-			else
-				a.setUrgencyLO(a.getLFTLO() - slot - remainTHI.get(a.getName()));
+			} else { // Laxity in LO mode
+
+				if (a.getCHI() != 0)
+					a.setUrgencyLO(a.getLFTLO() - relatSlot - remainTHI.get(a.getName()));
+				a.setUrgencyLO(a.getLFTLO() - relatSlot - remainTHI.get(a.getName()));
+			}
 		}
 	}
 	
@@ -314,27 +370,17 @@ public class MultiDAG {
 		}
 
 		calcLaxity(lHI, 0, Actor.HI);
-		lHI.sort(new Comparator<Actor>() {
-			@Override
-			public int compare(Actor o1, Actor o2) {
-				if (o1.getUrgencyHI() - o2.getUrgencyHI() != 0)
-					return o2.getUrgencyHI() - o1.getUrgencyHI();
-				else
-					return o2.getId() - o1.getId();
-			}			
-		});
+		lHI.sort(lHIComp);
 		
 		// Allocate all slots of the HI scheduling table
 		ListIterator<Actor> lit = lHI.listIterator();
 		boolean taskFinished = false;
 		
-		for (int s = hPeriod - 1; s >= 0; s--) {
-			checkDAGActivation(s);
-			
+		for (int s = hPeriod - 1; s >= 0; s--) {			
 			if (isDebug()) {
-				System.out.print("@t = "+s+" tasks activated: ");
+				System.out.print("DEBUG: @t = "+s+" tasks activated: ");
 				for (Actor a : lHI)
-					System.out.print("laxity "+a.getName()+"-> "+a.getUrgencyHI()+"; ");
+					System.out.print("L("+a.getName()+") = "+a.getUrgencyHI()+"; ");
 				System.out.println("");
 			}
 			
@@ -347,9 +393,12 @@ public class MultiDAG {
 					sHI[s][c] = a.getName();
 					val--;
 					
-					if (val == 0) {
-						lit.remove();
-						startHI.put(a.getName(), s);
+					if (val == a.getCLO()) { // The HI part of the task has been allocated
+						if (isDebug())
+							System.out.println("DEBUG: Adding ");
+						virtualDeadline.put((Integer)s, a.getName());
+					}
+					if (val == 0) { // The task has been fully scheduled
 						sched.add(a);
 						taskFinished = true;
 					}
@@ -361,16 +410,8 @@ public class MultiDAG {
 				checkActorActivationHI(sched, lHI, Actor.HI);
 			
 			calcLaxity(lHI, gethPeriod() - s, Actor.HI);
-			lHI.sort(new Comparator<Actor>() {
-				@Override
-				public int compare(Actor o1, Actor o2) {
-					if (o1.getUrgencyHI() - o2.getUrgencyHI() != 0)
-						return o2.getUrgencyHI() - o1.getUrgencyHI();
-					else
-						return o2.getId() - o1.getId();
-				}			
-			});
-			
+			lHI.sort(lHIComp);
+			checkDAGActivation(s - 1, sched, Actor.HI); // Check if DAGs need to be activated at the next slot
 			taskFinished = false;
 			lit = lHI.listIterator();
 		}
@@ -400,43 +441,6 @@ public class MultiDAG {
 	}
 	
 	/**
-	 * Checks if HI tasks need to be activated
-	 * @param ready
-	 * @param slot
-	 */
-	private void checkLSAIHI (List<Actor> ready, int slot) {
-		Enumeration<String> enumKey = startHI.keys();
-		
-		while (enumKey.hasMoreElements()) {
-			String task = enumKey.nextElement();
-			Integer val = startHI.get(task);
-			
-			if (slot == val) { // The slot corresponds to an LSAI
-				for (DAG d : getMcDags()) {
-					Actor a = d.getNodebyName(task);
-					
-					if (a != null && remainTLO.get(a.getName()) == a.getCLO()) {
-						if (!ready.contains(a)) // Check if the task is in the ready list (it should be)
-							System.out.println("WARNING: HI task is promoted but not in the ready queue.");
-						a.setUrgencyLO(0);
-						ready.sort(new Comparator<Actor>() {
-							@Override
-							public int compare(Actor o1, Actor o2) {
-								if (o1.getUrgencyLO() - o2.getUrgencyLO() != 0)
-									return o1.getUrgencyLO() - o2.getUrgencyLO();
-								else
-									return o1.getId() - o2.getId();
-							}			
-						});
-						if (isDebug())
-							System.out.println("LSAI => LSAI of task "+a.getName()+"; task has been promoted.");
-					}
-				}
-			}
-		}
-	}
-	
-	/**
 	 * Allocates the DAGs in LO mode
 	 * @throws SchedulingException
 	 */
@@ -452,15 +456,7 @@ public class MultiDAG {
 			}
 		}
 		
-		lLO.sort(new Comparator<Actor>() {
-			@Override
-			public int compare(Actor o1, Actor o2) {
-				if (o1.getUrgencyLO() - o2.getUrgencyLO() != 0)
-					return o1.getUrgencyLO() - o2.getUrgencyLO();
-				else
-					return o1.getId() - o2.getId();
-			}			
-		});
+		lLO.sort(lLOComp);
 		
 		// Allocate all slots of the LO scheduling table
 		ListIterator<Actor> lit = lLO.listIterator();
@@ -495,40 +491,14 @@ public class MultiDAG {
 			
 			if (taskFinished) {
 				checkActorActivationLO(sched, lLO, Actor.LO);
-				lLO.sort(new Comparator<Actor>() {
-					@Override
-					public int compare(Actor o1, Actor o2) {
-						if (o1.getUrgencyLO() - o2.getUrgencyLO() != 0)
-							return o1.getUrgencyLO() - o2.getUrgencyLO();
-						else
-							return o1.getId() - o2.getId();
-					}			
-				});
+				lLO.sort(lLOComp);
 			}
 			taskFinished = false;
-			// Check for HI activation of tasks
-			checkLSAIHI(lLO, s+1);
 			lit = lLO.listIterator();
 		}
 	}
 	
-	/**
-	 * Promotes virtual deadlines of HI tasks once they have been allocated
-	 * in HI criticality mode
-	 */
-	private void promoteVirtualDeadline () {
-		for (DAG d : mcDags ) {
-			for (Actor a : d.getNodes() ) {
-				if (a.getCHI() != 0) {
-					int ret =  a.getUrgencyLO();
-					int test = startHI.get(a.getName());
-					if (test < ret)
-						ret = test;
-				}
-			}
-		}
-	}
-	
+
 	/**
 	 * Tries to allocate all DAGs in the number of cores given
 	 * @throws SchedulingException
@@ -543,7 +513,6 @@ public class MultiDAG {
 		allocHI();
 		if (isDebug())
 			printSHI();
-		promoteVirtualDeadline();
 		allocLO();
 		if (isDebug())
 			printSLO();
@@ -558,7 +527,7 @@ public class MultiDAG {
 	public void printUrgencies () {
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
-				System.out.println("DAG "+d.getId()+"; Actor "+a.getName()
+				System.out.println("DEBUG: DAG "+d.getId()+"; Actor "+a.getName()
 									+"; LFT LO "+a.getLFTLO()+"; LFT HI "+a.getLFTHI());
 			}
 		}
@@ -577,10 +546,6 @@ public class MultiDAG {
 		}
 		
 		System.out.print("\n");
-		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes_HI())
-				System.out.println("Task "+a.getName()+" LSAI = "+getStartHI().get(a.getName()));
-		}
 	}
 	
 	/**
@@ -648,14 +613,6 @@ public class MultiDAG {
 		this.mcDags = mcDags;
 	}
 
-	public Hashtable<String, Integer> getStartHI() {
-		return startHI;
-	}
-
-	public void setStartHI(Hashtable<String, Integer> startHI) {
-		this.startHI = startHI;
-	}
-
 	public boolean isDebug() {
 		return debug;
 	}
@@ -670,5 +627,29 @@ public class MultiDAG {
 
 	public void sethPeriod(int hPeriod) {
 		this.hPeriod = hPeriod;
+	}
+
+	public Comparator<Actor> getlLOComp() {
+		return lLOComp;
+	}
+
+	public void setlLOComp(Comparator<Actor> lLOComp) {
+		this.lLOComp = lLOComp;
+	}
+
+	public Comparator<Actor> getlHIComp() {
+		return lHIComp;
+	}
+
+	public void setlHIComp(Comparator<Actor> lHIComp) {
+		this.lHIComp = lHIComp;
+	}
+
+	public Hashtable<Integer, String> getVirtualDeadline() {
+		return virtualDeadline;
+	}
+
+	public void setVirtualDeadline(Hashtable<Integer, String> virtualDeadline) {
+		this.virtualDeadline = virtualDeadline;
 	}
 }

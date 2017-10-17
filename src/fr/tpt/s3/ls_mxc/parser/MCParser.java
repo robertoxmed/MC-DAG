@@ -113,6 +113,7 @@ public class MCParser {
 											Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
 											Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
 						a.setfProb(Double.parseDouble(e.getElementsByTagName("fprob").item(0).getTextContent()));
+						a.setGraphDead(dag.getDeadline());
 						dag.getNodes().add(a);
 					}
 				}
