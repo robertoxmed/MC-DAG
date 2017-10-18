@@ -124,7 +124,7 @@ public class Main {
 			try {
 				msched.allocAll(debug);
 			} catch (SchedulingException e) {
-				System.out.println("Unable to schedule the example");
+				System.out.println("WARNING: Unable to schedule the example!");
 				e.getMessage();
 				System.exit(30);
 			}
