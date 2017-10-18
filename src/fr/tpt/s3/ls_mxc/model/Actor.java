@@ -113,6 +113,12 @@ public class Actor {
 	
 	public void checkifSinkinHI() {
 		Iterator<Edge> it_e = this.getSndEdges().iterator();
+		
+		if(this.getCHI() == 0) {
+			this.setSinkinHI(false);
+			return;
+		}
+		
 		this.setSinkinHI(true);
 		
 		while (it_e.hasNext()){
@@ -126,7 +132,7 @@ public class Actor {
 	}
 	
 	/**
-	 * 
+	 * Calculates the critical Path from a given node
 	 * @param n
 	 * @param mode
 	 * @return

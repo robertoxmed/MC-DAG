@@ -268,27 +268,32 @@ public class MultiDAG {
 	 * Checks for the activation of a new DAG during the hyper-period
 	 * @param slot
 	 */
-	private void checkDAGActivation (int slot, List<Actor> sched, short mode) {
+	private void checkDAGActivation (int slot, List<Actor> sched, List<Actor> lMode, short mode) {
 		for (DAG d : getMcDags()) {
 			// If the slot is a mulitple of the deadline there is a new activation
 			if (slot % d.getDeadline() == 0) {
-				if (isDebug())
-					System.out.println("DEBUG: checkDAGActivation(): DAG activation at slot "+slot);
-				
 				ListIterator<Actor> it = sched.listIterator();
+				
+				if (isDebug()) System.out.println("DEBUG: checkDAGActivation(): DAG (id. "+d.getId()+") activation at slot "+slot);
 				for (Actor a : d.getNodes()) {
 					while (it.hasNext()) { // Remove nodes from the sched list
 						Actor a2 = it.next();
-						if (a.getName().contentEquals(a2.getName())) {
-							if (isDebug())
-								System.out.println("DEBUG: checkDAGActivation(): removing node "+a2.getName()+" from sched list.");
+						if (a.getName().contentEquals(a2.getName()))
 							it.remove();
-						}
 					}
+					it = sched.listIterator();
 					// Re-init remaining execution time to be allocated
 					if (a.getCHI() != 0)
 						remainTHI.put(a.getName(), a.getCHI());
 					remainTLO.put(a.getName(), a.getCLO());
+					
+					if (mode == Actor.HI) {
+						if (a.isSinkinHI())
+							lMode.add(a);
+					} else {
+						if (a.isSource())
+							lMode.add(a);
+					}
 					
 					// Promote deadline on newly activated DAGs
 					if (mode == Actor.LO)
@@ -341,13 +346,10 @@ public class MultiDAG {
 		for (Actor a : list) {
 			int relatSlot = slot % a.getGraphDead();
 					
-			if (mode == Actor.HI) { // Laxity in HI mode
+			if (mode == Actor.HI) // Laxity in HI mode
 				a.setUrgencyHI(a.getLFTHI() - relatSlot - remainTHI.get(a.getName()));
-			} else { // Laxity in LO mode
-				if (a.getCHI() != 0)
-					a.setUrgencyLO(a.getLFTLO() - relatSlot - remainTLO.get(a.getName()));
+			else // Laxity in LO mode
 				a.setUrgencyLO(a.getLFTLO() - relatSlot - remainTLO.get(a.getName()));
-			}
 		}
 	}
 	
@@ -392,13 +394,13 @@ public class MultiDAG {
 					val--;
 					
 					if (val == a.getCLO()) { // The HI part of the task has been allocated
-						if (isDebug())
-							System.out.println("DEBUG: allocHI(): Adding virtual deadline @t = "+s+" for task "+a.getName());
+						if (isDebug()) System.out.println("DEBUG: allocHI(): Adding virtual deadline @t = "+s+" for task "+a.getName());
 						virtualDeadline.put((Integer)s, a.getName());
 					}
 					if (val == 0) { // The task has been fully scheduled
 						sched.add(a);
 						taskFinished = true;
+						lit.remove();
 					}
 					remainTHI.put(a.getName(), val);
 				}
@@ -407,7 +409,7 @@ public class MultiDAG {
 			if (taskFinished)
 				checkActorActivationHI(sched, lHI, Actor.HI);
 
-			checkDAGActivation(s, sched, Actor.HI); // Check if DAGs need to be activated at the next slot
+			checkDAGActivation(s, sched, lHI, Actor.HI); // Check if DAGs need to be activated at the next slot
 			calcLaxity(lHI, gethPeriod() - s, Actor.HI);
 			lHI.sort(lHIComp);
 			taskFinished = false;
@@ -506,7 +508,7 @@ public class MultiDAG {
 		initTables();
 		calcWeights();
 		if (isDebug())
-			printUrgencies();
+			printLFT();
 		initRemainT();
 		allocHI();
 		if (isDebug())
@@ -522,10 +524,10 @@ public class MultiDAG {
 	/**
 	 * Prints urgency values for the multi DAG scheduling
 	 */
-	public void printUrgencies () {
+	public void printLFT () {
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
-				System.out.println("DEBUG: DAG "+d.getId()+"; Actor "+a.getName()
+				System.out.println("DEBUG: printLFT(): DAG "+d.getId()+"; Actor "+a.getName()
 									+"; LFT LO "+a.getLFTLO()+"; LFT HI "+a.getLFTHI());
 			}
 		}
