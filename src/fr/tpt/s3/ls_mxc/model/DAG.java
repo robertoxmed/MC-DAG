@@ -36,6 +36,7 @@ public class DAG {
 	private Set<Actor> Outs;
 	private Set<Actor> sinks;
 	private Set<Actor> sinksHI;
+	private Set<Actor> sourcesHI;
 	private int critPath;
 	private int deadline;
 	
@@ -45,6 +46,7 @@ public class DAG {
 		setLoOuts(new HashSet<Actor>());
 		sinks = new HashSet<Actor>();
 		sinksHI = new HashSet<Actor>();
+		sourcesHI = new HashSet<Actor>();
 	}
 	
 	/**
@@ -58,26 +60,33 @@ public class DAG {
 		
 		while (in.hasNext()){
 			Actor n = in.next();
+			
 			n.checkifSink();
-			if (n.isSink())
-				getSinks().add(n);
 			n.checkifSinkinHI();
 			n.checkifSource();
+			n.checkifSourceHI();
+			
+			if (n.isSink())
+				getSinks().add(n);
+			if (n.isSinkinHI())
+				getSinksHI().add(n);
+			if (n.isSourceHI())
+				getSourcesHI().add(n);
 			
 			// Check if it's a HI sink
-			boolean sinkHI = true;
-			
-			for (Edge e : n.getSndEdges()) {
-				if (e.getDest().getCHI() != 0) {
-					sinkHI = false;
-					break;
-				}
-			}
-			
-			if (sinkHI && n.getCHI() != 0) {
-				getSinksHI().add(n);
-				n.setSinkinHI(true);
-			}
+//			boolean sinkHI = true;
+//			
+//			for (Edge e : n.getSndEdges()) {
+//				if (e.getDest().getCHI() != 0) {
+//					sinkHI = false;
+//					break;
+//				}
+//			}
+//			
+//			if (sinkHI && n.getCHI() != 0) {
+//				getSinksHI().add(n);
+//				n.setSinkinHI(true);
+//			}
 		}
 	}
 	
@@ -244,5 +253,13 @@ public class DAG {
 
 	public void setSinksHI(Set<Actor> sinksHI) {
 		this.sinksHI = sinksHI;
+	}
+
+	public Set<Actor> getSourcesHI() {
+		return sourcesHI;
+	}
+
+	public void setSourcesHI(Set<Actor> sourcesHI) {
+		this.sourcesHI = sourcesHI;
 	}
 }

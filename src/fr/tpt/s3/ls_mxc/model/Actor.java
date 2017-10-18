@@ -36,6 +36,7 @@ public class Actor {
 	private int cHI;
 	
 	private boolean source;
+	private boolean sourceHI;
 	private boolean sink;
 	private boolean sinkinHI;
 	
@@ -103,6 +104,11 @@ public class Actor {
 	public void checkifSink() {
 		if (sndEdges.size() == 0)
 			this.setSink(true);
+	}
+	
+	public void checkifSourceHI() {
+		if (rcvEdges.size() == 0 && this.getCHI() != 0)
+			this.setSourceHI(true);
 	}
 	
 	public void checkifSinkinHI() {
@@ -417,6 +423,11 @@ public class Actor {
 		this.graphDead = graphDead;
 	}
 
+	public boolean isSourceHI() {
+		return sourceHI;
+	}
 
-
+	public void setSourceHI(boolean sourceHI) {
+		this.sourceHI = sourceHI;
+	}
 }

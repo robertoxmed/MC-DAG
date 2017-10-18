@@ -119,26 +119,25 @@ public class MultiDAG {
 	 * @param mode
 	 * @return
 	 */
-	private int calcActorLFTHI (Actor a, int deadline) {
+	private void calcActorLFTHI (Actor a, int deadline) {
 		int ret = Integer.MAX_VALUE;
 		
-		if (a.isSinkinHI()) {
+		if (a.isSource()) {
 			ret = deadline;			
 		} else {
 			int test = Integer.MAX_VALUE;
 
-			for (Edge e : a.getSndEdges()) {
-				test = e.getDest().getLFTHI() - e.getDest().getCHI();
+			for (Edge e : a.getRcvEdges()) {
+				test = e.getSrc().getLFTHI() - e.getSrc().getCHI();
 				
 				if (test < ret)
 					ret = test;
 			}
 		}
 		a.setLFTHI(ret);
-		return ret;
 	}
 	
-	private int calcActorLFTLO (Actor a, int deadline) {
+	private void calcActorLFTLO (Actor a, int deadline) {
 		int ret = Integer.MAX_VALUE;
 		
 		if (a.isSink()) {			
@@ -152,9 +151,7 @@ public class MultiDAG {
 					ret = test;
 			}
 		}
-			
 		a.setLFTLO(ret);
-		return ret;
 	}
 	
 	/**
@@ -170,7 +167,7 @@ public class MultiDAG {
 			a.setVisited(true);
 		}
 		
-		for (Actor a : d.getSinksHI()) {
+		for (Actor a : d.getSourcesHI()) {
 			toVisitHI.add(a);
 			a.setVisitedHI(true);
 		}
@@ -192,10 +189,10 @@ public class MultiDAG {
 			Actor a = toVisitHI.get(0);
 			calcActorLFTHI(a, d.getDeadline());
 			
-			for (Edge e : a.getRcvEdges()) {
-				if (e.getSrc().getCHI() != 0 && !e.getSrc().isVisitedHI()) {
-					toVisitHI.add(e.getSrc());
-					e.getSrc().setVisitedHI(true);
+			for (Edge e : a.getSndEdges()) {
+				if (e.getDest().getCHI() != 0 && !e.getDest().isVisitedHI()) {
+					toVisitHI.add(e.getDest());
+					e.getDest().setVisitedHI(true);
 				}
 			}
 			toVisitHI.remove(0);
@@ -235,8 +232,10 @@ public class MultiDAG {
 					}
 				}
 			
-				if (add && !ready.contains(pred) && remainTHI.get(pred.getName()) != 0)
+				if (add && !ready.contains(pred) && remainTHI.get(pred.getName()) != 0) {
 					ready.add(pred);
+				}
+					
 			}
 		}
 	}
@@ -274,7 +273,7 @@ public class MultiDAG {
 			// If the slot is a mulitple of the deadline there is a new activation
 			if (slot % d.getDeadline() == 0) {
 				if (isDebug())
-					System.out.println("DEBUG: DAG activation at slot "+slot);
+					System.out.println("DEBUG: checkDAGActivation(): DAG activation at slot "+slot);
 				
 				ListIterator<Actor> it = sched.listIterator();
 				for (Actor a : d.getNodes()) {
@@ -282,7 +281,7 @@ public class MultiDAG {
 						Actor a2 = it.next();
 						if (a.getName().contentEquals(a2.getName())) {
 							if (isDebug())
-								System.out.println("DEBUG: removing node "+a2.getName()+" from sched list.");
+								System.out.println("DEBUG: checkDAGActivation(): removing node "+a2.getName()+" from sched list.");
 							it.remove();
 						}
 					}
@@ -343,12 +342,11 @@ public class MultiDAG {
 			int relatSlot = slot % a.getGraphDead();
 					
 			if (mode == Actor.HI) { // Laxity in HI mode
-				a.setUrgencyHI(a.getLFTHI() - slot - remainTHI.get(a.getName()));
+				a.setUrgencyHI(a.getLFTHI() - relatSlot - remainTHI.get(a.getName()));
 			} else { // Laxity in LO mode
-
 				if (a.getCHI() != 0)
-					a.setUrgencyLO(a.getLFTLO() - relatSlot - remainTHI.get(a.getName()));
-				a.setUrgencyLO(a.getLFTLO() - relatSlot - remainTHI.get(a.getName()));
+					a.setUrgencyLO(a.getLFTLO() - relatSlot - remainTLO.get(a.getName()));
+				a.setUrgencyLO(a.getLFTLO() - relatSlot - remainTLO.get(a.getName()));
 			}
 		}
 	}
@@ -378,7 +376,7 @@ public class MultiDAG {
 		
 		for (int s = hPeriod - 1; s >= 0; s--) {			
 			if (isDebug()) {
-				System.out.print("DEBUG: @t = "+s+" tasks activated: ");
+				System.out.print("DEBUG: allocHI(): @t = "+s+", tasks activated: ");
 				for (Actor a : lHI)
 					System.out.print("L("+a.getName()+") = "+a.getUrgencyHI()+"; ");
 				System.out.println("");
@@ -395,7 +393,7 @@ public class MultiDAG {
 					
 					if (val == a.getCLO()) { // The HI part of the task has been allocated
 						if (isDebug())
-							System.out.println("DEBUG: Adding ");
+							System.out.println("DEBUG: allocHI(): Adding virtual deadline @t = "+s+" for task "+a.getName());
 						virtualDeadline.put((Integer)s, a.getName());
 					}
 					if (val == 0) { // The task has been fully scheduled
@@ -408,10 +406,10 @@ public class MultiDAG {
 			
 			if (taskFinished)
 				checkActorActivationHI(sched, lHI, Actor.HI);
-			
+
+			checkDAGActivation(s, sched, Actor.HI); // Check if DAGs need to be activated at the next slot
 			calcLaxity(lHI, gethPeriod() - s, Actor.HI);
 			lHI.sort(lHIComp);
-			checkDAGActivation(s - 1, sched, Actor.HI); // Check if DAGs need to be activated at the next slot
 			taskFinished = false;
 			lit = lHI.listIterator();
 		}
