@@ -86,7 +86,6 @@ public class Main {
 		boolean debug = cmd.hasOption("debug");
 		
 		/* =============== Read from file and try to solve ================ */
-		
 		Set<DAG> dags = new HashSet<DAG>();
 		
 		MCParser mcp = new MCParser(inputFilePath, outSchedFilePath, outPrismFilePath, dags);
@@ -121,6 +120,8 @@ public class Main {
 			}
 		} else if (dags.size() > 1) {
 			msched = new MultiDAG(dags, mcp.getNbCores());
+			
+			System.out.println("MultiDAG: "+dags.size()+" DAGs are going to be scheduled in "+mcp.getNbCores()+" cores.");
 			try {
 				msched.allocAll(debug);
 			} catch (SchedulingException e) {

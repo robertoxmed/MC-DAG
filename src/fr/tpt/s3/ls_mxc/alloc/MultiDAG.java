@@ -49,7 +49,7 @@ public class MultiDAG {
 	private String sHI[][];
 	
 	// Virtual deadlines of HI tasks
-	private Hashtable<Integer, String> virtualDeadline;
+	private List<VirtualDeadlines> virtualDeadline;
 
 	// Remaining time for all nodes
 	private Hashtable<String, Integer> remainTLO;
@@ -65,7 +65,6 @@ public class MultiDAG {
 	public MultiDAG (Set<DAG> sd, int cores) {
 		setMcDags(sd);
 		setNbCores(cores);
-		setVirtualDeadline(new Hashtable<>());
 		remainTLO = new Hashtable<>();
 		remainTHI = new Hashtable<>();
 		
@@ -88,6 +87,7 @@ public class MultiDAG {
 					return o1.getId() - o2.getId();
 			}		
 		};
+		virtualDeadline = new LinkedList<>();
 	}
 	
 	/**
@@ -150,6 +150,8 @@ public class MultiDAG {
 			}
 		}
 		a.setLFTLO(ret);
+		if (a.getCHI() != 0)
+			a.setPromotedLFTLO(ret);
 		a.setUrgencyLO(ret);
 	}
 	
@@ -286,10 +288,14 @@ public class MultiDAG {
 							lMode.add(a);
 					}
 					
-					// Promote deadline on newly activated DAGs
 					if (mode == Actor.LO)
-						promoteVirtualDeadline(slot % d.getDeadline());
+						a.setPromotedLFTLO(a.getLFTLO());
+
 				}
+				// Promote deadline on newly activated DAGs
+				if (mode == Actor.LO)
+					promoteVirtualDeadline(d, slot);
+			
 			}
 		}
 	}
@@ -317,10 +323,14 @@ public class MultiDAG {
 		for (Actor a : list) {
 			int relatSlot = slot % a.getGraphDead();
 					
-			if (mode == Actor.HI) // Laxity in HI mode
+			if (mode == Actor.HI) { // Laxity in HI mode
 				a.setUrgencyHI(a.getLFTHI() - relatSlot - remainTHI.get(a.getName()));
-			else // Laxity in LO mode
-				a.setUrgencyLO(a.getLFTLO() - relatSlot - remainTLO.get(a.getName()));
+			} else  {// Laxity in LO mode
+				if (a.getCHI() != 0)
+					a.setUrgencyLO(a.getPromotedLFTLO() - relatSlot - remainTLO.get(a.getName()));
+				else 
+					a.setUrgencyLO(a.getLFTLO() - relatSlot - remainTLO.get(a.getName()));
+			}
 		}
 	}
 	
@@ -399,7 +409,8 @@ public class MultiDAG {
 					// The HI part of the task has been allocated
 					if (val == a.getCLO()) { 
 						if (isDebug()) System.out.println("DEBUG: allocHI(): Adding virtual deadline @t = "+s+" for task "+a.getName());
-						virtualDeadline.put((Integer)s, a.getName());
+						VirtualDeadlines vd = new VirtualDeadlines(a, s);
+						virtualDeadline.add(vd);
 					}
 					// The task has been fully scheduled
 					if (val == 0) {
@@ -428,17 +439,21 @@ public class MultiDAG {
 	 * Promotes virtual deadlines of HI tasks once they have been allocated
 	 * in HI criticality mode
 	 */
-	private void promoteVirtualDeadline (int slot) {
-		for (DAG d : mcDags ) {
-			for (Actor a : d.getNodes() ) {
-				int ret = Integer.MAX_VALUE;
-				
-				if (a.getCHI() != 0) {
-					ret =  a.getLFTLO();
-					if (slot < ret)
-						ret = slot;
+	private void promoteVirtualDeadline (DAG d, int slot) {
+		for (Actor a : d.getNodes() ) {
+			// Promotion of LFT only occurs when a task is a HI task.
+			if (a.getCHI() != 0) {
+				// Check for
+				for (int i = slot; i < slot + a.getLFTLO(); i++) {
+					for (VirtualDeadlines vd : virtualDeadline) {
+						if (vd.getSlot() == i && vd.getA().getName().contentEquals(a.getName())) {
+							if (i % d.getDeadline() < a.getLFTLO()) {
+								if (isDebug()) System.out.println("DEBUG: promoteVirtualDeadline(): Promoting deadline of task "+a.getName()+" to slot "+i%d.getDeadline());
+								a.setPromotedLFTLO(i % d.getDeadline());
+							}
+						}
+					}
 				}
-				a.setUrgencyLO(ret);
 			}
 		}
 	}
@@ -460,7 +475,8 @@ public class MultiDAG {
 		}
 		
 		// Upgrade LFTs for HI tasks
-		
+		for (DAG d : getMcDags())
+			promoteVirtualDeadline(d, 0);
 		
 		calcLaxity(lLO, 0, Actor.LO);
 		lLO.sort(lLOComp);
@@ -660,11 +676,4 @@ public class MultiDAG {
 		this.lHIComp = lHIComp;
 	}
 
-	public Hashtable<Integer, String> getVirtualDeadline() {
-		return virtualDeadline;
-	}
-
-	public void setVirtualDeadline(Hashtable<Integer, String> virtualDeadline) {
-		this.virtualDeadline = virtualDeadline;
-	}
 }

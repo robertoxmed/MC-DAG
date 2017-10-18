@@ -64,6 +64,7 @@ public class Actor {
 	
 	// Used for multi dag scheduling
 	private int graphDead;
+	private int promotedLFTLO;
 	private int LFTLO;
 	private int LFTHI;
 	private int urgencyLO;
@@ -435,5 +436,13 @@ public class Actor {
 
 	public void setSourceHI(boolean sourceHI) {
 		this.sourceHI = sourceHI;
+	}
+
+	public int getPromotedLFTLO() {
+		return promotedLFTLO;
+	}
+
+	public void setPromotedLFTLO(int promotedLFTLO) {
+		this.promotedLFTLO = promotedLFTLO;
 	}
 }
