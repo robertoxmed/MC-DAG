@@ -55,7 +55,8 @@ public class LS implements Runnable{
 	// Starting times of HI tasks in HI mode
 	private int Start_HI[];
 	
-	//private List<Node> topo_Nodes;
+	private boolean debug;
+
 
 	/**
 	 * Constructor of LS
@@ -894,6 +895,14 @@ public class LS implements Runnable{
 	public void run() {
 		try {
 			AllocAll();
+			if (isDebug()) {
+				System.out.println("[DEBUG] ========= Scheduling tables ===============");
+				this.printS_HI();
+				this.printS_LO();
+				System.out.println("[DEBUG] ========== Weights ===============");
+				this.printW(Actor.LO);
+				this.printW(Actor.HI);
+			}
 		} catch (SchedulingException e) {
 			System.out.println("[WARNING] UniDAG: Unable to schedule the example!");
 			System.out.println(e.getMessage());
@@ -969,7 +978,12 @@ public class LS implements Runnable{
 	public void setS_LO(String s_LO[][]) {
 		S_LO = s_LO;
 	}
+	
+	public boolean isDebug() {
+		return debug;
+	}
 
-
-
+	public void setDebug(boolean debug) {
+		this.debug = debug;
+	}
 }

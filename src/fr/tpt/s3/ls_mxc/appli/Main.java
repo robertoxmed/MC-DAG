@@ -31,7 +31,6 @@ import org.apache.commons.cli.ParseException;
 import fr.tpt.s3.ls_mxc.alloc.LS;
 import fr.tpt.s3.ls_mxc.alloc.MultiDAG;
 import fr.tpt.s3.ls_mxc.avail.Automata;
-import fr.tpt.s3.ls_mxc.model.Actor;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.parser.MCParser;
 
@@ -42,24 +41,24 @@ import fr.tpt.s3.ls_mxc.parser.MCParser;
  */
 public class Main {
 
-	public static void main (String[] args) throws IOException {
+	public static void main (String[] args) throws IOException, InterruptedException {
 		
 		/* ============================ Command line ================= */
 		Options options = new Options();
 		
 		Option input = new Option("i", "input", true, "MC-DAG XML Model");
-		input.setRequired(false);
+		input.setRequired(true);
 		input.setArgs(Option.UNLIMITED_VALUES); // Sets maximum number of threads to be launched
 		options.addOption(input);
 		
 		Option outSched = new Option("os", "out-scheduler", true, "File path to write the scheduling tables");
 		outSched.setRequired(false);
-		outSched.setArgs(10);
+		outSched.setArgs(Option.UNLIMITED_VALUES);
 		options.addOption(outSched);
 		
 		Option outPrism = new Option("op", "out-prism", true, "File path to write the PRISM model");
 		outPrism.setRequired(false);
-		outPrism.setArgs(10);
+		outPrism.setArgs(Option.UNLIMITED_VALUES);
 		options.addOption(outPrism);
 		
 		Option debugOpt = new Option("d", "debug", false, "Enabling debug");
@@ -88,12 +87,12 @@ public class Main {
 		/* =============== Read from files and try to solve ================ */
 		for (int i = 0; i < inputFilePath.length; i++) {
 			Set<DAG> dags = new HashSet<DAG>();
-			MCParser mcp = null; 
+			MCParser mcp = new MCParser(inputFilePath[i], null, null, dags);
 			
-			if (outSchedFilePath != null && outPrismFilePath != null)
-				mcp = new MCParser(inputFilePath[i], outSchedFilePath[i], outPrismFilePath[i], dags);
-			else
-				mcp = new MCParser(inputFilePath[i], null, null, dags);
+			if (outSchedFilePath != null)
+				mcp.setOutSchedFile(outSchedFilePath[i]);
+			if (outPrismFilePath != null )
+				mcp.setOutputFile(outPrismFilePath[i]);
 			
 			mcp.readXML();
 			LS ls = null;
@@ -106,20 +105,16 @@ public class Main {
 				ls.setMxcDag(dag);
 				ls.setDeadline(dag.getDeadline());
 				ls.setNbCores(mcp.getNbCores());
+				ls.setDebug(debug);
 				Thread t = new Thread (ls);
 				
-				t.run();
-				if (debug) {
-					System.out.println("========== Scheduling tables ===============");
-					ls.printS_HI();
-					ls.printS_LO();
-					System.out.println("========== Weights ===============");
-					ls.printW(Actor.LO);
-					ls.printW(Actor.HI);
-				}
+				t.start();
 				
-				if (outPrismFilePath != null)
+				if (outPrismFilePath != null) {
+					t.join();
+					if (debug) System.out.println("[DEBUG] UniDAG: Creating the automata object.");
 					auto = new Automata(ls, dag);
+				}
 
 			} else if (dags.size() > 1) {
 				msched = new MultiDAG(dags, mcp.getNbCores(), debug);
