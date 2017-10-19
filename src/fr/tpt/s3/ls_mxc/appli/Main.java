@@ -30,7 +30,6 @@ import org.apache.commons.cli.ParseException;
 
 import fr.tpt.s3.ls_mxc.alloc.LS;
 import fr.tpt.s3.ls_mxc.alloc.MultiDAG;
-import fr.tpt.s3.ls_mxc.alloc.SchedulingException;
 import fr.tpt.s3.ls_mxc.avail.Automata;
 import fr.tpt.s3.ls_mxc.model.Actor;
 import fr.tpt.s3.ls_mxc.model.DAG;
@@ -42,24 +41,25 @@ import fr.tpt.s3.ls_mxc.parser.MCParser;
  *
  */
 public class Main {
-	
 
 	public static void main (String[] args) throws IOException {
 		
 		/* ============================ Command line ================= */
-		
 		Options options = new Options();
 		
 		Option input = new Option("i", "input", true, "MC-DAG XML Model");
-		input.setRequired(true);
+		input.setRequired(false);
+		input.setArgs(Option.UNLIMITED_VALUES); // Sets maximum number of threads to be launched
 		options.addOption(input);
 		
 		Option outSched = new Option("os", "out-scheduler", true, "File path to write the scheduling tables");
 		outSched.setRequired(false);
+		outSched.setArgs(10);
 		options.addOption(outSched);
 		
 		Option outPrism = new Option("op", "out-prism", true, "File path to write the PRISM model");
 		outPrism.setRequired(false);
+		outPrism.setArgs(10);
 		options.addOption(outPrism);
 		
 		Option debugOpt = new Option("d", "debug", false, "Enabling debug");
@@ -80,28 +80,35 @@ public class Main {
 			return;
 		}
 		
-		String inputFilePath = cmd.getOptionValue("input");
-		String outSchedFilePath = cmd.getOptionValue("out-scheduler");
-		String outPrismFilePath = cmd.getOptionValue("out-prism");
+		String inputFilePath[] = cmd.getOptionValues("input");
+		String outSchedFilePath[] = cmd.getOptionValues("out-scheduler");
+		String outPrismFilePath[] = cmd.getOptionValues("out-prism");
 		boolean debug = cmd.hasOption("debug");
 		
-		/* =============== Read from file and try to solve ================ */
-		Set<DAG> dags = new HashSet<DAG>();
-		
-		MCParser mcp = new MCParser(inputFilePath, outSchedFilePath, outPrismFilePath, dags);
-		mcp.readXML();
-		LS ls = null;
-		MultiDAG msched = null;
-		Automata auto = null;
-		
-		if (dags.size() == 1) {
-			DAG dag = dags.iterator().next();
-			ls = new LS();
-			ls.setMxcDag(dag);
-			ls.setDeadline(dag.getDeadline());
-			ls.setNbCores(mcp.getNbCores());
-			try {
-				ls.AllocAll();
+		/* =============== Read from files and try to solve ================ */
+		for (int i = 0; i < inputFilePath.length; i++) {
+			Set<DAG> dags = new HashSet<DAG>();
+			MCParser mcp = null; 
+			
+			if (outSchedFilePath != null && outPrismFilePath != null)
+				mcp = new MCParser(inputFilePath[i], outSchedFilePath[i], outPrismFilePath[i], dags);
+			else
+				mcp = new MCParser(inputFilePath[i], null, null, dags);
+			
+			mcp.readXML();
+			LS ls = null;
+			MultiDAG msched = null;
+			Automata auto = null;
+			
+			if (dags.size() == 1) {
+				DAG dag = dags.iterator().next();
+				ls = new LS();
+				ls.setMxcDag(dag);
+				ls.setDeadline(dag.getDeadline());
+				ls.setNbCores(mcp.getNbCores());
+				Thread t = new Thread (ls);
+				
+				t.run();
 				if (debug) {
 					System.out.println("========== Scheduling tables ===============");
 					ls.printS_HI();
@@ -113,32 +120,25 @@ public class Main {
 				
 				if (outPrismFilePath != null)
 					auto = new Automata(ls, dag);
-			} catch (SchedulingException e) {
-				System.out.println("Unable to schedule the example");
-				e.getMessage();
-				System.exit(20);
+
+			} else if (dags.size() > 1) {
+				msched = new MultiDAG(dags, mcp.getNbCores(), debug);
+				
+				System.out.println("MultiDAG: "+dags.size()+" DAGs are going to be scheduled in "+mcp.getNbCores()+" cores.");
+				
+				Thread t = new Thread(msched);
+				t.start();
 			}
-		} else if (dags.size() > 1) {
-			msched = new MultiDAG(dags, mcp.getNbCores(), debug);
 			
-			System.out.println("MultiDAG: "+dags.size()+" DAGs are going to be scheduled in "+mcp.getNbCores()+" cores.");
-			try {
-				msched.allocAll();
-			} catch (SchedulingException e) {
-				System.out.println("WARNING: Unable to schedule the example!");
-				System.out.println(e.getMessage());
-				System.exit(30);
+			/* =============== Write results ================ */
+			if (outSchedFilePath != null)
+				mcp.writeSched();
+			if (outPrismFilePath != null) {
+				auto.createAutomata();
+				mcp.setAuto(auto);
+				mcp.writePRISM();
+				System.out.println("PRISM file written.");
 			}
-		}
-		
-		/* =============== Write results ================ */
-		if (outSchedFilePath != null)
-			mcp.writeSched();
-		if (outPrismFilePath != null) {
-			auto.createAutomata();
-			mcp.setAuto(auto);
-			mcp.writePRISM();
-			System.out.println("PRISM file written.");
 		}
 	}
 }

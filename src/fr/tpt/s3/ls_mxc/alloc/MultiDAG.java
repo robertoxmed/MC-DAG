@@ -104,7 +104,7 @@ public class MultiDAG implements Runnable{
 		sHI = new String[gethPeriod()][getNbCores()];
 		sLO = new String[gethPeriod()][getNbCores()];
 		
-		if (debug) System.out.println("DEBUG: initTables(): Hyper-period of the graph: "+gethPeriod()+"; tables initialized.");
+		if (debug) System.out.println("[DEBUG] initTables(): Hyper-period of the graph: "+gethPeriod()+"; tables initialized.");
 	}
 	
 	/**
@@ -262,7 +262,7 @@ public class MultiDAG implements Runnable{
 			if (slot % d.getDeadline() == 0) {
 				ListIterator<Actor> it = sched.listIterator();
 				
-				if (isDebug()) System.out.println("DEBUG: checkDAGActivation(): DAG (id. "+d.getId()+") activation at slot "+slot);
+				if (isDebug()) System.out.println("[DEBUG] checkDAGActivation(): DAG (id. "+d.getId()+") activation at slot "+slot);
 				for (Actor a : d.getNodes()) {
 					while (it.hasNext()) { // Remove nodes from the sched list
 						Actor a2 = it.next();
@@ -312,8 +312,10 @@ public class MultiDAG implements Runnable{
 		
 		for (int i = start; i <= t; i++) {
 			for (int c = 0; c < nbCores; c++) {
-				if (sHI[i][c].contentEquals(a.getName()))
-					ret++;
+				if (sHI[i][c] != null) {
+					if (sHI[i][c].contentEquals(a.getName()))
+						ret++;
+				}
 			}
 		}
 		return ret; 
@@ -349,7 +351,7 @@ public class MultiDAG implements Runnable{
 				if (a.getCHI() != 0) {
 					if ((a.getCLO() - remainTLO.get(a.getName())) - scheduledUntilT(a, slot) < 0) {
 						a.setPromoted(true);
-						if (isDebug()) System.out.println("DEBUG: calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
+						if (isDebug()) System.out.println("[DEBUG] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
 						a.setUrgencyLO(0);
 					} else {
 						a.setUrgencyLO(a.getLFTLO() - relatSlot - remainTLO.get(a.getName()));
@@ -412,7 +414,7 @@ public class MultiDAG implements Runnable{
 		
 		for (int s = hPeriod - 1; s >= 0; s--) {			
 			if (isDebug()) {
-				System.out.print("DEBUG: allocHI(): @t = "+s+", tasks activated: ");
+				System.out.print("[DEBUG] allocHI(): @t = "+s+", tasks activated: ");
 				for (Actor a : lHI)
 					System.out.print("L("+a.getName()+") = "+a.getUrgencyHI()+"; ");
 				System.out.println("");
@@ -420,7 +422,7 @@ public class MultiDAG implements Runnable{
 			
 			// Check if it's worth to continue the allocation
 			if (!isPossible(s, lHI, Actor.HI)) {
-				SchedulingException se = new SchedulingException("WARNING: allocHI() MultiDAG: Not enough slot left");
+				SchedulingException se = new SchedulingException("[WARNING] allocHI() MultiDAG: Not enough slot left");
 				throw se;
 			}
 			
@@ -483,7 +485,7 @@ public class MultiDAG implements Runnable{
 		
 		for (int s = 0; s < hPeriod; s++) {
 			if (isDebug()) {
-				System.out.print("DEBUG: allocLO(): @t = "+s+", tasks activated: ");
+				System.out.print("[DEBUG] allocLO(): @t = "+s+", tasks activated: ");
 				for (Actor a : lLO)
 					System.out.print("L("+a.getName()+") = "+a.getUrgencyLO()+"; ");
 				System.out.println("");
@@ -491,7 +493,7 @@ public class MultiDAG implements Runnable{
 			
 			// Verify that there are enough slots to continue the scheduling
 			if (!isPossible(s, lLO, Actor.LO)) {
-				SchedulingException se = new SchedulingException("WARNING: allocLO() MultiDAG: Not enough slot left");
+				SchedulingException se = new SchedulingException("[WARNING] allocLO() MultiDAG: Not enough slot left");
 				throw se;
 			}			
 			
@@ -553,8 +555,9 @@ public class MultiDAG implements Runnable{
 		try {
 			allocAll();
 		} catch (SchedulingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("[WARNING] MultiDAG: Unable to schedule the example!");
+			System.out.println(e.getMessage());
+			System.exit(30);
 		}
 	}
 	
@@ -567,7 +570,7 @@ public class MultiDAG implements Runnable{
 	public void printLFT () {
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
-				System.out.print("DEBUG: printLFT(): DAG "+d.getId()+"; Actor "+a.getName()
+				System.out.print("[DEBUG] printLFT(): DAG "+d.getId()+"; Actor "+a.getName()
 									+"; LFT LO "+a.getLFTLO());
 				if (a.getCHI() != 0) System.out.print("; LFT HI "+a.getLFTHI());
 				System.out.println(".");
@@ -685,7 +688,4 @@ public class MultiDAG implements Runnable{
 	public void setlHIComp(Comparator<Actor> lHIComp) {
 		this.lHIComp = lHIComp;
 	}
-
-
-
 }

@@ -31,7 +31,7 @@ import fr.tpt.s3.ls_mxc.model.Actor;
  * @author Roberto Medina
  *
  */
-public class LS {
+public class LS implements Runnable{
 	
 	// DAG to be scheduled
 	private DAG mcDag;
@@ -890,11 +890,22 @@ public class LS {
 		return true;
 	}
 	
+	@Override
+	public void run() {
+		try {
+			AllocAll();
+		} catch (SchedulingException e) {
+			System.out.println("[WARNING] UniDAG: Unable to schedule the example!");
+			System.out.println(e.getMessage());
+			System.exit(20);
+		}
+	}
+	
+	
 	/************************************************************************************/
 	
 	
-	/**
-	 * 
+	/* 
 	 * Getters & Setters
 	 */
 	public void setMxcDag(DAG d){
@@ -958,5 +969,7 @@ public class LS {
 	public void setS_LO(String s_LO[][]) {
 		S_LO = s_LO;
 	}
+
+
 
 }
