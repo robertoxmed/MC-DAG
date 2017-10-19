@@ -119,17 +119,16 @@ public class Main {
 				System.exit(20);
 			}
 		} else if (dags.size() > 1) {
-			msched = new MultiDAG(dags, mcp.getNbCores());
+			msched = new MultiDAG(dags, mcp.getNbCores(), debug);
 			
 			System.out.println("MultiDAG: "+dags.size()+" DAGs are going to be scheduled in "+mcp.getNbCores()+" cores.");
 			try {
-				msched.allocAll(debug);
+				msched.allocAll();
 			} catch (SchedulingException e) {
 				System.out.println("WARNING: Unable to schedule the example!");
-				e.getMessage();
+				System.out.println(e.getMessage());
 				System.exit(30);
 			}
-			
 		}
 		
 		/* =============== Write results ================ */
@@ -139,7 +138,7 @@ public class Main {
 			auto.createAutomata();
 			mcp.setAuto(auto);
 			mcp.writePRISM();
-			System.out.println("File written");
+			System.out.println("PRISM file written.");
 		}
 	}
 }

@@ -64,8 +64,8 @@ public class Actor {
 	
 	// Used for multi dag scheduling
 	private int graphDead;
-	private int promotedLFTLO;
 	private int LFTLO;
+	private boolean promoted;
 	private int LFTHI;
 	private int urgencyLO;
 	private int urgencyHI;
@@ -92,6 +92,7 @@ public class Actor {
 		urgencyLO = Integer.MAX_VALUE;
 		visited = false;
 		visitedHI = false;
+		promoted = false;
 	}
 	
 	/**
@@ -438,11 +439,11 @@ public class Actor {
 		this.sourceHI = sourceHI;
 	}
 
-	public int getPromotedLFTLO() {
-		return promotedLFTLO;
+	public boolean isPromoted() {
+		return promoted;
 	}
 
-	public void setPromotedLFTLO(int promotedLFTLO) {
-		this.promotedLFTLO = promotedLFTLO;
+	public void setPromoted(boolean promoted) {
+		this.promoted = promoted;
 	}
 }
