@@ -339,7 +339,6 @@ public class Automata {
 		finTrans.add(tfinal);
 	
 	}
-	
 
 	/**
 	 *  This procedures creates the automata for the PRISM model

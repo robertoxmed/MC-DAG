@@ -17,8 +17,6 @@
 package fr.tpt.s3.ls_mxc.appli;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -27,12 +25,6 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
-import fr.tpt.s3.ls_mxc.alloc.LS;
-import fr.tpt.s3.ls_mxc.alloc.MultiDAG;
-import fr.tpt.s3.ls_mxc.avail.Automata;
-import fr.tpt.s3.ls_mxc.model.DAG;
-import fr.tpt.s3.ls_mxc.parser.MCParser;
 
 /**
  * Main class to create the MC-DAG Framework. All functionalities should be included
@@ -43,20 +35,20 @@ public class Main {
 
 	public static void main (String[] args) throws IOException, InterruptedException {
 		
-		/* ============================ Command line ================= */
+		/* Command line options */
 		Options options = new Options();
 		
-		Option input = new Option("i", "input", true, "MC-DAG XML Model");
+		Option input = new Option("i", "input", true, "MC-DAG XML Models");
 		input.setRequired(true);
 		input.setArgs(Option.UNLIMITED_VALUES); // Sets maximum number of threads to be launched
 		options.addOption(input);
 		
-		Option outSched = new Option("os", "out-scheduler", true, "File path to write the scheduling tables");
+		Option outSched = new Option("os", "out-scheduler", true, "File paths to write the scheduling tables");
 		outSched.setRequired(false);
 		outSched.setArgs(Option.UNLIMITED_VALUES);
 		options.addOption(outSched);
 		
-		Option outPrism = new Option("op", "out-prism", true, "File path to write the PRISM model");
+		Option outPrism = new Option("op", "out-prism", true, "File paths to write the PRISM model");
 		outPrism.setRequired(false);
 		outPrism.setArgs(Option.UNLIMITED_VALUES);
 		options.addOption(outPrism);
@@ -84,56 +76,30 @@ public class Main {
 		String outPrismFilePath[] = cmd.getOptionValues("out-prism");
 		boolean debug = cmd.hasOption("debug");
 		
-		/* =============== Read from files and try to solve ================ */
-		for (int i = 0; i < inputFilePath.length; i++) {
-			Set<DAG> dags = new HashSet<DAG>();
-			MCParser mcp = new MCParser(inputFilePath[i], null, null, dags);
-			
-			if (outSchedFilePath != null)
-				mcp.setOutSchedFile(outSchedFilePath[i]);
-			if (outPrismFilePath != null )
-				mcp.setOutputFile(outPrismFilePath[i]);
-			
-			mcp.readXML();
-			LS ls = null;
-			MultiDAG msched = null;
-			Automata auto = null;
-			
-			if (dags.size() == 1) {
-				DAG dag = dags.iterator().next();
-				ls = new LS();
-				ls.setMxcDag(dag);
-				ls.setDeadline(dag.getDeadline());
-				ls.setNbCores(mcp.getNbCores());
-				ls.setDebug(debug);
-				Thread t = new Thread (ls);
-				
-				t.start();
-				
-				if (outPrismFilePath != null) {
-					t.join();
-					if (debug) System.out.println("[DEBUG] UniDAG: Creating the automata object.");
-					auto = new Automata(ls, dag);
-				}
-
-			} else if (dags.size() > 1) {
-				msched = new MultiDAG(dags, mcp.getNbCores(), debug);
-				
-				System.out.println("MultiDAG: "+dags.size()+" DAGs are going to be scheduled in "+mcp.getNbCores()+" cores.");
-				
-				Thread t = new Thread(msched);
-				t.start();
-			}
-			
-			/* =============== Write results ================ */
-			if (outSchedFilePath != null)
-				mcp.writeSched();
-			if (outPrismFilePath != null) {
-				auto.createAutomata();
-				mcp.setAuto(auto);
-				mcp.writePRISM();
-				System.out.println("PRISM file written.");
-			}
+		if ((outSchedFilePath != null && inputFilePath.length != outSchedFilePath.length)
+				|| (outPrismFilePath != null && inputFilePath.length != outPrismFilePath.length )) {
+			formatter.printHelp("MC-DAG framework", options);
+			System.exit(1);
+			return;
 		}
+		
+		Thread threads[] = new Thread[inputFilePath.length];
+		
+		/* Launch threads to solve allocation */
+		for (int i = 0; i < inputFilePath.length; i++) {
+			FrameworkThread ft = new FrameworkThread(inputFilePath[i], debug);
+			
+			if (outSchedFilePath != null)
+				ft.setOutSchedFile(outSchedFilePath[i]);
+			if (outPrismFilePath != null)
+				ft.setOutPRISMFile(outPrismFilePath[i]);
+			
+			threads[i] = new Thread(ft);
+			threads[i].start();
+		}
+		
+		/* Join all launched threads */
+		for (int i = 0; i < inputFilePath.length; i++)
+			threads[i].join();
 	}
 }

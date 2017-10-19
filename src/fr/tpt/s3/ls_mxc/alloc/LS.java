@@ -31,7 +31,7 @@ import fr.tpt.s3.ls_mxc.model.Actor;
  * @author Roberto Medina
  *
  */
-public class LS implements Runnable{
+public class LS{
 	
 	// DAG to be scheduled
 	private DAG mcDag;
@@ -597,73 +597,22 @@ public class LS implements Runnable{
 			}
 		}
 	}
-	
-	/*
-	 * Debuggin functions
-	 */
-	
-	public void printW(int mode) {
-		for (int i = 0; i < getMxcDag().getNodes().size(); i++) {
-			if (mode == Actor.HI ) {
-				if (getMxcDag().getNodebyID(i).getCHI() != 0)
-					System.out.println("Weight HI "+getMxcDag().getNodebyID(i).getName()+" = "+getMxcDag().getNodebyID(i).getWeightHI());
-			} else {
-				System.out.println("Weight LO "+getMxcDag().getNodebyID(i).getName()+" = "+weights_LO[i]);
-			}
-				
-		}
 
-		
-	}
-	
-	/**
-	 * Prints the S_HI table & start times
-	 */
-	public void printS_HI(){
-		for (int c = 0; c < nbCores; c++) {
-			for(int t = 0; t < deadline; t++) {
-				System.out.print(S_HI[t][c]+" | ");
-			}
-			System.out.print("\n");
-		}
-		System.out.print("\n");
-			
-	}
-	
-	/**
-	 * Prints the S_LO table
-	 */
-	public void printS_LO(){
-		for (int c = 0; c < nbCores; c++) {
-			for(int t = 0; t < deadline; t++) {
-				System.out.print(S_LO[t][c]+" | ");
-			}
-			System.out.print("\n");
-		}
-	}
-	
-	/**
-	 * Prints the S_HLFET_HI LO table table
-	 */
-	public void printS_HLFETHI(){
-		for (int c = 0; c < nbCores; c++) {
-			for(int t = 0; t < deadline; t++) {
-				System.out.print(S_HLFET_HI[t][c]+" | ");
-			}
-			System.out.print("\n");
-		}
-	}
-	
+
 	/**
 	 * Does the whole allocaiton
 	 * @throws SchedulingException 
 	 */
 	public void AllocAll() throws SchedulingException{
 		this.calcWeights(Actor.HI);
+		if (isDebug()) printW(Actor.HI);
 		this.AllocHI();
+		if (isDebug()) printS_HI();
 		
 		this.calcWeights(Actor.LO);
+		if (isDebug()) printW(Actor.LO);
 		this.AllocLO();
+		if (isDebug()) printS_LO();
 	}
 	
 	public void CheckBaruah() throws SchedulingException{
@@ -891,28 +840,63 @@ public class LS implements Runnable{
 		return true;
 	}
 	
-	@Override
-	public void run() {
-		try {
-			AllocAll();
-			if (isDebug()) {
-				System.out.println("[DEBUG] ========= Scheduling tables ===============");
-				this.printS_HI();
-				this.printS_LO();
-				System.out.println("[DEBUG] ========== Weights ===============");
-				this.printW(Actor.LO);
-				this.printW(Actor.HI);
+	/*
+	 * Debugging functions
+	 */
+	
+	/**
+	 * Prints weights in the different modes
+	 * @param mode
+	 */
+	public void printW(int mode) {
+		for (int i = 0; i < getMxcDag().getNodes().size(); i++) {
+			if (mode == Actor.HI ) {
+				if (getMxcDag().getNodebyID(i).getCHI() != 0)
+					System.out.println("[DEBUG] Weight HI "+getMxcDag().getNodebyID(i).getName()+" = "+getMxcDag().getNodebyID(i).getWeightHI());
+			} else {
+				System.out.println("[DEBUG] Weight LO "+getMxcDag().getNodebyID(i).getName()+" = "+weights_LO[i]);
 			}
-		} catch (SchedulingException e) {
-			System.out.println("[WARNING] UniDAG: Unable to schedule the example!");
-			System.out.println(e.getMessage());
-			System.exit(20);
+				
+		}	
+	}
+	
+	/**
+	 * Prints the S_HI table & start times
+	 */
+	public void printS_HI(){
+		for (int c = 0; c < nbCores; c++) {
+			for(int t = 0; t < deadline; t++) {
+				System.out.print(S_HI[t][c]+" | ");
+			}
+			System.out.print("\n");
+		}
+		System.out.print("\n");
+			
+	}
+	
+	/**
+	 * Prints the S_LO table
+	 */
+	public void printS_LO(){
+		for (int c = 0; c < nbCores; c++) {
+			for(int t = 0; t < deadline; t++) {
+				System.out.print(S_LO[t][c]+" | ");
+			}
+			System.out.print("\n");
 		}
 	}
 	
-	
-	/************************************************************************************/
-	
+	/**
+	 * Prints the S_HLFET_HI LO table table
+	 */
+	public void printS_HLFETHI(){
+		for (int c = 0; c < nbCores; c++) {
+			for(int t = 0; t < deadline; t++) {
+				System.out.print(S_HLFET_HI[t][c]+" | ");
+			}
+			System.out.print("\n");
+		}
+	}
 	
 	/* 
 	 * Getters & Setters

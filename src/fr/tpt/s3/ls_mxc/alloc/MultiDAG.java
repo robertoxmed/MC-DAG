@@ -29,7 +29,7 @@ import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
 import fr.tpt.s3.ls_mxc.util.MathMCDAG;
 
-public class MultiDAG implements Runnable{
+public class MultiDAG{
 	
 	// Set of DAGs to be scheduled
 	private Set<DAG> mcDags;
@@ -549,18 +549,7 @@ public class MultiDAG implements Runnable{
 		allocLO();
 		if (isDebug()) printSLO();
 	}
-	
-	@Override
-	public void run() {
-		try {
-			allocAll();
-		} catch (SchedulingException e) {
-			System.out.println("[WARNING] MultiDAG: Unable to schedule the example!");
-			System.out.println(e.getMessage());
-			System.exit(30);
-		}
-	}
-	
+
 	/*
 	 * Debugging functions
 	 */
