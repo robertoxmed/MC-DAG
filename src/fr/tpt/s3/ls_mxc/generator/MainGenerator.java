@@ -16,13 +16,7 @@
  *******************************************************************************/
 package fr.tpt.s3.ls_mxc.generator;
 
-import java.io.IOException;
-import java.util.Random;
-
 import org.apache.commons.cli.*;
-
-import fr.tpt.s3.ls_mxc.alloc.LS;
-import fr.tpt.s3.ls_mxc.parser.MCParser;
 
 /**
  * Main for the Graph generator interface
@@ -41,15 +35,15 @@ public class MainGenerator {
 
 		Options options = new Options();
 		
-		Option o_hi = new Option("h", "hi_utilization", true, "HI Utilization");
+		Option o_hi = new Option("h", "hi_utilization", true, "Max HI Utilization");
 		o_hi.setRequired(true);
 		options.addOption(o_hi);
 		
-		Option o_lo = new Option("l", "lo_utilization", true, "LO Utilization");
+		Option o_lo = new Option("l", "lo_utilization", true, "Max LO Utilization");
 		o_lo.setRequired(true);
 		options.addOption(o_lo);
 		
-		Option o_hi_lo = new Option("hl", "hi_lo_utilization", true, "HI Utilization in LO mode");
+		Option o_hi_lo = new Option("hl", "hi_lo_utilization", true, "Max HI Utilization in LO mode");
 		o_hi_lo.setRequired(true);
 		options.addOption(o_hi_lo);
 		
@@ -57,13 +51,17 @@ public class MainGenerator {
 		o_eprob.setRequired(true);
 		options.addOption(o_eprob);
 		
-		Option o_para = new Option("p", "parallelism", true, "Max parallelism for the DAG");
+		Option o_para = new Option("p", "parallelism", true, "Max parallelism for the DAGs");
 		o_para.setRequired(true);
 		options.addOption(o_para);
 		
-		Option o_cp = new Option("cp", "critical_path", true, "Critical Path of the DAG");
+		Option o_cp = new Option("cp", "critical_path", true, "Max critical path of the DAGs");
 		o_cp.setRequired(true);
 		options.addOption(o_cp);
+		
+		Option o_nbdags = new Option("nd", "num_dags", true, "Number of DAGs");
+		o_nbdags.setRequired(true);
+		options.addOption(o_nbdags);
 		
 		Option o_cores = new Option("c", "cores", true, "Number of cores");
 		o_cores.setRequired(true);
@@ -71,7 +69,11 @@ public class MainGenerator {
 		
 		Option o_out = new Option("o", "output", true, "Output file for the DAG");
 		o_out.setRequired(true);
-		options.addOption(o_out);	
+		options.addOption(o_out);
+		
+		Option debugOpt = new Option("d", "debug", false, "Enabling debug");
+		debugOpt.setRequired(false);
+		options.addOption(debugOpt);
 		
 		CommandLineParser parser = new DefaultParser();
 		HelpFormatter formatter = new HelpFormatter();
@@ -92,43 +94,38 @@ public class MainGenerator {
 		double UserHIinLO = Double.parseDouble(cmd.getOptionValue("hi_lo_utilization"));
 		int edgeProb = Integer.parseInt(cmd.getOptionValue("eprobability"));
 		int cp = Integer.parseInt(cmd.getOptionValue("critical_path"));
+		int nbDags = Integer.parseInt(cmd.getOptionValue("num_dags"));
 		int para = Integer.parseInt(cmd.getOptionValue("parallelism"));
 		int cores = Integer.parseInt(cmd.getOptionValue("cores"));
-		
+		boolean debug = cmd.hasOption("debug");		
 		String output = cmd.getOptionValue("output");
 		
 		/* ============================= Generator parameters ============================= */
 		
-		UtilizationGenerator ug = new UtilizationGenerator(userLO, userHI, cp, edgeProb, UserHIinLO, para, cores);
-		Random r = new Random();
-		
-		MCParser mcp = new MCParser(output, ug);
-		
-		if (r.nextInt(10)%2 == 0)
-			ug.GenenrateGraph();
-		else
-			ug.GenenrateGraphCp();
-		
-		LS ls = new LS(ug.getDeadline(), ug.getNbCores(), ug.getGenDAG());
-		if (!ls.HLFETSchedulable()) {
-			System.exit(3);
-			return;
-		}
-		
-		if (!ls.HLFETSchedulableHI()) {
-			System.exit(4);
-			return;
-		}
-		// Generate the file used for the list scheduling
-		try {
-			mcp.writeGennedDAG();
-			System.out.println("Written generated DAG");
-		} catch (IOException e) {
-			System.out.println("Failed to write the XML file in the generator " + e.getMessage());
-			
+		if (nbDags < 0) {
+			System.err.println("[ERROR] Generator: Number of DAGs need to be positive.");
+			formatter.printHelp("DAG Generator", options);
 			System.exit(1);
 			return;
 		}
 		
+		Thread threads[] = new Thread[nbDags];
+		
+		for (int i = 0; i < nbDags; i++) {
+			String outFile = output.concat("-"+i);
+			GeneratorThread gt = new GeneratorThread(userLO, userHI, cp, edgeProb, UserHIinLO, para, cores, outFile, debug);
+			threads[i] = new Thread(gt);
+			threads[i].start();
+		}
+		
+		for (int i = 0; i < nbDags; i++) {
+			try {
+				threads[i].join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
 	}
 }

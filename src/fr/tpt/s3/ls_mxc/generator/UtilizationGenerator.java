@@ -40,8 +40,9 @@ public class UtilizationGenerator {
 
 	private int deadline;
 	
-
-	public UtilizationGenerator (double U_LO, double U_HI, int cp, int edgeProb, double UHIinLO, int para, int cores) {
+	private boolean debug;
+	
+	public UtilizationGenerator (double U_LO, double U_HI, int cp, int edgeProb, double UHIinLO, int para, int cores, boolean debug) {
 		this.setUserU_LO(U_LO);
 		this.setUserU_HI(U_HI);
 		this.setUserCp(cp);
@@ -50,8 +51,8 @@ public class UtilizationGenerator {
 		this.setParaDegree(para);
 		this.setNbCores(cores);
 		this.rng = new RandomNumberGenerator();
+		this.setDebug(debug);
 	}
-
 	
 	/**
 	 * Generates a DAG
@@ -702,5 +703,13 @@ public class UtilizationGenerator {
 	
 	public void setHtoL(boolean htoL) {
 		HtoL = htoL;
+	}
+
+	public boolean isDebug() {
+		return debug;
+	}
+
+	public void setDebug(boolean debug) {
+		this.debug = debug;
 	}
 }
