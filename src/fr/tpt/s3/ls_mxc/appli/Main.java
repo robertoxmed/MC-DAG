@@ -85,6 +85,9 @@ public class Main {
 		
 		Thread threads[] = new Thread[inputFilePath.length];
 		
+		if (debug)
+			System.out.println("[DEBUG] Launching "+inputFilePath.length+" thread(s.");
+		
 		/* Launch threads to solve allocation */
 		for (int i = 0; i < inputFilePath.length; i++) {
 			FrameworkThread ft = new FrameworkThread(inputFilePath[i], debug);

@@ -104,7 +104,7 @@ public class MultiDAG{
 		sHI = new String[gethPeriod()][getNbCores()];
 		sLO = new String[gethPeriod()][getNbCores()];
 		
-		if (debug) System.out.println("[DEBUG] initTables(): Hyper-period of the graph: "+gethPeriod()+"; tables initialized.");
+		if (debug) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] initTables(): Hyper-period of the graph: "+gethPeriod()+"; tables initialized.");
 	}
 	
 	/**
@@ -262,7 +262,7 @@ public class MultiDAG{
 			if (slot % d.getDeadline() == 0) {
 				ListIterator<Actor> it = sched.listIterator();
 				
-				if (isDebug()) System.out.println("[DEBUG] checkDAGActivation(): DAG (id. "+d.getId()+") activation at slot "+slot);
+				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] checkDAGActivation(): DAG (id. "+d.getId()+") activation at slot "+slot);
 				for (Actor a : d.getNodes()) {
 					while (it.hasNext()) { // Remove nodes from the sched list
 						Actor a2 = it.next();
@@ -351,7 +351,7 @@ public class MultiDAG{
 				if (a.getCHI() != 0) {
 					if ((a.getCLO() - remainTLO.get(a.getName())) - scheduledUntilT(a, slot) < 0) {
 						a.setPromoted(true);
-						if (isDebug()) System.out.println("[DEBUG] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
+						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
 						a.setUrgencyLO(0);
 					} else {
 						a.setUrgencyLO(a.getLFTLO() - relatSlot - remainTLO.get(a.getName()));
@@ -374,12 +374,18 @@ public class MultiDAG{
 		ListIterator<Actor> it = lMode.listIterator();
 		
 		while (it.hasNext()) {
+			Actor a = it.next();
+			
 			if (mode == Actor.HI) {
-				if (it.next().getUrgencyHI() == 0)
+				if (a.getUrgencyHI() == 0)
 					m++;
+				else if (a.getUrgencyHI() < 0)
+					return false;					
 			} else {
-				if (it.next().getUrgencyLO() == 0)
+				if (a.getUrgencyLO() == 0)
 					m++;
+				else if (a.getUrgencyLO() < 0)
+					return false;
 			}
 			
 			if (m > nbCores)
@@ -412,9 +418,9 @@ public class MultiDAG{
 		ListIterator<Actor> lit = lHI.listIterator();
 		boolean taskFinished = false;
 		
-		for (int s = hPeriod - 1; s >= 0; s--) {			
+		for (int s = hPeriod - 1; s >= 0; s--) {
 			if (isDebug()) {
-				System.out.print("[DEBUG] allocHI(): @t = "+s+", tasks activated: ");
+				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] allocHI(): @t = "+s+", tasks activated: ");
 				for (Actor a : lHI)
 					System.out.print("L("+a.getName()+") = "+a.getUrgencyHI()+"; ");
 				System.out.println("");
@@ -422,7 +428,7 @@ public class MultiDAG{
 			
 			// Check if it's worth to continue the allocation
 			if (!isPossible(s, lHI, Actor.HI)) {
-				SchedulingException se = new SchedulingException("[WARNING] allocHI() MultiDAG: Not enough slot left");
+				SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] allocHI() MultiDAG: Not enough slot left");
 				throw se;
 			}
 			
@@ -485,7 +491,7 @@ public class MultiDAG{
 		
 		for (int s = 0; s < hPeriod; s++) {
 			if (isDebug()) {
-				System.out.print("[DEBUG] allocLO(): @t = "+s+", tasks activated: ");
+				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] allocLO(): @t = "+s+", tasks activated: ");
 				for (Actor a : lLO)
 					System.out.print("L("+a.getName()+") = "+a.getUrgencyLO()+"; ");
 				System.out.println("");
@@ -493,7 +499,7 @@ public class MultiDAG{
 			
 			// Verify that there are enough slots to continue the scheduling
 			if (!isPossible(s, lLO, Actor.LO)) {
-				SchedulingException se = new SchedulingException("[WARNING] allocLO() MultiDAG: Not enough slot left");
+				SchedulingException se = new SchedulingException("[WARNING "+Thread.currentThread().getName()+"] allocLO() MultiDAG: Not enough slot left");
 				throw se;
 			}			
 			
@@ -559,7 +565,7 @@ public class MultiDAG{
 	public void printLFT () {
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
-				System.out.print("[DEBUG] printLFT(): DAG "+d.getId()+"; Actor "+a.getName()
+				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] printLFT(): DAG "+d.getId()+"; Actor "+a.getName()
 									+"; LFT LO "+a.getLFTLO());
 				if (a.getCHI() != 0) System.out.print("; LFT HI "+a.getLFTHI());
 				System.out.println(".");

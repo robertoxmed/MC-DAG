@@ -55,6 +55,9 @@ public class FrameworkThread implements Runnable{
 	public void run() {
 		mcp.readXML();
 		
+		if (outSchedFile == null)
+			System.err.println("[WARNING] No output file has been specified for the scheduling tables.");
+		
 		// Only one DAG has to be scheduled in the multi-core architecture
 		if (dags.size() == 1) {
 			DAG dag = dags.iterator().next();
@@ -80,8 +83,9 @@ public class FrameworkThread implements Runnable{
 				try {
 					mcp.writePRISM();
 				} catch (IOException e) {
-					System.out.println("[WARNING] Error writting PRISM files "+outPRISMFile);
 					e.printStackTrace();
+					System.out.println("[WARNING] Error writting PRISM files "+outPRISMFile);
+
 				}
 				System.out.println("PRISM file written.");
 			}
@@ -94,8 +98,8 @@ public class FrameworkThread implements Runnable{
 			try {
 				msched.allocAll();
 			} catch (SchedulingException e) {
-				System.out.println("[ERROR] MultiDAG: unable to schedule the example: "+this.getInputFile());
-				System.out.println(e.getMessage());
+				System.err.println(e.getMessage());
+				System.err.println("[ERROR] MultiDAG: unable to schedule the example: "+mcp.getInputFile());
 				System.exit(1);
 			}
 		}
@@ -105,7 +109,7 @@ public class FrameworkThread implements Runnable{
 			try {
 				mcp.writeSched();
 			} catch (IOException e) {
-				System.out.println("[WARNING] Error writting scheduling tables to file "+outSchedFile);
+				System.err.println("[WARNING] Error writting scheduling tables to file "+outSchedFile);
 				e.printStackTrace();
 			}
 		}
