@@ -31,18 +31,17 @@ public class UtilizationGenerator {
 	private int userCp;
 	private int nbNodes;
 	private int nbCores;
-	private DAG genDAG;
 	private int edgeProb;
 	private double uHIinLO;
 	private int paraDegree;
 	private boolean HtoL;
 	private RandomNumberGenerator rng;
-
+	private Set<DAG> genDAG;
+	private int nbDags;
 	private int deadline;
-	
 	private boolean debug;
 	
-	public UtilizationGenerator (double U_LO, double U_HI, int cp, int edgeProb, double UHIinLO, int para, int cores, boolean debug) {
+	public UtilizationGenerator (double U_LO, double U_HI, int cp, int edgeProb, double UHIinLO, int para, int cores, int nbDags, boolean debug) {
 		this.setUserU_LO(U_LO);
 		this.setUserU_HI(U_HI);
 		this.setUserCp(cp);
@@ -50,17 +49,31 @@ public class UtilizationGenerator {
 		this.setuHIinLO(UHIinLO);
 		this.setParaDegree(para);
 		this.setNbCores(cores);
+		this.setGenDAG(new HashSet<DAG>());
 		this.rng = new RandomNumberGenerator();
 		this.setDebug(debug);
 	}
 	
 	/**
-	 * Generates a DAG
+	 * Function that prints the current parameters of the node
+	 * @param a
+	 */
+	private void debugNode (Actor a, String func) {
+		
+		System.out.println("[DEBUG] "+func+": Adding node "+a.getId()+" Ci(HI) = "+a.getCHI());
+		for (Edge e : a.getRcvEdges())
+			System.out.println("\t Rcv Edge "+e.getSrc().getId()+" -> "+a.getId());
+		for (Edge e : a.getSndEdges())
+			System.out.println("\t Snd Edge "+a.getId()+" -> "+e.getDest().getId());
+	}
+	
+	/**
+	 * Generates a DAG by generating its critical path first
 	 */
 	public void GenenrateGraphCp() {
 		// Variables
 		int id = 0;
-		setGenDAG(new DAG());
+		DAG d  = new DAG();
 		Set<Actor> nodes = new HashSet<Actor>();
 		boolean cpReached = false;
 		int rank = 0;		
@@ -73,12 +86,12 @@ public class UtilizationGenerator {
 		// Generate the CP in HI mode
 		Actor last = null;
 		int toCP = userCp;
+		
 		while (!cpReached) {
 			Actor n = new Actor(id, Integer.toString(id), 0, 0);
+			
 			n.setRank(rank);
-			
-			n.setCHI(rng.randomUnifInt(1,CHIBound) + 2);
-			
+			n.setCHI(rng.randomUnifInt(1,CHIBound) + 1);
 			
 			// Add egde and update the CP (if not source)
 			if (id != 0) {
@@ -102,17 +115,25 @@ public class UtilizationGenerator {
 				cpReached = true;
 			}
 			n.setCLO(n.getCHI());
-		}		
+
+
+			if (isDebug()) {
+				String func = Thread.currentThread().getStackTrace()[1].getMethodName();
+				debugNode(n, func);
+			}
+		}
+		
 		// Generate the other HI nodes and the arcs
 		rank = 0;		
 		while (budgetHI > 0) {
 			// Roll a number of nodes to add to the level
 			int nodesPerRank = rng.randomUnifInt(1, paraDegree);
+			
 			for (int j=0; j < nodesPerRank && budgetHI > 0; j++) {
 				Actor n = new Actor(id, Integer.toString(id), 0, 0);
-			
 				// Roll a C_HI and test if budget is left
 				n.setCHI(rng.randomUnifInt(1, CHIBound) + 2);
+				
 				if (budgetHI - n.getCHI() > 0) {
 					budgetHI = budgetHI - n.getCHI();
 				} else {
@@ -136,8 +157,12 @@ public class UtilizationGenerator {
 					}
 				}
 				n.setCLO(n.getCHI());
-				nodes.add(n);
 				n.CPfromNode(Actor.HI);
+				nodes.add(n);
+				if (isDebug()) {
+					String func = Thread.currentThread().getStackTrace()[1].getMethodName();
+					debugNode(n, func);
+				}
 				id++;
 			}
 			rank++;
@@ -167,7 +192,7 @@ public class UtilizationGenerator {
 			it_n.next().CPfromNode(Actor.LO);
 		}
 				
-		graphSanityCheck(Actor.HI);
+		graphSanityCheck(d, Actor.HI);
 		
 		// Add LO nodes
 		actualBudget = 0;
@@ -218,7 +243,6 @@ public class UtilizationGenerator {
 				n.CPfromNode(Actor.LO);
 				id++;
 			}
-
 			rank++;
 		}
 		
@@ -255,11 +279,11 @@ public class UtilizationGenerator {
 		}
 		
 		setNbNodes(id + 1);
-		graphSanityCheck(Actor.LO);
-		genDAG.setNodes(nodes);
-		setDeadline(genDAG.calcCriticalPath());
+		graphSanityCheck(d, Actor.LO);
+		d.setNodes(nodes);
+		setDeadline(d.calcCriticalPath());
+		genDAG.add(d);
 	}
-	
 	
 	/**
 	 * Generates a DAG without making the CP in HI first
@@ -267,7 +291,7 @@ public class UtilizationGenerator {
 	public void GenenrateGraph() {
 		// Variables
 		int id = 0;
-		setGenDAG(new DAG());
+		DAG d = new DAG();
 		Set<Actor> nodes = new HashSet<Actor>();
 		boolean cpReached = false;
 		int rank = 0;
@@ -343,7 +367,7 @@ public class UtilizationGenerator {
 			it_n.next().CPfromNode(Actor.LO);
 		}
 				
-		graphSanityCheck(Actor.HI);
+		graphSanityCheck(d, Actor.HI);
 		
 		// Add LO nodes
 		actualBudget = 0;
@@ -463,9 +487,10 @@ public class UtilizationGenerator {
 			n.checkifSource();
 		}
 		
-		graphSanityCheck(Actor.LO);
-		genDAG.setNodes(nodes);
-		setDeadline(genDAG.calcCriticalPath());
+		graphSanityCheck(d, Actor.LO);
+		d.setNodes(nodes);
+		d.calcCriticalPath();
+		getGenDAG().add(d);
 	}
 	
 	/**
@@ -485,12 +510,11 @@ public class UtilizationGenerator {
 	/**
 	 * Calculate the minimum number of cores for the Graph.
 	 */
-	public void calcMinCores() {
+	public void calcMinCores(DAG d) {
 		int sumClo = 0;
 		int sumChi = 0;
 		int max;
-		
-		Iterator<Actor> it_n = genDAG.getNodes().iterator();
+		Iterator<Actor> it_n = d.getNodes().iterator();
 		
 		while (it_n.hasNext()) {
 			Actor n = it_n.next();
@@ -518,16 +542,16 @@ public class UtilizationGenerator {
 	 * Sanity check for the graph:
 	 * 	- Each node has to have at least one edge
 	 */
-	public void graphSanityCheck(short mode) {
+	public void graphSanityCheck(DAG d, short mode) {
 		boolean added = false;
-		Iterator<Actor> it_n = genDAG.getNodes().iterator();
+		Iterator<Actor> it_n = d.getNodes().iterator();
 		
 		while (it_n.hasNext()) {
 			Actor n = it_n.next();
 			
 			// It is an independent node with no edges
 			if (n.getRcvEdges().size() == 0 && n.getSndEdges().size() == 0) {
-				Iterator<Actor> it_n2 = genDAG.getNodes().iterator();
+				Iterator<Actor> it_n2 = d.getNodes().iterator();
 				while (it_n2.hasNext() && added == false) {
 					if (mode == Actor.LO) {
 						Actor n2 = it_n2.next(); 
@@ -580,10 +604,10 @@ public class UtilizationGenerator {
 		}
 	}
 	
-	public void addHtoL() {
+	public void addHtoL(DAG d) {
 		Actor hi = null;
 		Actor lo = null;
-		Iterator<Actor> it_n = genDAG.getNodes().iterator();
+		Iterator<Actor> it_n = d.getNodes().iterator();
 		
 		while (HtoL == false) {
 
@@ -594,7 +618,7 @@ public class UtilizationGenerator {
 				}
 			}
 
-			it_n = genDAG.getNodes().iterator();
+			it_n = d.getNodes().iterator();
 			while (it_n.hasNext()) { // Find a HI task
 				Actor n = it_n.next();
 				if (n.getRank() > 2 && n.getCHI() == 0) {
@@ -657,11 +681,11 @@ public class UtilizationGenerator {
 		this.nbCores = nbCores;
 	}
 
-	public DAG getGenDAG() {
+	public Set<DAG> getGenDAG() {
 		return genDAG;
 	}
 
-	public void setGenDAG(DAG genDAG) {
+	public void setGenDAG(Set<DAG> genDAG) {
 		this.genDAG = genDAG;
 	}
 	public int getDeadline() {
@@ -696,7 +720,6 @@ public class UtilizationGenerator {
 		this.paraDegree = paraDegree;
 	}
 
-
 	public boolean isHtoL() {
 		return HtoL;
 	}
@@ -711,5 +734,13 @@ public class UtilizationGenerator {
 
 	public void setDebug(boolean debug) {
 		this.debug = debug;
+	}
+
+	public int getNbDags() {
+		return nbDags;
+	}
+
+	public void setNbDags(int nbDags) {
+		this.nbDags = nbDags;
 	}
 }

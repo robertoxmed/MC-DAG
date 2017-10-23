@@ -27,8 +27,8 @@ public class GeneratorThread implements Runnable{
 	private MCParser mcp;
 
 	public GeneratorThread (double uLO, double uHI, int cp, int edProb,
-			double uHIinLO, int para, int cores, String outFile, boolean debug) {
-		ug = new UtilizationGenerator(uLO, uHI, cp, edProb, uHIinLO, para, cores, debug);
+			double uHIinLO, int para, int cores, int nbDags, String outFile, boolean debug) {
+		ug = new UtilizationGenerator(uLO, uHI, cp, edProb, uHIinLO, para, cores, nbDags, debug);
 		mcp = new MCParser(outFile, ug);
 	}
 	
@@ -36,7 +36,7 @@ public class GeneratorThread implements Runnable{
 	public void run() {
 		Random r = new Random();
 		
-		if (r.nextInt(10)%2 == 0)
+		if (r.nextInt(10) % 2 == 0)
 			ug.GenenrateGraph();
 		else
 			ug.GenenrateGraphCp();

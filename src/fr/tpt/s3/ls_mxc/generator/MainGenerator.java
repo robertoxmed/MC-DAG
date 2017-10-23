@@ -26,7 +26,8 @@ import org.apache.commons.cli.*;
 public class MainGenerator {
 
 	/**
-	 * 
+	 * Main method for the generator: it launches a given number of threads with the parameters
+	 * given
 	 * @param args
 	 */
 	public static void main (String[] args) {
@@ -63,6 +64,10 @@ public class MainGenerator {
 		o_nbdags.setRequired(true);
 		options.addOption(o_nbdags);
 		
+		Option o_nbfiles = new Option("nf", "num_files", true, "Number of files");
+		o_nbfiles.setRequired(true);
+		options.addOption(o_nbfiles);
+		
 		Option o_cores = new Option("c", "cores", true, "Number of cores");
 		o_cores.setRequired(true);
 		options.addOption(o_cores);
@@ -95,6 +100,7 @@ public class MainGenerator {
 		int edgeProb = Integer.parseInt(cmd.getOptionValue("eprobability"));
 		int cp = Integer.parseInt(cmd.getOptionValue("critical_path"));
 		int nbDags = Integer.parseInt(cmd.getOptionValue("num_dags"));
+		int nbFiles = Integer.parseInt(cmd.getOptionValue("num_files"));
 		int para = Integer.parseInt(cmd.getOptionValue("parallelism"));
 		int cores = Integer.parseInt(cmd.getOptionValue("cores"));
 		boolean debug = cmd.hasOption("debug");		
@@ -102,8 +108,8 @@ public class MainGenerator {
 		
 		/* ============================= Generator parameters ============================= */
 		
-		if (nbDags < 0) {
-			System.err.println("[ERROR] Generator: Number of DAGs need to be positive.");
+		if (nbFiles < 0 || nbDags < 0) {
+			System.err.println("[ERROR] Generator: Number of files & DAGs need to be positive.");
 			formatter.printHelp("DAG Generator", options);
 			System.exit(1);
 			return;
@@ -111,14 +117,14 @@ public class MainGenerator {
 		
 		Thread threads[] = new Thread[nbDags];
 		
-		for (int i = 0; i < nbDags; i++) {
+		for (int i = 0; i < nbFiles; i++) {
 			String outFile = output.concat("-"+i);
-			GeneratorThread gt = new GeneratorThread(userLO, userHI, cp, edgeProb, UserHIinLO, para, cores, outFile, debug);
+			GeneratorThread gt = new GeneratorThread(userLO, userHI, cp, edgeProb, UserHIinLO, para, cores, nbDags, outFile, debug);
 			threads[i] = new Thread(gt);
 			threads[i].start();
 		}
 		
-		for (int i = 0; i < nbDags; i++) {
+		for (int i = 0; i < nbFiles; i++) {
 			try {
 				threads[i].join();
 			} catch (InterruptedException e) {

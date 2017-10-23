@@ -542,54 +542,55 @@ public class MCParser {
 			Element rootElement = doc.createElement("mcsystem");
 			doc.appendChild(rootElement);
 			
-			// MC DAG
-			Element mcdag = doc.createElement("mcdag");
-			Attr dagName = doc.createAttribute("name");
-			dagName.setValue("genned-"+ug.getUserU_LO()+"-"+ug.getUserU_HI()+"-ed-"+ug.getEdgeProb());
-			Attr dagDead = doc.createAttribute("deadline");
-			dagDead.setValue(String.valueOf(ug.getDeadline()));
-			mcdag.setAttributeNodeNS(dagName);
-			mcdag.setAttributeNode(dagDead);
-			rootElement.appendChild(mcdag);
-			
-			// Actors
-			for (Actor a : ug.getGenDAG().getNodes()) {
-				Element actor = doc.createElement("actor");
-				Attr actorNb = doc.createAttribute("name");
-				actorNb.setNodeValue(a.getName());
-				actor.setAttributeNode(actorNb);
-				// Add Ci HI and LO
-				Element chi = doc.createElement("chi");
-				chi.appendChild(doc.createTextNode(String.valueOf(a.getCHI())));
-				Element clo = doc.createElement("clo");
-				clo.appendChild(doc.createTextNode(String.valueOf(a.getCLO())));
-				actor.appendChild(chi);
-				actor.appendChild(clo);
-				mcdag.appendChild(actor);
-			}
-			
-			// Ports
-			Element edges = doc.createElement("ports");
-			int counter = 0;
-			for (Actor a : ug.getGenDAG().getNodes()) {
-				if (a.getSndEdges().size() != 0)  {
-					for (Edge e : a.getSndEdges()) {
-						Element edge = doc.createElement("port");
-						Attr portName = doc.createAttribute("name");
-						portName.setValue("p"+counter);
-						counter++;
-						Attr portSrc = doc.createAttribute("srcActor");
-						portSrc.setValue(e.getSrc().getName());
-						Attr portDst = doc.createAttribute("dstActor");
-						portDst.setValue(e.getDest().getName());
-						edge.setAttributeNode(portName);
-						edge.setAttributeNode(portSrc);
-						edge.setAttributeNode(portDst);
-						edges.appendChild(edge);
+			for (DAG d : ug.getGenDAG()) {
+				// MC DAG
+				Element mcdag = doc.createElement("mcdag");
+				Attr dagName = doc.createAttribute("name");
+				dagName.setValue("genned-"+ug.getUserU_LO()+"-"+ug.getUserU_HI()+"-ed-"+ug.getEdgeProb());
+				Attr dagDead = doc.createAttribute("deadline");
+				dagDead.setValue(String.valueOf(ug.getDeadline()));
+				mcdag.setAttributeNodeNS(dagName);
+				mcdag.setAttributeNode(dagDead);
+				rootElement.appendChild(mcdag);
+				// Actors
+				for (Actor a : d.getNodes()) {
+					Element actor = doc.createElement("actor");
+					Attr actorNb = doc.createAttribute("name");
+					actorNb.setNodeValue(a.getName());
+					actor.setAttributeNode(actorNb);
+					// Add Ci HI and LO
+					Element chi = doc.createElement("chi");
+					chi.appendChild(doc.createTextNode(String.valueOf(a.getCHI())));
+					Element clo = doc.createElement("clo");
+					clo.appendChild(doc.createTextNode(String.valueOf(a.getCLO())));
+					actor.appendChild(chi);
+					actor.appendChild(clo);
+					mcdag.appendChild(actor);
+				}
+				
+				// Ports
+				Element edges = doc.createElement("ports");
+				int counter = 0;
+				for (Actor a : d.getNodes()) {
+					if (a.getSndEdges().size() != 0)  {
+						for (Edge e : a.getSndEdges()) {
+							Element edge = doc.createElement("port");
+							Attr portName = doc.createAttribute("name");
+							portName.setValue("p"+counter);
+							counter++;
+							Attr portSrc = doc.createAttribute("srcActor");
+							portSrc.setValue(e.getSrc().getName());
+							Attr portDst = doc.createAttribute("dstActor");
+							portDst.setValue(e.getDest().getName());
+							edge.setAttributeNode(portName);
+							edge.setAttributeNode(portSrc);
+							edge.setAttributeNode(portDst);
+							edges.appendChild(edge);
+						}
 					}
 				}
+				mcdag.appendChild(edges);
 			}
-			mcdag.appendChild(edges);
 			
 			// Write the content
 			TransformerFactory tFactory = TransformerFactory.newInstance();
