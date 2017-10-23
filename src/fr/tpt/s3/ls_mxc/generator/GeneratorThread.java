@@ -25,26 +25,32 @@ public class GeneratorThread implements Runnable{
 
 	private UtilizationGenerator ug;
 	private MCParser mcp;
+	private boolean debug;
 
 	public GeneratorThread (double uLO, double uHI, int cp, int edProb,
 			double uHIinLO, int para, int cores, int nbDags, String outFile, boolean debug) {
 		ug = new UtilizationGenerator(uLO, uHI, cp, edProb, uHIinLO, para, cores, nbDags, debug);
 		mcp = new MCParser(outFile, ug);
+		setDebug(debug);
 	}
 	
 	@Override
 	public void run() {
 		Random r = new Random();
 		
-		if (r.nextInt(10) % 2 == 0)
-			ug.GenenrateGraph();
-		else
-			ug.GenenrateGraphCp();
+		for (int i = 0; i < ug.getNbDags(); i++) {
+			if (isDebug()) System.out.println("[DEBUG] Generating DAG #"+i);
+		
+			if (r.nextInt(10) % 2 == 0)
+				ug.GenenrateGraph();
+			else
+				ug.GenenrateGraphCp();
+		}
 
 		// Write the file
 		try {
 			mcp.writeGennedDAG();
-			System.out.println("Written generated DAG");
+			System.out.println(Thread.currentThread().getName()+"> Written generated DAG(s)!");
 		} catch (IOException e) {
 			System.err.println("[ERROR] Failed to write the XML file in the generator " + e.getMessage());
 			System.exit(1);
@@ -52,6 +58,9 @@ public class GeneratorThread implements Runnable{
 		}
 	}
 
+	/*
+	 * Getters & setters
+	 */
 	public UtilizationGenerator getUg() {
 		return ug;
 	}
@@ -66,5 +75,13 @@ public class GeneratorThread implements Runnable{
 
 	public void setMcp(MCParser mcp) {
 		this.mcp = mcp;
+	}
+	
+	public boolean isDebug() {
+		return debug;
+	}
+
+	public void setDebug(boolean debug) {
+		this.debug = debug;
 	}
 }

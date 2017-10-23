@@ -540,13 +540,14 @@ public class MCParser {
 			
 			// Root element (MC System)
 			Element rootElement = doc.createElement("mcsystem");
+			int i = 0;
 			doc.appendChild(rootElement);
 			
 			for (DAG d : ug.getGenDAG()) {
 				// MC DAG
 				Element mcdag = doc.createElement("mcdag");
 				Attr dagName = doc.createAttribute("name");
-				dagName.setValue("genned-"+ug.getUserU_LO()+"-"+ug.getUserU_HI()+"-ed-"+ug.getEdgeProb());
+				dagName.setValue("genned-"+ug.getUserU_LO()+"-"+ug.getUserU_HI()+"-ed-"+ug.getEdgeProb()+"-"+i++);
 				Attr dagDead = doc.createAttribute("deadline");
 				dagDead.setValue(String.valueOf(ug.getDeadline()));
 				mcdag.setAttributeNodeNS(dagName);
@@ -591,6 +592,13 @@ public class MCParser {
 				}
 				mcdag.appendChild(edges);
 			}
+			
+			// Number of cores of the architecture
+			Element cores = doc.createElement("cores");
+			Attr nbCores = doc.createAttribute("number");
+			nbCores.setValue(String.valueOf(ug.getNbCores()));
+			cores.setAttributeNode(nbCores);
+			rootElement.appendChild(cores);
 			
 			// Write the content
 			TransformerFactory tFactory = TransformerFactory.newInstance();

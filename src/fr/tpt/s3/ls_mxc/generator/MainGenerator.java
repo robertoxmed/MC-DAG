@@ -115,10 +115,10 @@ public class MainGenerator {
 			return;
 		}
 		
-		Thread threads[] = new Thread[nbDags];
+		Thread threads[] = new Thread[nbFiles];
 		
 		for (int i = 0; i < nbFiles; i++) {
-			String outFile = output.concat("-"+i);
+			String outFile = output.substring(0, output.lastIndexOf('.')).concat("-"+i+".xml");
 			GeneratorThread gt = new GeneratorThread(userLO, userHI, cp, edgeProb, UserHIinLO, para, cores, nbDags, outFile, debug);
 			threads[i] = new Thread(gt);
 			threads[i].start();

@@ -50,6 +50,7 @@ public class UtilizationGenerator {
 		this.setParaDegree(para);
 		this.setNbCores(cores);
 		this.setGenDAG(new HashSet<DAG>());
+		this.setNbDags(nbDags);
 		this.rng = new RandomNumberGenerator();
 		this.setDebug(debug);
 	}
@@ -60,7 +61,7 @@ public class UtilizationGenerator {
 	 */
 	private void debugNode (Actor a, String func) {
 		
-		System.out.println("[DEBUG] "+func+": Adding node "+a.getId()+" Ci(HI) = "+a.getCHI());
+		System.out.println("[DEBUG] "+func+": Adding node "+a.getId()+" Ci(HI) = "+a.getCHI()+" Ci(LO) = "+a.getCLO());
 		for (Edge e : a.getRcvEdges())
 			System.out.println("\t Rcv Edge "+e.getSrc().getId()+" -> "+a.getId());
 		for (Edge e : a.getSndEdges())
@@ -301,6 +302,10 @@ public class UtilizationGenerator {
 		int budgetLO = (int) Math.ceil(userCp * userU_LO);		
 		int CHIBound = (int) Math.ceil(userCp / 2);
 		int CLOBound = (int) Math.ceil(userCp / 2);
+		
+		if (isDebug()) {
+			System.out.println("[DEBUG] GenerateGraph: Generating a graph with parameters, ULO = "+this.userU_LO+", UHI = "+this.userU_HI);
+		}
 					
 		// Generate HI nodes and the arcs
 		// No hypothesis about the CP.
@@ -342,6 +347,10 @@ public class UtilizationGenerator {
 				nodes.add(n);
 				n.CPfromNode(Actor.HI);
 				id++;
+				if (isDebug()) {
+					String func = Thread.currentThread().getStackTrace()[1].getMethodName();
+					debugNode(n, func);
+				}
 			}
 			rank++;
 		}
@@ -415,13 +424,16 @@ public class UtilizationGenerator {
 							if (src.getCpFromNode_HI() + n.getCHI() == userCp) {
 								cpReached = true;
 							}
-								
 						}
 					}
 				}
 				nodes.add(n);
 				n.CPfromNode(Actor.LO);
 				id++;
+				if (isDebug()) {
+					String func = Thread.currentThread().getStackTrace()[1].getMethodName();
+					debugNode(n, func);
+				}
 			}
 
 			rank++;
