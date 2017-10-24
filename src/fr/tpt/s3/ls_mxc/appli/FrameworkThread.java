@@ -37,17 +37,21 @@ public class FrameworkThread implements Runnable{
 	private Set<DAG> dags;
 	private MCParser mcp;
 	private String inputFile;
-	private String outSchedFile;
-	private String outPRISMFile;
+	private boolean outSchedFile;
+	private boolean outPRISMFile;
 	
 	private LS ls;
 	private MultiDAG msched;
 	private Automata auto;
 	private boolean debug;
 	
-	public FrameworkThread(String iFile, boolean debug) {
+	public FrameworkThread(String iFile, boolean oSF, boolean oPF, boolean debug) {
 		dags = new HashSet<DAG>();
 		mcp = new MCParser(iFile, null, null, dags);
+		setOutSchedFile(oSF);
+		if (isOutSchedFile()) mcp.setOutSchedFile(iFile.substring(0, iFile.lastIndexOf('.')).concat("-sched.xml"));
+		setOutPRISMFile(oPF);
+		if (isOutSchedFile()) mcp.setOutSchedFile(iFile.substring(0, iFile.lastIndexOf('.')).concat(".pm"));
 		setDebug(debug);
 	}
 
@@ -55,7 +59,7 @@ public class FrameworkThread implements Runnable{
 	public void run() {
 		mcp.readXML();
 		
-		if (outSchedFile == null)
+		if (!isOutSchedFile())
 			System.err.println("[WARNING] No output file has been specified for the scheduling tables.");
 		
 		// Only one DAG has to be scheduled in the multi-core architecture
@@ -75,7 +79,7 @@ public class FrameworkThread implements Runnable{
 				System.exit(1);
 			}
 			
-			if (outPRISMFile != null) {
+			if (isOutPRISMFile()) {
 				if (debug) System.out.println("[DEBUG] UniDAG: Creating the automata object.");
 				auto = new Automata(ls, dag);
 				auto.createAutomata();
@@ -105,7 +109,7 @@ public class FrameworkThread implements Runnable{
 		}
 		
 		/* =============== Write results ================ */
-		if (outSchedFile != null) {
+		if (isOutSchedFile()) {
 			try {
 				mcp.writeSched();
 			} catch (IOException e) {
@@ -142,29 +146,51 @@ public class FrameworkThread implements Runnable{
 		this.inputFile = inputFile;
 	}
 
-	public String getOutSchedFile() {
-		return outSchedFile;
-	}
-
-	public void setOutSchedFile(String outSchedFile) {
-		this.outSchedFile = outSchedFile;
-		mcp.setOutSchedFile(outSchedFile);
-	}
-
-	public String getOutPRISMFile() {
-		return outPRISMFile;
-	}
-
-	public void setOutPRISMFile(String outPRISMFile) {
-		this.outPRISMFile = outPRISMFile;
-		mcp.setOutputFile(outPRISMFile);
-	}
-
 	public boolean isDebug() {
 		return debug;
 	}
 
 	public void setDebug(boolean debug) {
 		this.debug = debug;
+	}
+	
+	public boolean isOutSchedFile() {
+		return outSchedFile;
+	}
+
+	public void setOutSchedFile(boolean outSchedFile) {
+		this.outSchedFile = outSchedFile;
+	}
+
+	public boolean isOutPRISMFile() {
+		return outPRISMFile;
+	}
+
+	public void setOutPRISMFile(boolean outPRISMFile) {
+		this.outPRISMFile = outPRISMFile;
+	}
+
+	public LS getLs() {
+		return ls;
+	}
+
+	public void setLs(LS ls) {
+		this.ls = ls;
+	}
+
+	public MultiDAG getMsched() {
+		return msched;
+	}
+
+	public void setMsched(MultiDAG msched) {
+		this.msched = msched;
+	}
+
+	public Automata getAuto() {
+		return auto;
+	}
+
+	public void setAuto(Automata auto) {
+		this.auto = auto;
 	}
 }

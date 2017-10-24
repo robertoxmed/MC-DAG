@@ -33,7 +33,6 @@ public class MainGenerator {
 	public static void main (String[] args) {
 		
 		/* ============================ Command line ================= */
-
 		Options options = new Options();
 		
 		Option o_hi = new Option("h", "hi_utilization", true, "Max HI Utilization");

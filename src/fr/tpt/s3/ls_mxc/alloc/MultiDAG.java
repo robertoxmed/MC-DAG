@@ -88,7 +88,7 @@ public class MultiDAG{
 	}
 	
 	/**
-	 * Allocates the scheduling tables & the virtual deadlines
+	 * Allocates the scheduling tables
 	 */
 	private void initTables () {
 		int[] input = new int[getMcDags().size()];
@@ -108,7 +108,7 @@ public class MultiDAG{
 	}
 	
 	/**
-	 * Gives the LFT of an Actor
+	 * Calculates the LFT of an Actor (HI and LO mode)
 	 * @param a
 	 * @param deadline
 	 * @param mode

@@ -43,17 +43,15 @@ public class Main {
 		input.setArgs(Option.UNLIMITED_VALUES); // Sets maximum number of threads to be launched
 		options.addOption(input);
 		
-		Option outSched = new Option("os", "out-scheduler", true, "File paths to write the scheduling tables");
+		Option outSched = new Option("os", "out-scheduler", true, "Write the scheduling tables into a file.");
 		outSched.setRequired(false);
-		outSched.setArgs(Option.UNLIMITED_VALUES);
 		options.addOption(outSched);
 		
-		Option outPrism = new Option("op", "out-prism", true, "File paths to write the PRISM model");
+		Option outPrism = new Option("op", "out-prism", true, "Write PRISM model into a file.");
 		outPrism.setRequired(false);
-		outPrism.setArgs(Option.UNLIMITED_VALUES);
 		options.addOption(outPrism);
 		
-		Option debugOpt = new Option("d", "debug", false, "Enabling debug");
+		Option debugOpt = new Option("d", "debug", false, "Enabling debug.");
 		debugOpt.setRequired(false);
 		options.addOption(debugOpt);
 		
@@ -72,17 +70,9 @@ public class Main {
 		}
 		
 		String inputFilePath[] = cmd.getOptionValues("input");
-		String outSchedFilePath[] = cmd.getOptionValues("out-scheduler");
-		String outPrismFilePath[] = cmd.getOptionValues("out-prism");
+		boolean bOutSched = cmd.hasOption("out-scheduler");
+		boolean bOutPrism = cmd.hasOption("out-prism");
 		boolean debug = cmd.hasOption("debug");
-		
-		if ((outSchedFilePath != null && inputFilePath.length != outSchedFilePath.length)
-				|| (outPrismFilePath != null && inputFilePath.length != outPrismFilePath.length )) {
-			formatter.printHelp("MC-DAG framework", options);
-			System.exit(1);
-			return;
-		}
-		
 		Thread threads[] = new Thread[inputFilePath.length];
 		
 		if (debug)
@@ -90,12 +80,7 @@ public class Main {
 		
 		/* Launch threads to solve allocation */
 		for (int i = 0; i < inputFilePath.length; i++) {
-			FrameworkThread ft = new FrameworkThread(inputFilePath[i], debug);
-			
-			if (outSchedFilePath != null)
-				ft.setOutSchedFile(outSchedFilePath[i]);
-			if (outPrismFilePath != null)
-				ft.setOutPRISMFile(outPrismFilePath[i]);
+			FrameworkThread ft = new FrameworkThread(inputFilePath[i], bOutSched, bOutPrism, debug);
 			
 			threads[i] = new Thread(ft);
 			threads[i].start();
