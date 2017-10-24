@@ -72,21 +72,6 @@ public class DAG {
 				getSinksHI().add(n);
 			if (n.isSourceHI())
 				getSourcesHI().add(n);
-			
-			// Check if it's a HI sink
-//			boolean sinkHI = true;
-//			
-//			for (Edge e : n.getSndEdges()) {
-//				if (e.getDest().getCHI() != 0) {
-//					sinkHI = false;
-//					break;
-//				}
-//			}
-//			
-//			if (sinkHI && n.getCHI() != 0) {
-//				getSinksHI().add(n);
-//				n.setSinkinHI(true);
-//			}
 		}
 	}
 	

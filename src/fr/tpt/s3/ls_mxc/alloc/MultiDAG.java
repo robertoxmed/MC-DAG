@@ -150,6 +150,27 @@ public class MultiDAG{
 		a.setUrgencyLO(ret);
 	}
 	
+	private boolean succVisited (Actor a) {
+		boolean ret = true;
+		
+		for (Edge e : a.getSndEdges()) {
+			if (!e.getDest().isVisited())
+				return false;
+		}
+		return ret;
+	}
+	
+	private boolean succVisitedHI (Actor a) {
+		boolean ret = true;
+		
+		for (Edge e : a.getRcvEdges()) {
+			if (e.getSrc().getCHI() != 0 && !e.getSrc().isVisitedHI())
+				return false;
+		}
+		
+		return ret;
+	}
+	
 	/**
 	 * Recursively calculates LFTs of an actor
 	 */
@@ -173,7 +194,7 @@ public class MultiDAG{
 			
 			calcActorLFTLO(a, d.getDeadline());
 			for (Edge e : a.getRcvEdges()) {
-				if (!e.getSrc().isVisited()) {
+				if (!e.getSrc().isVisited() && succVisited(e.getSrc())) {
 					toVisit.add(e.getSrc());
 					e.getSrc().setVisited(true);
 				}
@@ -186,7 +207,8 @@ public class MultiDAG{
 			
 			calcActorLFTHI(a, d.getDeadline());
 			for (Edge e : a.getSndEdges()) {
-				if (e.getDest().getCHI() != 0 && !e.getDest().isVisitedHI()) {
+				if (e.getDest().getCHI() != 0 && !e.getDest().isVisitedHI()
+						&& succVisitedHI(e.getDest())) {
 					toVisitHI.add(e.getDest());
 					e.getDest().setVisitedHI(true);
 				}
@@ -413,7 +435,7 @@ public class MultiDAG{
 
 		calcLaxity(lHI, 0, Actor.HI);
 		lHI.sort(lHIComp);
-		
+		 
 		// Allocate all slots of the HI scheduling table
 		ListIterator<Actor> lit = lHI.listIterator();
 		boolean taskFinished = false;
@@ -580,7 +602,10 @@ public class MultiDAG{
 	public void printSHI () {
 		for (int c = 0; c < getNbCores(); c++) {
 			for (int s = 0; s < gethPeriod(); s++) {
-				System.out.print(sHI[s][c]+" | ");
+				if (sHI[s][c] != null)
+					System.out.print(sHI[s][c]+" | ");
+				else
+					System.out.print("-- | ");
 			}
 			System.out.print("\n");
 		}
@@ -594,7 +619,10 @@ public class MultiDAG{
 	public void printSLO () {
 		for (int c = 0; c < getNbCores(); c++) {
 			for (int s = 0; s < gethPeriod(); s++) {
-				System.out.print(sLO[s][c]+" | ");
+				if (sLO[s][c] !=  null)
+					System.out.print(sLO[s][c]+" | ");
+				else
+					System.out.print("-- | ");
 			}
 			System.out.print("\n");
 		}
