@@ -150,6 +150,12 @@ public class MultiDAG{
 		a.setUrgencyLO(ret);
 	}
 	
+	/**
+	 * Internal function that tests if all successors of a node have
+	 * been visited.
+	 * @param a
+	 * @return
+	 */
 	private boolean succVisited (Actor a) {
 		boolean ret = true;
 		
@@ -160,6 +166,12 @@ public class MultiDAG{
 		return ret;
 	}
 	
+	/**
+	 * Internal function that tests if all predecessors of a HI node have
+	 * been visited.
+	 * @param a
+	 * @return
+	 */
 	private boolean succVisitedHI (Actor a) {
 		boolean ret = true;
 		
