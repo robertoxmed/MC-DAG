@@ -629,11 +629,10 @@ public class MCParser {
 			out.write("digraph test{\n");
 			
 			// HI nodes color
-			out.write("\tnode [shape=circle, style=filled, color=lightgrey]; ");
 			for (DAG d : ug.getGenDAG()) {
 				for (Actor a : d.getNodes()) {
 					if (a.getCHI() != 0)
-						out.write(d.getId()+a.getName()+";");
+						out.write("\"D"+d.getId()+"N"+a.getName()+"\" [label=\"D"+d.getId()+"N"+a.getName()+"\\n"+a.getCHI()+"/"+a.getCLO()+"\",style=filled,color=lightgrey]\n");
 				}
 			}
 			out.write("\n");
@@ -643,7 +642,7 @@ public class MCParser {
 			for (DAG d : ug.getGenDAG()) {
 				for (Actor a : d.getNodes()) {
 					if (a.getCHI() == 0)
-						out.write(d.getId()+a.getName()+";");
+						out.write("\"D"+d.getId()+"N"+a.getName()+"\" [label=\"D"+d.getId()+"N"+a.getName()+"\\n"+a.getCHI()+"/"+a.getCLO()+"\",style=filled,color=white]\n");
 				}
 			}
 			out.write("\n");
@@ -652,7 +651,7 @@ public class MCParser {
 			for (DAG d : ug.getGenDAG()) {
 				for (Actor a : d.getNodes()) {
 					for (Edge e : a.getSndEdges())
-						out.write("\t"+d.getId()+e.getSrc().getName()+" -> "+d.getId()+e.getDest().getName()+";\n");
+						out.write("\tD"+d.getId()+"N"+e.getSrc().getName()+" -> D"+d.getId()+"N"+e.getDest().getName()+";\n");
 				}
 				out.write("\n");
 			}
