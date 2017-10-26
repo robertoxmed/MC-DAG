@@ -1,29 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mcsystem>
-	<mcdag name="A" deadline="20">
+	<mcdag name="A" deadline="15">
 		<actor name="A1">
 			<clo>2</clo>
 			<chi>4</chi>
 			<fprob>0.0001</fprob>
 		</actor>
 		<actor name="A2">
-			<clo>2</clo>
+			<clo>3</clo>
 			<chi>4</chi>
 			<fprob>0.0001</fprob>
 		</actor>
 		<actor name="A3">
-			<clo>2</clo>
-			<chi>4</chi>
+			<clo>1</clo>
+			<chi>0</chi>
 			<fprob>0.0001</fprob>
 		</actor>
 		<actor name="A4">
-			<clo>2</clo>
-			<chi>4</chi>
+			<clo>3</clo>
+			<chi>5</chi>
 			<fprob>0.0001</fprob>
 		</actor>
 		<actor name="A5">
-			<clo>2</clo>
-			<chi>4</chi>
+			<clo>4</clo>
+			<chi>0</chi>
 			<fprob>0.0001</fprob>
 		</actor>
 		<actor name="A6">
@@ -36,26 +36,18 @@
 			<chi>0</chi>
 			<fprob>0.0001</fprob>
 		</actor>
-		<actor name="A8">
-			<clo>1</clo>
-			<chi>0</chi>
-			<fprob>0.0001</fprob>
-		</actor>
 
 		<ports>
 			<port name="p_a0" srcActor="A1" dstActor="A2"/>
-			<port name="p_a1" srcActor="A1" dstActor="A3"/>
-			<port name="p_a2" srcActor="A1" dstActor="A4"/>
-      <port name="p_a3" srcActor="A2" dstActor="A5"/>
-      <port name="p_a4" srcActor="A3" dstActor="A5"/>
-      <port name="p_a5" srcActor="A4" dstActor="A5"/>
-      <port name="p_a6" srcActor="A5" dstActor="A6"/>
-      <port name="p_a7" srcActor="A5" dstActor="A7"/>
-      <port name="p_a8" srcActor="A7" dstActor="A8"/>
+			<port name="p_a1" srcActor="A1" dstActor="A5"/>
+			<port name="p_a2" srcActor="A2" dstActor="A3"/>
+			<port name="p_a3" srcActor="A2" dstActor="A4"/>
+			<port name="p_a4" srcActor="A5" dstActor="A6"/>
+			<port name="p_a5" srcActor="A5" dstActor="A7"/>
 		</ports>
 	</mcdag>
 
-  <mcdag name="B" deadline="10">
+	<mcdag name="B" deadline="10">
 		<actor name="B1">
 			<clo>2</clo>
 			<chi>4</chi>
@@ -93,14 +85,42 @@
 		</actor>
 
 		<ports>
-      <port name="p_b0" srcActor="B1" dstActor="B2"/>
+			<port name="p_b0" srcActor="B1" dstActor="B2"/>
 			<port name="p_b1" srcActor="B5" dstActor="B2"/>
 			<port name="p_b2" srcActor="B5" dstActor="B6"/>
-      <port name="p_b3" srcActor="B2" dstActor="B3"/>
-      <port name="p_b4" srcActor="B6" dstActor="B3"/>
-      <port name="p_b5" srcActor="B3" dstActor="B4"/>
-      <port name="p_b6" srcActor="B3" dstActor="B7"/>
+			<port name="p_b3" srcActor="B2" dstActor="B3"/>
+			<port name="p_b4" srcActor="B6" dstActor="B3"/>
+			<port name="p_b5" srcActor="B3" dstActor="B4"/>
+			<port name="p_b6" srcActor="B3" dstActor="B7"/>
 		</ports>
 	</mcdag>
-	<cores number="2"/>
+
+	<mcdag name="C" deadline="10">
+		<actor name="C1">
+				<clo>3</clo>
+				<chi>4</chi>
+				<fprob>0.0001</fprob>
+			</actor>
+			<actor name="C2">
+				<clo>1</clo>
+				<chi>4</chi>
+				<fprob>0.0001</fprob>
+			</actor>
+			<actor name="C3">
+				<clo>4</clo>
+				<chi>5</chi>
+				<fprob>0.0001</fprob>
+			</actor>
+			<actor name="C4">
+				<clo>2</clo>
+				<chi>0</chi>
+				<fprob>0.0001</fprob>
+			</actor>
+			<ports>
+				<port name="p_c0" srcActor="C1" dstActor="C3"/>
+				<port name="p_c1" srcActor="C2" dstActor="C3"/>
+				<port name="p_c2" srcActor="C3" dstActor="C4"/>
+			</ports>
+	</mcdag>
+	<cores number="4"/>
 </mcsystem>
