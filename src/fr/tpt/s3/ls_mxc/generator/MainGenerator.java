@@ -75,6 +75,10 @@ public class MainGenerator {
 		o_out.setRequired(true);
 		options.addOption(o_out);
 		
+		Option graphOpt = new Option("g", "graphviz", false, "Generate a graphviz DOT file");
+		graphOpt.setRequired(false);
+		options.addOption(graphOpt);
+		
 		Option debugOpt = new Option("d", "debug", false, "Enabling debug");
 		debugOpt.setRequired(false);
 		options.addOption(debugOpt);
@@ -102,7 +106,8 @@ public class MainGenerator {
 		int nbFiles = Integer.parseInt(cmd.getOptionValue("num_files"));
 		int para = Integer.parseInt(cmd.getOptionValue("parallelism"));
 		int cores = Integer.parseInt(cmd.getOptionValue("cores"));
-		boolean debug = cmd.hasOption("debug");		
+		boolean graph = cmd.hasOption("graphviz");	
+		boolean debug = cmd.hasOption("debug");	
 		String output = cmd.getOptionValue("output");
 		
 		/* ============================= Generator parameters ============================= */
@@ -118,7 +123,7 @@ public class MainGenerator {
 		
 		for (int i = 0; i < nbFiles; i++) {
 			String outFile = output.substring(0, output.lastIndexOf('.')).concat("-"+i+".xml");
-			GeneratorThread gt = new GeneratorThread(userLO, userHI, cp, edgeProb, UserHIinLO, para, cores, nbDags, outFile, debug);
+			GeneratorThread gt = new GeneratorThread(userLO, userHI, cp, edgeProb, UserHIinLO, para, cores, nbDags, outFile, graph, debug);
 			threads[i] = new Thread(gt);
 			threads[i].start();
 		}

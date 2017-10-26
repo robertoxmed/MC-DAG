@@ -56,6 +56,7 @@ public class MCParser {
 	private String outputFile;
 	private String outSchedFile;
 	private String outGenFile;
+	private String outDotFile;
 	// Only references do not have to be instantiated
 	private Set<DAG> dags;
 	private LS ls;
@@ -530,7 +531,6 @@ public class MCParser {
 	 * @throws IOException
 	 */
 	public void writeGennedDAG () throws IOException {
-		
 		try {
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
@@ -564,9 +564,9 @@ public class MCParser {
 					clo.appendChild(doc.createTextNode(String.valueOf(a.getCLO())));
 					Element fprob = doc.createElement("fprob");
 					fprob.appendChild(doc.createTextNode("0.0"));
-					actor.appendChild(fprob);
 					actor.appendChild(chi);
 					actor.appendChild(clo);
+					actor.appendChild(fprob);
 					mcdag.appendChild(actor);
 				}
 				
@@ -611,6 +611,61 @@ public class MCParser {
 			trans.transform(dSource, sResult);
 		} catch (Exception ie) {
 			ie.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Writtes the dot file for the generated graphs.
+	 * @throws IOException
+	 */
+	public void writeDot () throws IOException {
+		BufferedWriter out = null;
+		try {
+			File f = new File(outDotFile);
+			f.createNewFile();
+			FileWriter fstream = new FileWriter(f);
+			out = new BufferedWriter(fstream);
+			
+			out.write("digraph test{\n");
+			
+			// HI nodes color
+			out.write("\tnode [shape=circle, style=filled, color=lightgrey]; ");
+			for (DAG d : ug.getGenDAG()) {
+				for (Actor a : d.getNodes()) {
+					if (a.getCHI() != 0)
+						out.write(d.getId()+a.getName()+";");
+				}
+			}
+			out.write("\n");
+
+			// LO nodes color
+			out.write("\tnode [shape=circle, color=white]; ");
+			for (DAG d : ug.getGenDAG()) {
+				for (Actor a : d.getNodes()) {
+					if (a.getCHI() == 0)
+						out.write(d.getId()+a.getName()+";");
+				}
+			}
+			out.write("\n");
+			
+			// Create the edges between the nodes
+			for (DAG d : ug.getGenDAG()) {
+				for (Actor a : d.getNodes()) {
+					for (Edge e : a.getSndEdges())
+						out.write("\t"+d.getId()+e.getSrc().getName()+" -> "+d.getId()+e.getDest().getName()+";\n");
+				}
+				out.write("\n");
+			}
+			// Options and EoF
+			out.write("overlap=false\n"
+					+ "fontsize = 12\n"
+					+ "}");
+			
+		} catch (IOException ie) {
+			System.out.println(ie.getMessage());
+		} finally {
+			if (out != null)
+				out.close();
 		}
 	}
 	
@@ -700,5 +755,13 @@ public class MCParser {
 
 	public void setDags(Set<DAG> dags) {
 		this.dags = dags;
+	}
+
+	public String getOutDotFile() {
+		return outDotFile;
+	}
+
+	public void setOutDotFile(String outDotFile) {
+		this.outDotFile = outDotFile;
 	}
 }

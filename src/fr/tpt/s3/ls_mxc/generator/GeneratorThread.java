@@ -23,13 +23,16 @@ public class GeneratorThread implements Runnable{
 
 	private UtilizationGenerator ug;
 	private MCParser mcp;
+	private boolean graphBool;
 	private boolean debug;
-
+	
 	public GeneratorThread (double uLO, double uHI, int cp, int edProb,
-			double uHIinLO, int para, int cores, int nbDags, String outFile, boolean debug) {
+			double uHIinLO, int para, int cores, int nbDags, String outFile,
+			boolean graphBool, boolean debug) {
 		ug = new UtilizationGenerator(uLO, uHI, cp, edProb, uHIinLO, para, cores, nbDags, debug);
 		mcp = new MCParser(outFile, ug);
 		setDebug(debug);
+		setGraphBool(graphBool);
 	}
 	
 	@Override
@@ -42,6 +45,12 @@ public class GeneratorThread implements Runnable{
 		// Write the file
 		try {
 			mcp.writeGennedDAG();
+			if (isGraphBool()) {
+				System.out.println("Dot : "+mcp.getOutGenFile().concat(".dot"));
+				mcp.setOutDotFile(mcp.getOutGenFile().concat(".dot"));
+				
+				mcp.writeDot();
+			}
 			System.out.println(Thread.currentThread().getName()+"> Written generated DAG(s)!");
 		} catch (IOException e) {
 			System.err.println("[ERROR] Failed to write the XML file in the generator " + e.getMessage());
@@ -75,5 +84,13 @@ public class GeneratorThread implements Runnable{
 
 	public void setDebug(boolean debug) {
 		this.debug = debug;
+	}
+
+	public boolean isGraphBool() {
+		return graphBool;
+	}
+
+	public void setGraphBool(boolean graphBool) {
+		this.graphBool = graphBool;
 	}
 }

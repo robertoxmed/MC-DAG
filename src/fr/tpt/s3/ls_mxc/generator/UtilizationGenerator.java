@@ -266,6 +266,7 @@ public class UtilizationGenerator {
 		graphSanityCheck(d, Actor.LO);
 		d.setNodes(nodes);
 		d.setDeadline(rDead);
+		d.setId(getGenDAG().size());
 		getGenDAG().add(d);
 	}
 	
