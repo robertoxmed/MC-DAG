@@ -361,7 +361,6 @@ public class MCParser {
 				out.write(";\n");
 			}
 			out.write("\n");
-
 			
 			// Write Processor Module
 			out.write("module proc\n");
@@ -376,7 +375,6 @@ public class MCParser {
 			out.write("\n");
 			
 			// Create MK firms if they exist
-			
 			iftm = auto.getFtms().iterator();
 			while (iftm.hasNext()) {
 				FTM ftm = iftm.next();
@@ -564,6 +562,9 @@ public class MCParser {
 					chi.appendChild(doc.createTextNode(String.valueOf(a.getCHI())));
 					Element clo = doc.createElement("clo");
 					clo.appendChild(doc.createTextNode(String.valueOf(a.getCLO())));
+					Element fprob = doc.createElement("fprob");
+					fprob.appendChild(doc.createTextNode("0.0"));
+					actor.appendChild(fprob);
 					actor.appendChild(chi);
 					actor.appendChild(clo);
 					mcdag.appendChild(actor);
