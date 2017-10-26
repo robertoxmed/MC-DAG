@@ -61,229 +61,11 @@ public class UtilizationGenerator {
 	 */
 	private void debugNode (Actor a, String func) {
 		
-		System.out.println("[DEBUG] "+func+": Adding node "+a.getId()+" Ci(HI) = "+a.getCHI()+" Ci(LO) = "+a.getCLO());
+		System.out.println("[DEBUG] "+func+": Node "+a.getId()+" Ci(HI) = "+a.getCHI()+" Ci(LO) = "+a.getCLO());
 		for (Edge e : a.getRcvEdges())
 			System.out.println("\t Rcv Edge "+e.getSrc().getId()+" -> "+a.getId());
 		for (Edge e : a.getSndEdges())
 			System.out.println("\t Snd Edge "+a.getId()+" -> "+e.getDest().getId());
-	}
-	
-	/**
-	 * Generates a DAG by generating its critical path first
-	 */
-	public void GenenrateGraphCp() {
-		// Variables
-		int id = 0;
-		DAG d  = new DAG();
-		Set<Actor> nodes = new HashSet<Actor>();
-		boolean cpReached = false;
-		int rank = 0;		
-		// Budgets deduced by utilization and CP
-		int budgetHI = (int) Math.ceil(userCp * userU_HI);
-		int budgetLO = (int) Math.ceil(userCp * userU_LO);		
-		int CHIBound = (int) Math.ceil(userCp / 2);
-		int CLOBound = (int) Math.ceil(userCp / 2);
-		
-		// Generate the CP in HI mode
-		Actor last = null;
-		int toCP = userCp;
-		
-		while (!cpReached) {
-			Actor n = new Actor(id, Integer.toString(id), 0, 0);
-			
-			n.setRank(rank);
-			n.setCHI(rng.randomUnifInt(1,CHIBound) + 1);
-			
-			// Add egde and update the CP (if not source)
-			if (id != 0) {
-				Edge e = new Edge(last, n);
-				last.getSndEdges().add(e);
-				n.getRcvEdges().add(e);
-			}
-			
-			nodes.add(n);
-			n.CPfromNode(Actor.HI);
-			last = n;
-			rank++;
-			id++;
-			
-			if (toCP - n.getCHI() > 0) {
-				toCP = toCP  - n.getCHI();
-				budgetHI = budgetHI - n.getCHI();
-			} else {
-				n.setCHI(toCP);
-				budgetHI = budgetHI - n.getCHI();
-				cpReached = true;
-			}
-			n.setCLO(n.getCHI());
-
-
-			if (isDebug()) {
-				String func = Thread.currentThread().getStackTrace()[1].getMethodName();
-				debugNode(n, func);
-			}
-		}
-		
-		// Generate the other HI nodes and the arcs
-		rank = 0;		
-		while (budgetHI > 0) {
-			// Roll a number of nodes to add to the level
-			int nodesPerRank = rng.randomUnifInt(1, paraDegree);
-			
-			for (int j=0; j < nodesPerRank && budgetHI > 0; j++) {
-				Actor n = new Actor(id, Integer.toString(id), 0, 0);
-				// Roll a C_HI and test if budget is left
-				n.setCHI(rng.randomUnifInt(1, CHIBound) + 2);
-				
-				if (budgetHI - n.getCHI() > 0) {
-					budgetHI = budgetHI - n.getCHI();
-				} else {
-					n.setCHI(budgetHI);
-					budgetHI = 0;
-				}
-				
-				n.setRank(rank);
-				if (rank != 0) {
-					Iterator<Actor> it_n = nodes.iterator();
-					while (it_n.hasNext()) {
-						Actor src = it_n.next();
-						// Test if the rank of the source is lower and if the CP
-						// is not reached
-						if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
-								&& src.getCpFromNode_HI() + n.getCHI() <= userCp) {
-							Edge e = new Edge(src, n);
-							src.getSndEdges().add(e);
-							n.getRcvEdges().add(e);
-						}
-					}
-				}
-				n.setCLO(n.getCHI());
-				n.CPfromNode(Actor.HI);
-				nodes.add(n);
-				if (isDebug()) {
-					String func = Thread.currentThread().getStackTrace()[1].getMethodName();
-					debugNode(n, func);
-				}
-				id++;
-			}
-			rank++;
-		}
-		
-		// Deflate HI execution times
-		int wantedHIinLO = (int) Math.ceil(uHIinLO * userCp);
-		int actualBudget = (int) Math.ceil(userU_HI * userCp);
-		Iterator<Actor> it_n;
-		while (wantedHIinLO < actualBudget && !allHIareMin(nodes)) {
-			it_n = nodes.iterator();
-			while (it_n.hasNext()) {
-				Actor n = it_n.next();
-				
-				n.setCLO(rng.randomUnifInt(1, n.getCLO()) + 1);				
-				if (n.getCLO() == 0)
-					n.setCLO(1);
-				
-				actualBudget = actualBudget - n.getCLO();
-				if (actualBudget < 0)
-					actualBudget = 0;
-			}
-		}
-		
-		it_n = nodes.iterator();
-		while (it_n.hasNext()){
-			it_n.next().CPfromNode(Actor.LO);
-		}
-				
-		graphSanityCheck(d, Actor.HI);
-		
-		// Add LO nodes
-		actualBudget = 0;
-		it_n = nodes.iterator();
-		while (it_n.hasNext()) {
-			actualBudget += it_n.next().getCLO();
-		}
-			
-		budgetLO = budgetLO - actualBudget;
-					
-		rank = 0;
-		while (budgetLO > 0) {
-			// Roll a number of nodes to add to the level
-			int nodesPerRank = rng.randomUnifInt(1, ((int)(paraDegree / 2)));
-			for (int j=0; j < nodesPerRank && budgetLO > 0; j++) {
-				Actor n = new Actor(id, Integer.toString(id), 0, 0);
-			
-				// Roll a C_HI and test if budget is left
-				n.setCHI(0);
-				n.setCLO(rng.randomUnifInt(1, CLOBound) + 1);
-				if (n.getCLO() == 0)
-					n.setCLO(1); // Minimal execution time
-				
-				if (budgetLO - n.getCLO() > 0) {
-					budgetLO = budgetLO - n.getCLO();
-				} else {
-					n.setCLO(budgetLO);
-					budgetLO = 0;
-				}
-				
-				n.setRank(rank);
-				if (rank != 0) {
-					Iterator<Actor> it = nodes.iterator();
-					while (it.hasNext()) {
-						Actor src = it.next();
-						// Test if the rank of the source is lower and if the CP
-						// is not reached
-						if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
-								&& src.getCpFromNode_LO() + n.getCLO() <= userCp &&
-								allowedCommunitcation(src, n)) {
-							Edge e = new Edge(src, n);
-							src.getSndEdges().add(e);
-							n.getRcvEdges().add(e);
-						}
-					}
-				}
-				nodes.add(n);
-				n.CPfromNode(Actor.LO);
-				id++;
-			}
-			rank++;
-		}
-		
-		// Have at least a 2 rank LO graph by adding one extra LO node
-		if (rank == 1) {
-			Actor n = new Actor(id, Integer.toString(id), 0, 1);;
-			
-			Iterator<Actor> it = nodes.iterator();
-			while (it.hasNext()) {
-				Actor src = it.next();
-				
-				if (src.getCHI() == 0) {
-					Edge e = new Edge(src, n);
-					src.getSndEdges().add(e);
-					n.getRcvEdges().add(e);
-				} else if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
-						&& src.getCpFromNode_LO() + n.getCLO() <= userCp &&
-						allowedCommunitcation(src, n)) {
-					Edge e = new Edge(src, n);
-					src.getSndEdges().add(e);
-					n.getRcvEdges().add(e);
-				}
-			}
-			nodes.add(n);
-			n.CPfromNode(Actor.LO);
-			id++;
-		}
-		
-		it_n = nodes.iterator();
-		while (it_n.hasNext()){
-			Actor n = it_n.next();
-			n.checkifSink();
-			n.checkifSource();
-		}
-		
-		setNbNodes(id + 1);
-		graphSanityCheck(d, Actor.LO);
-		d.setNodes(nodes);
-		setDeadline(d.calcCriticalPath());
-		genDAG.add(d);
 	}
 	
 	/**
@@ -294,17 +76,21 @@ public class UtilizationGenerator {
 		int id = 0;
 		DAG d = new DAG();
 		Set<Actor> nodes = new HashSet<Actor>();
-		boolean cpReached = false;
 		int rank = 0;
 		
-		// Budgets deduced by utilization and CP
-		int budgetHI = (int) Math.ceil(userCp * userU_HI);
-		int budgetLO = (int) Math.ceil(userCp * userU_LO);		
-		int CHIBound = (int) Math.ceil(userCp / 2);
-		int CLOBound = (int) Math.ceil(userCp / 2);
+		// Budgets deduced by utilization and deadline
+		// Randomly generate a deadline
+		int rDead = rng.randomUnifInt(userCp/2, userCp);
+		
+		int budgetHI = (int) Math.ceil(rDead * userU_HI);
+		int budgetLO = (int) Math.ceil(rDead * userU_LO);		
+		int CHIBound = (int) Math.ceil(rDead / 2);
+		int CLOBound = (int) Math.ceil(rDead / 2);
 		
 		if (isDebug()) {
-			System.out.println("[DEBUG] GenerateGraph: Generating a graph with parameters, ULO = "+this.userU_LO+", UHI = "+this.userU_HI);
+			System.out.println("[DEBUG] GenerateGraph: Generating a graph with parameters, ULO = "+this.userU_LO+", UHI = "+this.userU_HI+
+					" deadline = "+rDead);
+			System.out.println("[DEBUG] GenerateGraph: >>> Generating HI tasks first.");
 		}
 					
 		// Generate HI nodes and the arcs
@@ -333,13 +119,10 @@ public class UtilizationGenerator {
 						// Test if the rank of the source is lower and if the CP
 						// is not reached
 						if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
-								&& src.getCpFromNode_HI() + n.getCHI() <= userCp) {
+								&& src.getCpFromNode_HI() + n.getCHI() <= rDead) {
 							Edge e = new Edge(src, n);
 							src.getSndEdges().add(e);
 							n.getRcvEdges().add(e);
-							if (src.getCpFromNode_HI() + n.getCHI() == userCp) {
-								cpReached = true;
-							}
 						}
 					}
 				}
@@ -356,8 +139,8 @@ public class UtilizationGenerator {
 		}
 		
 		// Deflate HI execution times
-		int wantedHIinLO = (int) Math.ceil(uHIinLO * userCp);
-		int actualBudget = (int) Math.ceil(userU_HI * userCp);
+		int wantedHIinLO = (int) Math.ceil(uHIinLO * rDead);
+		int actualBudget = (int) Math.ceil(userU_HI * rDead);
 		Iterator<Actor> it_n;
 		while (wantedHIinLO < actualBudget && !allHIareMin(nodes)) {
 			it_n = nodes.iterator();
@@ -369,6 +152,13 @@ public class UtilizationGenerator {
 				if (actualBudget < 0)
 					actualBudget = 0;
 			}
+		}
+
+		// Debugging block
+		if (isDebug()) {
+			System.out.println("[DEBUG] GenerateGraph(): >>> Deflation of HI tasks finished");
+			for (Actor a : nodes) 
+				debugNode(a, "GenerateGraph()");
 		}
 		
 		it_n = nodes.iterator();
@@ -416,27 +206,26 @@ public class UtilizationGenerator {
 						// Test if the rank of the source is lower and if the CP
 						// is not reached
 						if (rng.randomUnifInt(1,100) <= edgeProb && n.getRank() > src.getRank()
-								&& src.getCpFromNode_LO() + n.getCLO() <= userCp &&
+								&& src.getCpFromNode_LO() + n.getCLO() <= rDead &&
 								allowedCommunitcation(src, n)) {
 							Edge e = new Edge(src, n);
 							src.getSndEdges().add(e);
 							n.getRcvEdges().add(e);
-							if (src.getCpFromNode_HI() + n.getCHI() == userCp) {
-								cpReached = true;
-							}
 						}
 					}
 				}
 				nodes.add(n);
 				n.CPfromNode(Actor.LO);
 				id++;
-				if (isDebug()) {
-					String func = Thread.currentThread().getStackTrace()[1].getMethodName();
-					debugNode(n, func);
-				}
 			}
-
 			rank++;
+		}
+		
+		// Debugging block
+		if (isDebug()) {
+			System.out.println("[DEBUG] GenerateGraph(): >>> LO tasks added.");
+			for (Actor a : nodes) 
+				debugNode(a, "GenerateGraph()");
 		}
 		
 		// Have at least a 2 rank LO graph by adding one extra LO node
@@ -452,7 +241,7 @@ public class UtilizationGenerator {
 					src.getSndEdges().add(e);
 					n.getRcvEdges().add(e);
 				} else if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
-						&& src.getCpFromNode_LO() + n.getCLO() <= userCp &&
+						&& src.getCpFromNode_LO() + n.getCLO() <= rDead &&
 						allowedCommunitcation(src, n)) {
 					Edge e = new Edge(src, n);
 					src.getSndEdges().add(e);
@@ -461,34 +250,6 @@ public class UtilizationGenerator {
 			}
 			nodes.add(n);
 			n.CPfromNode(Actor.LO);
-			id++;
-		}
-		
-		// The Cp wasn't reached we need to add more tasks in LO mode
-		if (!cpReached) {
-			Actor n = new Actor(id, Integer.toString(id), 0, 0);
-			
-			// Get the closest node to the CP
-			int max = 0;
-			Actor node_max = null;
-			Iterator<Actor> it = nodes.iterator();
-			while (it.hasNext()) {
-				Actor m = it.next();
-				if (m.getCpFromNode_LO() > max) {
-					max = m.getCpFromNode_LO();
-					node_max = m;
-				}
-			}
-			
-			// Roll a C_HI and test if budget is left
-			n.setCHI(0);
-			n.setCLO(userCp - node_max.getCpFromNode_LO());
-			Edge e = new Edge(node_max, n);
-			node_max.getSndEdges().add(e);
-			n.getRcvEdges().add(e);
-			
-			n.CPfromNode(Actor.LO);
-			nodes.add(n);
 			id++;
 		}
 		
@@ -501,7 +262,7 @@ public class UtilizationGenerator {
 		
 		graphSanityCheck(d, Actor.LO);
 		d.setNodes(nodes);
-		d.calcCriticalPath();
+		d.setDeadline(rDead);
 		getGenDAG().add(d);
 	}
 	

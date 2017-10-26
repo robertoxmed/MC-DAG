@@ -17,8 +17,6 @@
 package fr.tpt.s3.ls_mxc.generator;
 
 import java.io.IOException;
-import java.util.Random;
-
 import fr.tpt.s3.ls_mxc.parser.MCParser;
 
 public class GeneratorThread implements Runnable{
@@ -36,15 +34,9 @@ public class GeneratorThread implements Runnable{
 	
 	@Override
 	public void run() {
-		Random r = new Random();
-		
 		for (int i = 0; i < ug.getNbDags(); i++) {
 			if (isDebug()) System.out.println("[DEBUG] Generating DAG #"+i);
-		
-			if (r.nextInt(10) % 2 == 0)
-				ug.GenenrateGraph();
-			else
-				ug.GenenrateGraphCp();
+			ug.GenenrateGraph();
 		}
 
 		// Write the file
