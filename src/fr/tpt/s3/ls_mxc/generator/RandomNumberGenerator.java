@@ -29,7 +29,23 @@ public class RandomNumberGenerator {
 		uniform = new Uniform(random);
 	}
 
-	public int randomUnifInt(int f, int t) {
-		return uniform.nextIntFromTo(f, t);
+	/**
+	 * Returns a uniform integer between a lower and an upper bound
+	 * @param lb
+	 * @param ub
+	 * @return
+	 */
+	public int randomUnifInt(int lb, int ub) {
+		return uniform.nextIntFromTo(lb, ub);
+	}
+	
+	/**
+	 * Returns a uniform double between a lower and an upper bound
+	 * @param lb
+	 * @param ub
+	 * @return
+	 */
+	public double randomUnifDouble (double lb, double ub) {
+		return uniform.nextDoubleFromTo(lb, ub);
 	}
 }

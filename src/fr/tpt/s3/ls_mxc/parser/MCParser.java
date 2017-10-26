@@ -549,7 +549,7 @@ public class MCParser {
 				Attr dagName = doc.createAttribute("name");
 				dagName.setValue("genned-"+ug.getUserU_LO()+"-"+ug.getUserU_HI()+"-ed-"+ug.getEdgeProb()+"-"+i++);
 				Attr dagDead = doc.createAttribute("deadline");
-				dagDead.setValue(String.valueOf(ug.getDeadline()));
+				dagDead.setValue(String.valueOf(d.getDeadline()));
 				mcdag.setAttributeNodeNS(dagName);
 				mcdag.setAttributeNode(dagDead);
 				rootElement.appendChild(mcdag);

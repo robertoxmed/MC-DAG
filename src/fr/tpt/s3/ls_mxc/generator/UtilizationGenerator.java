@@ -81,14 +81,16 @@ public class UtilizationGenerator {
 		// Budgets deduced by utilization and deadline
 		// Randomly generate a deadline
 		int rDead = rng.randomUnifInt(userCp/2, userCp);
+		double rULO = rng.randomUnifDouble(userU_LO / 2, userU_LO);
+		double rUHI = rng.randomUnifDouble(userU_HI / 2, userU_LO);
 		
-		int budgetHI = (int) Math.ceil(rDead * userU_HI);
-		int budgetLO = (int) Math.ceil(rDead * userU_LO);		
+		int budgetHI = (int) Math.ceil(rDead * rUHI);
+		int budgetLO = (int) Math.ceil(rDead * rULO);		
 		int CHIBound = (int) Math.ceil(rDead / 2);
 		int CLOBound = (int) Math.ceil(rDead / 2);
 		
 		if (isDebug()) {
-			System.out.println("[DEBUG] GenerateGraph: Generating a graph with parameters, ULO = "+this.userU_LO+", UHI = "+this.userU_HI+
+			System.out.println("[DEBUG] GenerateGraph: Generating a graph with parameters, ULO = "+rULO+", UHI = "+rUHI+
 					" deadline = "+rDead);
 			System.out.println("[DEBUG] GenerateGraph: >>> Generating HI tasks first.");
 		}
@@ -139,8 +141,9 @@ public class UtilizationGenerator {
 		}
 		
 		// Deflate HI execution times
-		int wantedHIinLO = (int) Math.ceil(uHIinLO * rDead);
-		int actualBudget = (int) Math.ceil(userU_HI * rDead);
+		double minU = Math.min(rUHI, rULO) / 2;
+		int wantedHIinLO = (int) Math.ceil(minU * rDead);
+		int actualBudget = (int) Math.ceil(rUHI * rDead);
 		Iterator<Actor> it_n;
 		while (wantedHIinLO < actualBudget && !allHIareMin(nodes)) {
 			it_n = nodes.iterator();
