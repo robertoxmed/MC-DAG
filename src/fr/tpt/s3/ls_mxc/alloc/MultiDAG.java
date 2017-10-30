@@ -186,7 +186,7 @@ public class MultiDAG{
 	/**
 	 * Recursively calculates LFTs of an actor
 	 */
-	private void calcVirtualDeadlines (DAG d) {
+	private void calcLFTs (DAG d) {
 		// Add a list to add the nodes that have to be visited
 		ArrayList<Actor> toVisit = new ArrayList<>();
 		ArrayList<Actor> toVisitHI = new ArrayList<>();
@@ -234,7 +234,7 @@ public class MultiDAG{
 	 */
 	private void calcWeights () {
 		for (DAG d : getMcDags()) {
-			calcVirtualDeadlines(d);
+			calcLFTs(d);
 		}
 	}
 
