@@ -110,7 +110,7 @@ public class MCParser {
 					Node n = nList.item(i);
 					if (n.getNodeType() == Node.ELEMENT_NODE) {
 						Element e = (Element) n;
-						Actor a = new Actor(nb_actors++, e.getAttribute("name"),
+						Actor a = new Actor(nb_actors++, "D"+d+"N"+e.getAttribute("name"),
 											Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
 											Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
 						a.setfProb(Double.parseDouble(e.getElementsByTagName("fprob").item(0).getTextContent()));
@@ -157,8 +157,8 @@ public class MCParser {
 						Element e = (Element) n;
 						// Creating the edge adds it to the corresponding nodes
 						@SuppressWarnings("unused")
-						Edge ed = new Edge(dag.getNodebyName(e.getAttribute("srcActor")),
-								dag.getNodebyName(e.getAttribute("dstActor")));
+						Edge ed = new Edge(dag.getNodebyName("D"+d+"N"+e.getAttribute("srcActor")),
+								dag.getNodebyName("D"+d+"N"+e.getAttribute("dstActor")));
 					}
 				}
 				dag.sanityChecks();
