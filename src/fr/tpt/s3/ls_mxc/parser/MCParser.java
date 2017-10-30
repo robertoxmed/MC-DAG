@@ -126,7 +126,7 @@ public class MCParser {
 					if (n.getNodeType() == Node.ELEMENT_NODE) {
 						Element e = (Element) n;
 						if (e.getAttribute("type").contains("voter")) {
-							Actor a = new Actor(nb_actors++, e.getAttribute("name"),
+							Actor a = new Actor(nb_actors++, "D"+d+"N"+e.getAttribute("name"),
 												Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
 												Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
 							a.setfMechanism(true);
