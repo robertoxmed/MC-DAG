@@ -6,7 +6,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package fr.tpt.s3.ls_mxc.appli;
+package fr.tpt.s3.ls_mxc.bench.dac;
 
 import java.io.IOException;
 
@@ -27,33 +27,22 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 /**
- * Main class to create the MC-DAG Framework. All functionalities should be included
+ * This benchmarks compares us to the state of the art techniques
+ * of multiDAG scheduling for MxC systems
  * @author roberto
  *
  */
-public class Main {
+public class MainBench {
 
-	public static void main (String[] args) throws IOException, InterruptedException {
+	public static void main (String[] args) throws IOException {
 		
-		/* Command line options */
+		// Command line options
 		Options options = new Options();
 		
-		Option input = new Option("i", "input", true, "MC-DAG XML Models");
+		Option input = new Option("i", "input", true, "MC-DAG XML models.");
 		input.setRequired(true);
-		input.setArgs(Option.UNLIMITED_VALUES); // Sets maximum number of threads to be launched
+		input.setArgs(Option.UNLIMITED_VALUES);
 		options.addOption(input);
-		
-		Option outSched = new Option("os", "out-scheduler", true, "Write the scheduling tables into a file.");
-		outSched.setRequired(false);
-		options.addOption(outSched);
-		
-		Option outPrism = new Option("op", "out-prism", true, "Write PRISM model into a file.");
-		outPrism.setRequired(false);
-		options.addOption(outPrism);
-		
-		Option debugOpt = new Option("d", "debug", false, "Enabling debug.");
-		debugOpt.setRequired(false);
-		options.addOption(debugOpt);
 		
 		CommandLineParser parser = new DefaultParser();
 		HelpFormatter formatter = new HelpFormatter();
@@ -61,33 +50,23 @@ public class Main {
 		
 		try {
 			cmd = parser.parse(options, args);
-		} catch (ParseException e) {
+		} catch (ParseException e ) {
 			System.err.println(e.getMessage());
-			formatter.printHelp("MC-DAG framework", options);
-			
+			formatter.printHelp("Benchmarks MultiDAG", options);
 			System.exit(1);
 			return;
 		}
 		
 		String inputFilePath[] = cmd.getOptionValues("input");
-		boolean bOutSched = cmd.hasOption("out-scheduler");
-		boolean bOutPrism = cmd.hasOption("out-prism");
-		boolean debug = cmd.hasOption("debug");
 		Thread threads[] = new Thread[inputFilePath.length];
 		
-		if (debug)
-			System.out.println("[DEBUG] Launching "+inputFilePath.length+" thread(s).");
-		
-		/* Launch threads to solve allocation */
 		for (int i = 0; i < inputFilePath.length; i++) {
-			FrameworkThread ft = new FrameworkThread(inputFilePath[i], bOutSched, bOutPrism, debug);
+			BenchThread bt = new BenchThread(inputFilePath[i]);
+			threads[i] = new Thread(bt);
 			
-			threads[i] = new Thread(ft);
 			threads[i].start();
 		}
 		
-		/* Join all launched threads */
-		for (int i = 0; i < inputFilePath.length; i++)
-			threads[i].join();
+
 	}
 }
