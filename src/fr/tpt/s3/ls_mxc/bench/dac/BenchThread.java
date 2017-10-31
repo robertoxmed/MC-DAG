@@ -40,11 +40,11 @@ public class BenchThread implements Runnable {
 	 * with a federated scheduler
 	 * @return
 	 */
-	public int minCoresBaruah () {
+	private int minCoresBaruah () {
 		int ret = 0;
+		double uRest = 0.0;
 		
 		for (DAG d : dags) {
-			int minClust = 0;
 			double uMax = 0.0;
 			double uLO = 0.0;
 			double uHI = 0.0;
@@ -55,22 +55,30 @@ public class BenchThread implements Runnable {
 				uLO += a.getCLO();
 			}
 			
+			uLO = uLO / d.getDeadline();
+			uHI = uHI / d.getDeadline();
 			uMax = (uHI > uLO) ? uHI : uLO;
-			minClust = (uMax > 1) ? 1 : (int) Math.ceil(uMax);
-			ret += minClust;
+			
+			if (uMax > 1) 
+				ret += (int) Math.ceil(uMax);
+			else 
+				uRest += uMax;
 		}
 		
-		return ret;
+		return ret += (int) Math.ceil(uRest);
 	}
 	
 	
 	@Override
 	public void run () {
+		int bcores = 0;
 		
 		// Read the file
 		mcp.readXML();
 		
 		// Calc the min number of cores for Baruah
+		bcores = minCoresBaruah();
+		System.out.println("[BENCH "+Thread.currentThread().getName()+"] Minimum number of cores Baruah = "+bcores);
 		
 		// Allocate with Baruah -> check if schedulable or not
 		

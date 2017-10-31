@@ -34,7 +34,7 @@ import org.apache.commons.cli.ParseException;
  */
 public class MainBench {
 
-	public static void main (String[] args) throws IOException {
+	public static void main (String[] args) throws IOException, InterruptedException {
 		
 		// Command line options
 		Options options = new Options();
@@ -43,6 +43,10 @@ public class MainBench {
 		input.setRequired(true);
 		input.setArgs(Option.UNLIMITED_VALUES);
 		options.addOption(input);
+		
+		Option jobs = new Option("j", "jobs", true, "Number of threads to be launched.");
+		jobs.setRequired(false);
+		options.addOption(jobs);
 		
 		CommandLineParser parser = new DefaultParser();
 		HelpFormatter formatter = new HelpFormatter();
@@ -58,13 +62,38 @@ public class MainBench {
 		}
 		
 		String inputFilePath[] = cmd.getOptionValues("input");
-		Thread threads[] = new Thread[inputFilePath.length];
+		int nbJobs = 1;
+		int nbFiles = inputFilePath.length;
+		int count = 0;
+				
+		if (cmd.hasOption("jobs"))
+			nbJobs = Integer.parseInt(cmd.getOptionValue("jobs"));
+		Thread threads[] = new Thread[nbJobs];
 		
-		for (int i = 0; i < inputFilePath.length; i++) {
-			BenchThread bt = new BenchThread(inputFilePath[i]);
-			threads[i] = new Thread(bt);
+		/*
+		 *  While files need to be allocated
+		 *  run the tests in the pool of threads
+		 */
+		while (nbFiles != 0) {
+			int launched = 0;
 			
-			threads[i].start();
+			for (int i = 0; i < nbJobs && count < nbFiles; i++) {
+				BenchThread bt = new BenchThread(inputFilePath[count]);
+				threads[i] = new Thread(bt);
+				threads[i].setName("Thread "+i);
+				launched++;
+				count++;
+				threads[i].start();
+			}
+			
+			for (int i = 0; i < launched; i++) {
+				try {
+					threads[i].join();
+					nbFiles--;
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
 		}
 		
 
