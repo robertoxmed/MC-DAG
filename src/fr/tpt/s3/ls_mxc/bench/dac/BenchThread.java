@@ -68,6 +68,9 @@ public class BenchThread implements Runnable {
 		return ret += (int) Math.ceil(uRest);
 	}
 	
+	private synchronized void writeResults () {
+		
+	}
 	
 	@Override
 	public void run () {

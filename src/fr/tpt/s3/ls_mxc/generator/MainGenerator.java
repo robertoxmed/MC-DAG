@@ -83,6 +83,10 @@ public class MainGenerator {
 		debugOpt.setRequired(false);
 		options.addOption(debugOpt);
 		
+		Option jobsOpt = new Option("j", "jobs", true, "Number of jobs");
+		jobsOpt.setRequired(false);
+		options.addOption(jobsOpt);
+		
 		CommandLineParser parser = new DefaultParser();
 		HelpFormatter formatter = new HelpFormatter();
 		CommandLine cmd;
@@ -109,33 +113,45 @@ public class MainGenerator {
 		boolean graph = cmd.hasOption("graphviz");	
 		boolean debug = cmd.hasOption("debug");	
 		String output = cmd.getOptionValue("output");
+		int nbJobs = 1;
+		if (cmd.hasOption("jobs"))
+			nbJobs = Integer.parseInt(cmd.getOptionValue("jobs"));
 		
 		/* ============================= Generator parameters ============================= */
 		
-		if (nbFiles < 0 || nbDags < 0) {
+		if (nbFiles < 0 || nbDags < 0 || nbJobs < 0) {
 			System.err.println("[ERROR] Generator: Number of files & DAGs need to be positive.");
 			formatter.printHelp("DAG Generator", options);
 			System.exit(1);
 			return;
 		}
 		
-		Thread threads[] = new Thread[nbFiles];
+		Thread threads[] = new Thread[nbJobs];
 		
-		for (int i = 0; i < nbFiles; i++) {
-			String outFile = output.substring(0, output.lastIndexOf('.')).concat("-"+i+".xml");
-			GeneratorThread gt = new GeneratorThread(userLO, userHI, cp, edgeProb, UserHIinLO, para, cores, nbDags, outFile, graph, debug);
-			threads[i] = new Thread(gt);
-			threads[i].start();
-		}
+		int nbFilesCreated = 0;
+		int count = 0;
 		
-		for (int i = 0; i < nbFiles; i++) {
-			try {
-				threads[i].join();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		while (nbFilesCreated != nbFiles) {
+			int launched = 0;
+			
+			for (int i = 0; i < nbJobs && count < nbFiles; i++) {
+				String outFile = output.substring(0, output.lastIndexOf('.')).concat("-"+count+".xml");
+				GeneratorThread gt = new GeneratorThread(userLO, userHI, cp, edgeProb, UserHIinLO, para, cores, nbDags, outFile, graph, debug);
+				threads[i] = new Thread(gt);
+				threads[i].setName("GeneratorThread-"+i);
+				launched++;
+				count++;
+				threads[i].start();
+			}
+			
+			for (int i = 0; i < launched; i++) {
+				try {
+					threads[i].join();
+					nbFilesCreated++;
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 		}
-
 	}
 }

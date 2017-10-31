@@ -25,7 +25,7 @@ public class RandomNumberGenerator {
 	private Uniform uniform;
 	
 	public RandomNumberGenerator () {
-		random = new MersenneTwister();
+		random = new MersenneTwister(new java.util.Date());
 		uniform = new Uniform(random);
 	}
 

@@ -80,7 +80,7 @@ public class MainBench {
 			for (int i = 0; i < nbJobs && count < nbFiles; i++) {
 				BenchThread bt = new BenchThread(inputFilePath[count]);
 				threads[i] = new Thread(bt);
-				threads[i].setName("Thread "+i);
+				threads[i].setName("BenchThread-"+i);
 				launched++;
 				count++;
 				threads[i].start();
