@@ -44,9 +44,17 @@ public class MainBench {
 		input.setArgs(Option.UNLIMITED_VALUES);
 		options.addOption(input);
 		
+		Option output = new Option("o", "output", true, "File where results have to be written.");
+		output.setRequired(true);
+		options.addOption(output);
+		
 		Option jobs = new Option("j", "jobs", true, "Number of threads to be launched.");
 		jobs.setRequired(false);
 		options.addOption(jobs);
+		
+		Option debug = new Option("d", "debug", false, "Debug logs.");
+		debug.setRequired(false);
+		options.addOption(debug);
 		
 		CommandLineParser parser = new DefaultParser();
 		HelpFormatter formatter = new HelpFormatter();
@@ -62,6 +70,8 @@ public class MainBench {
 		}
 		
 		String inputFilePath[] = cmd.getOptionValues("input");
+		String outputFilePath = cmd.getOptionValue("output");
+		boolean boolDebug = cmd.hasOption("debug");
 		int nbJobs = 1;
 		int nbFiles = inputFilePath.length;
 		int count = 0;
@@ -77,8 +87,8 @@ public class MainBench {
 		while (nbFiles != 0) {
 			int launched = 0;
 			
-			for (int i = 0; i < nbJobs && count < nbFiles; i++) {
-				BenchThread bt = new BenchThread(inputFilePath[count]);
+			for (int i = 0; i < nbJobs && count < inputFilePath.length; i++) {
+				BenchThread bt = new BenchThread(inputFilePath[count], outputFilePath, boolDebug);
 				threads[i] = new Thread(bt);
 				threads[i].setName("BenchThread-"+i);
 				launched++;
@@ -95,7 +105,7 @@ public class MainBench {
 				}
 			}
 		}
-		
+		System.out.println("[BENCH Main] DONE");
 
 	}
 }

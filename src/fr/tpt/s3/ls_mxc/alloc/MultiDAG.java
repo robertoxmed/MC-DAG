@@ -575,7 +575,7 @@ public class MultiDAG{
 	 * @param debug
 	 * @throws SchedulingException
 	 */
-	public void allocAll () throws SchedulingException {
+	public boolean allocAll () throws SchedulingException {
 		this.setDebug(debug);
 		initTables();
 		calcWeights();
@@ -588,6 +588,7 @@ public class MultiDAG{
 		
 		allocLO();
 		if (isDebug()) printSLO();
+		return true;
 	}
 
 	/*

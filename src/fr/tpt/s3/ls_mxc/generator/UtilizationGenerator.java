@@ -145,6 +145,7 @@ public class UtilizationGenerator {
 		int wantedHIinLO = (int) Math.ceil(minU * rDead);
 		int actualBudget = (int) Math.ceil(rUHI * rDead);
 		Iterator<Actor> it_n;
+		
 		while (wantedHIinLO < actualBudget && !allHIareMin(nodes)) {
 			it_n = nodes.iterator();
 			while (it_n.hasNext()) {
@@ -229,31 +230,6 @@ public class UtilizationGenerator {
 			System.out.println("[DEBUG] GenerateGraph(): >>> LO tasks added.");
 			for (Actor a : nodes) 
 				debugNode(a, "GenerateGraph()");
-		}
-		
-		// Have at least a 2 rank LO graph by adding one extra LO node
-		if (rank == 1) {
-			Actor n = new Actor(id, Integer.toString(id), 0, 1);
-			
-			Iterator<Actor> it = nodes.iterator();
-			while (it.hasNext()) {
-				Actor src = it.next();
-				
-				if (src.getCHI() == 0) {
-					Edge e = new Edge(src, n);
-					src.getSndEdges().add(e);
-					n.getRcvEdges().add(e);
-				} else if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
-						&& src.getCpFromNode_LO() + n.getCLO() <= rDead &&
-						allowedCommunitcation(src, n)) {
-					Edge e = new Edge(src, n);
-					src.getSndEdges().add(e);
-					n.getRcvEdges().add(e);
-				}
-			}
-			nodes.add(n);
-			n.CPfromNode(Actor.LO);
-			id++;
 		}
 		
 		it_n = nodes.iterator();
