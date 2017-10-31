@@ -133,6 +133,32 @@ public class DAG {
 		}
 	}
 	
+	/**
+	 * Returns the utilization in the LO mode
+	 * @return
+	 */
+	public double getULO () {
+		double ret = 0.0;
+		
+		for (Actor a : getNodes())
+			ret += a.getCLO();
+		
+		return ret / getDeadline();
+	}
+	
+	/**
+	 * Returns the utilization in the HI mode
+	 * @return
+	 */
+	public double getUHI () {
+		double ret = 0.0;
+		
+		for (Actor a : getNodes()) {
+			if (a.getCHI() != 0)
+				ret += a.getCHI();
+		}
+		return ret / getDeadline();
+	}
 	
 	/*
 	 * Getters & Setters

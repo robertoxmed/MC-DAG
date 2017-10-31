@@ -19,6 +19,7 @@ package fr.tpt.s3.ls_mxc.bench.dac;
 import java.util.HashSet;
 import java.util.Set;
 
+import fr.tpt.s3.ls_mxc.alloc.LS;
 import fr.tpt.s3.ls_mxc.alloc.MultiDAG;
 import fr.tpt.s3.ls_mxc.alloc.SchedulingException;
 import fr.tpt.s3.ls_mxc.model.Actor;
@@ -135,12 +136,49 @@ public class BenchThread implements Runnable {
 		if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] Minimum number of cores Baruah = " + bcores);
 		
 		// Allocate with Baruah -> check if schedulable or not
+		boolean schedFede = false;
+		int maxFCores = 2 * bcores;
+		double uRestLO = 0.0;
+		double uRestHI = 0.0;
+		double uRestMax = 0.0;
+		
+		for (DAG d : dags) {
+			if (d.getUHI() < 1 && d.getULO() < 1) {
+				uRestLO += d.getULO();
+				uRestHI += d.getUHI();
+			}
+			uRestMax = (uRestHI > uRestLO) ? uRestHI: uRestLO;
+			maxFCores -= (int) Math.ceil(uRestMax);
+		}
+		
+		if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] DAGs with U < 1 use " + (int) Math.ceil(uRestMax)+" cores.");
+		
+		while (!schedFede && bcores < maxFCores) {
+			for (DAG d : dags) {
+				// Utilization of the DAG is higher than 1
+				if (d.getUHI() > 1 || d.getULO() > 1) {
+					try {
+						LS ls = new LS(d.getDeadline(), bcores, d);
+						schedFede = ls.CheckBaruah();			
+					} catch (SchedulingException se) {
+						bcores++;
+						if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] Incrementing the number of cores Federated:" + bcores);
+					}
+				}
+			}
+		}
+		
+		// Maximum num of cores reached but still non schedulable
+		if (!schedFede) {
+			System.out.println("[BENCH "+Thread.currentThread().getName()+"] Non-schedulable with Federated approach and " + maxFCores);
+		}
 		
 		// Calc min number of cores for our method
 		lcores = minCoresLaxity();
 		int maxLCores = 2 * lcores;
 		if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] Minimum number of cores Laxity = " + lcores);
 		
+		// Allocate with our method.
 		boolean schedLax = false;
 		MultiDAG mdag = new MultiDAG(dags, lcores, false);
 		
@@ -150,12 +188,12 @@ public class BenchThread implements Runnable {
 				schedLax = mdag.allocAll();
 			} catch (SchedulingException se) {
 				lcores++;
-				if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] Incrementing the number of cores " + lcores);
+				if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] Incrementing the number of cores Laxity: " + lcores);
 			}
 		}
 			
-		
-		// Allocate with our method.
+		// Write results
+
 	}
 	
 	/*

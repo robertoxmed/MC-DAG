@@ -38,7 +38,7 @@ public class Edge {
 		d.getRcvEdges().add(this);
 	}
 	
-	/**
+	/*
 	 * Getters & Setters	
 	 * 
 	 */

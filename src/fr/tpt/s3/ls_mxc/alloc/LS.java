@@ -103,7 +103,7 @@ public class LS{
 			Actor n = it_n.next();
 			if (n.getCHI() !=  0) {
 				weights_B[n.getId()] = calcHLFETLevel(n, 0) + mcDag.getCritPath()*2; // Add constant
-				n.setWeight_B(n.getWeightLO()+mcDag.getCritPath()*2);
+				n.setWeight_B(n.getWeightLO() + mcDag.getCritPath()*2);
 			} else {
 				weights_B[n.getId()] = calcHLFETLevel(n, 0);
 			}
@@ -603,7 +603,9 @@ public class LS{
 	 * Does the whole allocaiton
 	 * @throws SchedulingException 
 	 */
-	public void AllocAll() throws SchedulingException{
+	public boolean AllocAll() throws SchedulingException{
+		boolean ret = true;
+		
 		this.calcWeights(Actor.HI);
 		if (isDebug()) printW(Actor.HI);
 		this.AllocHI();
@@ -613,12 +615,23 @@ public class LS{
 		if (isDebug()) printW(Actor.LO);
 		this.AllocLO();
 		if (isDebug()) printS_LO();
+		
+		return ret;
 	}
 	
-	public void CheckBaruah() throws SchedulingException{
+	public boolean CheckBaruah() throws SchedulingException{
 		// Check if schedulable by Baruah
+		boolean ret = true;
+		
+		this.calcWeights(Actor.HI);
 		this.calcWeightsB();
+		
+		this.AllocHI();
+		
+		
 		this.Alloc_B();
+		
+		return ret;
 	}
 	
 	/**
