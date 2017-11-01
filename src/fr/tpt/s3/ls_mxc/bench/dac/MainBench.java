@@ -17,6 +17,7 @@
 package fr.tpt.s3.ls_mxc.bench.dac;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -79,6 +80,13 @@ public class MainBench {
 		if (cmd.hasOption("jobs"))
 			nbJobs = Integer.parseInt(cmd.getOptionValue("jobs"));
 		Thread threads[] = new Thread[nbJobs];
+		
+		/*
+		 * Write the fields at the beginning of the output file
+		 */
+		PrintWriter writer = new PrintWriter(outputFilePath, "UTF-8");
+		writer.println("Thread; File; Federated; FSched (?) ; Laxity; LSched (?)");
+		writer.close();
 		
 		/*
 		 *  While files need to be allocated

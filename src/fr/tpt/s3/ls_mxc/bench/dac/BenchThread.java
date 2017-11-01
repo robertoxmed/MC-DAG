@@ -16,6 +16,10 @@
  *******************************************************************************/
 package fr.tpt.s3.ls_mxc.bench.dac;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -116,9 +120,15 @@ public class BenchThread implements Runnable {
 	
 	/**
 	 * Writes the results of the thread in the text file
+	 * @throws IOException 
 	 */
-	private synchronized void writeResults () {
+	@SuppressWarnings("resource")
+	private synchronized void writeResults (int fCores, boolean fSched, int lCores, boolean lSched) throws IOException {
+		Writer output;
+		output = new BufferedWriter(new FileWriter(getOutputFile(), true));
 		
+		output.write(Thread.currentThread().getName()+"; "+fCores+"; "+fSched+"; "+lCores+"; "+lSched+";\n");
+		output.close();
 	}
 	
 	@Override
@@ -193,7 +203,12 @@ public class BenchThread implements Runnable {
 		}
 			
 		// Write results
-
+		try {
+			writeResults(bcores + (int) Math.ceil(uRestMax), schedFede, lcores, schedLax);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	/*
