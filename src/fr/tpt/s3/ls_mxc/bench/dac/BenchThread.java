@@ -133,7 +133,7 @@ public class BenchThread implements Runnable {
 		
 		// Calc the min number of cores for Baruah
 		bcores = minCoresBaruah();
-		if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] Minimum number of cores Baruah = " + bcores);
+		if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] Minimum number of cores Federated = " + bcores);
 		
 		// Allocate with Baruah -> check if schedulable or not
 		boolean schedFede = false;
@@ -156,7 +156,7 @@ public class BenchThread implements Runnable {
 		while (!schedFede && bcores < maxFCores) {
 			for (DAG d : dags) {
 				// Utilization of the DAG is higher than 1
-				if (d.getUHI() > 1 || d.getULO() > 1) {
+				if (d.getUHI() >= 1 || d.getULO() >= 1) {
 					try {
 						LS ls = new LS(d.getDeadline(), bcores, d);
 						schedFede = ls.CheckBaruah();			
