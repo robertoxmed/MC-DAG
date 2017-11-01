@@ -122,12 +122,11 @@ public class BenchThread implements Runnable {
 	 * Writes the results of the thread in the text file
 	 * @throws IOException 
 	 */
-	@SuppressWarnings("resource")
 	private synchronized void writeResults (int fCores, boolean fSched, int lCores, boolean lSched) throws IOException {
 		Writer output;
 		output = new BufferedWriter(new FileWriter(getOutputFile(), true));
 		
-		output.write(Thread.currentThread().getName()+"; "+fCores+"; "+fSched+"; "+lCores+"; "+lSched+";\n");
+		output.write(Thread.currentThread().getName()+"; "+getInputFile()+"; "+fCores+"; "+fSched+"; "+lCores+"; "+lSched+";\n");
 		output.close();
 	}
 	

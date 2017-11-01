@@ -81,8 +81,8 @@ public class UtilizationGenerator {
 		// Budgets deduced by utilization and deadline
 		// Randomly generate a deadline
 		int rDead = rng.randomUnifInt(userCp/2, userCp);
-		double rULO = rng.randomUnifDouble(userU_LO / 2, userU_LO);
-		double rUHI = rng.randomUnifDouble(userU_HI / 2, userU_LO);
+		double rULO = rng.randomUnifDouble(0.2, userU_LO);
+		double rUHI = rng.randomUnifDouble(0.2, userU_LO);
 		
 		int budgetHI = (int) Math.ceil(rDead * rUHI);
 		int budgetLO = (int) Math.ceil(rDead * rULO);		

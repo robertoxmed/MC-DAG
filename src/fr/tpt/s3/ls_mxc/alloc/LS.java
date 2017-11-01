@@ -103,7 +103,7 @@ public class LS{
 			Actor n = it_n.next();
 			if (n.getCHI() !=  0) {
 				weights_B[n.getId()] = calcHLFETLevel(n, 0) + mcDag.getCritPath()*2; // Add constant
-				n.setWeight_B(n.getWeightLO() + mcDag.getCritPath()*2);
+				n.setWeight_B(n.getWeightLO() + mcDag.getCritPath() * 2);
 			} else {
 				weights_B[n.getId()] = calcHLFETLevel(n, 0);
 			}
