@@ -115,7 +115,6 @@ public class Actor {
 	}
 	
 	public void checkifSinkinHI() {
-		Iterator<Edge> it_e = this.getSndEdges().iterator();
 		
 		if(this.getCHI() == 0) {
 			this.setSinkinHI(false);
@@ -124,6 +123,7 @@ public class Actor {
 		
 		this.setSinkinHI(true);
 		
+		Iterator<Edge> it_e = this.getSndEdges().iterator();
 		while (it_e.hasNext()){
 			Edge e = it_e.next();
 			Actor dst = e.getDest();
@@ -154,22 +154,26 @@ public class Actor {
 			int max = 0;
 			int tmp = 0;
 			Iterator<Edge> it_e = this.getRcvEdges().iterator();
+			
 			while (it_e.hasNext()){
 				Edge e = it_e.next();
 				if (mode == Actor.LO) {
-					tmp = e.getSrc().getCpFromNode_LO();
+					tmp = e.getSrc().CPfromNode(Actor.LO);
 					if (max < tmp)
 						max = tmp;
 				} else {
-					tmp = e.getSrc().getCpFromNode_HI();
+					tmp = e.getSrc().CPfromNode(Actor.HI);
 					if (max < tmp)
 						max = tmp;
 				}
 			}
-			if (mode == 0)
-				this.setCpFromNode_LO(max + this.getCLO());
-			else
-				this.setCpFromNode_HI(max + this.getCHI());
+			if (mode == Actor.LO) {
+				max += this.getCLO();
+				this.setCpFromNode_LO(max);
+			} else {
+				max += this.getCHI();
+				this.setCpFromNode_HI(max);
+			}
 			
 			return max;
 		}

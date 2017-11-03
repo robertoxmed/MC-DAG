@@ -584,10 +584,10 @@ public class MultiDAG{
 		
 		initRemainT();
 		allocHI();
-		if (isDebug()) printSHI();
+		//if (isDebug()) printSHI();
 		
 		allocLO();
-		if (isDebug()) printSLO();
+		//if (isDebug()) printSLO();
 		return true;
 	}
 

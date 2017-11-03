@@ -61,14 +61,8 @@ public class BenchThread implements Runnable {
 			double uLO = 0.0;
 			double uHI = 0.0;
 			
-			for (Actor a : d.getNodes()) {
-				if (a.getCHI() != 0)
-					uHI += a.getCHI();
-				uLO += a.getCLO();
-			}
-			
-			uLO = uLO / d.getDeadline();
-			uHI = uHI / d.getDeadline();
+			uLO = d.getULO();
+			uHI = d.getUHI();
 			uMax = (uHI > uLO) ? uHI : uLO;
 			
 			if (uMax > 1) 
@@ -126,8 +120,29 @@ public class BenchThread implements Runnable {
 		Writer output;
 		output = new BufferedWriter(new FileWriter(getOutputFile(), true));
 		
-		output.write(Thread.currentThread().getName()+"; "+getInputFile()+"; "+fCores+"; "+fSched+"; "+lCores+"; "+lSched+";\n");
+		int outBFSched = 0;
+		if (fSched)
+			outBFSched = 1;
+		int outBLSched = 0;
+		if (lSched)
+			outBLSched = 1;
+		
+		output.write(Thread.currentThread().getName()+"; "+getInputFile()+"; "+fCores+"; "+outBFSched+"; "+lCores+"; "+outBLSched+";\n");
 		output.close();
+	}
+	
+	/**
+	 * Checks if all DAGs will be scheduled using EDF
+	 * @return
+	 */
+	private boolean allDAGsEDF (Set<DAG> dags) {
+		
+		for (DAG d : dags) {
+			if (d.getUHI() >= 1 || d.getULO() >= 1)
+				return false;
+		}
+		
+		return true;
 	}
 	
 	@Override
@@ -176,6 +191,13 @@ public class BenchThread implements Runnable {
 				}
 			}
 		}
+		
+		/*
+		 *  If all DAGs are scheduled using EDF and we gave the minimum number
+		 *  the set is schedulable
+		 */
+		if (allDAGsEDF(dags))
+			schedFede = true;
 		
 		// Maximum num of cores reached but still non schedulable
 		if (!schedFede) {

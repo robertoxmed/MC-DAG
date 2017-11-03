@@ -189,11 +189,9 @@ public class UtilizationGenerator {
 			for (int j=0; j < nodesPerRank && budgetLO > 0; j++) {
 				Actor n = new Actor(id, Integer.toString(id), 0, 0);
 			
-				// Roll a C_HI and test if budget is left
+				// Roll a C_LO and test if budget is left
 				n.setCHI(0);
 				n.setCLO(rng.randomUnifInt(1, CLOBound));
-				if (n.getCLO() == 0)
-					n.setCLO(1); // Minimal execution time
 				
 				if (budgetLO - n.getCLO() > 0) {
 					budgetLO = budgetLO - n.getCLO();

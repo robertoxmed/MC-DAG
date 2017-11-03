@@ -110,7 +110,7 @@ public class MCParser {
 					Node n = nList.item(i);
 					if (n.getNodeType() == Node.ELEMENT_NODE) {
 						Element e = (Element) n;
-						Actor a = new Actor(nb_actors++, "D"+d+"N"+e.getAttribute("name"),
+						Actor a = new Actor(nb_actors++, e.getAttribute("name"),
 											Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
 											Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
 						a.setfProb(Double.parseDouble(e.getElementsByTagName("fprob").item(0).getTextContent()));
@@ -126,7 +126,7 @@ public class MCParser {
 					if (n.getNodeType() == Node.ELEMENT_NODE) {
 						Element e = (Element) n;
 						if (e.getAttribute("type").contains("voter")) {
-							Actor a = new Actor(nb_actors++, "D"+d+"N"+e.getAttribute("name"),
+							Actor a = new Actor(nb_actors++, e.getAttribute("name"),
 												Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
 												Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
 							a.setfMechanism(true);
@@ -157,8 +157,8 @@ public class MCParser {
 						Element e = (Element) n;
 						// Creating the edge adds it to the corresponding nodes
 						@SuppressWarnings("unused")
-						Edge ed = new Edge(dag.getNodebyName("D"+d+"N"+e.getAttribute("srcActor")),
-								dag.getNodebyName("D"+d+"N"+e.getAttribute("dstActor")));
+						Edge ed = new Edge(dag.getNodebyName(e.getAttribute("srcActor")),
+								dag.getNodebyName(e.getAttribute("dstActor")));
 					}
 				}
 				dag.sanityChecks();
@@ -538,14 +538,13 @@ public class MCParser {
 			
 			// Root element (MC System)
 			Element rootElement = doc.createElement("mcsystem");
-			int i = 0;
 			doc.appendChild(rootElement);
 			
 			for (DAG d : ug.getGenDAG()) {
 				// MC DAG
 				Element mcdag = doc.createElement("mcdag");
 				Attr dagName = doc.createAttribute("name");
-				dagName.setValue("genned-"+ug.getUserU_LO()+"-"+ug.getUserU_HI()+"-ed-"+ug.getEdgeProb()+"-"+i++);
+				dagName.setValue("genned-"+ug.getUserU_LO()+"-"+ug.getUserU_HI()+"-ed-"+ug.getEdgeProb()+"-"+d.getId());
 				Attr dagDead = doc.createAttribute("deadline");
 				dagDead.setValue(String.valueOf(d.getDeadline()));
 				mcdag.setAttributeNodeNS(dagName);
@@ -555,7 +554,7 @@ public class MCParser {
 				for (Actor a : d.getNodes()) {
 					Element actor = doc.createElement("actor");
 					Attr actorNb = doc.createAttribute("name");
-					actorNb.setNodeValue(a.getName());
+					actorNb.setNodeValue("D"+d.getId()+"N"+a.getId());
 					actor.setAttributeNode(actorNb);
 					// Add Ci HI and LO
 					Element chi = doc.createElement("chi");
@@ -581,9 +580,9 @@ public class MCParser {
 							portName.setValue("p"+counter);
 							counter++;
 							Attr portSrc = doc.createAttribute("srcActor");
-							portSrc.setValue(e.getSrc().getName());
+							portSrc.setValue("D"+d.getId()+"N"+e.getSrc().getName());
 							Attr portDst = doc.createAttribute("dstActor");
-							portDst.setValue(e.getDest().getName());
+							portDst.setValue("D"+d.getId()+"N"+e.getDest().getName());
 							edge.setAttributeNode(portName);
 							edge.setAttributeNode(portSrc);
 							edge.setAttributeNode(portDst);
