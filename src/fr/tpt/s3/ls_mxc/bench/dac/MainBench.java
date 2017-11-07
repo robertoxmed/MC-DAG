@@ -18,6 +18,8 @@ package fr.tpt.s3.ls_mxc.bench.dac;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -75,11 +77,9 @@ public class MainBench {
 		boolean boolDebug = cmd.hasOption("debug");
 		int nbJobs = 1;
 		int nbFiles = inputFilePath.length;
-		int count = 0;
 				
 		if (cmd.hasOption("jobs"))
 			nbJobs = Integer.parseInt(cmd.getOptionValue("jobs"));
-		Thread threads[] = new Thread[nbJobs];
 		
 		/*
 		 * Write the fields at the beginning of the output file
@@ -92,27 +92,17 @@ public class MainBench {
 		 *  While files need to be allocated
 		 *  run the tests in the pool of threads
 		 */
-		while (nbFiles != 0) {
-			int launched = 0;
+		
+		int i_files = 0;
+		ExecutorService executor = Executors.newFixedThreadPool(nbJobs);
+		
+		while (i_files != nbFiles) {
+			BenchThread bt = new BenchThread(inputFilePath[i_files], outputFilePath, boolDebug);
 			
-			for (int i = 0; i < nbJobs && count < inputFilePath.length; i++) {
-				BenchThread bt = new BenchThread(inputFilePath[count], outputFilePath, boolDebug);
-				threads[i] = new Thread(bt);
-				threads[i].setName("BenchThread-"+i);
-				launched++;
-				count++;
-				threads[i].start();
-			}
-			
-			for (int i = 0; i < launched; i++) {
-				try {
-					threads[i].join();
-					nbFiles--;
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
+			executor.execute(bt);
+			i_files++;
 		}
+		executor.shutdown();
 		System.out.println("[BENCH Main] DONE");
 
 	}

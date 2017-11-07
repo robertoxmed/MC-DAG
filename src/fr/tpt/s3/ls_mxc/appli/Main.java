@@ -17,6 +17,8 @@
 package fr.tpt.s3.ls_mxc.appli;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -51,6 +53,10 @@ public class Main {
 		outPrism.setRequired(false);
 		options.addOption(outPrism);
 		
+		Option jobs = new Option("j", "jobs", true, "Number of threads to be launched.");
+		jobs.setRequired(false);
+		options.addOption(jobs);
+		
 		Option debugOpt = new Option("d", "debug", false, "Enabling debug.");
 		debugOpt.setRequired(false);
 		options.addOption(debugOpt);
@@ -73,21 +79,26 @@ public class Main {
 		boolean bOutSched = cmd.hasOption("out-scheduler");
 		boolean bOutPrism = cmd.hasOption("out-prism");
 		boolean debug = cmd.hasOption("debug");
-		Thread threads[] = new Thread[inputFilePath.length];
+		int nbFiles = inputFilePath.length;
+		
+		int nbJobs = 1;
+		if (cmd.hasOption("jobs"))
+			nbJobs = Integer.parseInt(cmd.getOptionValue("jobs"));
 		
 		if (debug)
 			System.out.println("[DEBUG] Launching "+inputFilePath.length+" thread(s).");
 		
-		/* Launch threads to solve allocation */
-		for (int i = 0; i < inputFilePath.length; i++) {
-			FrameworkThread ft = new FrameworkThread(inputFilePath[i], bOutSched, bOutPrism, debug);
-			
-			threads[i] = new Thread(ft);
-			threads[i].start();
-		}
+		int i_files = 0;
+		ExecutorService executor = Executors.newFixedThreadPool(nbJobs);
 		
-		/* Join all launched threads */
-		for (int i = 0; i < inputFilePath.length; i++)
-			threads[i].join();
+		/* Launch threads to solve allocation */
+		while (i_files != nbFiles) {
+			FrameworkThread ft = new FrameworkThread(inputFilePath[i_files], bOutSched, bOutPrism, debug);
+			
+			executor.execute(ft);
+			i_files++;
+		}
+		executor.shutdown();
+		System.out.println("[FRAMEWORK Main] DONE");
 	}
 }
