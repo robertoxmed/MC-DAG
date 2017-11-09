@@ -41,11 +41,14 @@ public class BenchThread implements Runnable {
 	private String outputFile;
 	private boolean debug;
 	
+	private boolean schedFede;
+	
 	public BenchThread (String input, String output, boolean debug) {
 		setInputFile(input);
 		dags = new HashSet<DAG>();
 		setOutputFile(output);
 		setDebug(debug);
+		setSchedFede(true);
 		mcp = new MCParser(inputFile, null, null, dags);
 	}
 	
@@ -124,7 +127,7 @@ public class BenchThread implements Runnable {
 		output = new BufferedWriter(new FileWriter(getOutputFile(), true));
 		
 		int outBFSched = 0;
-		if (fSched)
+		if (isSchedFede())
 			outBFSched = 1;
 		int outBLSched = 0;
 		if (lSched)
@@ -162,7 +165,7 @@ public class BenchThread implements Runnable {
 		return ret;
 	}
 	
-	private int testSystemFederated (int maxCores, boolean schedulable) {
+	private int testSystemFederated (int maxCores) {
 		int ret = 0;
 		int testedCores = 0;
 		Set<DAG> clusteredDAGs = new HashSet<DAG>();
@@ -171,8 +174,9 @@ public class BenchThread implements Runnable {
 		// Test schedulability of all DAGs with the federated approach
 		for (DAG d : dags) {
 			if (d.getUHI() >= 1 || d.getULO() >= 1) {
+				Boolean b = new Boolean(false);
 				clusteredDAGs.add(d);
-				dagMap.put(d, false);
+				dagMap.put(d,b);
 				testedCores += d.getMinCores();
 			}
 		}
@@ -202,8 +206,8 @@ public class BenchThread implements Runnable {
 		
 		for (DAG d : dags) {
 			if (dagMap.get(d) != null) {
-				if (dagMap.get(d) == false)
-					schedulable = false;
+				if (dagMap.get(d).booleanValue() == false)
+					setSchedFede(false);
 			}
 		}
 		
@@ -226,7 +230,6 @@ public class BenchThread implements Runnable {
 		if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] Minimum number of cores Federated = " + bcores);
 		
 		// Allocate with Baruah -> check if schedulable or not
-		boolean schedFede = true;
 		int maxFCores = 2 * lcores;
 		double uRestLO = 0.0;
 		double uRestHI = 0.0;
@@ -243,39 +246,36 @@ public class BenchThread implements Runnable {
 		
 		if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] DAGs with U < 1 use " + (int) Math.ceil(uRestMax)+" cores.");
 		
-		if (allDAGsEDF(dags)) {
-			maxFCores = (int) Math.ceil(uRestMax);
-		} else {
-			maxFCores = testSystemFederated(maxFCores, schedFede);		
-			maxFCores += (int) Math.ceil(uRestMax);
-		}
-		
 		/*
 		 *  If all DAGs are scheduled using EDF and we gave the minimum number
 		 *  the set is schedulable
 		 */
-		
+		if (allDAGsEDF(dags)) {
+			maxFCores = (int) Math.ceil(uRestMax);
+		} else {
+			maxFCores = testSystemFederated(maxFCores);		
+			maxFCores += (int) Math.ceil(uRestMax);
+		}
 		
 		// Maximum num of cores reached but still non schedulable
-		if (!schedFede) {
+		if (!isSchedFede())
 			System.out.println("[BENCH "+Thread.currentThread().getName()+"] Non-schedulable with Federated approach and " + maxFCores);
-		}
 		
 		// Calc min number of cores for our method
 		int maxLCores = 2 * lcores;
-		if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] Minimum number of cores Laxity = " + lcores);
+		if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] Minimum number of cores Laxity = " + lcores+"; max cores = "+maxLCores);
 		
 		// Allocate with our method.
 		boolean schedLax = false;
 		MultiDAG mdag = new MultiDAG(dags, lcores, false);
 		
-		while (!schedLax && lcores < maxLCores) {
+		while (!schedLax && lcores <= maxLCores) {
 			try {
 				mdag.setNbCores(lcores);
 				schedLax = mdag.allocAll();
 			} catch (SchedulingException se) {
 				lcores++;
-				if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] Incrementing the number of cores Laxity: " + lcores);
+				if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] LAXITY incrementing number of cores: " + lcores);
 			}
 		}
 			
@@ -329,5 +329,13 @@ public class BenchThread implements Runnable {
 
 	public void setOutputFile(String outputFile) {
 		this.outputFile = outputFile;
+	}
+
+	public boolean isSchedFede() {
+		return schedFede;
+	}
+
+	public void setSchedFede(boolean schedFede) {
+		this.schedFede = schedFede;
 	}
 }

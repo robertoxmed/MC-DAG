@@ -433,7 +433,7 @@ public class MultiDAG{
 	 * Allocates the DAGs in the HI mode and registers virtual deadlines
 	 * @throws SchedulingException
 	 */
-	public void allocHI () throws SchedulingException {
+	public boolean allocHI () throws SchedulingException {
 		List<Actor> sched = new LinkedList<>();
 		lHI = new ArrayList<Actor>();
 		
@@ -498,13 +498,14 @@ public class MultiDAG{
 			taskFinished = false;
 			lit = lHI.listIterator();
 		}
+		return true;
 	}
 	
 	/**
 	 * Allocates the DAGs in LO mode
 	 * @throws SchedulingException
 	 */
-	public void allocLO () throws SchedulingException {
+	public boolean allocLO () throws SchedulingException{
 		List<Actor> sched = new LinkedList<>();
 		lLO = new ArrayList<Actor>();
 		
@@ -568,6 +569,7 @@ public class MultiDAG{
 			taskFinished = false;
 			lit = lLO.listIterator();
 		}
+		return true;
 	}
 	
 	/**
@@ -576,6 +578,7 @@ public class MultiDAG{
 	 * @throws SchedulingException
 	 */
 	public boolean allocAll () throws SchedulingException {
+		boolean ret = true;
 		this.setDebug(debug);
 		initTables();
 		calcWeights();
@@ -583,12 +586,15 @@ public class MultiDAG{
 		if (isDebug()) printLFT();
 		
 		initRemainT();
-		allocHI();
+		if (!allocHI())
+			return false;
 		if (isDebug()) printSHI();
 		
-		allocLO();
+		if (!allocLO())
+			return false;
 		if (isDebug()) printSLO();
-		return true;
+		
+		return ret;
 	}
 
 	/*
