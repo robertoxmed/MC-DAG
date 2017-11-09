@@ -283,7 +283,6 @@ public class BenchThread implements Runnable {
 		try {
 			writeResults(maxFCores, schedFede, lcores, schedLax);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

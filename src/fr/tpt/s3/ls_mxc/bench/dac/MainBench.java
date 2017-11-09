@@ -104,10 +104,7 @@ public class MainBench {
 			i_files++;
 		}
 		executor.shutdown();
-		
 		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-		
 		System.out.println("[BENCH Main] DONE");
-
 	}
 }
