@@ -102,7 +102,7 @@ public class LS{
 		while(it_n.hasNext()){
 			Actor n = it_n.next();
 			if (n.getCHI() !=  0) {
-				weights_B[n.getId()] = calcHLFETLevel(n, 0) + mcDag.getCritPath()*2; // Add constant
+				weights_B[n.getId()] = calcHLFETLevel(n, 0) + 200; // Add constant
 				n.setWeight_B(n.getWeightLO() + mcDag.getCritPath() * 2);
 			} else {
 				weights_B[n.getId()] = calcHLFETLevel(n, 0);
@@ -216,10 +216,10 @@ public class LS{
 		for(int t = deadline - 1; t >= 0 ; t--){
 			
 			// Check if there is enough slots to finish executing tasks
-			/* if (! checkFreeSlot(t_hi, getMxcDag().getNodes().size(), (t+1) * nbCores)){
+			if (! checkFreeSlot(t_hi, getMxcDag().getNodes().size(), (t+1) * nbCores)){
 				SchedulingException se = new SchedulingException("Alloc HI : Not enough slot lefts");
 				throw se;
-			} */
+			}
 			
 			for(int c = 0; c < nbCores; c++) {
 				if (li_it.hasNext()){
@@ -627,7 +627,6 @@ public class LS{
 		this.calcWeightsB();
 		
 		this.AllocHI();
-		
 		
 		this.Alloc_B();
 		

@@ -28,6 +28,7 @@ public class UtilizationGenerator {
 	
 	private double userU_LO;
 	private double userU_HI;
+	private double lowerU;
 	private int userCp;
 	private int nbNodes;
 	private int nbCores;
@@ -41,9 +42,12 @@ public class UtilizationGenerator {
 	private int deadline;
 	private boolean debug;
 	
-	public UtilizationGenerator (double U_LO, double U_HI, int cp, int edgeProb, double UHIinLO, int para, int cores, int nbDags, boolean debug) {
+	private int possibleDeadlines[] = {10, 15, 20, 30, 8, 12, 14}; 
+	
+	public UtilizationGenerator (double U_LO, double U_HI, int cp, int edgeProb, double UHIinLO, double lU, int para, int cores, int nbDags, boolean debug) {
 		this.setUserU_LO(U_LO);
 		this.setUserU_HI(U_HI);
+		this.setLowerU(lU);
 		this.setUserCp(cp);
 		this.setEdgeProb(edgeProb);
 		this.setuHIinLO(UHIinLO);
@@ -80,9 +84,10 @@ public class UtilizationGenerator {
 		
 		// Budgets deduced by utilization and deadline
 		// Randomly generate a deadline
-		int rDead = rng.randomUnifInt(userCp/2, userCp);
-		double rULO = rng.randomUnifDouble(0.2, userU_LO);
-		double rUHI = rng.randomUnifDouble(0.2, userU_LO);
+		int idxDead = rng.randomUnifInt(0, possibleDeadlines.length - 1);
+		int rDead = possibleDeadlines[idxDead];
+		double rULO = rng.randomUnifDouble(lowerU, userU_HI);
+		double rUHI = rULO;
 		
 		int budgetHI = (int) Math.ceil(rDead * rUHI);
 		int budgetLO = (int) Math.ceil(rDead * rULO);		
@@ -141,7 +146,7 @@ public class UtilizationGenerator {
 		}
 		
 		// Deflate HI execution times
-		double minU = Math.min(rUHI, rULO) / 2;
+		double minU = uHIinLO;
 		int wantedHIinLO = (int) Math.ceil(minU * rDead);
 		int actualBudget = (int) Math.ceil(rUHI * rDead);
 		Iterator<Actor> it_n;
@@ -493,5 +498,13 @@ public class UtilizationGenerator {
 
 	public void setNbDags(int nbDags) {
 		this.nbDags = nbDags;
+	}
+
+	public double getLowerU() {
+		return lowerU;
+	}
+
+	public void setLowerU(double lowerU) {
+		this.lowerU = lowerU;
 	}
 }

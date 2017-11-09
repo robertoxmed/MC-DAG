@@ -85,7 +85,7 @@ public class MainBench {
 		 * Write the fields at the beginning of the output file
 		 */
 		PrintWriter writer = new PrintWriter(outputFilePath, "UTF-8");
-		writer.println("Thread; File; Federated; FSched (?) ; Laxity; LSched (?)");
+		writer.println("Thread; File; Federated; FSched (?) ; Laxity; LSched (?); Utilization");
 		writer.close();
 		
 		/*

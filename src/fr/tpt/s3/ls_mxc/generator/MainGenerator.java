@@ -47,6 +47,10 @@ public class MainGenerator {
 		o_hi_lo.setRequired(true);
 		options.addOption(o_hi_lo);
 		
+		Option o_lo_u = new Option("lu", "lower_ut", true, "Lower bound utilization");
+		o_lo_u.setRequired(true);
+		options.addOption(o_lo_u);
+		
 		Option o_eprob = new Option("e", "eprobability", true, "Probability of edges");
 		o_eprob.setRequired(true);
 		options.addOption(o_eprob);
@@ -104,6 +108,7 @@ public class MainGenerator {
 		double userHI = Double.parseDouble(cmd.getOptionValue("hi_utilization"));
 		double userLO = Double.parseDouble(cmd.getOptionValue("lo_utilization"));
 		double UserHIinLO = Double.parseDouble(cmd.getOptionValue("hi_lo_utilization"));
+		double userLowerBound = Double.parseDouble(cmd.getOptionValue("lower_ut"));
 		int edgeProb = Integer.parseInt(cmd.getOptionValue("eprobability"));
 		int cp = Integer.parseInt(cmd.getOptionValue("critical_path"));
 		int nbDags = Integer.parseInt(cmd.getOptionValue("num_dags"));
@@ -136,7 +141,7 @@ public class MainGenerator {
 			
 			for (int i = 0; i < nbJobs && count < nbFiles; i++) {
 				String outFile = output.substring(0, output.lastIndexOf('.')).concat("-"+count+".xml");
-				GeneratorThread gt = new GeneratorThread(userLO, userHI, cp, edgeProb, UserHIinLO, para, cores, nbDags, outFile, graph, debug);
+				GeneratorThread gt = new GeneratorThread(userLO, userHI, cp, edgeProb, UserHIinLO, userLowerBound, para, cores, nbDags, outFile, graph, debug);
 				threads[i] = new Thread(gt);
 				threads[i].setName("GeneratorThread-"+i);
 				launched++;

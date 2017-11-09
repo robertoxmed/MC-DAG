@@ -20,7 +20,9 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import fr.tpt.s3.ls_mxc.alloc.LS;
@@ -118,6 +120,7 @@ public class BenchThread implements Runnable {
 	 */
 	private synchronized void writeResults (int fCores, boolean fSched, int lCores, boolean lSched) throws IOException {
 		Writer output;
+		double uDAGs = 0.0;
 		output = new BufferedWriter(new FileWriter(getOutputFile(), true));
 		
 		int outBFSched = 0;
@@ -127,7 +130,10 @@ public class BenchThread implements Runnable {
 		if (lSched)
 			outBLSched = 1;
 		
-		output.write(Thread.currentThread().getName()+"; "+getInputFile()+"; "+fCores+"; "+outBFSched+"; "+lCores+"; "+outBLSched+";\n");
+		for (DAG d : dags)
+			uDAGs += d.getU();
+		
+		output.write(Thread.currentThread().getName()+"; "+getInputFile()+"; "+fCores+"; "+outBFSched+"; "+lCores+"; "+outBLSched+"; "+uDAGs+";\n");
 		output.close();
 	}
 	
@@ -145,6 +151,65 @@ public class BenchThread implements Runnable {
 		return true;
 	}
 	
+	
+	private boolean testFederated (DAG d, int cores) throws SchedulingException {
+		boolean ret = false;
+		
+		LS ls = new LS(d.getDeadline(), cores, d);
+		
+		ret = ls.CheckBaruah();
+		
+		return ret;
+	}
+	
+	private int testSystemFederated (int maxCores, boolean schedulable) {
+		int ret = 0;
+		int testedCores = 0;
+		Set<DAG> clusteredDAGs = new HashSet<DAG>();
+		Map<DAG, Boolean> dagMap = new HashMap<DAG, Boolean>();
+		
+		// Test schedulability of all DAGs with the federated approach
+		for (DAG d : dags) {
+			if (d.getUHI() >= 1 || d.getULO() >= 1) {
+				clusteredDAGs.add(d);
+				dagMap.put(d, false);
+				testedCores += d.getMinCores();
+			}
+		}
+		
+		while (testedCores < maxCores) {
+			for (DAG d : clusteredDAGs) {
+				int maxQuota = d.getMinCores() * 2;
+				int addedQuota = 0;
+				boolean schedFed = false;
+				
+				while (!schedFed && addedQuota < maxQuota - d.getMinCores()) {
+					try {
+						schedFed = testFederated(d, d.getMinCores() + addedQuota);
+					} catch (SchedulingException se) {
+						addedQuota++;
+						if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] Incrementing the number of cores Federated: " + addedQuota);
+					}
+				}
+				
+				if (schedFed)
+					dagMap.put(d, true);
+				
+				ret += d.getMinCores() + addedQuota;
+				testedCores += ret;
+			}
+		}
+		
+		for (DAG d : dags) {
+			if (dagMap.get(d) != null) {
+				if (dagMap.get(d) == false)
+					schedulable = false;
+			}
+		}
+		
+		return ret;
+	}
+	
 	@Override
 	public void run () {
 		int bcores = 0;
@@ -156,12 +221,13 @@ public class BenchThread implements Runnable {
 		mcp.readXML();
 		
 		// Calc the min number of cores for Baruah
+		lcores = minCoresLaxity();
 		bcores = minCoresBaruah();
 		if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] Minimum number of cores Federated = " + bcores);
 		
 		// Allocate with Baruah -> check if schedulable or not
-		boolean schedFede = false;
-		int maxFCores = 2 * bcores;
+		boolean schedFede = true;
+		int maxFCores = 2 * lcores;
 		double uRestLO = 0.0;
 		double uRestHI = 0.0;
 		double uRestMax = 0.0;
@@ -171,33 +237,24 @@ public class BenchThread implements Runnable {
 				uRestLO += d.getULO();
 				uRestHI += d.getUHI();
 			}
-			uRestMax = (uRestHI > uRestLO) ? uRestHI: uRestLO;
-			maxFCores -= (int) Math.ceil(uRestMax);
+			uRestMax += (uRestHI > uRestLO) ? uRestHI: uRestLO;
 		}
+		maxFCores -= (int) Math.ceil(uRestMax);
 		
 		if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] DAGs with U < 1 use " + (int) Math.ceil(uRestMax)+" cores.");
 		
-		while (!schedFede && bcores < maxFCores) {
-			for (DAG d : dags) {
-				// Utilization of the DAG is higher than 1
-				if (d.getUHI() >= 1 || d.getULO() >= 1) {
-					try {
-						LS ls = new LS(d.getDeadline(), bcores, d);
-						schedFede = ls.CheckBaruah();			
-					} catch (SchedulingException se) {
-						bcores++;
-						if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] Incrementing the number of cores Federated:" + bcores);
-					}
-				}
-			}
+		if (allDAGsEDF(dags)) {
+			maxFCores = (int) Math.ceil(uRestMax);
+		} else {
+			maxFCores = testSystemFederated(maxFCores, schedFede);		
+			maxFCores += (int) Math.ceil(uRestMax);
 		}
 		
 		/*
 		 *  If all DAGs are scheduled using EDF and we gave the minimum number
 		 *  the set is schedulable
 		 */
-		if (allDAGsEDF(dags))
-			schedFede = true;
+		
 		
 		// Maximum num of cores reached but still non schedulable
 		if (!schedFede) {
@@ -205,7 +262,6 @@ public class BenchThread implements Runnable {
 		}
 		
 		// Calc min number of cores for our method
-		lcores = minCoresLaxity();
 		int maxLCores = 2 * lcores;
 		if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] Minimum number of cores Laxity = " + lcores);
 		
@@ -225,7 +281,7 @@ public class BenchThread implements Runnable {
 			
 		// Write results
 		try {
-			writeResults(bcores + (int) Math.ceil(uRestMax), schedFede, lcores, schedLax);
+			writeResults(maxFCores, schedFede, lcores, schedLax);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

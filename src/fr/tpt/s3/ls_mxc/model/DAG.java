@@ -160,6 +160,28 @@ public class DAG {
 		return ret / getDeadline();
 	}
 	
+	/**
+	 * Returns the maximum utilization of the DAG
+	 * @return
+	 */
+	public double getU () {
+		double ret = (this.getUHI() > this.getULO()) ? this.getUHI() : this.getULO();
+		
+		return ret;
+	}
+	
+	/**
+	 * Returns the number of minimal cores required to schedule the DAG
+	 * @return
+	 */
+	public int getMinCores() {
+		int ret = 0;
+		
+		ret = (int) ((this.getUHI() > this.getULO()) ? Math.ceil(getUHI()) : Math.ceil(getULO()));
+		
+		return ret;
+	}
+	
 	/*
 	 * Getters & Setters
 	 * 
