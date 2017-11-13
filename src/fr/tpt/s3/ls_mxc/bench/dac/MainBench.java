@@ -105,6 +105,24 @@ public class MainBench {
 		}
 		executor.shutdown();
 		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		
+		int i_files2 = 0;
+		String outFile2 = outputFilePath.substring(0, outputFilePath.lastIndexOf('.')).concat("-schedulability.csv");
+		writer = new PrintWriter(outFile2, "UTF-8");
+		writer.println("Thread; File; FSched (?) ; LSched (?); Utilization");
+		writer.close();
+		
+		ExecutorService executor2 = Executors.newFixedThreadPool(nbJobs);
+		while (i_files2 != nbFiles) {
+			BenchThread2 bt2 = new BenchThread2(inputFilePath[i_files2], outFile2, boolDebug);
+			
+			executor2.execute(bt2);
+			i_files2++;
+		}
+		
+		executor2.shutdown();
+		executor2.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+
 		System.out.println("[BENCH Main] DONE");
 	}
 }

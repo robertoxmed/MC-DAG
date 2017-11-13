@@ -19,6 +19,7 @@ package fr.tpt.s3.ls_mxc.appli;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -99,6 +100,7 @@ public class Main {
 			i_files++;
 		}
 		executor.shutdown();
+		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 		System.out.println("[FRAMEWORK Main] DONE");
 	}
 }

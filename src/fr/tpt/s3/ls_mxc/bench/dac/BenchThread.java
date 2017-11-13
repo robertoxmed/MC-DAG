@@ -240,8 +240,8 @@ public class BenchThread implements Runnable {
 				uRestLO += d.getULO();
 				uRestHI += d.getUHI();
 			}
-			uRestMax += (uRestHI > uRestLO) ? uRestHI: uRestLO;
 		}
+		uRestMax += (uRestHI > uRestLO) ? uRestHI: uRestLO;
 		maxFCores -= (int) Math.ceil(uRestMax);
 		
 		if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] DAGs with U < 1 use " + (int) Math.ceil(uRestMax)+" cores.");
