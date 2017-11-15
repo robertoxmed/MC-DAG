@@ -42,7 +42,7 @@ public class UtilizationGenerator {
 	private int deadline;
 	private boolean debug;
 	
-	private int possibleDeadlines[] = {10, 15, 20, 30, 8, 12, 14}; 
+	private int possibleDeadlines[] = {10, 15, 20, 30, 14, 12}; 
 	
 	public UtilizationGenerator (double U_LO, double U_HI, int cp, int edgeProb, double UHIinLO, double lU, int para, int cores, int nbDags, boolean debug) {
 		this.setUserU_LO(U_LO);
@@ -95,7 +95,6 @@ public class UtilizationGenerator {
 		else
 			rUHI = rULO;
 		 
-		
 		int budgetHI = (int) Math.ceil(rDead * rUHI);
 		int budgetLO = (int) Math.ceil(rDead * rULO);		
 		int CHIBound = (int) Math.ceil(rDead / 2);
@@ -194,7 +193,7 @@ public class UtilizationGenerator {
 		budgetLO = budgetLO - actualBudget;
 
 		// Generate LO tasks
-		rank = 0;
+		rank = 1;
 		while (budgetLO > 0) {
 			// Roll a number of nodes to add to the level
 			int nodesPerRank = rng.randomUnifInt(1, (int)(paraDegree / 2));
@@ -305,6 +304,7 @@ public class UtilizationGenerator {
 	 * Sanity check for the graph:
 	 * 	- Each node has to have at least one edge
 	 */
+	@SuppressWarnings("unused")
 	public void graphSanityCheck(DAG d, short mode) {
 		boolean added = false;
 		Iterator<Actor> it_n = d.getNodes().iterator();
@@ -314,55 +314,49 @@ public class UtilizationGenerator {
 			
 			// It is an independent node with no edges
 			if (n.getRcvEdges().size() == 0 && n.getSndEdges().size() == 0) {
-				Iterator<Actor> it_n2 = d.getNodes().iterator();
-				while (it_n2.hasNext() && added == false) {
-					if (mode == Actor.LO) {
-						Actor n2 = it_n2.next(); 
-						if (n.getRank() < n2.getRank() &&
-								allowedCommunitcation(n, n2) &&
-								n.getCpFromNode_LO() + n2.getCLO() <= userCp){
-							Edge e = new Edge(n, n2);
-							n.getSndEdges().add(e);
-							n2.getRcvEdges().add(e);
-							added = true;
-							if ((n.getCHI() == 0 && n2.getCHI() != 0) ||
-									(n.getCHI() != 0 && n2.getCHI() == 0))
-								this.setHtoL(true);
-							n2.CPfromNode(mode);
-						} else if (n.getRank() > n2.getRank() &&
-								allowedCommunitcation(n2,n) &&
-								n2.getCpFromNode_LO() + n.getCLO() <= userCp) {
-							Edge e = new Edge(n2, n);
-							n.getRcvEdges().add(e);
-							n2.getSndEdges().add(e);
-							added = true;
-							if ((n.getCHI() == 0 && n2.getCHI() != 0) ||
-									(n.getCHI() != 0 && n2.getCHI() == 0))
-								this.setHtoL(true);
-							n.CPfromNode(mode);
-						}
-					} else {
-						Actor n2 = it_n2.next(); 
-						if (n.getRank() < n2.getRank() &&
-								allowedCommunitcation(n, n2) &&
-								n.getCpFromNode_HI() + n2.getCHI() <= userCp){
-							Edge e = new Edge(n, n2);
-							n.getSndEdges().add(e);
-							n2.getRcvEdges().add(e);
-							added = true;
-							n.CPfromNode(mode);
-						} else if (n.getRank() > n2.getRank() &&
-								allowedCommunitcation(n2,n) &&
-								n2.getCpFromNode_HI() + n.getCHI() <= userCp) {
-							Edge e = new Edge(n2, n);
-							n.getRcvEdges().add(e);
-							n2.getSndEdges().add(e);
-							added = true;
-							n.CPfromNode(mode);
+				
+				while (added == false) {
+					Iterator<Actor> it_n2 = d.getNodes().iterator();
+					while (it_n2.hasNext() && added == false) {
+						Actor n2 = it_n2.next();
+						if (mode == Actor.LO && !n.equals(n2)) {
+							if (n.getRank() < n2.getRank() &&
+									allowedCommunitcation(n, n2) &&
+									n.getCpFromNode_LO() + n2.getCLO() <= userCp){
+								
+								Edge e = new Edge(n, n2);
+								added = true;
+								if ((n.getCHI() == 0 && n2.getCHI() != 0) ||
+										(n.getCHI() != 0 && n2.getCHI() == 0))
+									this.setHtoL(true);
+								n2.CPfromNode(mode);
+							} else if (n.getRank() > n2.getRank() &&
+									allowedCommunitcation(n2,n) &&
+									n2.getCpFromNode_LO() + n.getCLO() <= userCp) {
+								Edge e = new Edge(n2, n);
+								added = true;
+								if ((n.getCHI() == 0 && n2.getCHI() != 0) ||
+										(n.getCHI() != 0 && n2.getCHI() == 0))
+									this.setHtoL(true);
+								n.CPfromNode(mode);
+							}
+						} else if (mode == Actor.HI && !n.equals(n2)){
+							if (n.getRank() < n2.getRank() &&
+									allowedCommunitcation(n, n2) &&
+									n.getCpFromNode_HI() + n2.getCHI() <= userCp){
+								Edge e = new Edge(n, n2);
+								added = true;
+								n.CPfromNode(mode);
+							} else if (n.getRank() > n2.getRank() &&
+									allowedCommunitcation(n2,n) &&
+									n2.getCpFromNode_HI() + n.getCHI() <= userCp) {
+								Edge e = new Edge(n2, n);
+								added = true;
+								n.CPfromNode(mode);
+							}
 						}
 					}
 				}
-				added = false;
 			}
 		}
 	}
