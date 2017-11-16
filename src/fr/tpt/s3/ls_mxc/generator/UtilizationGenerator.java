@@ -358,6 +358,7 @@ public class UtilizationGenerator {
 					}
 				}
 			}
+			added = false;
 		}
 	}
 	
