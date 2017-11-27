@@ -14,15 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package fr.tpt.s3.ls_mxc.appli;
+package fr.tpt.s3.ls_mxc.alloc;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-import fr.tpt.s3.ls_mxc.alloc.SingleDAG;
-import fr.tpt.s3.ls_mxc.alloc.MultiDAG;
-import fr.tpt.s3.ls_mxc.alloc.SchedulingException;
 import fr.tpt.s3.ls_mxc.avail.Automata;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.parser.MCParser;
@@ -32,7 +29,7 @@ import fr.tpt.s3.ls_mxc.parser.MCParser;
  * @author roberto
  *
  */
-public class FrameworkThread implements Runnable{
+public class AllocationThread implements Runnable{
 	
 	private Set<DAG> dags;
 	private MCParser mcp;
@@ -45,7 +42,7 @@ public class FrameworkThread implements Runnable{
 	private Automata auto;
 	private boolean debug;
 	
-	public FrameworkThread(String iFile, boolean oSF, boolean oPF, boolean debug) {
+	public AllocationThread(String iFile, boolean oSF, boolean oPF, boolean debug) {
 		dags = new HashSet<DAG>();
 		mcp = new MCParser(iFile, null, null, dags);
 		setOutSchedFile(oSF);

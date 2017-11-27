@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package fr.tpt.s3.ls_mxc.appli;
+package fr.tpt.s3.ls_mxc.alloc;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
@@ -94,7 +94,7 @@ public class Main {
 		
 		/* Launch threads to solve allocation */
 		while (i_files != nbFiles) {
-			FrameworkThread ft = new FrameworkThread(inputFilePath[i_files], bOutSched, bOutPrism, debug);
+			AllocationThread ft = new AllocationThread(inputFilePath[i_files], bOutSched, bOutPrism, debug);
 			
 			executor.execute(ft);
 			i_files++;

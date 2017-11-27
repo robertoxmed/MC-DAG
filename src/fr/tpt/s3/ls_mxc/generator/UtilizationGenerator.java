@@ -22,6 +22,7 @@ import java.util.Set;
 
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
+import fr.tpt.s3.ls_mxc.util.RandomNumberGenerator;
 import fr.tpt.s3.ls_mxc.model.Actor;
 
 public class UtilizationGenerator {
