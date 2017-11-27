@@ -37,7 +37,7 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Node;
 import org.w3c.dom.Element;
 
-import fr.tpt.s3.ls_mxc.alloc.LS;
+import fr.tpt.s3.ls_mxc.alloc.SingleDAG;
 import fr.tpt.s3.ls_mxc.alloc.MultiDAG;
 import fr.tpt.s3.ls_mxc.avail.AutoBoolean;
 import fr.tpt.s3.ls_mxc.avail.Automata;
@@ -59,7 +59,7 @@ public class MCParser {
 	private String outDotFile;
 	// Only references do not have to be instantiated
 	private Set<DAG> dags;
-	private LS ls;
+	private SingleDAG ls;
 	private MultiDAG mdagsched;
 	private Automata auto;
 	private UtilizationGenerator ug;
@@ -688,12 +688,12 @@ public class MCParser {
 		this.outputFile = outputFile;
 	}
 
-	public LS getLs() {
+	public SingleDAG getLs() {
 		return ls;
 	}
 
 
-	public void setLs(LS ls) {
+	public void setLs(SingleDAG ls) {
 		this.ls = ls;
 	}
 

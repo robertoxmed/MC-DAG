@@ -31,7 +31,7 @@ import fr.tpt.s3.ls_mxc.model.Actor;
  * @author Roberto Medina
  *
  */
-public class LS{
+public class SingleDAG{
 	
 	// DAG to be scheduled
 	private DAG mcDag;
@@ -64,13 +64,13 @@ public class LS{
 	 * @param cores Number of cores
 	 * @param d Dag
 	 */
-	public LS(int dln, int cores, DAG d){
+	public SingleDAG(int dln, int cores, DAG d){
 		this.setDeadline(dln);
 		this.setNbCores(cores);
 		this.setMxcDag(d);
 	}
 	
-	public LS() {}
+	public SingleDAG() {}
 	
 	/**
 	 * Calc weights for HLFET for both tables

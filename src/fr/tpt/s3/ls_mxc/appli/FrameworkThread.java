@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-import fr.tpt.s3.ls_mxc.alloc.LS;
+import fr.tpt.s3.ls_mxc.alloc.SingleDAG;
 import fr.tpt.s3.ls_mxc.alloc.MultiDAG;
 import fr.tpt.s3.ls_mxc.alloc.SchedulingException;
 import fr.tpt.s3.ls_mxc.avail.Automata;
@@ -40,7 +40,7 @@ public class FrameworkThread implements Runnable{
 	private boolean outSchedFile;
 	private boolean outPRISMFile;
 	
-	private LS ls;
+	private SingleDAG ls;
 	private MultiDAG msched;
 	private Automata auto;
 	private boolean debug;
@@ -65,7 +65,7 @@ public class FrameworkThread implements Runnable{
 		// Only one DAG has to be scheduled in the multi-core architecture
 		if (dags.size() == 1) {
 			DAG dag = dags.iterator().next();
-			ls = new LS();
+			ls = new SingleDAG();
 			ls.setMxcDag(dag);
 			ls.setDeadline(dag.getDeadline());
 			ls.setNbCores(mcp.getNbCores());
@@ -170,11 +170,11 @@ public class FrameworkThread implements Runnable{
 		this.outPRISMFile = outPRISMFile;
 	}
 
-	public LS getLs() {
+	public SingleDAG getLs() {
 		return ls;
 	}
 
-	public void setLs(LS ls) {
+	public void setLs(SingleDAG ls) {
 		this.ls = ls;
 	}
 

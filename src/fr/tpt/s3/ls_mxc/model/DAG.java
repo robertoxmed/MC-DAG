@@ -20,7 +20,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import fr.tpt.s3.ls_mxc.alloc.LS;
+import fr.tpt.s3.ls_mxc.alloc.SingleDAG;
 
 /**
  * Class to model the DAG in MxC
@@ -82,7 +82,7 @@ public class DAG {
 	public int calcCriticalPath() {
 		int cp = 0;
 		
-		LS ls = new LS();
+		SingleDAG ls = new SingleDAG();
 		ls.setMxcDag(this);
 		ls.calcWeights(0);
 		ls.calcWeights(1);

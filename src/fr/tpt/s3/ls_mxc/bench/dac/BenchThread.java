@@ -25,7 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import fr.tpt.s3.ls_mxc.alloc.LS;
+import fr.tpt.s3.ls_mxc.alloc.SingleDAG;
 import fr.tpt.s3.ls_mxc.alloc.MultiDAG;
 import fr.tpt.s3.ls_mxc.alloc.SchedulingException;
 import fr.tpt.s3.ls_mxc.model.Actor;
@@ -158,7 +158,7 @@ public class BenchThread implements Runnable {
 	private boolean testFederated (DAG d, int cores) throws SchedulingException {
 		boolean ret = false;
 		
-		LS ls = new LS(d.getDeadline(), cores, d);
+		SingleDAG ls = new SingleDAG(d.getDeadline(), cores, d);
 		
 		ret = ls.CheckBaruah();
 		

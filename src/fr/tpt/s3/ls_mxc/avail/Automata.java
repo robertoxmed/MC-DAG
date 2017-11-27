@@ -23,7 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import fr.tpt.s3.ls_mxc.alloc.LS;
+import fr.tpt.s3.ls_mxc.alloc.SingleDAG;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Actor;
 
@@ -38,14 +38,14 @@ public class Automata {
 	private List<FTM> ftms;
 	private Set<Formula> loOutsForm;
 	
-	private LS ls;
+	private SingleDAG ls;
 	private DAG d;
 
 	/**
 	 *  Constructor of the Automata, needs the LO, HI tables,
 	 *  the DAG with the data dependencies, deadline and number of cores
 	 */
-	public Automata (LS ls, DAG d) {
+	public Automata (SingleDAG ls, DAG d) {
 		this.setD(d);
 		this.setLs(ls);
 		this.loSched = new LinkedList<State>();
@@ -443,11 +443,11 @@ public class Automata {
 		this.d = d;
 	}
 
-	public LS getLs() {
+	public SingleDAG getLs() {
 		return ls;
 	}
 
-	public void setLs(LS ls) {
+	public void setLs(SingleDAG ls) {
 		this.ls = ls;
 	}
 

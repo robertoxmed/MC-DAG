@@ -7,7 +7,7 @@ import java.io.Writer;
 import java.util.HashSet;
 import java.util.Set;
 
-import fr.tpt.s3.ls_mxc.alloc.LS;
+import fr.tpt.s3.ls_mxc.alloc.SingleDAG;
 import fr.tpt.s3.ls_mxc.alloc.MultiDAG;
 import fr.tpt.s3.ls_mxc.alloc.SchedulingException;
 import fr.tpt.s3.ls_mxc.model.Actor;
@@ -142,7 +142,7 @@ public class BenchThread2 implements Runnable {
 		}
 		
 		for (DAG d : clusteredDAGs) {
-			LS ls = new LS(d.getDeadline(), d.getMinCores(), d);
+			SingleDAG ls = new SingleDAG(d.getDeadline(), d.getMinCores(), d);
 			try {
 				ls.CheckBaruah();
 			} catch (SchedulingException se) {
