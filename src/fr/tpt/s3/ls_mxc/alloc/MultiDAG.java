@@ -104,6 +104,13 @@ public class MultiDAG{
 		sHI = new String[gethPeriod()][getNbCores()];
 		sLO = new String[gethPeriod()][getNbCores()];
 		
+		for (i = 0; i < gethPeriod(); i++) {
+			for (int j = 0; j < getNbCores(); j++) {
+				sHI[i][j] = "-";
+				sLO[i][j] = "-";
+			}
+		}
+		
 		if (debug) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] initTables(): Hyper-period of the graph: "+gethPeriod()+"; tables initialized.");
 	}
 	

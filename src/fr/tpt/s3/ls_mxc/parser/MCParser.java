@@ -55,15 +55,20 @@ public class MCParser {
 	private String inputFile;
 	private String outputFile;
 	private String outSchedFile;
+	private String outPrismFile;
 	private String outGenFile;
 	private String outDotFile;
+	
 	// Only references do not have to be instantiated
 	private Set<DAG> dags;
-	private SingleDAG ls;
 	private MultiDAG mdagsched;
 	private Automata auto;
 	private UtilizationGenerator ug;
 	
+	// Writing scheduling tables
+	private String[][] sLO;
+	private String[][] sHI;
+	private int hPeriod;
 	private int nbCores;
 	
 	public MCParser (String iFile, String oSFile, String oFile, Set<DAG> dags) {
@@ -71,7 +76,6 @@ public class MCParser {
 		setOutSchedFile(oSFile);
 		setOutputFile(oFile);
 		setDags(dags);
-		setLs(ls);
 	}
 	
 	public MCParser (String oGFile, UtilizationGenerator ug) {
@@ -189,17 +193,17 @@ public class MCParser {
 			// SHI table
 			Element shi = doc.createElement("shi");
 			rootElement.appendChild(shi);
-			for (int i = 0; i < nbCores; i++) {
+			for (int i = 0; i < this.getNbCores(); i++) {
 				Element core = doc.createElement("core");
 				Attr attrCoreNb = doc.createAttribute("number");
 				attrCoreNb.setNodeValue(String.valueOf(i));
 				core.setAttributeNode(attrCoreNb);
-				for (int j = 0; j < ls.getDeadline(); j++) {
+				for (int j = 0; j < this.gethPeriod(); j++) {
 					Element slot = doc.createElement("slot");
 					Attr slotNb = doc.createAttribute("slot");
 					slotNb.setNodeValue(String.valueOf(j));
 					slot.setAttributeNodeNS(slotNb);
-					slot.appendChild(doc.createTextNode(ls.getS_HI()[j][i]));
+					slot.appendChild(doc.createTextNode(this.getsHI()[j][i]));
 					core.appendChild(slot);
 				}
 				shi.appendChild(core);
@@ -208,17 +212,17 @@ public class MCParser {
 			// SLO table
 			Element slo = doc.createElement("slo");
 			rootElement.appendChild(slo);
-			for (int i = 0; i < ls.getNbCores(); i++) {
+			for (int i = 0; i < this.getNbCores(); i++) {
 				Element core = doc.createElement("core");
 				Attr attrCoreNb = doc.createAttribute("number");
 				attrCoreNb.setNodeValue(String.valueOf(i));
 				core.setAttributeNode(attrCoreNb);
-				for (int j = 0; j < ls.getDeadline(); j++) {
+				for (int j = 0; j < this.gethPeriod(); j++) {
 					Element slot = doc.createElement("slot");
 					Attr slotNb = doc.createAttribute("slot");
 					slotNb.setNodeValue(String.valueOf(j));
 					slot.setAttributeNodeNS(slotNb);
-					slot.appendChild(doc.createTextNode(ls.getS_LO()[j][i]));
+					slot.appendChild(doc.createTextNode(this.getsLO()[j][i]));
 					core.appendChild(slot);
 				}
 				slo.appendChild(core);
@@ -286,7 +290,7 @@ public class MCParser {
 		try {
 			DAG dag = dags.iterator().next();
 			
-			File f = new File(getOutputFile());
+			File f = new File(getOutPrismFile());
 			f.createNewFile();
 			FileWriter fstream = new FileWriter(f);
 			out = new BufferedWriter(fstream);
@@ -688,16 +692,6 @@ public class MCParser {
 		this.outputFile = outputFile;
 	}
 
-	public SingleDAG getLs() {
-		return ls;
-	}
-
-
-	public void setLs(SingleDAG ls) {
-		this.ls = ls;
-	}
-
-
 	public Automata getAuto() {
 		return auto;
 	}
@@ -761,5 +755,37 @@ public class MCParser {
 
 	public void setOutDotFile(String outDotFile) {
 		this.outDotFile = outDotFile;
+	}
+
+	public String getOutPrismFile() {
+		return outPrismFile;
+	}
+
+	public void setOutPrismFile(String outPrismFile) {
+		this.outPrismFile = outPrismFile;
+	}
+
+	public String[][] getsLO() {
+		return sLO;
+	}
+
+	public void setsLO(String[][] sLO) {
+		this.sLO = sLO;
+	}
+
+	public String[][] getsHI() {
+		return sHI;
+	}
+
+	public void setsHI(String[][] sHI) {
+		this.sHI = sHI;
+	}
+
+	public int gethPeriod() {
+		return hPeriod;
+	}
+
+	public void sethPeriod(int hPeriod) {
+		this.hPeriod = hPeriod;
 	}
 }

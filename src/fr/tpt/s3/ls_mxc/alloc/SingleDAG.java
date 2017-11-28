@@ -46,8 +46,8 @@ public class SingleDAG{
 	private int weights_B[];
 	
 	// Scheduling tables, i: slot, j: task
-	private String S_LO[][];
-	private String S_HI[][];
+	private String sLO[][];
+	private String sHI[][];
 	private String S_B[][];
 	private String S_HLFET[][];
 	private String S_HLFET_HI[][];
@@ -167,11 +167,11 @@ public class SingleDAG{
 		/* =============================================
 		 *  Initialization of variables used by the method & class
 		 ================================================*/
-		S_HI = new String[deadline][nbCores];
+		sHI = new String[deadline][nbCores];
 		// Initialize with 0s
 		for (int c = 0; c < nbCores; c++) {
 			for(int t = 0; t < deadline; t++) {
-				S_HI[t][c] = "-";
+				sHI[t][c] = "-";
 			}
 		}
 			
@@ -224,7 +224,7 @@ public class SingleDAG{
 			for(int c = 0; c < nbCores; c++) {
 				if (li_it.hasNext()){
 					Actor n = li_it.next(); // Get head of the list
-					S_HI[t][c] = n.getName(); // Give the slot to the task
+					sHI[t][c] = n.getName(); // Give the slot to the task
 					
 					// Decrement slots left for the task
 					t_hi[n.getId()] = t_hi[n.getId()] - 1;
@@ -276,11 +276,11 @@ public class SingleDAG{
 		/* =============================================
 		 *  Initialization of variables used by the method
 		 ================================================*/
-		S_LO = new String[deadline][nbCores];
+		sLO = new String[deadline][nbCores];
 		// Initialize with 0s
 		for (int c = 0; c < nbCores; c++) {
 			for(int t = 0; t < deadline; t++) {
-				S_LO[t][c] = "-";
+				sLO[t][c] = "-";
 			}
 		}
 			
@@ -333,7 +333,7 @@ public class SingleDAG{
 				if (li_it.hasNext()){
 					Actor n = li_it.next(); // Get head of the list
 					
-					S_LO[t][c] = n.getName(); // Give the slot to the task
+					sLO[t][c] = n.getName(); // Give the slot to the task
 
 					// Decrement slots left for the task
 					t_lo[n.getId()] = t_lo[n.getId()] - 1;
@@ -878,7 +878,7 @@ public class SingleDAG{
 	public void printS_HI(){
 		for (int c = 0; c < nbCores; c++) {
 			for(int t = 0; t < deadline; t++) {
-				System.out.print(S_HI[t][c]+" | ");
+				System.out.print(sHI[t][c]+" | ");
 			}
 			System.out.print("\n");
 		}
@@ -892,7 +892,7 @@ public class SingleDAG{
 	public void printS_LO(){
 		for (int c = 0; c < nbCores; c++) {
 			for(int t = 0; t < deadline; t++) {
-				System.out.print(S_LO[t][c]+" | ");
+				System.out.print(sLO[t][c]+" | ");
 			}
 			System.out.print("\n");
 		}
@@ -952,11 +952,11 @@ public class SingleDAG{
 		this.weights_HI = weights_HI;
 	}
 	public String[][] getS_HI() {
-		return S_HI;
+		return sHI;
 	}
 
 	public void setS_HI(String[][] s_HI) {
-		S_HI = s_HI;
+		sHI = s_HI;
 	}
 
 	public int[] getStart_HI() {
@@ -968,11 +968,11 @@ public class SingleDAG{
 	}
 
 	public String[][] getS_LO() {
-		return S_LO;
+		return sLO;
 	}
 
 	public void setS_LO(String s_LO[][]) {
-		S_LO = s_LO;
+		sLO = s_LO;
 	}
 	
 	public boolean isDebug() {

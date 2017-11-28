@@ -46,7 +46,7 @@ public class AllocationThread implements Runnable{
 		dags = new HashSet<DAG>();
 		mcp = new MCParser(iFile, null, null, dags);
 		setOutPRISMFile(oPF);
-		if (isOutSchedFile()) mcp.setOutSchedFile(iFile.substring(0, iFile.lastIndexOf('.')).concat(".pm"));
+		if (isOutSchedFile()) mcp.setOutPrismFile(iFile.substring(0, iFile.lastIndexOf('.')).concat(".pm"));
 		setOutSchedFile(oSF);
 		if (isOutSchedFile()) mcp.setOutSchedFile(iFile.substring(0, iFile.lastIndexOf('.')).concat("-sched.xml"));
 		setDebug(debug);
@@ -75,6 +75,10 @@ public class AllocationThread implements Runnable{
 				System.out.println(e1.getMessage());
 				System.exit(1);
 			}
+			mcp.setNbCores(ls.getNbCores());
+			mcp.sethPeriod(ls.getDeadline());
+			mcp.setsLO(ls.getS_LO());
+			mcp.setsHI(ls.getS_HI());
 			
 			if (isOutPRISMFile()) {
 				if (debug) System.out.println("[DEBUG] UniDAG: Creating the automata object.");
@@ -85,16 +89,14 @@ public class AllocationThread implements Runnable{
 					mcp.writePRISM();
 				} catch (IOException e) {
 					e.printStackTrace();
-					System.out.println("[WARNING] Error writting PRISM files "+outPRISMFile);
-
+					System.err.println("[WARNING] Error writting PRISM files "+outPRISMFile);
 				}
-				System.out.println("PRISM file written.");
+				System.out.println("["+Thread.currentThread().getName()+"] PRISM file written.");
 			}
 		// Multiple DAGs neede to be scheduled
 		} else if (dags.size() > 1) {
 			msched = new MultiDAG(dags, mcp.getNbCores(), debug);
-			
-			System.out.println("MultiDAG: "+dags.size()+" DAGs are going to be scheduled in "+mcp.getNbCores()+" cores.");
+			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] MultiDAG: "+dags.size()+" DAGs are going to be scheduled in "+mcp.getNbCores()+" cores.");
 			
 			try {
 				msched.allocAll();
@@ -103,12 +105,15 @@ public class AllocationThread implements Runnable{
 				System.err.println("[ERROR] MultiDAG: unable to schedule the example: "+mcp.getInputFile());
 				System.exit(1);
 			}
+			mcp.setNbCores(msched.getNbCores());
+			mcp.sethPeriod(msched.gethPeriod());
+			mcp.setsLO(msched.getsLO());
+			mcp.setsHI(msched.getsHI());
 		}
 		
 		/* =============== Write results ================ */
 		if (isOutSchedFile()) {
 			try {
-				mcp.setLs(ls);
 				mcp.writeSched();
 			} catch (IOException e) {
 				System.err.println("[WARNING] Error writting scheduling tables to file "+outSchedFile);
