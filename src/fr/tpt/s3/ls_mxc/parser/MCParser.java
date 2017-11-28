@@ -189,7 +189,7 @@ public class MCParser {
 			// SHI table
 			Element shi = doc.createElement("shi");
 			rootElement.appendChild(shi);
-			for (int i = 0; i < ls.getNbCores(); i++) {
+			for (int i = 0; i < nbCores; i++) {
 				Element core = doc.createElement("core");
 				Attr attrCoreNb = doc.createAttribute("number");
 				attrCoreNb.setNodeValue(String.valueOf(i));

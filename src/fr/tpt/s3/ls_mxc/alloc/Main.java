@@ -46,11 +46,11 @@ public class Main {
 		input.setArgs(Option.UNLIMITED_VALUES); // Sets maximum number of threads to be launched
 		options.addOption(input);
 		
-		Option outSched = new Option("os", "out-scheduler", true, "Write the scheduling tables into a file.");
+		Option outSched = new Option("os", "out-scheduler", false, "Write the scheduling tables into a file.");
 		outSched.setRequired(false);
 		options.addOption(outSched);
 		
-		Option outPrism = new Option("op", "out-prism", true, "Write PRISM model into a file.");
+		Option outPrism = new Option("op", "out-prism", false, "Write PRISM model into a file.");
 		outPrism.setRequired(false);
 		options.addOption(outPrism);
 		

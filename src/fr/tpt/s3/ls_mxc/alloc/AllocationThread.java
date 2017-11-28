@@ -45,10 +45,10 @@ public class AllocationThread implements Runnable{
 	public AllocationThread(String iFile, boolean oSF, boolean oPF, boolean debug) {
 		dags = new HashSet<DAG>();
 		mcp = new MCParser(iFile, null, null, dags);
-		setOutSchedFile(oSF);
-		if (isOutSchedFile()) mcp.setOutSchedFile(iFile.substring(0, iFile.lastIndexOf('.')).concat("-sched.xml"));
 		setOutPRISMFile(oPF);
 		if (isOutSchedFile()) mcp.setOutSchedFile(iFile.substring(0, iFile.lastIndexOf('.')).concat(".pm"));
+		setOutSchedFile(oSF);
+		if (isOutSchedFile()) mcp.setOutSchedFile(iFile.substring(0, iFile.lastIndexOf('.')).concat("-sched.xml"));
 		setDebug(debug);
 	}
 
@@ -108,6 +108,7 @@ public class AllocationThread implements Runnable{
 		/* =============== Write results ================ */
 		if (isOutSchedFile()) {
 			try {
+				mcp.setLs(ls);
 				mcp.writeSched();
 			} catch (IOException e) {
 				System.err.println("[WARNING] Error writting scheduling tables to file "+outSchedFile);
