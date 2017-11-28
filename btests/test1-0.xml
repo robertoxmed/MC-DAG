@@ -1,78 +1,41 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <mcsystem>
-    <mcdag deadline="14" name="genned-1.5-1.5-ed-30-1">
-        <actor name="D1N0">
-            <chi>4</chi>
-            <clo>3</clo>
-            <fprob>0.0</fprob>
-        </actor>
-        <actor name="D1N1">
-            <chi>5</chi>
-            <clo>4</clo>
-            <fprob>0.0</fprob>
-        </actor>
-        <actor name="D1N2">
-            <chi>4</chi>
-            <clo>3</clo>
-            <fprob>0.0</fprob>
-        </actor>
-        <actor name="D1N3">
-            <chi>0</chi>
-            <clo>3</clo>
-            <fprob>0.0</fprob>
-        </actor>
-        <ports>
-            <port dstActor="D1N2" name="p0" srcActor="D1N0"/>
-            <port dstActor="D1N2" name="p1" srcActor="D1N1"/>
-        </ports>
-    </mcdag>
-    <mcdag deadline="20" name="genned-1.5-1.5-ed-30-0">
-        <actor name="D0N5">
-            <chi>0</chi>
-            <clo>7</clo>
-            <fprob>0.0</fprob>
-        </actor>
-        <actor name="D0N1">
-            <chi>7</chi>
-            <clo>2</clo>
-            <fprob>0.0</fprob>
-        </actor>
-        <actor name="D0N6">
-            <chi>0</chi>
-            <clo>10</clo>
-            <fprob>0.0</fprob>
-        </actor>
-        <actor name="D0N7">
-            <chi>0</chi>
-            <clo>1</clo>
-            <fprob>0.0</fprob>
-        </actor>
-        <actor name="D0N2">
-            <chi>6</chi>
-            <clo>1</clo>
-            <fprob>0.0</fprob>
-        </actor>
+    <mcdag deadline="30" name="genned-1.5-1.5-ed-40-0">
         <actor name="D0N3">
-            <chi>6</chi>
+            <chi>0</chi>
             <clo>2</clo>
             <fprob>0.0</fprob>
         </actor>
         <actor name="D0N4">
             <chi>0</chi>
-            <clo>4</clo>
+            <clo>6</clo>
             <fprob>0.0</fprob>
         </actor>
-        <actor name="D0N0">
-            <chi>8</chi>
+        <actor name="D0N1">
+            <chi>6</chi>
             <clo>1</clo>
             <fprob>0.0</fprob>
         </actor>
+        <actor name="D0N0">
+            <chi>10</chi>
+            <clo>1</clo>
+            <fprob>0.0</fprob>
+        </actor>
+        <actor name="D0N2">
+            <chi>7</chi>
+            <clo>1</clo>
+            <fprob>0.0</fprob>
+        </actor>
+        <actor name="D0N5">
+            <chi>0</chi>
+            <clo>12</clo>
+            <fprob>0.0</fprob>
+        </actor>
         <ports>
-            <port dstActor="D0N7" name="p0" srcActor="D0N1"/>
-            <port dstActor="D0N5" name="p1" srcActor="D0N4"/>
-            <port dstActor="D0N6" name="p2" srcActor="D0N4"/>
-            <port dstActor="D0N4" name="p3" srcActor="D0N0"/>
-            <port dstActor="D0N3" name="p4" srcActor="D0N0"/>
+            <port dstActor="D0N4" name="p0" srcActor="D0N3"/>
+            <port dstActor="D0N3" name="p1" srcActor="D0N0"/>
+            <port dstActor="D0N5" name="p2" srcActor="D0N0"/>
+            <port dstActor="D0N5" name="p3" srcActor="D0N2"/>
         </ports>
     </mcdag>
     <cores number="4"/>
