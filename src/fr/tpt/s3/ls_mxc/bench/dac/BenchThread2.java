@@ -33,7 +33,7 @@ public class BenchThread2 implements Runnable {
 		setDebug(debug);
 		setSchedFede(false);
 		setSchedLax(true);
-		mcp = new MCParser(inputFile, null, null, dags);
+		mcp = new MCParser(inputFile, null, dags);
 	}
 	
 	/**

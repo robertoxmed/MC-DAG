@@ -37,8 +37,6 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Node;
 import org.w3c.dom.Element;
 
-import fr.tpt.s3.ls_mxc.alloc.SingleDAG;
-import fr.tpt.s3.ls_mxc.alloc.MultiDAG;
 import fr.tpt.s3.ls_mxc.avail.AutoBoolean;
 import fr.tpt.s3.ls_mxc.avail.Automata;
 import fr.tpt.s3.ls_mxc.avail.FTM;
@@ -53,7 +51,6 @@ import fr.tpt.s3.ls_mxc.model.Actor;
 public class MCParser {
 
 	private String inputFile;
-	private String outputFile;
 	private String outSchedFile;
 	private String outPrismFile;
 	private String outGenFile;
@@ -61,7 +58,6 @@ public class MCParser {
 	
 	// Only references do not have to be instantiated
 	private Set<DAG> dags;
-	private MultiDAG mdagsched;
 	private Automata auto;
 	private UtilizationGenerator ug;
 	
@@ -71,10 +67,9 @@ public class MCParser {
 	private int hPeriod;
 	private int nbCores;
 	
-	public MCParser (String iFile, String oSFile, String oFile, Set<DAG> dags) {
+	public MCParser (String iFile, String oSFile,Set<DAG> dags) {
 		setInputFile(iFile);
 		setOutSchedFile(oSFile);
-		setOutputFile(oFile);
 		setDags(dags);
 	}
 	
@@ -250,7 +245,7 @@ public class MCParser {
 	private void writePCTL () throws IOException {
 		BufferedWriter out = null;
 		try {
-			String fileName = getOutputFile();
+			String fileName = getOutPrismFile();
 			int pos = fileName.lastIndexOf(".");
 			if (pos > 0) {
 			    fileName = fileName.substring(0, pos);
@@ -682,16 +677,6 @@ public class MCParser {
 		this.inputFile = inputFile;
 	}
 
-
-	public String getOutputFile() {
-		return outputFile;
-	}
-
-
-	public void setOutputFile(String outputFile) {
-		this.outputFile = outputFile;
-	}
-
 	public Automata getAuto() {
 		return auto;
 	}
@@ -723,14 +708,6 @@ public class MCParser {
 
 	public void setUg(UtilizationGenerator ug) {
 		this.ug = ug;
-	}
-
-	public MultiDAG getMdagsched() {
-		return mdagsched;
-	}
-
-	public void setMdagsched(MultiDAG mdagsched) {
-		this.mdagsched = mdagsched;
 	}
 
 	public int getNbCores() {

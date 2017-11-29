@@ -49,7 +49,7 @@ public class BenchThread implements Runnable {
 		setOutputFile(output);
 		setDebug(debug);
 		setSchedFede(true);
-		mcp = new MCParser(inputFile, null, null, dags);
+		mcp = new MCParser(inputFile, null, dags);
 	}
 	
 	/**
