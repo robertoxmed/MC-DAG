@@ -20,7 +20,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-public class Actor {
+public abstract class Actor {
 	
 	public static final short LO = 0;
 	public static final short HI = 1;
@@ -29,6 +29,9 @@ public class Actor {
 	private String name;
 	
 	private int[] cIs;
+	
+	private int cpFromNodeLO;
+	private int cpFromNodeHI;
 	
 	private Set<Edge> rcvEdges;
 	private Set<Edge> sndEdges;
@@ -80,7 +83,7 @@ public class Actor {
 		Iterator<Edge> it_e = this.getSndEdges().iterator();
 		while (it_e.hasNext()){
 			Edge e = it_e.next();
-			ActorSched dst = e.getDest();
+			Actor dst = e.getDest();
 			if (dst.getcIs()[1] != 0) {
 				this.setSinkHI(false);
 				break;
@@ -107,6 +110,69 @@ public class Actor {
 			return true;
 		else
 			return false;
+	}
+	
+	/**
+	 * Calculates the critical Path from a given node
+	 * @param n
+	 * @param mode
+	 * @return
+	 */
+	public int CPfromNode (short mode) {
+		
+		if (this.getRcvEdges().size() == 0) {
+			if (mode == 0) {
+				this.setCpFromNodeLO(this.getcIs()[0]);
+				return this.getcIs()[0];
+			} else {
+				this.setCpFromNodeHI(this.getcIs()[1]);
+				return this.getcIs()[1];
+			}
+		} else {
+			int max = 0;
+			int tmp = 0;
+			Iterator<Edge> it_e = this.getRcvEdges().iterator();
+			
+			while (it_e.hasNext()){
+				Edge e = it_e.next();
+				if (mode == ActorSched.LO) {
+					tmp = e.getSrc().CPfromNode(ActorSched.LO);
+					if (max < tmp)
+						max = tmp;
+				} else {
+					tmp = e.getSrc().CPfromNode(ActorSched.HI);
+					if (max < tmp)
+						max = tmp;
+				}
+			}
+			if (mode == ActorSched.LO) {
+				max += this.getcIs()[0];
+				this.setCpFromNodeLO(max);
+			} else {
+				max += this.getcIs()[1];
+				this.setCpFromNodeHI(max);
+			}
+			
+			return max;
+		}
+	}
+	
+	/**
+	 * Returns all LOpredecessors of a node
+	 * @return
+	 */
+	public Set<Actor> getLOPred() {
+		HashSet<Actor> result = new HashSet<Actor>();
+		Iterator<Edge> ie = this.getRcvEdges().iterator();
+		
+		while (ie.hasNext()){
+			Edge e = ie.next();
+			if (e.getSrc().getcIs()[1] == 0) {
+				result.add(e.getSrc());
+				result.addAll(e.getSrc().getLOPred());
+			}
+		}
+		return result;
 	}
 	
 	/*
@@ -183,5 +249,21 @@ public class Actor {
 	
 	public void setSourceHI(boolean sourceHI) {
 		this.sourceHI = sourceHI;
+	}
+
+	public int getCpFromNodeLO() {
+		return cpFromNodeLO;
+	}
+
+	public void setCpFromNodeLO(int cpFromNodeLO) {
+		this.cpFromNodeLO = cpFromNodeLO;
+	}
+
+	public int getCpFromNodeHI() {
+		return cpFromNodeHI;
+	}
+
+	public void setCpFromNodeHI(int cpFromNodeHI) {
+		this.cpFromNodeHI = cpFromNodeHI;
 	}
 }

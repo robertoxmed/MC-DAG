@@ -20,8 +20,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import fr.tpt.s3.ls_mxc.alloc.SingleDAG;
-
 /**
  * Class to model the DAG in MxC
  * @author Roberto Medina
@@ -30,23 +28,23 @@ import fr.tpt.s3.ls_mxc.alloc.SingleDAG;
 public class DAG {
 	
 	private int id;
-	private Set<ActorSched> nodes;
-	private Set<ActorSched> nodesHI;
-	private Set<ActorSched> loOuts;
-	private Set<ActorSched> Outs;
-	private Set<ActorSched> sinks;
-	private Set<ActorSched> sinksHI;
-	private Set<ActorSched> sourcesHI;
+	private Set<Actor> nodes;
+	private Set<Actor> nodesHI;
+	private Set<Actor> loOuts;
+	private Set<Actor> Outs;
+	private Set<Actor> sinks;
+	private Set<Actor> sinksHI;
+	private Set<Actor> sourcesHI;
 	private int critPath;
 	private int deadline;
 	
 	public DAG() {
-		nodes = new HashSet<ActorSched>();
-		nodesHI = new HashSet<ActorSched>();
-		setLoOuts(new HashSet<ActorSched>());
-		sinks = new HashSet<ActorSched>();
-		sinksHI = new HashSet<ActorSched>();
-		sourcesHI = new HashSet<ActorSched>();
+		nodes = new HashSet<Actor>();
+		nodesHI = new HashSet<Actor>();
+		setLoOuts(new HashSet<Actor>());
+		sinks = new HashSet<Actor>();
+		sinksHI = new HashSet<Actor>();
+		sourcesHI = new HashSet<Actor>();
 	}
 	
 	/**
@@ -56,10 +54,10 @@ public class DAG {
 	public void sanityChecks () {
 		this.setHINodes();
 		this.calcLOouts();
-		Iterator<ActorSched> in = this.getNodes().iterator();
+		Iterator<Actor> in = this.getNodes().iterator();
 		
 		while (in.hasNext()){
-			ActorSched n = in.next();
+			Actor n = in.next();
 			
 			n.checkifSink();
 			n.checkifSinkinHI();
@@ -82,16 +80,11 @@ public class DAG {
 	public int calcCriticalPath() {
 		int cp = 0;
 		
-		SingleDAG ls = new SingleDAG();
-		ls.setMxcDag(this);
-		ls.calcWeights(0);
-		ls.calcWeights(1);
-		
 		for(int i = 0; i < this.getNodes().size(); i++) {
-			if (cp < this.getNodebyID(i).getWeightLO())
-				cp = this.getNodebyID(i).getWeightLO();
-			if (cp < this.getNodebyID(i).getWeightHI())
-				cp = this.getNodebyID(i).getWeightHI();
+			if (cp < this.getNodebyID(i).getCpFromNodeLO())
+				cp = this.getNodebyID(i).getCpFromNodeLO();
+			if (cp < this.getNodebyID(i).getCpFromNodeHI())
+				cp = this.getNodebyID(i).getCpFromNodeHI();
 		}
 		this.setCritPath(cp);
 		return cp;
@@ -101,9 +94,9 @@ public class DAG {
 	 * Sets HI nodes in the corresponding set
 	 */
 	public void setHINodes() {
-		Iterator<ActorSched> in = this.getNodes().iterator();
+		Iterator<Actor> in = this.getNodes().iterator();
 		while (in.hasNext()) {
-			ActorSched n = in.next();
+			Actor n = in.next();
 			if (n.getCI(1) != 0)
 				this.getNodes_HI().add(n);
 		}
@@ -113,9 +106,9 @@ public class DAG {
 	 * Searches for the LO outputs in the DAG
 	 */
 	public void calcLOouts() {
-		Iterator<ActorSched> in = this.getNodes().iterator();
+		Iterator<Actor> in = this.getNodes().iterator();
 		while (in.hasNext()) {
-			ActorSched n = in.next();
+			Actor n = in.next();
 			if (n.getSndEdges().size() == 0 &&
 					n.getCI(1) == 0) {
 				this.getLoOuts().add(n);
@@ -127,7 +120,7 @@ public class DAG {
 	 * Gets the outputs of the DAG
 	 */
 	public void calcOuts() {
-		for (ActorSched a : getNodes()) {
+		for (Actor a : getNodes()) {
 			if (a.getSndEdges().size() == 0)
 				Outs.add(a);
 		}
@@ -140,7 +133,7 @@ public class DAG {
 	public double getULO () {
 		double ret = 0.0;
 		
-		for (ActorSched a : getNodes())
+		for (Actor a : getNodes())
 			ret += a.getCI(0);
 		
 		return ret / getDeadline();
@@ -153,7 +146,7 @@ public class DAG {
 	public double getUHI () {
 		double ret = 0.0;
 		
-		for (ActorSched a : getNodes()) {
+		for (Actor a : getNodes()) {
 			if (a.getCI(1) != 0)
 				ret += a.getCI(1);
 		}
@@ -186,27 +179,27 @@ public class DAG {
 	 * Getters & Setters
 	 * 
 	 */
-	public Set<ActorSched> getNodes() {
+	public Set<Actor> getNodes() {
 		return nodes;
 	}
-	public void setNodes(Set<ActorSched> Nodes) {
+	public void setNodes(Set<Actor> Nodes) {
 		nodes = Nodes;
 	}
 	
-	public ActorSched getNodebyID(int id){
-		Iterator<ActorSched> it = nodes.iterator();
+	public Actor getNodebyID(int id){
+		Iterator<Actor> it = nodes.iterator();
 		while(it.hasNext()){
-			ActorSched n = it.next();
+			Actor n = it.next();
 			if (n.getId() == id)
 				return n; 
 		}
 		return null;
 	}
 
-	public ActorSched getNodebyName(String name){
-		Iterator<ActorSched> it = nodes.iterator();
+	public Actor getNodebyName(String name){
+		Iterator<Actor> it = nodes.iterator();
 		while(it.hasNext()){
-			ActorSched n = it.next();
+			Actor n = it.next();
 			if (n.getName().equalsIgnoreCase(name))
 				return n; 
 		}
@@ -214,18 +207,18 @@ public class DAG {
 	}
 
 	
-	public Set<ActorSched> getNodes_HI() {
+	public Set<Actor> getNodes_HI() {
 		return nodesHI;
 	}
 
-	public void setNodes_HI(Set<ActorSched> nodes_HI) {
+	public void setNodes_HI(Set<Actor> nodes_HI) {
 		nodesHI = nodes_HI;
 	}
 	
-	public ActorSched getNodeHIbyID(int id){
-		Iterator<ActorSched> it = nodesHI.iterator();
+	public Actor getNodeHIbyID(int id){
+		Iterator<Actor> it = nodesHI.iterator();
 		while(it.hasNext()){
-			ActorSched n = it.next();
+			Actor n = it.next();
 			if (n.getId() == id)
 				return n; 
 		}
@@ -240,11 +233,11 @@ public class DAG {
 		this.critPath = critPath;
 	}
 
-	public Set<ActorSched> getLoOuts() {
+	public Set<Actor> getLoOuts() {
 		return loOuts;
 	}
 
-	public void setLoOuts(Set<ActorSched> lO_outs) {
+	public void setLoOuts(Set<Actor> lO_outs) {
 		loOuts = lO_outs;
 	}
 
@@ -256,11 +249,11 @@ public class DAG {
 		this.deadline = deadline;
 	}
 
-	public Set<ActorSched> getSinks() {
+	public Set<Actor> getSinks() {
 		return sinks;
 	}
 
-	public void setSinks(Set<ActorSched> sinks) {
+	public void setSinks(Set<Actor> sinks) {
 		this.sinks = sinks;
 	}
 
@@ -272,27 +265,27 @@ public class DAG {
 		this.id = id;
 	}
 
-	public Set<ActorSched> getOuts() {
+	public Set<Actor> getOuts() {
 		return Outs;
 	}
 
-	public void setOuts(Set<ActorSched> outs) {
+	public void setOuts(Set<Actor> outs) {
 		Outs = outs;
 	}
 
-	public Set<ActorSched> getSinksHI() {
+	public Set<Actor> getSinksHI() {
 		return sinksHI;
 	}
 
-	public void setSinksHI(Set<ActorSched> sinksHI) {
+	public void setSinksHI(Set<Actor> sinksHI) {
 		this.sinksHI = sinksHI;
 	}
 
-	public Set<ActorSched> getSourcesHI() {
+	public Set<Actor> getSourcesHI() {
 		return sourcesHI;
 	}
 
-	public void setSourcesHI(Set<ActorSched> sourcesHI) {
+	public void setSourcesHI(Set<Actor> sourcesHI) {
 		this.sourcesHI = sourcesHI;
 	}
 }

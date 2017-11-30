@@ -24,34 +24,35 @@ package fr.tpt.s3.ls_mxc.model;
 public class Edge {
 	
 	// One edge has a src and a destination
-	private ActorSched src;
-	private ActorSched dest;
+	private Actor src;
+	private Actor dest;
 
 	
 	/**
 	 * Constructor for the Edge
 	 */
-	public Edge(ActorSched s, ActorSched d){
+	
+	public Edge(Actor s, Actor d) {
 		this.setSrc(s);
 		this.setDest(d);
 		s.getSndEdges().add(this);
 		d.getRcvEdges().add(this);
 	}
-	
+
 	/*
 	 * Getters & Setters	
 	 * 
 	 */
-	public ActorSched getSrc() {
+	public Actor getSrc() {
 		return src;
 	}
-	public void setSrc(ActorSched src) {
-		this.src = src;
+	public void setSrc(Actor s) {
+		this.src = s;
 	}
-	public ActorSched getDest() {
+	public Actor getDest() {
 		return dest;
 	}
-	public void setDest(ActorSched dest) {
+	public void setDest(Actor dest) {
 		this.dest = dest;
 	}
 }

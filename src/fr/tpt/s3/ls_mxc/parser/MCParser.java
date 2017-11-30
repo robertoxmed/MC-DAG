@@ -46,6 +46,8 @@ import fr.tpt.s3.ls_mxc.avail.Transition;
 import fr.tpt.s3.ls_mxc.generator.UtilizationGenerator;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
+import fr.tpt.s3.ls_mxc.model.Actor;
+import fr.tpt.s3.ls_mxc.model.ActorAvail;
 import fr.tpt.s3.ls_mxc.model.ActorSched;
 
 public class MCParser {
@@ -125,19 +127,19 @@ public class MCParser {
 					if (n.getNodeType() == Node.ELEMENT_NODE) {
 						Element e = (Element) n;
 						if (e.getAttribute("type").contains("voter")) {
-							ActorSched a = new ActorSched(nb_actors++, e.getAttribute("name"),
+							ActorAvail a = new ActorAvail(nb_actors++, e.getAttribute("name"),
 												Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
 												Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
 							a.setfMechanism(true);
-							a.setfMechType(ActorSched.VOTER);
+							a.setfMechType(ActorAvail.VOTER);
 							a.setVotTask(e.getElementsByTagName("vtask").item(0).getTextContent());
-							dag.getNodebyName(e.getElementsByTagName("vtask").item(0).getTextContent()).setVoted(true);
+							((ActorAvail) dag.getNodebyName(e.getElementsByTagName("vtask").item(0).getTextContent())).setVoted(true);
 							a.setNbReplicas(Integer.parseInt(e.getElementsByTagName("replicas").item(0).getTextContent()));
 							dag.getNodes().add(a);
 						} else if (e.getAttribute("type").contains("mkfirm")) {
-							ActorSched a = dag.getNodebyName(e.getAttribute("name"));
+							ActorAvail a = (ActorAvail) dag.getNodebyName(e.getAttribute("name"));
 							a.setfMechanism(true);
-							a.setfMechType(ActorSched.MKFIRM);
+							a.setfMechType(ActorAvail.MKFIRM);
 							a.setM(Integer.parseInt(e.getElementsByTagName("m").item(0).getTextContent()));
 							a.setK(Integer.parseInt(e.getElementsByTagName("k").item(0).getTextContent()));
 							a.setVoted(true);
@@ -261,7 +263,7 @@ public class MCParser {
 			
 			// Write properties for all LO outputs
 			for (DAG d : dags) {
-				for (ActorSched aout : d.getLoOuts()) {
+				for (Actor aout : d.getLoOuts()) {
 					out.write("(R{\""+aout.getName()+"_cycles\"}=? [ C <= D ])/(R{\"total_cycles\"}=? [ C <= D ])\n\n");
 				}
 			}
@@ -298,7 +300,7 @@ public class MCParser {
 			Iterator<FTM> iftm = auto.getFtms().iterator();
 			while (iftm.hasNext() ) {
 				FTM ftm = iftm.next();
-				if (ftm.getType() == ActorSched.VOTER) {
+				if (ftm.getType() == ActorAvail.VOTER) {
 					out.write("module "+ftm.getName()+"\n");
 					out.write("\tv"+countFtm+": [0..20] init 0;\n");
 					Iterator<Transition> it = ftm.getTransitions().iterator();
@@ -340,7 +342,7 @@ public class MCParser {
 						out.write("endmodule\n");
 						out.write("\n");
 					}
-				} else if (ftm.getType() != ActorSched.MKFIRM) {
+				} else if (ftm.getType() != ActorAvail.MKFIRM) {
 					System.out.print("Uknown Voting mechanism");
 				}
 				countFtm++;
@@ -367,8 +369,8 @@ public class MCParser {
 			out.write("\ts : [0.."+auto.getNbStates()+"] init "+auto.getLo_sched().get(0).getId()+";\n");
 			
 			// Create all necessary booleans
-			for (ActorSched a : dag.getNodes()) {
-				if (a.getCHI() == 0) // It is a LO task
+			for (Actor a : dag.getNodes()) {
+				if (a.getCI(1) == 0) // It is a LO task
 					out.write("\t"+a.getName()+"bool: bool init false;\n");
 			}
 			
@@ -378,7 +380,7 @@ public class MCParser {
 			iftm = auto.getFtms().iterator();
 			while (iftm.hasNext()) {
 				FTM ftm = iftm.next();
-				if (ftm.getType() == ActorSched.MKFIRM) {
+				if (ftm.getType() == ActorAvail.MKFIRM) {
 					for (int i = 0; i < ftm.getK(); i ++) {
 						out.write("\t"+ftm.getName()+"_v"+i+": [0..1] init 1;\n");
 					}
@@ -494,9 +496,9 @@ public class MCParser {
 					
 			// Create the rewards
 			out.write("\n");
-			Iterator<ActorSched> in = dag.getLoOuts().iterator();
+			Iterator<Actor> in = dag.getLoOuts().iterator();
 			while (in.hasNext()) {
-				ActorSched n = in.next();
+				Actor n = in.next();
 				out.write("rewards \""+n.getName()+"_cycles\"\n");
 				out.write("\t["+n.getName()+"_ok] true : 1;\n");
 				out.write("endrewards\n");
@@ -550,16 +552,16 @@ public class MCParser {
 				mcdag.setAttributeNode(dagDead);
 				rootElement.appendChild(mcdag);
 				// Actors
-				for (ActorSched a : d.getNodes()) {
+				for (Actor a : d.getNodes()) {
 					Element actor = doc.createElement("actor");
 					Attr actorNb = doc.createAttribute("name");
 					actorNb.setNodeValue("D"+d.getId()+"N"+a.getId());
 					actor.setAttributeNode(actorNb);
 					// Add Ci HI and LO
 					Element chi = doc.createElement("chi");
-					chi.appendChild(doc.createTextNode(String.valueOf(a.getCHI())));
+					chi.appendChild(doc.createTextNode(String.valueOf(a.getCI(1))));
 					Element clo = doc.createElement("clo");
-					clo.appendChild(doc.createTextNode(String.valueOf(a.getCLO())));
+					clo.appendChild(doc.createTextNode(String.valueOf(a.getCI(0))));
 					Element fprob = doc.createElement("fprob");
 					fprob.appendChild(doc.createTextNode("0.0"));
 					actor.appendChild(chi);
@@ -571,7 +573,7 @@ public class MCParser {
 				// Ports
 				Element edges = doc.createElement("ports");
 				int counter = 0;
-				for (ActorSched a : d.getNodes()) {
+				for (Actor a : d.getNodes()) {
 					if (a.getSndEdges().size() != 0)  {
 						for (Edge e : a.getSndEdges()) {
 							Element edge = doc.createElement("port");
@@ -628,9 +630,9 @@ public class MCParser {
 			
 			// HI nodes color
 			for (DAG d : ug.getGenDAG()) {
-				for (ActorSched a : d.getNodes()) {
-					if (a.getCHI() != 0)
-						out.write("\"D"+d.getId()+"N"+a.getName()+"\" [label=\"D"+d.getId()+"N"+a.getName()+"\\n"+a.getCHI()+"/"+a.getCLO()+"\",style=filled,color=lightgrey]\n");
+				for (Actor a : d.getNodes()) {
+					if (a.getCI(1) != 0)
+						out.write("\"D"+d.getId()+"N"+a.getName()+"\" [label=\"D"+d.getId()+"N"+a.getName()+"\\n"+a.getCI(1)+"/"+a.getCI(0)+"\",style=filled,color=lightgrey]\n");
 				}
 			}
 			out.write("\n");
@@ -638,16 +640,16 @@ public class MCParser {
 			// LO nodes color
 			out.write("\tnode [shape=circle, color=white]; ");
 			for (DAG d : ug.getGenDAG()) {
-				for (ActorSched a : d.getNodes()) {
-					if (a.getCHI() == 0)
-						out.write("\"D"+d.getId()+"N"+a.getName()+"\" [label=\"D"+d.getId()+"N"+a.getName()+"\\n"+a.getCHI()+"/"+a.getCLO()+"\",style=filled,color=white]\n");
+				for (Actor a : d.getNodes()) {
+					if (a.getCI(1) == 0)
+						out.write("\"D"+d.getId()+"N"+a.getName()+"\" [label=\"D"+d.getId()+"N"+a.getName()+"\\n"+a.getCI(1)+"/"+a.getCI(0)+"\",style=filled,color=white]\n");
 				}
 			}
 			out.write("\n");
 			
 			// Create the edges between the nodes
 			for (DAG d : ug.getGenDAG()) {
-				for (ActorSched a : d.getNodes()) {
+				for (Actor a : d.getNodes()) {
 					for (Edge e : a.getSndEdges())
 						out.write("\tD"+d.getId()+"N"+e.getSrc().getName()+" -> D"+d.getId()+"N"+e.getDest().getName()+";\n");
 				}

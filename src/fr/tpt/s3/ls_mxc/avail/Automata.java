@@ -73,7 +73,7 @@ public class Automata {
 			}
 		}
 
-		ActorSched n = d.getNodebyName(task);
+		Actor n = d.getNodebyName(task);
 		State s;
 		if (n.getCHI() !=  0) {
 			s = new State(nbStates++, task, ActorSched.HI);

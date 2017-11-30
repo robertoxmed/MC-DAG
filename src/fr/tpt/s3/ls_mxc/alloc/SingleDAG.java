@@ -24,6 +24,7 @@ import java.util.ListIterator;
 
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
+import fr.tpt.s3.ls_mxc.model.Actor;
 import fr.tpt.s3.ls_mxc.model.ActorSched;
 
 /**
@@ -79,9 +80,9 @@ public class SingleDAG{
 		weights_LO = new int[mcDag.getNodes().size()];
 		weights_HI = new int[mcDag.getNodes().size()];
 		
-		Iterator<ActorSched> it_n = mcDag.getNodes().iterator();
+		Iterator<Actor> it_n = mcDag.getNodes().iterator();
 		while(it_n.hasNext()){
-			ActorSched n = it_n.next();
+			ActorSched n = (ActorSched)it_n.next();
 			if(mode == 0) { // LO mode
 				weights_LO[n.getId()] = calcHLFETLevel(n, mode);
 				
@@ -98,9 +99,9 @@ public class SingleDAG{
 		
 		weights_B = new int[mcDag.getNodes().size()];
 		
-		Iterator<ActorSched> it_n = mcDag.getNodes().iterator();
+		Iterator<Actor> it_n = mcDag.getNodes().iterator();
 		while(it_n.hasNext()){
-			ActorSched n = it_n.next();
+			ActorSched n = (ActorSched) it_n.next();
 			if (n.getcIs()[1] !=  0) {
 				weights_B[n.getId()] = calcHLFETLevel(n, 0) + 200; // Add constant
 				n.setWeight_B(n.getWeightLO() + mcDag.getCritPath() * 2);
@@ -138,7 +139,7 @@ public class SingleDAG{
 		while (ie.hasNext()) {
 			
 			Edge e = ie.next();
-			tmp_max[i] = calcHLFETLevel(e.getDest(), mode); 
+			tmp_max[i] = calcHLFETLevel((ActorSched) e.getDest(), mode); 
 			i++;
 		}
 		
@@ -178,7 +179,7 @@ public class SingleDAG{
 		Start_HI = new int[mcDag.getNodes().size()];
 		int[] t_hi = new int[mcDag.getNodes().size()];
 		
-		Iterator<ActorSched> it_n = mcDag.getNodes().iterator(); 
+		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
 		// Ready list of tasks that have their dependencies met
 		LinkedList<ActorSched> ready_hi = new LinkedList<ActorSched>();
 		// List of recently finished tasks -> to activate new ones
@@ -187,7 +188,7 @@ public class SingleDAG{
 		
 		// Add HI nodes to the list
 		while(it_n.hasNext()){
-			ActorSched n = it_n.next();
+			ActorSched n = (ActorSched) it_n.next();
 			if (n.getcIs()[1] != 0) {
 				t_hi[n.getId()] = n.getcIs()[1];
 				if (n.isSinkHI()) { // At the beginning only exit nodes are added
@@ -286,7 +287,7 @@ public class SingleDAG{
 			
 		int[] t_lo = new int[mcDag.getNodes().size()];
 		
-		Iterator<ActorSched> it_n = mcDag.getNodes().iterator(); 
+		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
 		// Ready list of tasks that have their dependencies met
 		LinkedList<ActorSched> ready_lo = new LinkedList<ActorSched>();
 		// List of recently finished tasks -> to activate new ones
@@ -295,7 +296,7 @@ public class SingleDAG{
 		
 		// Add LO nodes to the list
 		while(it_n.hasNext()){
-			ActorSched n = it_n.next();
+			ActorSched n = (ActorSched) it_n.next();
 			t_lo[n.getId()] = n.getcIs()[0];
 			if (n.isSource()) // At the beginning only source nodes are added
 				ready_lo.add(n);
@@ -392,7 +393,7 @@ public class SingleDAG{
 			
 		int[] t_lo = new int[mcDag.getNodes().size()];
 		
-		Iterator<ActorSched> it_n = mcDag.getNodes().iterator(); 
+		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
 		// Ready list of tasks that have their dependencies met
 		LinkedList<ActorSched> ready_lo = new LinkedList<ActorSched>();
 		// List of recently finished tasks -> to activate new ones
@@ -401,7 +402,7 @@ public class SingleDAG{
 		
 		// Add LO nodes to the list
 		while(it_n.hasNext()){
-			ActorSched n = it_n.next();
+			ActorSched n = (ActorSched) it_n.next();
 			t_lo[n.getId()] = n.getcIs()[0];
 			if (n.isSource()) // At the beginning only source nodes are added
 				ready_lo.add(n);
@@ -486,9 +487,9 @@ public class SingleDAG{
 	 */
 	public boolean checkStartHI(LinkedList<ActorSched> ready_lo, int t, int[] start_hi, int[] t_lo){
 		boolean ret = false;
-		Iterator<ActorSched> it_n = mcDag.getNodes().iterator();
+		Iterator<Actor> it_n = mcDag.getNodes().iterator();
 		while (it_n.hasNext()){
-			ActorSched n = it_n.next();
+			ActorSched n = (ActorSched) it_n.next();
 			if (start_hi[n.getId()] == t && t_lo[n.getId()] != 0 && n.getcIs()[1] != 0){
 				n.setWeightLO(Integer.MAX_VALUE);
 				Collections.sort(ready_lo, new Comparator<ActorSched>() {
@@ -519,7 +520,7 @@ public class SingleDAG{
 		Iterator<Edge> it_e = n.getSndEdges().iterator();
 		while (it_e.hasNext()){
 			Edge e = it_e.next();
-			ActorSched suc = e.getDest();
+			ActorSched suc = (ActorSched) e.getDest();
 			boolean ready = true;
 			boolean add = true;
 			
@@ -532,7 +533,7 @@ public class SingleDAG{
 			while (it_e_rcv.hasNext()){ // For each successor we check its dependencies
 				
 				Edge e2 = it_e_rcv.next();
-				ActorSched pred = e2.getSrc();
+				ActorSched pred = (ActorSched) e2.getSrc();
 				if (t_hi[pred.getId()] != 0){
 					ready = false;
 					break;
@@ -565,7 +566,7 @@ public class SingleDAG{
 		Iterator<Edge> it_e = n.getRcvEdges().iterator();
 		while (it_e.hasNext()){
 			Edge e = it_e.next();
-			ActorSched pred = e.getSrc();
+			ActorSched pred = (ActorSched) e.getSrc();
 			boolean ready = true;
 			boolean add = true;
 			
@@ -578,7 +579,7 @@ public class SingleDAG{
 			while (it_e_rcv.hasNext()){ // For each successor we check if it has been executed
 				
 				Edge e2 = it_e_rcv.next();
-				ActorSched suc = e2.getDest();
+				ActorSched suc = (ActorSched) e2.getDest();
 				if (t_hi[suc.getId()] != 0){
 					ready = false;
 					break;
@@ -670,7 +671,7 @@ public class SingleDAG{
 			
 		int[] t_lo = new int[mcDag.getNodes().size()];
 		
-		Iterator<ActorSched> it_n = mcDag.getNodes().iterator(); 
+		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
 		// Ready list of tasks that have their dependencies met
 		LinkedList<ActorSched> ready_lo = new LinkedList<ActorSched>();
 		// List of recently finished tasks -> to activate new ones
@@ -679,7 +680,7 @@ public class SingleDAG{
 		
 		// Add LO nodes to the list
 		while(it_n.hasNext()){
-			ActorSched n = it_n.next();
+			ActorSched n = (ActorSched) it_n.next();
 			t_lo[n.getId()] = n.getcIs()[0];
 			if (n.isSource()) // At the beginning only source nodes are added
 				ready_lo.add(n);
@@ -768,7 +769,7 @@ public class SingleDAG{
 			
 		int[] t_hi = new int[mcDag.getNodes().size()];
 		
-		Iterator<ActorSched> it_n = mcDag.getNodes().iterator(); 
+		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
 		// Ready list of tasks that have their dependencies met
 		LinkedList<ActorSched> ready_hi = new LinkedList<ActorSched>();
 		// List of recently finished tasks -> to activate new ones
@@ -777,7 +778,7 @@ public class SingleDAG{
 		
 		// Add HI nodes to the list
 		while(it_n.hasNext()){
-			ActorSched n = it_n.next();
+			ActorSched n = (ActorSched) it_n.next();
 			if (n.getcIs()[1] != 0) {
 				t_hi[n.getId()] = n.getcIs()[1];
 				if (n.isSource()) // At the beginning only source nodes are added
@@ -864,7 +865,7 @@ public class SingleDAG{
 		for (int i = 0; i < getMxcDag().getNodes().size(); i++) {
 			if (mode == ActorSched.HI ) {
 				if (getMxcDag().getNodebyID(i).getcIs()[1] != 0)
-					System.out.println("[DEBUG] Weight HI "+getMxcDag().getNodebyID(i).getName()+" = "+getMxcDag().getNodebyID(i).getWeightHI());
+					System.out.println("[DEBUG] Weight HI "+getMxcDag().getNodebyID(i).getName()+" = "+((ActorSched) getMxcDag().getNodebyID(i)).getWeightHI());
 			} else {
 				System.out.println("[DEBUG] Weight LO "+getMxcDag().getNodebyID(i).getName()+" = "+weights_LO[i]);
 			}

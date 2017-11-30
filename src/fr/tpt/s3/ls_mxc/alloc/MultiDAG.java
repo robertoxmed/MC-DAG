@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
+import fr.tpt.s3.ls_mxc.model.Actor;
 import fr.tpt.s3.ls_mxc.model.ActorSched;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
@@ -130,7 +131,7 @@ public class MultiDAG{
 			int test = Integer.MAX_VALUE;
 
 			for (Edge e : a.getRcvEdges()) {
-				test = e.getSrc().getLFTHI() - e.getSrc().getCHI();
+				test = ((ActorSched) e.getSrc()).getLFTHI() - e.getSrc().getCI(1);
 				
 				if (test < ret)
 					ret = test;
@@ -148,7 +149,7 @@ public class MultiDAG{
 			int test = Integer.MAX_VALUE;
 
 			for (Edge e : a.getSndEdges()) {
-				test = e.getDest().getLFTLO() - e.getDest().getCLO();
+				test = ((ActorSched) e.getDest()).getLFTLO() - e.getDest().getCI(0);
 				if (test < ret)
 					ret = test;
 			}
@@ -167,7 +168,7 @@ public class MultiDAG{
 		boolean ret = true;
 		
 		for (Edge e : a.getSndEdges()) {
-			if (!e.getDest().isVisited())
+			if (!((ActorSched) e.getDest()).isVisited())
 				return false;
 		}
 		return ret;
@@ -183,7 +184,7 @@ public class MultiDAG{
 		boolean ret = true;
 		
 		for (Edge e : a.getRcvEdges()) {
-			if (e.getSrc().getCHI() != 0 && !e.getSrc().isVisitedHI())
+			if (e.getSrc().getCI(1) != 0 && !((ActorSched) e.getSrc()).isVisitedHI())
 				return false;
 		}
 		
@@ -198,14 +199,14 @@ public class MultiDAG{
 		ArrayList<ActorSched> toVisit = new ArrayList<>();
 		ArrayList<ActorSched> toVisitHI = new ArrayList<>();
 		
-		for (ActorSched a : d.getSinks()) {
-			toVisit.add(a);
-			a.setVisited(true);
+		for (Actor a : d.getSinks()) {
+			toVisit.add((ActorSched) a);
+			((ActorSched) a).setVisited(true);
 		}
 		
-		for (ActorSched a : d.getSourcesHI()) {
-			toVisitHI.add(a);
-			a.setVisitedHI(true);
+		for (Actor a : d.getSourcesHI()) {
+			toVisitHI.add((ActorSched) a);
+			((ActorSched) a).setVisitedHI(true);
 		}
 		
 		while (toVisit.size() != 0) {
@@ -213,9 +214,9 @@ public class MultiDAG{
 			
 			calcActorLFTLO(a, d.getDeadline());
 			for (Edge e : a.getRcvEdges()) {
-				if (!e.getSrc().isVisited() && succVisited(e.getSrc())) {
-					toVisit.add(e.getSrc());
-					e.getSrc().setVisited(true);
+				if (!((ActorSched) e.getSrc()).isVisited() && succVisited((ActorSched) e.getSrc())) {
+					toVisit.add((ActorSched) e.getSrc());
+					((ActorSched) e.getSrc()).setVisited(true);
 				}
 			}
 			toVisit.remove(0);
@@ -226,10 +227,10 @@ public class MultiDAG{
 			
 			calcActorLFTHI(a, d.getDeadline());
 			for (Edge e : a.getSndEdges()) {
-				if (e.getDest().getCHI() != 0 && !e.getDest().isVisitedHI()
-						&& succVisitedHI(e.getDest())) {
-					toVisitHI.add(e.getDest());
-					e.getDest().setVisitedHI(true);
+				if (e.getDest().getCI(1) != 0 && !((ActorSched) e.getDest()).isVisitedHI()
+						&& succVisitedHI((ActorSched) e.getDest())) {
+					toVisitHI.add((ActorSched) e.getDest());
+					((ActorSched) e.getDest()).setVisitedHI(true);
 				}
 			}
 			toVisitHI.remove(0);
@@ -254,12 +255,12 @@ public class MultiDAG{
 		// Check all predecessor of actor a that just finished
 		for (ActorSched a : sched) {
 			for (Edge e : a.getRcvEdges()) {
-				ActorSched pred = e.getSrc();
+				ActorSched pred = (ActorSched) e.getSrc();
 				boolean add = true;
 			
 				// 	Check all successors of the predecessor
 				for (Edge e2 : pred.getSndEdges()) {
-					if (e2.getDest().getCHI() != 0 && !sched.contains(e2.getDest()))
+					if (e2.getDest().getCI(1) != 0 && !sched.contains(e2.getDest()))
 						add = false;
 				}
 			
@@ -278,7 +279,7 @@ public class MultiDAG{
 		// Check all predecessor of actor a that just finished
 		for (ActorSched a : sched) {
 			for (Edge e : a.getSndEdges()) {
-				ActorSched succ = e.getDest();
+				ActorSched succ = (ActorSched) e.getDest();
 				boolean add = true;
 			
 				// 	Check all successors of the predecessor
@@ -304,7 +305,7 @@ public class MultiDAG{
 				ListIterator<ActorSched> it = sched.listIterator();
 				
 				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] checkDAGActivation(): DAG (id. "+d.getId()+") activation at slot "+slot);
-				for (ActorSched a : d.getNodes()) {
+				for (Actor a : d.getNodes()) {
 					while (it.hasNext()) { // Remove nodes from the sched list
 						ActorSched a2 = it.next();
 						if (a.getName().contentEquals(a2.getName()))
@@ -312,16 +313,16 @@ public class MultiDAG{
 					}
 					it = sched.listIterator();
 					// Re-init remaining execution time to be allocated
-					if (a.getCHI() != 0)
-						remainTHI.put(a.getName(), a.getCHI());
-					remainTLO.put(a.getName(), a.getCLO());
+					if (a.getCI(1) != 0)
+						remainTHI.put(a.getName(), a.getCI(1));
+					remainTLO.put(a.getName(), a.getCI(0));
 					
 					if (mode == ActorSched.HI) {
-						if (a.isSinkinHI())
-							lMode.add(a);
+						if (a.isSinkHI())
+							lMode.add((ActorSched) a);
 					} else {
 						if (a.isSource())
-							lMode.add(a);
+							lMode.add((ActorSched) a);
 					}
 				}			
 			}
@@ -333,10 +334,10 @@ public class MultiDAG{
 	 */
 	private void initRemainT () {
 		for (DAG d : getMcDags()) {
-			for (ActorSched a : d.getNodes()) {
-				if (a.getCHI() != 0)
-					remainTHI.put(a.getName(), a.getCHI());
-				remainTLO.put(a.getName(), a.getCLO());
+			for (Actor a : d.getNodes()) {
+				if (a.getCI(1) != 0)
+					remainTHI.put(a.getName(), a.getCI(1));
+				remainTLO.put(a.getName(), a.getCI(0));
 			}
 		}
 	}
@@ -367,9 +368,9 @@ public class MultiDAG{
 	 */
 	private void resetPromotion () {
 		for (DAG d : getMcDags()) {
-			for (ActorSched a : d.getNodes()) {
-				if (a.getCHI() != 0) {
-					a.setPromoted(false);
+			for (Actor a : d.getNodes()) {
+				if (a.getCI(1) != 0) {
+					((ActorSched) a).setPromoted(false);
 				}
 			}
 		}
@@ -389,8 +390,8 @@ public class MultiDAG{
 				a.setUrgencyHI(a.getLFTHI() - relatSlot - remainTHI.get(a.getName()));
 			} else  {// Laxity in LO mode
 				// Promote HI tasks that need to be scheduled at this slot
-				if (a.getCHI() != 0) {
-					if ((a.getCLO() - remainTLO.get(a.getName())) - scheduledUntilT(a, slot) < 0) {
+				if (a.getCI(1) != 0) {
+					if ((a.getCI(0) - remainTLO.get(a.getName())) - scheduledUntilT(a, slot) < 0) {
 						a.setPromoted(true);
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
 						a.setUrgencyLO(0);
@@ -446,9 +447,9 @@ public class MultiDAG{
 		
 		// Add all exit HI nodes to the ready list.
 		for (DAG d : getMcDags()) {
-			for (ActorSched a : d.getNodes()) {
-				if (a.isSinkinHI())
-					lHI.add(a);
+			for (Actor a : d.getNodes()) {
+				if (a.isSinkHI())
+					lHI.add((ActorSched) a);
 			}
 		}
 
@@ -518,9 +519,9 @@ public class MultiDAG{
 		
 		// Add all HI nodes to the list.
 		for (DAG d : getMcDags()) {
-			for (ActorSched a : d.getNodes()) {
+			for (Actor a : d.getNodes()) {
 				if (a.isSource())
-					lLO.add(a);
+					lLO.add((ActorSched) a);
 			}
 		}
 		
@@ -612,10 +613,10 @@ public class MultiDAG{
 	 */
 	public void printLFT () {
 		for (DAG d : getMcDags()) {
-			for (ActorSched a : d.getNodes()) {
+			for (Actor a : d.getNodes()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] printLFT(): DAG "+d.getId()+"; Actor "+a.getName()
-									+"; LFT LO "+a.getLFTLO());
-				if (a.getCHI() != 0) System.out.print("; LFT HI "+a.getLFTHI());
+									+"; LFT LO "+((ActorSched) a).getLFTLO());
+				if (a.getCI(1) != 0) System.out.print("; LFT HI "+((ActorSched) a).getLFTHI());
 				System.out.println(".");
 			}
 		}

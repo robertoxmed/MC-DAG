@@ -22,7 +22,6 @@ public class ActorAvail extends ActorSched {
 	public static final short MKFIRM = 3;
 	
 	// Used for DAG availability analysis
-	private double fProb;
 	private String votTask;
 	private boolean fMechanism;
 	private short fMechType;
@@ -38,12 +37,7 @@ public class ActorAvail extends ActorSched {
 	/*
 	 * Getters and Setters
 	 */
-	public double getfProb() {
-		return fProb;
-	}
-	public void setfProb(double fProb) {
-		this.fProb = fProb;
-	}
+
 	public String getVotTask() {
 		return votTask;
 	}

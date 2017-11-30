@@ -16,11 +16,6 @@
  *******************************************************************************/
 package fr.tpt.s3.ls_mxc.model;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-
-
 public class ActorSched extends Actor {
 	
 	private int wLO;
@@ -29,10 +24,7 @@ public class ActorSched extends Actor {
 	
 	// Used for DAG generation
 	private int rank;
-	private int cpFromNode_LO;
-	private int cpFromNode_HI;
 
-	
 	// Used for multi dag scheduling
 	private int graphDead;
 	private int LFTLO;
@@ -43,6 +35,8 @@ public class ActorSched extends Actor {
 	private boolean visited;
 	private boolean visitedHI;
 	
+	private double fProb;
+
 	/**
 	 * Constructors
 	 */
@@ -60,77 +54,16 @@ public class ActorSched extends Actor {
 		promoted = false;
 	}
 	
-
-	
-	/**
-	 * Calculates the critical Path from a given node
-	 * @param n
-	 * @param mode
-	 * @return
-	 */
-	public int CPfromNode (short mode) {
-		
-		if (this.getRcvEdges().size() == 0) {
-			if (mode == 0) {
-				this.setCpFromNode_LO(this.getcIs()[0]);
-				return this.getcIs()[0];
-			} else {
-				this.setCpFromNode_HI(this.getcIs()[1]);
-				return this.getcIs()[1];
-			}
-		} else {
-			int max = 0;
-			int tmp = 0;
-			Iterator<Edge> it_e = this.getRcvEdges().iterator();
-			
-			while (it_e.hasNext()){
-				Edge e = it_e.next();
-				if (mode == ActorSched.LO) {
-					tmp = e.getSrc().CPfromNode(ActorSched.LO);
-					if (max < tmp)
-						max = tmp;
-				} else {
-					tmp = e.getSrc().CPfromNode(ActorSched.HI);
-					if (max < tmp)
-						max = tmp;
-				}
-			}
-			if (mode == ActorSched.LO) {
-				max += this.getcIs()[0];
-				this.setCpFromNode_LO(max);
-			} else {
-				max += this.getcIs()[1];
-				this.setCpFromNode_HI(max);
-			}
-			
-			return max;
-		}
-			
-	}
-	
-
-	/**
-	 * Returns all LOpredecessors of a node
-	 * @return
-	 */
-	public Set<ActorSched> getLOPred() {
-		HashSet<ActorSched> result = new HashSet<ActorSched>();
-		Iterator<Edge> ie = this.getRcvEdges().iterator();
-		
-		while (ie.hasNext()){
-			Edge e = ie.next();
-			if (e.getSrc().getcIs()[1] == 0) {
-				result.add(e.getSrc());
-				result.addAll(e.getSrc().getLOPred());
-			}
-		}
-		return result;
-	}
-
 	
 	/*
 	 *  Getters & Setters
 	 */
+	public double getfProb() {
+		return fProb;
+	}
+	public void setfProb(double fProb) {
+		this.fProb = fProb;
+	}
 	public int getWeightLO(){
 		return this.wLO;
 	}
@@ -150,22 +83,6 @@ public class ActorSched extends Actor {
 
 	public void setRank(int rank) {
 		this.rank = rank;
-	}
-
-	public int getCpFromNode_LO() {
-		return cpFromNode_LO;
-	}
-
-	public void setCpFromNode_LO(int cpFromNode_LO) {
-		this.cpFromNode_LO = cpFromNode_LO;
-	}
-
-	public int getCpFromNode_HI() {
-		return cpFromNode_HI;
-	}
-
-	public void setCpFromNode_HI(int cpFromNode_HI) {
-		this.cpFromNode_HI = cpFromNode_HI;
 	}
 
 	public int getWeight_B() {
