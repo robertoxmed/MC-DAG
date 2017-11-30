@@ -111,11 +111,18 @@ public class MCParser {
 					Node n = nList.item(i);
 					if (n.getNodeType() == Node.ELEMENT_NODE) {
 						Element e = (Element) n;
-						ActorSched a = new ActorSched(nb_actors++, e.getAttribute("name"),
+						Actor a;
+						if (outPrismFile == null) {
+							a = new ActorSched(nb_actors++, e.getAttribute("name"),
 											Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
 											Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
-						a.setfProb(Double.parseDouble(e.getElementsByTagName("fprob").item(0).getTextContent()));
-						a.setGraphDead(dag.getDeadline());
+						} else {
+							a = new ActorAvail(nb_actors++, e.getAttribute("name"),
+									Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
+									Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
+						}
+						((ActorSched) a).setfProb(Double.parseDouble(e.getElementsByTagName("fprob").item(0).getTextContent()));
+						((ActorSched) a).setGraphDead(dag.getDeadline());
 						dag.getNodes().add(a);
 					}
 				}
