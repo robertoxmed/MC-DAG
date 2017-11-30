@@ -23,7 +23,7 @@ import java.util.Set;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
 import fr.tpt.s3.ls_mxc.util.RandomNumberGenerator;
-import fr.tpt.s3.ls_mxc.model.Actor;
+import fr.tpt.s3.ls_mxc.model.ActorSched;
 
 public class UtilizationGenerator {
 	
@@ -64,7 +64,7 @@ public class UtilizationGenerator {
 	 * Function that prints the current parameters of the node
 	 * @param a
 	 */
-	private void debugNode (Actor a, String func) {
+	private void debugNode (ActorSched a, String func) {
 		
 		System.out.println("[DEBUG] "+func+": Node "+a.getId()+" Ci(HI) = "+a.getCHI()+" Ci(LO) = "+a.getCLO());
 		for (Edge e : a.getRcvEdges())
@@ -80,7 +80,7 @@ public class UtilizationGenerator {
 		// Variables
 		int id = 0;
 		DAG d = new DAG();
-		Set<Actor> nodes = new HashSet<Actor>();
+		Set<ActorSched> nodes = new HashSet<ActorSched>();
 		int rank = 0;
 		
 		// Budgets deduced by utilization and deadline
@@ -114,7 +114,7 @@ public class UtilizationGenerator {
 			// Roll a number of nodes to add to the level
 			int nodesPerRank = rng.randomUnifInt(1,paraDegree);
 			for (int j=0; j < nodesPerRank && budgetHI > 0; j++) {
-				Actor n = new Actor(id, Integer.toString(id), 0, 0);
+				ActorSched n = new ActorSched(id, Integer.toString(id), 0, 0);
 			
 				// Roll a C_HI and test if budget is left
 				n.setCHI(rng.randomUnifInt(2, CHIBound));
@@ -127,9 +127,9 @@ public class UtilizationGenerator {
 				
 				n.setRank(rank);
 				if (rank != 0) {
-					Iterator<Actor> it_n = nodes.iterator();
+					Iterator<ActorSched> it_n = nodes.iterator();
 					while (it_n.hasNext()) {
-						Actor src = it_n.next();
+						ActorSched src = it_n.next();
 						// Test if the rank of the source is lower and if the CP
 						// is not reached
 						if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
@@ -142,7 +142,7 @@ public class UtilizationGenerator {
 				}
 				n.setCLO(n.getCHI());
 				nodes.add(n);
-				n.CPfromNode(Actor.HI);
+				n.CPfromNode(ActorSched.HI);
 				id++;
 				if (isDebug()) {
 					String func = Thread.currentThread().getStackTrace()[1].getMethodName();
@@ -156,12 +156,12 @@ public class UtilizationGenerator {
 		double minU = uHIinLO;
 		int wantedHIinLO = (int) Math.ceil(minU * rDead);
 		int actualBudget = (int) Math.ceil(rUHI * rDead);
-		Iterator<Actor> it_n;
+		Iterator<ActorSched> it_n;
 		
 		while (wantedHIinLO < actualBudget && !allHIareMin(nodes)) {
 			it_n = nodes.iterator();
 			while (it_n.hasNext()) {
-				Actor n = it_n.next();
+				ActorSched n = it_n.next();
 				
 				n.setCLO(rng.randomUnifInt(1, n.getCLO()));				
 				actualBudget = actualBudget - n.getCLO();
@@ -173,16 +173,16 @@ public class UtilizationGenerator {
 		// Debugging block
 		if (isDebug()) {
 			System.out.println("[DEBUG] GenerateGraph(): >>> Deflation of HI tasks finished");
-			for (Actor a : nodes) 
+			for (ActorSched a : nodes) 
 				debugNode(a, "GenerateGraph()");
 		}
 		
 		it_n = nodes.iterator();
 		while (it_n.hasNext()){
-			it_n.next().CPfromNode(Actor.LO);
+			it_n.next().CPfromNode(ActorSched.LO);
 		}
 				
-		graphSanityCheck(d, Actor.HI);
+		graphSanityCheck(d, ActorSched.HI);
 		
 		// Add LO nodes
 		actualBudget = 0;
@@ -199,7 +199,7 @@ public class UtilizationGenerator {
 			// Roll a number of nodes to add to the level
 			int nodesPerRank = rng.randomUnifInt(1, (int)(paraDegree / 2));
 			for (int j=0; j < nodesPerRank && budgetLO > 0; j++) {
-				Actor n = new Actor(id, Integer.toString(id), 0, 0);
+				ActorSched n = new ActorSched(id, Integer.toString(id), 0, 0);
 			
 				// Roll a C_LO and test if budget is left
 				n.setCHI(0);
@@ -214,9 +214,9 @@ public class UtilizationGenerator {
 				
 				n.setRank(rank);
 				if (rank != 0) {
-					Iterator<Actor> it = nodes.iterator();
+					Iterator<ActorSched> it = nodes.iterator();
 					while (it.hasNext()) {
-						Actor src = it.next();
+						ActorSched src = it.next();
 						// Test if the rank of the source is lower and if the CP
 						// is not reached
 						if (rng.randomUnifInt(1,100) <= edgeProb && n.getRank() > src.getRank()
@@ -229,7 +229,7 @@ public class UtilizationGenerator {
 					}
 				}
 				nodes.add(n);
-				n.CPfromNode(Actor.LO);
+				n.CPfromNode(ActorSched.LO);
 				id++;
 			}
 			rank++;
@@ -238,18 +238,18 @@ public class UtilizationGenerator {
 		// Debugging block
 		if (isDebug()) {
 			System.out.println("[DEBUG] GenerateGraph(): >>> LO tasks added.");
-			for (Actor a : nodes) 
+			for (ActorSched a : nodes) 
 				debugNode(a, "GenerateGraph()");
 		}
 		
 		it_n = nodes.iterator();
 		while (it_n.hasNext()){
-			Actor n = it_n.next();
+			ActorSched n = it_n.next();
 			n.checkifSink();
 			n.checkifSource();
 		}
 		
-		graphSanityCheck(d, Actor.LO);
+		graphSanityCheck(d, ActorSched.LO);
 		d.setNodes(nodes);
 		d.setDeadline(rDead);
 		d.setId(getGenDAG().size());
@@ -261,8 +261,8 @@ public class UtilizationGenerator {
 	 * @param nodes
 	 * @return
 	 */
-	public boolean allHIareMin (Set<Actor> nodes) {
-		Iterator<Actor> it = nodes.iterator();
+	public boolean allHIareMin (Set<ActorSched> nodes) {
+		Iterator<ActorSched> it = nodes.iterator();
 		while (it.hasNext()){
 			if (it.next().getCLO() != 1)
 				return false;
@@ -277,10 +277,10 @@ public class UtilizationGenerator {
 		int sumClo = 0;
 		int sumChi = 0;
 		int max;
-		Iterator<Actor> it_n = d.getNodes().iterator();
+		Iterator<ActorSched> it_n = d.getNodes().iterator();
 		
 		while (it_n.hasNext()) {
-			Actor n = it_n.next();
+			ActorSched n = it_n.next();
 			sumChi += n.getCHI();
 			sumClo += n.getCLO();
 		}
@@ -293,7 +293,7 @@ public class UtilizationGenerator {
 		this.setNbCores((int)Math.ceil(max/this.getDeadline()));
 	}
 	
-	public boolean allowedCommunitcation (Actor src, Actor dest) {
+	public boolean allowedCommunitcation (ActorSched src, ActorSched dest) {
 		if ((src.getCHI() > 0 && dest.getCHI() >= 0) ||
 		(src.getCHI() == 0 && dest.getCHI() == 0))
 			return true;
@@ -308,19 +308,19 @@ public class UtilizationGenerator {
 	@SuppressWarnings("unused")
 	public void graphSanityCheck(DAG d, short mode) {
 		boolean added = false;
-		Iterator<Actor> it_n = d.getNodes().iterator();
+		Iterator<ActorSched> it_n = d.getNodes().iterator();
 		
 		while (it_n.hasNext()) {
-			Actor n = it_n.next();
+			ActorSched n = it_n.next();
 			
 			// It is an independent node with no edges
 			if (n.getRcvEdges().size() == 0 && n.getSndEdges().size() == 0) {
 				
 				while (added == false) {
-					Iterator<Actor> it_n2 = d.getNodes().iterator();
+					Iterator<ActorSched> it_n2 = d.getNodes().iterator();
 					while (it_n2.hasNext() && added == false) {
-						Actor n2 = it_n2.next();
-						if (mode == Actor.LO && !n.equals(n2)) {
+						ActorSched n2 = it_n2.next();
+						if (mode == ActorSched.LO && !n.equals(n2)) {
 							if (n.getRank() < n2.getRank() &&
 									allowedCommunitcation(n, n2) &&
 									n.getCpFromNode_LO() + n2.getCLO() <= userCp){
@@ -341,7 +341,7 @@ public class UtilizationGenerator {
 									this.setHtoL(true);
 								n.CPfromNode(mode);
 							}
-						} else if (mode == Actor.HI && !n.equals(n2)){
+						} else if (mode == ActorSched.HI && !n.equals(n2)){
 							if (n.getRank() < n2.getRank() &&
 									allowedCommunitcation(n, n2) &&
 									n.getCpFromNode_HI() + n2.getCHI() <= userCp){
@@ -364,14 +364,14 @@ public class UtilizationGenerator {
 	}
 	
 	public void addHtoL(DAG d) {
-		Actor hi = null;
-		Actor lo = null;
-		Iterator<Actor> it_n = d.getNodes().iterator();
+		ActorSched hi = null;
+		ActorSched lo = null;
+		Iterator<ActorSched> it_n = d.getNodes().iterator();
 		
 		while (HtoL == false) {
 
 			while (it_n.hasNext()) { // Find a HI task
-				Actor n = it_n.next();
+				ActorSched n = it_n.next();
 				if (n.getRank() < 2 && n.getCHI() > 0) {
 					hi = n;
 				}
@@ -379,7 +379,7 @@ public class UtilizationGenerator {
 
 			it_n = d.getNodes().iterator();
 			while (it_n.hasNext()) { // Find a HI task
-				Actor n = it_n.next();
+				ActorSched n = it_n.next();
 				if (n.getRank() > 2 && n.getCHI() == 0) {
 					lo = n;
 				}
@@ -391,7 +391,7 @@ public class UtilizationGenerator {
 				Edge e = new Edge(hi, lo);
 				hi.getSndEdges().add(e);
 				lo.getRcvEdges().add(e);
-				lo.CPfromNode(Actor.LO);
+				lo.CPfromNode(ActorSched.LO);
 				this.setHtoL(true);
 			}
 		}

@@ -24,7 +24,7 @@ import java.util.ListIterator;
 
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
-import fr.tpt.s3.ls_mxc.model.Actor;
+import fr.tpt.s3.ls_mxc.model.ActorSched;
 
 /**
  * List scheduling algorithm + construction of tables
@@ -79,9 +79,9 @@ public class SingleDAG{
 		weights_LO = new int[mcDag.getNodes().size()];
 		weights_HI = new int[mcDag.getNodes().size()];
 		
-		Iterator<Actor> it_n = mcDag.getNodes().iterator();
+		Iterator<ActorSched> it_n = mcDag.getNodes().iterator();
 		while(it_n.hasNext()){
-			Actor n = it_n.next();
+			ActorSched n = it_n.next();
 			if(mode == 0) { // LO mode
 				weights_LO[n.getId()] = calcHLFETLevel(n, mode);
 				
@@ -98,9 +98,9 @@ public class SingleDAG{
 		
 		weights_B = new int[mcDag.getNodes().size()];
 		
-		Iterator<Actor> it_n = mcDag.getNodes().iterator();
+		Iterator<ActorSched> it_n = mcDag.getNodes().iterator();
 		while(it_n.hasNext()){
-			Actor n = it_n.next();
+			ActorSched n = it_n.next();
 			if (n.getCHI() !=  0) {
 				weights_B[n.getId()] = calcHLFETLevel(n, 0) + 200; // Add constant
 				n.setWeight_B(n.getWeightLO() + mcDag.getCritPath() * 2);
@@ -117,15 +117,15 @@ public class SingleDAG{
 	 * @param mode Mode of the graph
 	 * @return Level of the Node in the graph
 	 */
-	public int calcHLFETLevel(Actor n, int mode) {
+	public int calcHLFETLevel(ActorSched n, int mode) {
 		
 		int max = 0;
 		
 		// Final case the node is a sink
-		if (n.isSink() && mode == Actor.LO){
+		if (n.isSink() && mode == ActorSched.LO){
 			n.setWeightLO(n.getCLO());
 			return n.getCLO();
-		} else if (n.isSinkinHI() && mode == Actor.HI) {
+		} else if (n.isSinkinHI() && mode == ActorSched.HI) {
 			n.setWeightHI(n.getCHI());
 			return n.getCHI();
 		}
@@ -147,7 +147,7 @@ public class SingleDAG{
 				max = tmp_max[j];
 		}
 		
-		if (mode == Actor.LO) { // LO mode
+		if (mode == ActorSched.LO) { // LO mode
 			n.setWeightLO(max + n.getCLO());
 			return max + n.getCLO();
 		} else {
@@ -163,7 +163,7 @@ public class SingleDAG{
 	 * @throws SchedulingException
 	 */
 	public void AllocHI() throws SchedulingException{
-		this.calcWeights(Actor.HI);
+		this.calcWeights(ActorSched.HI);
 		/* =============================================
 		 *  Initialization of variables used by the method & class
 		 ================================================*/
@@ -178,16 +178,16 @@ public class SingleDAG{
 		Start_HI = new int[mcDag.getNodes().size()];
 		int[] t_hi = new int[mcDag.getNodes().size()];
 		
-		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
+		Iterator<ActorSched> it_n = mcDag.getNodes().iterator(); 
 		// Ready list of tasks that have their dependencies met
-		LinkedList<Actor> ready_hi = new LinkedList<Actor>();
+		LinkedList<ActorSched> ready_hi = new LinkedList<ActorSched>();
 		// List of recently finished tasks -> to activate new ones
-		LinkedList<Actor> finished_hi = new LinkedList<Actor>();
+		LinkedList<ActorSched> finished_hi = new LinkedList<ActorSched>();
 		boolean task_finished = false;
 		
 		// Add HI nodes to the list
 		while(it_n.hasNext()){
-			Actor n = it_n.next();
+			ActorSched n = it_n.next();
 			if (n.getCHI() != 0) {
 				t_hi[n.getId()] = n.getCHI();
 				if (n.isSinkinHI()) { // At the beginning only exit nodes are added
@@ -197,9 +197,9 @@ public class SingleDAG{
 		}
 
 		// Sort lists
-		Collections.sort(ready_hi, new Comparator<Actor>() {
+		Collections.sort(ready_hi, new Comparator<ActorSched>() {
 			@Override
-			public int compare(Actor n1, Actor n2) {
+			public int compare(ActorSched n1, ActorSched n2) {
 				if (n2.getWeightHI()- n1.getWeightHI() != 0)
 					return n1.getWeightHI()- n2.getWeightHI();
 				else
@@ -212,7 +212,7 @@ public class SingleDAG{
 		 * =============================================*/
 		
 		// Iterate through slots
-		ListIterator<Actor> li_it = ready_hi.listIterator();
+		ListIterator<ActorSched> li_it = ready_hi.listIterator();
 		for(int t = deadline - 1; t >= 0 ; t--){
 			
 			// Check if there is enough slots to finish executing tasks
@@ -223,7 +223,7 @@ public class SingleDAG{
 			
 			for(int c = 0; c < nbCores; c++) {
 				if (li_it.hasNext()){
-					Actor n = li_it.next(); // Get head of the list
+					ActorSched n = li_it.next(); // Get head of the list
 					sHI[t][c] = n.getName(); // Give the slot to the task
 					
 					// Decrement slots left for the task
@@ -241,14 +241,14 @@ public class SingleDAG{
 			// Tasks finished their execution 
 			if (task_finished) {
 				// Check for new activations
-				ListIterator<Actor> li_f = finished_hi.listIterator();
+				ListIterator<ActorSched> li_f = finished_hi.listIterator();
 				while (li_f.hasNext()) {
-					Actor n = li_f.next();
+					ActorSched n = li_f.next();
 					checkActivationHI(ready_hi, li_it, n, t_hi);
 					// Heavier tasks can be activated -> needs a new sort
-					Collections.sort(ready_hi, new Comparator<Actor>() {
+					Collections.sort(ready_hi, new Comparator<ActorSched>() {
 						@Override
-						public int compare(Actor n1, Actor n2) {
+						public int compare(ActorSched n1, ActorSched n2) {
 							if (n2.getWeightHI()- n1.getWeightHI() < 0 ||
 									n2.getWeightHI()- n1.getWeightHI() > 0)
 								return n1.getWeightHI()- n2.getWeightHI();
@@ -286,16 +286,16 @@ public class SingleDAG{
 			
 		int[] t_lo = new int[mcDag.getNodes().size()];
 		
-		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
+		Iterator<ActorSched> it_n = mcDag.getNodes().iterator(); 
 		// Ready list of tasks that have their dependencies met
-		LinkedList<Actor> ready_lo = new LinkedList<Actor>();
+		LinkedList<ActorSched> ready_lo = new LinkedList<ActorSched>();
 		// List of recently finished tasks -> to activate new ones
-		LinkedList<Actor> finished_lo = new LinkedList<Actor>();
+		LinkedList<ActorSched> finished_lo = new LinkedList<ActorSched>();
 		boolean task_finished = false;
 		
 		// Add LO nodes to the list
 		while(it_n.hasNext()){
-			Actor n = it_n.next();
+			ActorSched n = it_n.next();
 			t_lo[n.getId()] = n.getCLO();
 			if (n.isSource()) // At the beginning only source nodes are added
 				ready_lo.add(n);
@@ -303,9 +303,9 @@ public class SingleDAG{
 
 		// Sort lists
 		
-		Collections.sort(ready_lo, new Comparator<Actor>() {
+		Collections.sort(ready_lo, new Comparator<ActorSched>() {
 			@Override
-			public int compare(Actor n1, Actor n2) {
+			public int compare(ActorSched n1, ActorSched n2) {
 				if (n2.getWeightLO() - n1.getWeightLO() !=0)
 					return n2.getWeightLO() - n1.getWeightLO();
 				else
@@ -318,7 +318,7 @@ public class SingleDAG{
 		 * =============================================*/
 		
 		// Iterate through slots
-		ListIterator<Actor> li_it = ready_lo.listIterator();
+		ListIterator<ActorSched> li_it = ready_lo.listIterator();
 		for(int t = 0; t < deadline; t++){
 			// For each slot check if it's an WC activation time
 			if (! checkFreeSlot(t_lo, mcDag.getNodes().size(), (deadline - t) * nbCores)){
@@ -331,7 +331,7 @@ public class SingleDAG{
 			
 			for(int c = 0; c < nbCores; c++) {
 				if (li_it.hasNext()){
-					Actor n = li_it.next(); // Get head of the list
+					ActorSched n = li_it.next(); // Get head of the list
 					
 					sLO[t][c] = n.getName(); // Give the slot to the task
 
@@ -347,16 +347,16 @@ public class SingleDAG{
 			}
 			
 			if (task_finished) {
-				ListIterator<Actor> li_f = finished_lo.listIterator();
+				ListIterator<ActorSched> li_f = finished_lo.listIterator();
 				while (li_f.hasNext()) {
-					Actor n = li_f.next();
+					ActorSched n = li_f.next();
 					// Check for new activations
 					checkActivation(ready_lo, li_it, n, t_lo, 0);
 
 					// Heavier tasks can be activated -> needs a new sort
-					Collections.sort(ready_lo, new Comparator<Actor>() {
+					Collections.sort(ready_lo, new Comparator<ActorSched>() {
 						@Override
-						public int compare(Actor n1, Actor n2) {
+						public int compare(ActorSched n1, ActorSched n2) {
 							if (n2.getWeightLO() - n1.getWeightLO() !=0)
 								return n2.getWeightLO() - n1.getWeightLO();
 							else
@@ -392,25 +392,25 @@ public class SingleDAG{
 			
 		int[] t_lo = new int[mcDag.getNodes().size()];
 		
-		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
+		Iterator<ActorSched> it_n = mcDag.getNodes().iterator(); 
 		// Ready list of tasks that have their dependencies met
-		LinkedList<Actor> ready_lo = new LinkedList<Actor>();
+		LinkedList<ActorSched> ready_lo = new LinkedList<ActorSched>();
 		// List of recently finished tasks -> to activate new ones
-		LinkedList<Actor> finished_lo = new LinkedList<Actor>();
+		LinkedList<ActorSched> finished_lo = new LinkedList<ActorSched>();
 		boolean task_finished = false;
 		
 		// Add LO nodes to the list
 		while(it_n.hasNext()){
-			Actor n = it_n.next();
+			ActorSched n = it_n.next();
 			t_lo[n.getId()] = n.getCLO();
 			if (n.isSource()) // At the beginning only source nodes are added
 				ready_lo.add(n);
 		}
 
 		// Sort lists
-		Collections.sort(ready_lo, new Comparator<Actor>() {
+		Collections.sort(ready_lo, new Comparator<ActorSched>() {
 			@Override
-			public int compare(Actor n1, Actor n2) {
+			public int compare(ActorSched n1, ActorSched n2) {
 				if (n2.getWeight_B() - n1.getWeight_B() !=0)
 					return n2.getWeight_B() - n1.getWeight_B();
 				else
@@ -423,7 +423,7 @@ public class SingleDAG{
 		 * =============================================*/
 		
 		// Iterate through slots
-		ListIterator<Actor> li_it = ready_lo.listIterator();
+		ListIterator<ActorSched> li_it = ready_lo.listIterator();
 		for(int t = 0; t < deadline; t++){
 			// For each slot check if it's an WC activation time
 			if (! checkFreeSlot(t_lo, mcDag.getNodes().size(), (deadline - t) * nbCores)){
@@ -433,7 +433,7 @@ public class SingleDAG{
 			
 			for(int c = 0; c < nbCores; c++) {
 				if (li_it.hasNext()){
-					Actor n = li_it.next(); // Get head of the list
+					ActorSched n = li_it.next(); // Get head of the list
 					
 					S_B[t][c] = n.getName(); // Give the slot to the task
 
@@ -449,16 +449,16 @@ public class SingleDAG{
 			}
 			
 			if (task_finished) {
-				ListIterator<Actor> li_f = finished_lo.listIterator();
+				ListIterator<ActorSched> li_f = finished_lo.listIterator();
 				while (li_f.hasNext()) {
-					Actor n = li_f.next();
+					ActorSched n = li_f.next();
 					// Check for new activations
 					checkActivation(ready_lo, li_it, n, t_lo, 0);
 
 					// Heavier tasks can be activated -> needs a new sort
-					Collections.sort(ready_lo, new Comparator<Actor>() {
+					Collections.sort(ready_lo, new Comparator<ActorSched>() {
 						@Override
-						public int compare(Actor n1, Actor n2) {
+						public int compare(ActorSched n1, ActorSched n2) {
 							if (n2.getWeight_B() - n1.getWeight_B() !=0)
 								return n2.getWeight_B() - n1.getWeight_B();
 							else
@@ -484,16 +484,16 @@ public class SingleDAG{
 	 * @param t_lo Table of execution times
 	 * @return
 	 */
-	public boolean checkStartHI(LinkedList<Actor> ready_lo, int t, int[] start_hi, int[] t_lo){
+	public boolean checkStartHI(LinkedList<ActorSched> ready_lo, int t, int[] start_hi, int[] t_lo){
 		boolean ret = false;
-		Iterator<Actor> it_n = mcDag.getNodes().iterator();
+		Iterator<ActorSched> it_n = mcDag.getNodes().iterator();
 		while (it_n.hasNext()){
-			Actor n = it_n.next();
+			ActorSched n = it_n.next();
 			if (start_hi[n.getId()] == t && t_lo[n.getId()] != 0 && n.getCHI() != 0){
 				n.setWeightLO(Integer.MAX_VALUE);
-				Collections.sort(ready_lo, new Comparator<Actor>() {
+				Collections.sort(ready_lo, new Comparator<ActorSched>() {
 					@Override
-					public int compare(Actor n1, Actor n2) {
+					public int compare(ActorSched n1, ActorSched n2) {
 						if (n2.getWeightLO() - n1.getWeightLO() !=0)
 							return n2.getWeightLO() - n1.getWeightLO();
 						else
@@ -513,13 +513,13 @@ public class SingleDAG{
 	 * @param t_hi
 	 * @param mode
 	 */
-	public void checkActivation(LinkedList<Actor> l_r, ListIterator<Actor> li_r, Actor n, int[] t_hi, int mode){
+	public void checkActivation(LinkedList<ActorSched> l_r, ListIterator<ActorSched> li_r, ActorSched n, int[] t_hi, int mode){
 		
 		// Check all successors
 		Iterator<Edge> it_e = n.getSndEdges().iterator();
 		while (it_e.hasNext()){
 			Edge e = it_e.next();
-			Actor suc = e.getDest();
+			ActorSched suc = e.getDest();
 			boolean ready = true;
 			boolean add = true;
 			
@@ -532,7 +532,7 @@ public class SingleDAG{
 			while (it_e_rcv.hasNext()){ // For each successor we check its dependencies
 				
 				Edge e2 = it_e_rcv.next();
-				Actor pred = e2.getSrc();
+				ActorSched pred = e2.getSrc();
 				if (t_hi[pred.getId()] != 0){
 					ready = false;
 					break;
@@ -541,7 +541,7 @@ public class SingleDAG{
 			
 			if (ready) {
 				// Need to check if the task has already been added
-				ListIterator<Actor> li = l_r.listIterator();
+				ListIterator<ActorSched> li = l_r.listIterator();
 				while(li.hasNext()){
 					if(li.next().getId() == suc.getId())
 						add = false;
@@ -559,13 +559,13 @@ public class SingleDAG{
 	 * @param t_hi
 	 * @param mode
 	 */
-	public void checkActivationHI(LinkedList<Actor> l_r, ListIterator<Actor> li_r, Actor n, int[] t_hi){
+	public void checkActivationHI(LinkedList<ActorSched> l_r, ListIterator<ActorSched> li_r, ActorSched n, int[] t_hi){
 		
 		// Check all successors
 		Iterator<Edge> it_e = n.getRcvEdges().iterator();
 		while (it_e.hasNext()){
 			Edge e = it_e.next();
-			Actor pred = e.getSrc();
+			ActorSched pred = e.getSrc();
 			boolean ready = true;
 			boolean add = true;
 			
@@ -578,7 +578,7 @@ public class SingleDAG{
 			while (it_e_rcv.hasNext()){ // For each successor we check if it has been executed
 				
 				Edge e2 = it_e_rcv.next();
-				Actor suc = e2.getDest();
+				ActorSched suc = e2.getDest();
 				if (t_hi[suc.getId()] != 0){
 					ready = false;
 					break;
@@ -587,7 +587,7 @@ public class SingleDAG{
 			
 			if (ready) {
 				// Need to check if the task has already been added
-				ListIterator<Actor> li = l_r.listIterator();
+				ListIterator<ActorSched> li = l_r.listIterator();
 				while(li.hasNext()){
 					if(li.next().getId() == pred.getId())
 						add = false;
@@ -606,13 +606,13 @@ public class SingleDAG{
 	public boolean AllocAll() throws SchedulingException{
 		boolean ret = true;
 		
-		this.calcWeights(Actor.HI);
-		if (isDebug()) printW(Actor.HI);
+		this.calcWeights(ActorSched.HI);
+		if (isDebug()) printW(ActorSched.HI);
 		this.AllocHI();
 		if (isDebug()) printS_HI();
 		
-		this.calcWeights(Actor.LO);
-		if (isDebug()) printW(Actor.LO);
+		this.calcWeights(ActorSched.LO);
+		if (isDebug()) printW(ActorSched.LO);
 		this.AllocLO();
 		if (isDebug()) printS_LO();
 		
@@ -623,7 +623,7 @@ public class SingleDAG{
 		// Check if schedulable by Baruah
 		boolean ret = true;
 		
-		this.calcWeights(Actor.HI);
+		this.calcWeights(ActorSched.HI);
 		this.calcWeightsB();
 		
 		this.AllocHI();
@@ -656,7 +656,7 @@ public class SingleDAG{
 	
 	public boolean HLFETSchedulable() {
 
-		this.calcWeights(Actor.LO);
+		this.calcWeights(ActorSched.LO);
 		/* =============================================
 		 *  Initialization of variables used by the method
 		 ================================================*/
@@ -670,25 +670,25 @@ public class SingleDAG{
 			
 		int[] t_lo = new int[mcDag.getNodes().size()];
 		
-		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
+		Iterator<ActorSched> it_n = mcDag.getNodes().iterator(); 
 		// Ready list of tasks that have their dependencies met
-		LinkedList<Actor> ready_lo = new LinkedList<Actor>();
+		LinkedList<ActorSched> ready_lo = new LinkedList<ActorSched>();
 		// List of recently finished tasks -> to activate new ones
-		LinkedList<Actor> finished_lo = new LinkedList<Actor>();
+		LinkedList<ActorSched> finished_lo = new LinkedList<ActorSched>();
 		boolean task_finished = false;
 		
 		// Add LO nodes to the list
 		while(it_n.hasNext()){
-			Actor n = it_n.next();
+			ActorSched n = it_n.next();
 			t_lo[n.getId()] = n.getCLO();
 			if (n.isSource()) // At the beginning only source nodes are added
 				ready_lo.add(n);
 		}
 
 		// Sort lists
-		Collections.sort(ready_lo, new Comparator<Actor>() {
+		Collections.sort(ready_lo, new Comparator<ActorSched>() {
 			@Override
-			public int compare(Actor n1, Actor n2) {
+			public int compare(ActorSched n1, ActorSched n2) {
 				if (n2.getWeightLO() - n1.getWeightLO() != 0)
 					return n2.getWeightLO()- n1.getWeightLO();
 				else
@@ -701,7 +701,7 @@ public class SingleDAG{
 		 * =============================================*/
 		
 		// Iterate through slots
-		ListIterator<Actor> li_it = ready_lo.listIterator();
+		ListIterator<ActorSched> li_it = ready_lo.listIterator();
 		for(int t = 0; t < deadline; t++){
 			// For each slot check if it's an WC activation time
 			if (! checkFreeSlot(t_lo, mcDag.getNodes().size(), (deadline - t) * nbCores)){
@@ -711,7 +711,7 @@ public class SingleDAG{
 			
 			for(int c = 0; c < nbCores; c++) {
 				if (li_it.hasNext()){
-					Actor n = li_it.next(); // Get head of the list
+					ActorSched n = li_it.next(); // Get head of the list
 					
 					S_HLFET[t][c] = n.getName(); // Give the slot to the task
 
@@ -727,16 +727,16 @@ public class SingleDAG{
 			}
 			
 			if (task_finished) {
-				ListIterator<Actor> li_f = finished_lo.listIterator();
+				ListIterator<ActorSched> li_f = finished_lo.listIterator();
 				while (li_f.hasNext()) {
-					Actor n = li_f.next();
+					ActorSched n = li_f.next();
 					// Check for new activations
 					checkActivation(ready_lo, li_it, n, t_lo, 0);
 
 					// Heavier tasks can be activated -> needs a new sort
-					Collections.sort(ready_lo, new Comparator<Actor>() {
+					Collections.sort(ready_lo, new Comparator<ActorSched>() {
 						@Override
-						public int compare(Actor n1, Actor n2) {
+						public int compare(ActorSched n1, ActorSched n2) {
 							if (n2.getWeightLO() - n1.getWeightLO() != 0)
 								return n2.getWeightLO()- n1.getWeightLO();
 							else
@@ -768,16 +768,16 @@ public class SingleDAG{
 			
 		int[] t_hi = new int[mcDag.getNodes().size()];
 		
-		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
+		Iterator<ActorSched> it_n = mcDag.getNodes().iterator(); 
 		// Ready list of tasks that have their dependencies met
-		LinkedList<Actor> ready_hi = new LinkedList<Actor>();
+		LinkedList<ActorSched> ready_hi = new LinkedList<ActorSched>();
 		// List of recently finished tasks -> to activate new ones
-		LinkedList<Actor> finished_hi = new LinkedList<Actor>();
+		LinkedList<ActorSched> finished_hi = new LinkedList<ActorSched>();
 		boolean task_finished = false;
 		
 		// Add HI nodes to the list
 		while(it_n.hasNext()){
-			Actor n = it_n.next();
+			ActorSched n = it_n.next();
 			if (n.getCHI() != 0) {
 				t_hi[n.getId()] = n.getCHI();
 				if (n.isSource()) // At the beginning only source nodes are added
@@ -786,9 +786,9 @@ public class SingleDAG{
 		}
 
 		// Sort lists		
-		Collections.sort(ready_hi, new Comparator<Actor>() {
+		Collections.sort(ready_hi, new Comparator<ActorSched>() {
 			@Override
-			public int compare(Actor n1, Actor n2) {
+			public int compare(ActorSched n1, ActorSched n2) {
 				if (n2.getWeightHI()- n1.getWeightHI() != 0)
 					return n2.getWeightHI()- n1.getWeightHI();
 				else
@@ -801,7 +801,7 @@ public class SingleDAG{
 		 * =============================================*/
 		
 		// Iterate through slots
-		ListIterator<Actor> li_it = ready_hi.listIterator();
+		ListIterator<ActorSched> li_it = ready_hi.listIterator();
 		for(int t = 0 ; t < deadline ; t++){
 			
 			//Check if there is enough slots to finish executing tasks
@@ -811,7 +811,7 @@ public class SingleDAG{
 			
 			for(int c = 0; c < nbCores; c++) {
 				if (li_it.hasNext()){
-					Actor n = li_it.next(); // Get head of the list
+					ActorSched n = li_it.next(); // Get head of the list
 					S_HLFET_HI[t][c] = n.getName(); // Give the slot to the task
 					// Decrement slots left for the task
 					t_hi[n.getId()] = t_hi[n.getId()] - 1;
@@ -826,14 +826,14 @@ public class SingleDAG{
 			// Tasks finished their execution 
 			if (task_finished) {
 				// Check for new activations
-				ListIterator<Actor> li_f = finished_hi.listIterator();
+				ListIterator<ActorSched> li_f = finished_hi.listIterator();
 				while (li_f.hasNext()) {
-					Actor n = li_f.next();
+					ActorSched n = li_f.next();
 					checkActivation(ready_hi, li_it, n, t_hi, 1);
 					// Heavier tasks can be activated -> needs a new sort
-					Collections.sort(ready_hi, new Comparator<Actor>() {
+					Collections.sort(ready_hi, new Comparator<ActorSched>() {
 						@Override
-						public int compare(Actor n1, Actor n2) {
+						public int compare(ActorSched n1, ActorSched n2) {
 							if (n2.getWeightHI()- n1.getWeightHI() != 0)
 								return n2.getWeightHI()- n1.getWeightHI();
 							else
@@ -862,7 +862,7 @@ public class SingleDAG{
 	 */
 	public void printW(int mode) {
 		for (int i = 0; i < getMxcDag().getNodes().size(); i++) {
-			if (mode == Actor.HI ) {
+			if (mode == ActorSched.HI ) {
 				if (getMxcDag().getNodebyID(i).getCHI() != 0)
 					System.out.println("[DEBUG] Weight HI "+getMxcDag().getNodebyID(i).getName()+" = "+getMxcDag().getNodebyID(i).getWeightHI());
 			} else {

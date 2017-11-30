@@ -25,7 +25,7 @@ import java.util.Set;
 
 import fr.tpt.s3.ls_mxc.alloc.SingleDAG;
 import fr.tpt.s3.ls_mxc.model.DAG;
-import fr.tpt.s3.ls_mxc.model.Actor;
+import fr.tpt.s3.ls_mxc.model.ActorSched;
 
 public class Automata {
 
@@ -73,32 +73,32 @@ public class Automata {
 			}
 		}
 
-		Actor n = d.getNodebyName(task);
+		ActorSched n = d.getNodebyName(task);
 		State s;
 		if (n.getCHI() !=  0) {
-			s = new State(nbStates++, task, Actor.HI);
+			s = new State(nbStates++, task, ActorSched.HI);
 			if (n.isfMechanism()) { // Test if it's a fault tolerant mechanism
 				s.setfMechanism(true);
-				if (n.getfMechType() == Actor.VOTER) {
+				if (n.getfMechType() == ActorSched.VOTER) {
 					FTM ftm = new FTM(3, n.getName());
 					ftm.setNbVot(n.getNbReplicas());
 					ftm.setVotTask(d.getNodebyName(n.getVotTask()));
-					ftm.setType(Actor.VOTER);
+					ftm.setType(ActorSched.VOTER);
 					ftm.createVoter();
 					ftms.add(ftm);
 				}
 			}
 		} else {
 			
-			s = new State(nbStates++, task, Actor.LO);
+			s = new State(nbStates++, task, ActorSched.LO);
 			if (n.isVoted())
 				s.setVoted(true);
-			if (n.getfMechType() == Actor.MKFIRM) {
+			if (n.getfMechType() == ActorSched.MKFIRM) {
 				FTM ftm = null;
 				s.setfMechanism(true);
 				ftm = new FTM(n.getM(), n.getK(), n.getName());
 				ftm.setVotTask(n);
-				ftm.setType(Actor.MKFIRM);				
+				ftm.setType(ActorSched.MKFIRM);				
 				ftm.createMKFirm();
 				ftms.add(ftm);
 			}
@@ -117,9 +117,9 @@ public class Automata {
 			}
 		}
 
-		Actor n = d.getNodebyName(task);
+		ActorSched n = d.getNodebyName(task);
 		State s;
-		s = new State(nbStates++, task, Actor.HI);
+		s = new State(nbStates++, task, ActorSched.HI);
 		s.setCompTime(c_t);
 
 		addWithTime(hiSched, n, s, c_t);
@@ -132,7 +132,7 @@ public class Automata {
 	 * @param s
 	 * @param c_t
 	 */
-	public void addWithTime(List<State> l, Actor n, State s, int c_t) {
+	public void addWithTime(List<State> l, ActorSched n, State s, int c_t) {
 		int idx = 0;
 		Iterator<State> is = l.iterator();
 		State s2 = null;
@@ -155,7 +155,7 @@ public class Automata {
 				while (is.hasNext() && cur_ct == c_t) {
 					s2 = is.next();
 					cur_ct = s2.getCompTime();
-					if (s2.getMode() == Actor.HI)
+					if (s2.getMode() == ActorSched.HI)
 						idx++;
 				}
 			} else if (n.getCHI() == 0) {
@@ -168,15 +168,15 @@ public class Automata {
 			}
 		}
 		l.add(idx,s);
-		if (n.isfMechanism() && n.getfMechType() == Actor.MKFIRM) {
-			State s0 = new State(nbStates++, n.getName(), Actor.LO);
+		if (n.isfMechanism() && n.getfMechType() == ActorSched.MKFIRM) {
+			State s0 = new State(nbStates++, n.getName(), ActorSched.LO);
 			s0.setCompTime(c_t);
 			s0.setSynched(true);
 			l.add(idx+1, s0);
 		}
 		// If it is an exit LO node
 		if (n.getCHI() == 0 && n.getSndEdges().size() == 0) {
-			State s0 = new State(nbStates++, n.getName(), Actor.LO);
+			State s0 = new State(nbStates++, n.getName(), ActorSched.LO);
 			s0.setCompTime(c_t);
 			s0.setExit(true);
 			l.add(idx+1, s0);
@@ -229,22 +229,22 @@ public class Automata {
 	 * for each output formula in the DAG
 	 */
 	public void calcOutputSets() {
-		Iterator<Actor> in = d.getLoOuts().iterator();
+		Iterator<ActorSched> in = d.getLoOuts().iterator();
 		while (in.hasNext()) {
-			Actor n = in.next();
+			ActorSched n = in.next();
 			
 			// Create the Formula
 			LinkedList<AutoBoolean> bSet = new LinkedList<AutoBoolean>();
 			Formula f = new Formula(n.getName(), bSet);
 			
-			Set<Actor> nPred = n.getLOPred();
+			Set<ActorSched> nPred = n.getLOPred();
 			
 			// Create the boolean set for the LO output
 			AutoBoolean a = new AutoBoolean(n.getName(), n.getName());
 			bSet.add(a);
-			Iterator<Actor> in2 = nPred.iterator();
+			Iterator<ActorSched> in2 = nPred.iterator();
 			while (in2.hasNext()) {
-				Actor n2 = in2.next();
+				ActorSched n2 = in2.next();
 				AutoBoolean ab = new AutoBoolean(n2.getName(), n.getName());
 				bSet.add(ab);
 			}
@@ -303,7 +303,7 @@ public class Automata {
 			if (it2.hasNext()) {
 				s2 = it2.next();
 				Transition t;
-				if (s.getMode() == Actor.HI) { // If it's a HI task
+				if (s.getMode() == ActorSched.HI) { // If it's a HI task
 					// Find the HI task that corresponds to s
 					State S = hiSched.get(0);
 					t = new Transition(s, s2, S);
@@ -350,9 +350,9 @@ public class Automata {
 		s0.setCompTime(0);
 		loSched.add(s0);
 		
-		Iterator<Actor> in = d.getNodes().iterator();
+		Iterator<ActorSched> in = d.getNodes().iterator();
 		while (in.hasNext()) {
-			Actor n = in.next();
+			ActorSched n = in.next();
 			this.calcCompTimeLO(n.getName());
 		}
 		

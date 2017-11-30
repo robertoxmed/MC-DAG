@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
-import fr.tpt.s3.ls_mxc.model.Actor;
+import fr.tpt.s3.ls_mxc.model.ActorSched;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
 import fr.tpt.s3.ls_mxc.util.MathMCDAG;
@@ -39,10 +39,10 @@ public class MultiDAG{
 	private int hPeriod;
 	
 	// List of DAG nodes to order them
-	private List<Actor> lLO;
-	private List<Actor> lHI;
-	private Comparator<Actor> lHIComp;
-	private Comparator<Actor> lLOComp;
+	private List<ActorSched> lLO;
+	private List<ActorSched> lHI;
+	private Comparator<ActorSched> lHIComp;
+	private Comparator<ActorSched> lLOComp;
 	
 	// Scheduling tables
 	private String sLO[][];
@@ -65,9 +65,9 @@ public class MultiDAG{
 		remainTLO = new Hashtable<>();
 		remainTHI = new Hashtable<>();
 		
-		lHIComp = new Comparator<Actor>() {
+		lHIComp = new Comparator<ActorSched>() {
 			@Override
-			public int compare(Actor o1, Actor o2) {
+			public int compare(ActorSched o1, ActorSched o2) {
 				if (o1.getUrgencyHI() - o2.getUrgencyHI() != 0)
 					return o1.getUrgencyHI() - o2.getUrgencyHI();
 				else
@@ -75,9 +75,9 @@ public class MultiDAG{
 			}			
 		};
 		
-		lLOComp = new Comparator<Actor>() {
+		lLOComp = new Comparator<ActorSched>() {
 			@Override
-			public int compare(Actor o1, Actor o2) {
+			public int compare(ActorSched o1, ActorSched o2) {
 				if (o1.getUrgencyLO() - o2.getUrgencyLO() != 0)
 					return o1.getUrgencyLO() - o2.getUrgencyLO();
 				else
@@ -121,7 +121,7 @@ public class MultiDAG{
 	 * @param mode
 	 * @return
 	 */
-	private void calcActorLFTHI (Actor a, int deadline) {
+	private void calcActorLFTHI (ActorSched a, int deadline) {
 		int ret = Integer.MAX_VALUE;
 		
 		if (a.isSource()) {
@@ -139,7 +139,7 @@ public class MultiDAG{
 		a.setLFTHI(ret);
 	}
 	
-	private void calcActorLFTLO (Actor a, int deadline) {
+	private void calcActorLFTLO (ActorSched a, int deadline) {
 		int ret = Integer.MAX_VALUE;
 		
 		if (a.isSink()) {			
@@ -163,7 +163,7 @@ public class MultiDAG{
 	 * @param a
 	 * @return
 	 */
-	private boolean succVisited (Actor a) {
+	private boolean succVisited (ActorSched a) {
 		boolean ret = true;
 		
 		for (Edge e : a.getSndEdges()) {
@@ -179,7 +179,7 @@ public class MultiDAG{
 	 * @param a
 	 * @return
 	 */
-	private boolean succVisitedHI (Actor a) {
+	private boolean succVisitedHI (ActorSched a) {
 		boolean ret = true;
 		
 		for (Edge e : a.getRcvEdges()) {
@@ -195,21 +195,21 @@ public class MultiDAG{
 	 */
 	private void calcLFTs (DAG d) {
 		// Add a list to add the nodes that have to be visited
-		ArrayList<Actor> toVisit = new ArrayList<>();
-		ArrayList<Actor> toVisitHI = new ArrayList<>();
+		ArrayList<ActorSched> toVisit = new ArrayList<>();
+		ArrayList<ActorSched> toVisitHI = new ArrayList<>();
 		
-		for (Actor a : d.getSinks()) {
+		for (ActorSched a : d.getSinks()) {
 			toVisit.add(a);
 			a.setVisited(true);
 		}
 		
-		for (Actor a : d.getSourcesHI()) {
+		for (ActorSched a : d.getSourcesHI()) {
 			toVisitHI.add(a);
 			a.setVisitedHI(true);
 		}
 		
 		while (toVisit.size() != 0) {
-			Actor a = toVisit.get(0);
+			ActorSched a = toVisit.get(0);
 			
 			calcActorLFTLO(a, d.getDeadline());
 			for (Edge e : a.getRcvEdges()) {
@@ -222,7 +222,7 @@ public class MultiDAG{
 		}
 		
 		while (toVisitHI.size() != 0) {
-			Actor a = toVisitHI.get(0);
+			ActorSched a = toVisitHI.get(0);
 			
 			calcActorLFTHI(a, d.getDeadline());
 			for (Edge e : a.getSndEdges()) {
@@ -250,11 +250,11 @@ public class MultiDAG{
 	 * @param a
 	 * @param sched
 	 */
-	private void checkActorActivationHI (List<Actor> sched, List<Actor> ready) {
+	private void checkActorActivationHI (List<ActorSched> sched, List<ActorSched> ready) {
 		// Check all predecessor of actor a that just finished
-		for (Actor a : sched) {
+		for (ActorSched a : sched) {
 			for (Edge e : a.getRcvEdges()) {
-				Actor pred = e.getSrc();
+				ActorSched pred = e.getSrc();
 				boolean add = true;
 			
 				// 	Check all successors of the predecessor
@@ -274,11 +274,11 @@ public class MultiDAG{
 	 * @param a
 	 * @param sched
 	 */
-	private void checkActorActivationLO (List<Actor> sched, List<Actor> ready) {
+	private void checkActorActivationLO (List<ActorSched> sched, List<ActorSched> ready) {
 		// Check all predecessor of actor a that just finished
-		for (Actor a : sched) {
+		for (ActorSched a : sched) {
 			for (Edge e : a.getSndEdges()) {
-				Actor succ = e.getDest();
+				ActorSched succ = e.getDest();
 				boolean add = true;
 			
 				// 	Check all successors of the predecessor
@@ -297,16 +297,16 @@ public class MultiDAG{
 	 * Checks for the activation of a new DAG during the hyper-period
 	 * @param slot
 	 */
-	private void checkDAGActivation (int slot, List<Actor> sched, List<Actor> lMode, short mode) {
+	private void checkDAGActivation (int slot, List<ActorSched> sched, List<ActorSched> lMode, short mode) {
 		for (DAG d : getMcDags()) {
 			// If the slot is a mulitple of the deadline there is a new activation
 			if (slot % d.getDeadline() == 0) {
-				ListIterator<Actor> it = sched.listIterator();
+				ListIterator<ActorSched> it = sched.listIterator();
 				
 				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] checkDAGActivation(): DAG (id. "+d.getId()+") activation at slot "+slot);
-				for (Actor a : d.getNodes()) {
+				for (ActorSched a : d.getNodes()) {
 					while (it.hasNext()) { // Remove nodes from the sched list
-						Actor a2 = it.next();
+						ActorSched a2 = it.next();
 						if (a.getName().contentEquals(a2.getName()))
 							it.remove();
 					}
@@ -316,7 +316,7 @@ public class MultiDAG{
 						remainTHI.put(a.getName(), a.getCHI());
 					remainTLO.put(a.getName(), a.getCLO());
 					
-					if (mode == Actor.HI) {
+					if (mode == ActorSched.HI) {
 						if (a.isSinkinHI())
 							lMode.add(a);
 					} else {
@@ -333,7 +333,7 @@ public class MultiDAG{
 	 */
 	private void initRemainT () {
 		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
+			for (ActorSched a : d.getNodes()) {
 				if (a.getCHI() != 0)
 					remainTHI.put(a.getName(), a.getCHI());
 				remainTLO.put(a.getName(), a.getCLO());
@@ -347,7 +347,7 @@ public class MultiDAG{
 	 * @param t
 	 * @return
 	 */
-	private int scheduledUntilT (Actor a, int t) {
+	private int scheduledUntilT (ActorSched a, int t) {
 		int ret = 0;
 		int start = (int)(t / a.getGraphDead()) * a.getGraphDead();
 		
@@ -367,7 +367,7 @@ public class MultiDAG{
 	 */
 	private void resetPromotion () {
 		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
+			for (ActorSched a : d.getNodes()) {
 				if (a.getCHI() != 0) {
 					a.setPromoted(false);
 				}
@@ -381,11 +381,11 @@ public class MultiDAG{
 	 * @param slot
 	 * @param mode
 	 */
-	private void calcLaxity (List<Actor> list, int slot, short mode) {
-		for (Actor a : list) {
+	private void calcLaxity (List<ActorSched> list, int slot, short mode) {
+		for (ActorSched a : list) {
 			int relatSlot = slot % a.getGraphDead();
 					
-			if (mode == Actor.HI) { // Laxity in HI mode
+			if (mode == ActorSched.HI) { // Laxity in HI mode
 				a.setUrgencyHI(a.getLFTHI() - relatSlot - remainTHI.get(a.getName()));
 			} else  {// Laxity in LO mode
 				// Promote HI tasks that need to be scheduled at this slot
@@ -409,15 +409,15 @@ public class MultiDAG{
 	 * @param slot
 	 * @return
 	 */
-	private boolean isPossible (int slot, List<Actor> lMode, short mode) {
+	private boolean isPossible (int slot, List<ActorSched> lMode, short mode) {
 		int m = 0;
 		boolean ret = true;
-		ListIterator<Actor> it = lMode.listIterator();
+		ListIterator<ActorSched> it = lMode.listIterator();
 		
 		while (it.hasNext()) {
-			Actor a = it.next();
+			ActorSched a = it.next();
 			
-			if (mode == Actor.HI) {
+			if (mode == ActorSched.HI) {
 				if (a.getUrgencyHI() == 0)
 					m++;
 				else if (a.getUrgencyHI() < 0)
@@ -441,34 +441,34 @@ public class MultiDAG{
 	 * @throws SchedulingException
 	 */
 	public boolean allocHI () throws SchedulingException {
-		List<Actor> sched = new LinkedList<>();
-		lHI = new ArrayList<Actor>();
+		List<ActorSched> sched = new LinkedList<>();
+		lHI = new ArrayList<ActorSched>();
 		
 		// Add all exit HI nodes to the ready list.
 		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
+			for (ActorSched a : d.getNodes()) {
 				if (a.isSinkinHI())
 					lHI.add(a);
 			}
 		}
 
-		calcLaxity(lHI, 0, Actor.HI);
+		calcLaxity(lHI, 0, ActorSched.HI);
 		lHI.sort(lHIComp);
 		 
 		// Allocate all slots of the HI scheduling table
-		ListIterator<Actor> lit = lHI.listIterator();
+		ListIterator<ActorSched> lit = lHI.listIterator();
 		boolean taskFinished = false;
 		
 		for (int s = hPeriod - 1; s >= 0; s--) {
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] allocHI(): @t = "+s+", tasks activated: ");
-				for (Actor a : lHI)
+				for (ActorSched a : lHI)
 					System.out.print("L("+a.getName()+") = "+a.getUrgencyHI()+"; ");
 				System.out.println("");
 			}
 			
 			// Check if it's worth to continue the allocation
-			if (!isPossible(s, lHI, Actor.HI)) {
+			if (!isPossible(s, lHI, ActorSched.HI)) {
 				SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] allocHI() MultiDAG: Not enough slot left");
 				throw se;
 			}
@@ -476,7 +476,7 @@ public class MultiDAG{
 			for (int c = getNbCores() - 1; c >= 0; c--) {
 				// Find a ready task in the HI list
 				if (lit.hasNext()) {
-					Actor a = lit.next();
+					ActorSched a = lit.next();
 					int val = remainTHI.get(a.getName());
 					
 					sHI[s][c] = a.getName();
@@ -497,9 +497,9 @@ public class MultiDAG{
 
 			if (s != 0) {
 				// Check if DAGs need to be activated at the next slot
-				checkDAGActivation(s, sched, lHI, Actor.HI); 
+				checkDAGActivation(s, sched, lHI, ActorSched.HI); 
 				// Update laxities for nodes in the ready list
-				calcLaxity(lHI, gethPeriod() - s, Actor.HI);
+				calcLaxity(lHI, gethPeriod() - s, ActorSched.HI);
 			}
 			lHI.sort(lHIComp);
 			taskFinished = false;
@@ -513,34 +513,34 @@ public class MultiDAG{
 	 * @throws SchedulingException
 	 */
 	public boolean allocLO () throws SchedulingException{
-		List<Actor> sched = new LinkedList<>();
-		lLO = new ArrayList<Actor>();
+		List<ActorSched> sched = new LinkedList<>();
+		lLO = new ArrayList<ActorSched>();
 		
 		// Add all HI nodes to the list.
 		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
+			for (ActorSched a : d.getNodes()) {
 				if (a.isSource())
 					lLO.add(a);
 			}
 		}
 		
-		calcLaxity(lLO, 0, Actor.LO);
+		calcLaxity(lLO, 0, ActorSched.LO);
 		lLO.sort(lLOComp);
 		
 		// Allocate all slots of the LO scheduling table
-		ListIterator<Actor> lit = lLO.listIterator();
+		ListIterator<ActorSched> lit = lLO.listIterator();
 		boolean taskFinished = false;
 		
 		for (int s = 0; s < hPeriod; s++) {
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] allocLO(): @t = "+s+", tasks activated: ");
-				for (Actor a : lLO)
+				for (ActorSched a : lLO)
 					System.out.print("L("+a.getName()+") = "+a.getUrgencyLO()+"; ");
 				System.out.println("");
 			}
 			
 			// Verify that there are enough slots to continue the scheduling
-			if (!isPossible(s, lLO, Actor.LO)) {
+			if (!isPossible(s, lLO, ActorSched.LO)) {
 				SchedulingException se = new SchedulingException("[WARNING "+Thread.currentThread().getName()+"] allocLO() MultiDAG: Not enough slot left");
 				throw se;
 			}			
@@ -548,7 +548,7 @@ public class MultiDAG{
 			for (int c = 0; c < getNbCores(); c++) {
 				// Find a ready task in the HI list
 				if (lit.hasNext()) {
-					Actor a = lit.next();
+					ActorSched a = lit.next();
 					int val = remainTLO.get(a.getName());
 					
 					sLO[s][c] = a.getName();
@@ -569,8 +569,8 @@ public class MultiDAG{
 				checkActorActivationLO(sched, lLO);
 			
 			if (s != hPeriod - 1) {
-				checkDAGActivation(s + 1, sched, lLO, Actor.LO);
-				calcLaxity(lLO, s + 1, Actor.LO);
+				checkDAGActivation(s + 1, sched, lLO, ActorSched.LO);
+				calcLaxity(lLO, s + 1, ActorSched.LO);
 			}
 			lLO.sort(lLOComp);
 			taskFinished = false;
@@ -612,7 +612,7 @@ public class MultiDAG{
 	 */
 	public void printLFT () {
 		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
+			for (ActorSched a : d.getNodes()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] printLFT(): DAG "+d.getId()+"; Actor "+a.getName()
 									+"; LFT LO "+a.getLFTLO());
 				if (a.getCHI() != 0) System.out.print("; LFT HI "+a.getLFTHI());
@@ -682,19 +682,19 @@ public class MultiDAG{
 		this.sHI = sHI;
 	}
 
-	public List<Actor> getlLO() {
+	public List<ActorSched> getlLO() {
 		return lLO;
 	}
 
-	public void setlLO(List<Actor> lLO) {
+	public void setlLO(List<ActorSched> lLO) {
 		this.lLO = lLO;
 	}
 
-	public List<Actor> getlHI() {
+	public List<ActorSched> getlHI() {
 		return lHI;
 	}
 
-	public void setlHI(List<Actor> lHI) {
+	public void setlHI(List<ActorSched> lHI) {
 		this.lHI = lHI;
 	}
 
@@ -722,19 +722,19 @@ public class MultiDAG{
 		this.hPeriod = hPeriod;
 	}
 
-	public Comparator<Actor> getlLOComp() {
+	public Comparator<ActorSched> getlLOComp() {
 		return lLOComp;
 	}
 
-	public void setlLOComp(Comparator<Actor> lLOComp) {
+	public void setlLOComp(Comparator<ActorSched> lLOComp) {
 		this.lLOComp = lLOComp;
 	}
 
-	public Comparator<Actor> getlHIComp() {
+	public Comparator<ActorSched> getlHIComp() {
 		return lHIComp;
 	}
 
-	public void setlHIComp(Comparator<Actor> lHIComp) {
+	public void setlHIComp(Comparator<ActorSched> lHIComp) {
 		this.lHIComp = lHIComp;
 	}
 }
