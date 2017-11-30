@@ -18,6 +18,7 @@ package fr.tpt.s3.ls_mxc.model;
 
 public class ActorSched extends Actor {
 	
+	// Used for singleDAG scheduling
 	private int wLO;
 	private int wHI;
 	private int wB;
@@ -25,7 +26,7 @@ public class ActorSched extends Actor {
 	// Used for DAG generation
 	private int rank;
 
-	// Used for multi dag scheduling
+	// Used for multiDAG scheduling
 	private int graphDead;
 	private int LFTLO;
 	private boolean promoted;
