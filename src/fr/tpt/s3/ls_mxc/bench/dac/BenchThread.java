@@ -28,7 +28,7 @@ import java.util.Set;
 import fr.tpt.s3.ls_mxc.alloc.SingleDAG;
 import fr.tpt.s3.ls_mxc.alloc.MultiDAG;
 import fr.tpt.s3.ls_mxc.alloc.SchedulingException;
-import fr.tpt.s3.ls_mxc.model.ActorSched;
+import fr.tpt.s3.ls_mxc.model.Actor;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.parser.MCParser;
 import fr.tpt.s3.ls_mxc.util.MathMCDAG;
@@ -103,10 +103,10 @@ public class BenchThread implements Runnable {
 		for (DAG d : getDags()) {
 			int nbActivations = (int) (hPeriod / d.getDeadline());
 			
-			for (ActorSched a : d.getNodes()) {
-				if (a.getCHI() != 0)
-					uHI += nbActivations * a.getCHI();
-				uLO += nbActivations * a.getCLO();
+			for (Actor a : d.getNodes()) {
+				if (a.getCI(1) != 0)
+					uHI += nbActivations * a.getCI(1);
+				uLO += nbActivations * a.getCI(0);
 			}
 		}
 		uLO = uLO / hPeriod;

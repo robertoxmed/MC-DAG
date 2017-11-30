@@ -79,34 +79,34 @@ public class Automata {
 		State s;
 		if (n.getCI(1) !=  0) {
 			s = new State(nbStates++, task, ActorSched.HI);
-			if (n.isfMechanism()) { // Test if it's a fault tolerant mechanism
+			if (((ActorAvail) n).isfMechanism()) { // Test if it's a fault tolerant mechanism
 				s.setfMechanism(true);
-				if (n.getfMechType() == ActorSched.VOTER) {
+				if (((ActorAvail) n).getfMechType() == ActorAvail.VOTER) {
 					FTM ftm = new FTM(3, n.getName());
-					ftm.setNbVot(n.getNbReplicas());
-					ftm.setVotTask(d.getNodebyName(n.getVotTask()));
-					ftm.setType(ActorSched.VOTER);
+					ftm.setNbVot(((ActorAvail) n).getNbReplicas());
+					ftm.setVotTask((ActorSched) d.getNodebyName(((ActorAvail) n).getVotTask()));
+					ftm.setType(ActorAvail.VOTER);
 					ftm.createVoter();
 					ftms.add(ftm);
 				}
 			}
 		} else {
-			
 			s = new State(nbStates++, task, ActorSched.LO);
-			if (n.isVoted())
+			
+			if (((ActorAvail) n).isVoted())
 				s.setVoted(true);
-			if (n.getfMechType() == ActorSched.MKFIRM) {
+			if (((ActorAvail) n).getfMechType() == ActorAvail.MKFIRM) {
 				FTM ftm = null;
 				s.setfMechanism(true);
-				ftm = new FTM(n.getM(), n.getK(), n.getName());
-				ftm.setVotTask(n);
-				ftm.setType(ActorSched.MKFIRM);				
+				ftm = new FTM(((ActorAvail) n).getM(), ((ActorAvail) n).getK(), n.getName());
+				ftm.setVotTask((ActorSched) n);
+				ftm.setType(ActorAvail.MKFIRM);				
 				ftm.createMKFirm();
 				ftms.add(ftm);
 			}
 		}
 		s.setCompTime(c_t);
-		addWithTime(loSched, n, s, c_t);
+		addWithTime(loSched, (ActorAvail) n, s, c_t);
 	}
 	
 	// Calculate completion time of tasks and create a new state HI mode
@@ -119,12 +119,12 @@ public class Automata {
 			}
 		}
 
-		ActorSched n = d.getNodebyName(task);
+		ActorSched n = (ActorSched) d.getNodebyName(task);
 		State s;
 		s = new State(nbStates++, task, ActorSched.HI);
 		s.setCompTime(c_t);
 
-		addWithTime(hiSched, n, s, c_t);
+		addWithTime(hiSched, (ActorAvail) n, s, c_t);
 	}
 	
 	/**
@@ -134,7 +134,7 @@ public class Automata {
 	 * @param s
 	 * @param c_t
 	 */
-	public void addWithTime(List<State> l, ActorSched n, State s, int c_t) {
+	public void addWithTime(List<State> l, ActorAvail n, State s, int c_t) {
 		int idx = 0;
 		Iterator<State> is = l.iterator();
 		State s2 = null;
@@ -231,22 +231,22 @@ public class Automata {
 	 * for each output formula in the DAG
 	 */
 	public void calcOutputSets() {
-		Iterator<ActorSched> in = d.getLoOuts().iterator();
+		Iterator<Actor> in = d.getLoOuts().iterator();
 		while (in.hasNext()) {
-			ActorSched n = in.next();
+			ActorSched n = (ActorSched) in.next();
 			
 			// Create the Formula
 			LinkedList<AutoBoolean> bSet = new LinkedList<AutoBoolean>();
 			Formula f = new Formula(n.getName(), bSet);
 			
-			Set<ActorSched> nPred = n.getLOPred();
+			Set<Actor> nPred = n.getLOPred();
 			
 			// Create the boolean set for the LO output
 			AutoBoolean a = new AutoBoolean(n.getName(), n.getName());
 			bSet.add(a);
-			Iterator<ActorSched> in2 = nPred.iterator();
+			Iterator<Actor> in2 = nPred.iterator();
 			while (in2.hasNext()) {
-				ActorSched n2 = in2.next();
+				ActorSched n2 = (ActorSched) in2.next();
 				AutoBoolean ab = new AutoBoolean(n2.getName(), n.getName());
 				bSet.add(ab);
 			}
@@ -310,17 +310,17 @@ public class Automata {
 					State S = hiSched.get(0);
 					t = new Transition(s, s2, S);
 					if(!s.isfMechanism()) // If it's not a fault tolerant mechanism
-						t.setP(d.getNodebyName(s.getTask()).getfProb());
+						t.setP(((ActorSched) d.getNodebyName(s.getTask())).getfProb());
 				} else { // It is a LO task
 					if (s.isVoted()) {
 						t = new Transition(s,s2, s2);
-						t.setP(d.getNodebyName(s.getTask()).getfProb());
+						t.setP(((ActorSched) d.getNodebyName(s.getTask())).getfProb());
 					} else if (s.isSynched()) {
 						t = new Transition(s, s2, s2);
 					} else {
 						t = new Transition(s, s2, s2);
 						if (s.getCompTime() != 0)
-							t.setP(d.getNodebyName(s.getTask()).getfProb());
+							t.setP(((ActorSched) d.getNodebyName(s.getTask())).getfProb());
 					}
 				}
 				getL_transitions().add(t);
@@ -352,9 +352,9 @@ public class Automata {
 		s0.setCompTime(0);
 		loSched.add(s0);
 		
-		Iterator<ActorSched> in = d.getNodes().iterator();
+		Iterator<Actor> in = d.getNodes().iterator();
 		while (in.hasNext()) {
-			ActorSched n = in.next();
+			ActorSched n = (ActorSched) in.next();
 			this.calcCompTimeLO(n.getName());
 		}
 		
