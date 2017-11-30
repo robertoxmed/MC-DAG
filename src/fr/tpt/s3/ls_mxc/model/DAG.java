@@ -68,7 +68,7 @@ public class DAG {
 			
 			if (n.isSink())
 				getSinks().add(n);
-			if (n.isSinkinHI())
+			if (n.isSinkHI())
 				getSinksHI().add(n);
 			if (n.isSourceHI())
 				getSourcesHI().add(n);
@@ -104,7 +104,7 @@ public class DAG {
 		Iterator<ActorSched> in = this.getNodes().iterator();
 		while (in.hasNext()) {
 			ActorSched n = in.next();
-			if (n.getCHI() != 0)
+			if (n.getCI(1) != 0)
 				this.getNodes_HI().add(n);
 		}
 	}
@@ -117,7 +117,7 @@ public class DAG {
 		while (in.hasNext()) {
 			ActorSched n = in.next();
 			if (n.getSndEdges().size() == 0 &&
-					n.getCHI() == 0) {
+					n.getCI(1) == 0) {
 				this.getLoOuts().add(n);
 			}
 		}
@@ -141,7 +141,7 @@ public class DAG {
 		double ret = 0.0;
 		
 		for (ActorSched a : getNodes())
-			ret += a.getCLO();
+			ret += a.getCI(0);
 		
 		return ret / getDeadline();
 	}
@@ -154,8 +154,8 @@ public class DAG {
 		double ret = 0.0;
 		
 		for (ActorSched a : getNodes()) {
-			if (a.getCHI() != 0)
-				ret += a.getCHI();
+			if (a.getCI(1) != 0)
+				ret += a.getCI(1);
 		}
 		return ret / getDeadline();
 	}

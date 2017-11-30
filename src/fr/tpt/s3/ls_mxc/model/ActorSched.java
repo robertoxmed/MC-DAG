@@ -23,9 +23,6 @@ import java.util.Set;
 
 public class ActorSched extends Actor {
 	
-	public static final short VOTER = 2;
-	public static final short MKFIRM = 3;
-
 	private int wLO;
 	private int wHI;
 	private int wB;
@@ -34,16 +31,7 @@ public class ActorSched extends Actor {
 	private int rank;
 	private int cpFromNode_LO;
 	private int cpFromNode_HI;
-	
-	// Used for DAG availability analysis
-	private double fProb;
-	private String votTask;
-	private boolean fMechanism;
-	private short fMechType;
-	private boolean isVoted;
-	private int nbReplicas;
-	private int M;
-	private int K;
+
 	
 	// Used for multi dag scheduling
 	private int graphDead;
@@ -55,21 +43,14 @@ public class ActorSched extends Actor {
 	private boolean visited;
 	private boolean visitedHI;
 	
-	
 	/**
 	 * Constructors
 	 */
-	public ActorSched(int id, String name, int c_lo, int c_hi){
-		this.setId(id);
-		this.setCLO(c_lo);
-		this.setCHI(c_hi);
-		this.setName(name);
-		this.setSink(false);
-		this.setSource(false);
+	public ActorSched(int id, String name, int cLO, int cHI){
+		super(id, name, 2);
 		
-		rcvEdges = new HashSet<Edge>();
-		sndEdges = new HashSet<Edge>();
-	
+		this.getcIs()[0] = cLO;
+		this.getcIs()[1] = cHI;
 		LFTHI = Integer.MAX_VALUE;
 		LFTLO = Integer.MAX_VALUE;
 		urgencyHI = Integer.MAX_VALUE;
@@ -79,43 +60,7 @@ public class ActorSched extends Actor {
 		promoted = false;
 	}
 	
-	/**
-	 * 	Utility methods
-	 */
-	public void checkifSource() {
-		if (rcvEdges.size() == 0)
-			this.setSource(true);
-	}
-	
-	public void checkifSink() {
-		if (sndEdges.size() == 0)
-			this.setSink(true);
-	}
-	
-	public void checkifSourceHI() {
-		if (rcvEdges.size() == 0 && this.getCHI() != 0)
-			this.setSourceHI(true);
-	}
-	
-	public void checkifSinkinHI() {
-		
-		if(this.getCHI() == 0) {
-			this.setSinkinHI(false);
-			return;
-		}
-		
-		this.setSinkinHI(true);
-		
-		Iterator<Edge> it_e = this.getSndEdges().iterator();
-		while (it_e.hasNext()){
-			Edge e = it_e.next();
-			ActorSched dst = e.getDest();
-			if (dst.getCHI() != 0) {
-				this.setSinkinHI(false);
-				break;
-			}
-		}
-	}
+
 	
 	/**
 	 * Calculates the critical Path from a given node
@@ -127,11 +72,11 @@ public class ActorSched extends Actor {
 		
 		if (this.getRcvEdges().size() == 0) {
 			if (mode == 0) {
-				this.setCpFromNode_LO(cLO);
-				return this.getCLO();
+				this.setCpFromNode_LO(this.getcIs()[0]);
+				return this.getcIs()[0];
 			} else {
-				this.setCpFromNode_HI(cHI);
-				return this.getCHI();
+				this.setCpFromNode_HI(this.getcIs()[1]);
+				return this.getcIs()[1];
 			}
 		} else {
 			int max = 0;
@@ -151,10 +96,10 @@ public class ActorSched extends Actor {
 				}
 			}
 			if (mode == ActorSched.LO) {
-				max += this.getCLO();
+				max += this.getcIs()[0];
 				this.setCpFromNode_LO(max);
 			} else {
-				max += this.getCHI();
+				max += this.getcIs()[1];
 				this.setCpFromNode_HI(max);
 			}
 			
@@ -174,7 +119,7 @@ public class ActorSched extends Actor {
 		
 		while (ie.hasNext()){
 			Edge e = ie.next();
-			if (e.getSrc().getCHI() == 0) {
+			if (e.getSrc().getcIs()[1] == 0) {
 				result.add(e.getSrc());
 				result.addAll(e.getSrc().getLOPred());
 			}
@@ -229,70 +174,6 @@ public class ActorSched extends Actor {
 
 	public void setWeight_B(int weight_B) {
 		this.wB = weight_B;
-	}
-
-	public double getfProb() {
-		return fProb;
-	}
-
-	public void setfProb(double fProb) {
-		this.fProb = fProb;
-	}
-
-	public boolean isfMechanism() {
-		return fMechanism;
-	}
-
-	public void setfMechanism(boolean fMechanism) {
-		this.fMechanism = fMechanism;
-	}
-
-	public int getNbReplicas() {
-		return nbReplicas;
-	}
-
-	public void setNbReplicas(int nbReplicas) {
-		this.nbReplicas = nbReplicas;
-	}
-
-	public String getVotTask() {
-		return votTask;
-	}
-
-	public void setVotTask(String votTask) {
-		this.votTask = votTask;
-	}
-
-	public boolean isVoted() {
-		return isVoted;
-	}
-
-	public void setVoted(boolean isVoted) {
-		this.isVoted = isVoted;
-	}
-
-	public short getfMechType() {
-		return fMechType;
-	}
-
-	public void setfMechType(short fMechType) {
-		this.fMechType = fMechType;
-	}
-
-	public int getM() {
-		return M;
-	}
-
-	public void setM(int m) {
-		M = m;
-	}
-
-	public int getK() {
-		return K;
-	}
-
-	public void setK(int k) {
-		K = k;
 	}
 
 	public int getUrgencyLO() {

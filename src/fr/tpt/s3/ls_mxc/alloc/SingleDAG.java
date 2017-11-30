@@ -101,7 +101,7 @@ public class SingleDAG{
 		Iterator<ActorSched> it_n = mcDag.getNodes().iterator();
 		while(it_n.hasNext()){
 			ActorSched n = it_n.next();
-			if (n.getCHI() !=  0) {
+			if (n.getcIs()[1] !=  0) {
 				weights_B[n.getId()] = calcHLFETLevel(n, 0) + 200; // Add constant
 				n.setWeight_B(n.getWeightLO() + mcDag.getCritPath() * 2);
 			} else {
@@ -123,11 +123,11 @@ public class SingleDAG{
 		
 		// Final case the node is a sink
 		if (n.isSink() && mode == ActorSched.LO){
-			n.setWeightLO(n.getCLO());
-			return n.getCLO();
-		} else if (n.isSinkinHI() && mode == ActorSched.HI) {
-			n.setWeightHI(n.getCHI());
-			return n.getCHI();
+			n.setWeightLO(n.getcIs()[0]);
+			return n.getcIs()[0];
+		} else if (n.isSinkHI() && mode == ActorSched.HI) {
+			n.setWeightHI(n.getcIs()[1]);
+			return n.getcIs()[1];
 		}
 		
 		// General case
@@ -148,11 +148,11 @@ public class SingleDAG{
 		}
 		
 		if (mode == ActorSched.LO) { // LO mode
-			n.setWeightLO(max + n.getCLO());
-			return max + n.getCLO();
+			n.setWeightLO(max + n.getcIs()[0]);
+			return max + n.getcIs()[0];
 		} else {
-			n.setWeightHI(max + n.getCHI());
-			return max + n.getCHI();
+			n.setWeightHI(max + n.getcIs()[1]);
+			return max + n.getcIs()[1];
 		}
 	}
 	
@@ -188,9 +188,9 @@ public class SingleDAG{
 		// Add HI nodes to the list
 		while(it_n.hasNext()){
 			ActorSched n = it_n.next();
-			if (n.getCHI() != 0) {
-				t_hi[n.getId()] = n.getCHI();
-				if (n.isSinkinHI()) { // At the beginning only exit nodes are added
+			if (n.getcIs()[1] != 0) {
+				t_hi[n.getId()] = n.getcIs()[1];
+				if (n.isSinkHI()) { // At the beginning only exit nodes are added
 					ready_hi.add(n);
 				}
 			}
@@ -296,7 +296,7 @@ public class SingleDAG{
 		// Add LO nodes to the list
 		while(it_n.hasNext()){
 			ActorSched n = it_n.next();
-			t_lo[n.getId()] = n.getCLO();
+			t_lo[n.getId()] = n.getcIs()[0];
 			if (n.isSource()) // At the beginning only source nodes are added
 				ready_lo.add(n);
 		}
@@ -402,7 +402,7 @@ public class SingleDAG{
 		// Add LO nodes to the list
 		while(it_n.hasNext()){
 			ActorSched n = it_n.next();
-			t_lo[n.getId()] = n.getCLO();
+			t_lo[n.getId()] = n.getcIs()[0];
 			if (n.isSource()) // At the beginning only source nodes are added
 				ready_lo.add(n);
 		}
@@ -489,7 +489,7 @@ public class SingleDAG{
 		Iterator<ActorSched> it_n = mcDag.getNodes().iterator();
 		while (it_n.hasNext()){
 			ActorSched n = it_n.next();
-			if (start_hi[n.getId()] == t && t_lo[n.getId()] != 0 && n.getCHI() != 0){
+			if (start_hi[n.getId()] == t && t_lo[n.getId()] != 0 && n.getcIs()[1] != 0){
 				n.setWeightLO(Integer.MAX_VALUE);
 				Collections.sort(ready_lo, new Comparator<ActorSched>() {
 					@Override
@@ -523,7 +523,7 @@ public class SingleDAG{
 			boolean ready = true;
 			boolean add = true;
 			
-			if (mode == 1 && suc.getCHI() == 0) { // Don't activate LO tasks in HI mode
+			if (mode == 1 && suc.getcIs()[1] == 0) { // Don't activate LO tasks in HI mode
 				ready = false;
 				break;
 			}
@@ -569,7 +569,7 @@ public class SingleDAG{
 			boolean ready = true;
 			boolean add = true;
 			
-			if (pred.getCHI() == 0) { // Don't activate LO tasks in HI mode
+			if (pred.getcIs()[1] == 0) { // Don't activate LO tasks in HI mode
 				ready = false;
 				break;
 			}
@@ -680,7 +680,7 @@ public class SingleDAG{
 		// Add LO nodes to the list
 		while(it_n.hasNext()){
 			ActorSched n = it_n.next();
-			t_lo[n.getId()] = n.getCLO();
+			t_lo[n.getId()] = n.getcIs()[0];
 			if (n.isSource()) // At the beginning only source nodes are added
 				ready_lo.add(n);
 		}
@@ -778,8 +778,8 @@ public class SingleDAG{
 		// Add HI nodes to the list
 		while(it_n.hasNext()){
 			ActorSched n = it_n.next();
-			if (n.getCHI() != 0) {
-				t_hi[n.getId()] = n.getCHI();
+			if (n.getcIs()[1] != 0) {
+				t_hi[n.getId()] = n.getcIs()[1];
 				if (n.isSource()) // At the beginning only source nodes are added
 					ready_hi.add(n);
 			}
@@ -863,7 +863,7 @@ public class SingleDAG{
 	public void printW(int mode) {
 		for (int i = 0; i < getMxcDag().getNodes().size(); i++) {
 			if (mode == ActorSched.HI ) {
-				if (getMxcDag().getNodebyID(i).getCHI() != 0)
+				if (getMxcDag().getNodebyID(i).getcIs()[1] != 0)
 					System.out.println("[DEBUG] Weight HI "+getMxcDag().getNodebyID(i).getName()+" = "+getMxcDag().getNodebyID(i).getWeightHI());
 			} else {
 				System.out.println("[DEBUG] Weight LO "+getMxcDag().getNodebyID(i).getName()+" = "+weights_LO[i]);
