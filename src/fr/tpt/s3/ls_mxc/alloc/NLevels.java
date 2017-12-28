@@ -2,7 +2,9 @@ package fr.tpt.s3.ls_mxc.alloc;
 
 import java.util.Set;
 
+import fr.tpt.s3.ls_mxc.model.Actor;
 import fr.tpt.s3.ls_mxc.model.DAG;
+import fr.tpt.s3.ls_mxc.util.MathMCDAG;
 
 public class NLevels {
 	
@@ -18,11 +20,13 @@ public class NLevels {
 	private String sched[][][];
 	
 	// Remaining time to be allocated for each node
+	// Level, DAG id, Actor id
 	private int remainingTime[][][];
+	
 	
 	// Debugging boolean
 	private boolean debug;
-	
+		
 	/**
 	 * Constructor
 	 * @param dags
@@ -37,6 +41,7 @@ public class NLevels {
 		setDebug(debug);
 		remainingTime = new int[getLevels()][getMcDags().size()][];
 		
+		// Init remaining scheduling time tables
 		for (DAG d : getMcDags()) {
 			for (int i = 0; i < getLevels(); i++) {
 				remainingTime[i][d.getId()] = new int[d.getNodes().size()];
@@ -45,24 +50,71 @@ public class NLevels {
 	}
 	
 	/**
-	 * Inits the remaining time to be allocated for each node in each level
+	 * Initializes the remaining time to be allocated for each node in each level
 	 */
 	private void initRemainTime () {
-		for (DAG d : getMcDags()) {
-			for (int i = 0; i < getLevels(); i++) {
-				sched = new String[getLevels()][gethPeriod()][getNbCores()];
+		for (int i = 0; i < getLevels(); i++) {
+			for (DAG d : getMcDags()) {
+				for (Actor a : d.getNodes()) {
+					remainingTime[i][d.getId()][a.getId()] = a.getCI(i);
+				}	
 			}
 		}
+		if (debug) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] initRemainTime(): Remaining time of actors initialized!");
 	}
 	
+	/**
+	 * Inits the scheduling tables and calculates the hyper-period
+	 */
+	private void initTables () {
+		int[] input = new int[getMcDags().size()];
+		int i = 0;
+		
+		for (DAG d : getMcDags()) {
+			input[i] = d.getDeadline();
+			i++;
+		}
+		
+		sethPeriod(MathMCDAG.lcm(input));
+		
+		// Init scheduling tables
+		for (i = 0; i < getLevels(); i++)
+			sched = new String[getLevels()][gethPeriod()][getNbCores()];
+		
+		for (i = 0; i < getLevels(); i++) {
+			for (int j = 0; j < gethPeriod(); j++) {
+				for (int k = 0; k < getNbCores(); k++) {
+					sched[i][j][k] = "-";
+				}
+			}
+		}
+		
+		if (debug) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] initTables(): Sched tables initialized!");
+	}
 	
-	private void buildTable (int level) throws SchedulingException {
+	/**
+	 * Builds the scheduling table of level l
+	 * @param l
+	 * @throws SchedulingException
+	 */
+	private void buildTable (int l) throws SchedulingException {
 		
 	}
 	
-	
+	/**
+	 * Builds all the scheduling tables for the system
+	 */
 	private void buildAllTables () {
+		initRemainTime();
+		initTables();
 		
+		for (int i = 0; i < getLevels(); i++) {
+			try {
+				buildTable(i);
+			} catch (SchedulingException se) {
+				
+			}
+		}
 	}
 	
 	/*
