@@ -39,6 +39,7 @@ public class ActorSched extends Actor {
 	// Used for N levels scheduling
 	private int LFTs[];
 	private int urgencies[];
+	private boolean visitedL[];
 	
 	private double fProb;
 
@@ -171,6 +172,9 @@ public class ActorSched extends Actor {
 		LFTs = lFTs;
 	}
 
+	public void setLFTinL (int val, int l) {
+		this.getLFTs()[l] = val;
+	}
 
 	public int[] getUrgencies() {
 		return urgencies;
@@ -183,6 +187,16 @@ public class ActorSched extends Actor {
 	
 	public void setUrgency (int val, int idx) {
 		this.urgencies[idx] = val;
+	}
+
+
+	public boolean[] getVisitedL() {
+		return visitedL;
+	}
+
+
+	public void setVisitedL(boolean visitedL[]) {
+		this.visitedL = visitedL;
 	}
 
 }

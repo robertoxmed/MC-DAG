@@ -1,5 +1,6 @@
 package fr.tpt.s3.ls_mxc.alloc;
 
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
@@ -7,6 +8,7 @@ import java.util.Set;
 import fr.tpt.s3.ls_mxc.model.Actor;
 import fr.tpt.s3.ls_mxc.model.ActorSched;
 import fr.tpt.s3.ls_mxc.model.DAG;
+import fr.tpt.s3.ls_mxc.model.Edge;
 import fr.tpt.s3.ls_mxc.util.MathMCDAG;
 
 public class NLevels {
@@ -105,7 +107,18 @@ public class NLevels {
 	private void calcActorLFTrev (ActorSched a, int l, int dead) {
 		int ret = Integer.MAX_VALUE;
 		
-		if (a.isSourceinL(l))
+		if (a.isSourceinL(l)) {
+			ret = dead;
+		} else {
+			int test = Integer.MAX_VALUE;
+			
+			for (Edge e : a.getRcvEdges()) {
+				test = ((ActorSched) e.getSrc()).getLFTs()[l] - e.getSrc().getCI(l);
+				if (test < ret)
+					ret = test;
+			}
+		}
+		a.setLFTinL(ret, l);
 	}
 	
 	/**
@@ -115,6 +128,106 @@ public class NLevels {
 	 */
 	private void calcActorLFT (ActorSched a, int l, int dead) {
 		int ret = Integer.MAX_VALUE;
+		
+		if (a.isSinkinL(l)) {
+			ret = dead;
+		} else {
+			int test = Integer.MAX_VALUE;
+			
+			for (Edge e : a.getSndEdges()) {
+				test = ((ActorSched) e.getDest()).getLFTs()[l] - e.getDest().getCI(l);
+				if (test < ret)
+					ret = test;
+			}
+		}
+		a.setLFTinL(ret, l);
+		a.setUrgency(ret, l);
+	}
+	
+	/**
+	 * Internal function that tests if all successor of LO nodes in L mode have
+	 * been visited.
+	 * @param a
+	 * @param l
+	 * @return
+	 */
+	private boolean succVisitedinL (ActorSched a, int l) {
+		for (Edge e : a.getSndEdges()) {
+			if (e.getDest().getCI(l) != 0 && !((ActorSched) e.getDest()).getVisitedL()[l]) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * Internal function that tests if all predecessors of HI nodes in L mode have
+	 * been visited.
+	 * @param a
+	 * @param l
+	 * @return
+	 */
+	private boolean predVisitedinL (ActorSched a, int l) {
+		for (Edge e : a.getRcvEdges()) {
+			if (e.getSrc().getCI(l) != 0 && !((ActorSched) e.getSrc()).getVisitedL()[l]) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * Calculate LFTs on a DAG d
+	 * @param d
+	 */
+	private void calcLFTs (DAG d) {
+		
+		// Calculate LFTs in HI modes
+		for (int i = 1; i < levels; i++) {
+			ArrayList<ActorSched> toVisit = new ArrayList<>();
+			
+			// Calculate sources in i mode
+			for (Actor a : d.getNodes()) {
+				if (a.isSourceinL(i))
+					toVisit.add((ActorSched) a);
+			}
+			
+			// Visit all nodes iteratively
+			while (!toVisit.isEmpty()) {
+				ActorSched a = toVisit.get(0);
+				
+				calcActorLFTrev(a, i, d.getDeadline());
+				for (Edge e : a.getSndEdges()) {
+					if (e.getDest().getCI(i) != 0 && ((ActorSched) e.getDest()).getVisitedL()[i]
+							&& predVisitedinL((ActorSched) e.getDest(), i)) {
+						toVisit.add((ActorSched) e.getDest());
+						((ActorSched) e.getDest()).getVisitedL()[i] = true;
+					}
+				}
+				toVisit.remove(0);
+			}
+		}
+		
+		// Calculate LFT in LO mode
+		ArrayList<ActorSched> toVisit = new ArrayList<>();
+		
+		for (Actor a : d.getNodes()) {
+			if (a.isSinkinL(0))
+				toVisit.add((ActorSched) a);
+		}
+		
+		while (!toVisit.isEmpty()) {
+			ActorSched a = toVisit.get(0);
+			
+			calcActorLFT(a, 0, d.getDeadline());
+			for (Edge e : a.getRcvEdges()) {
+				if (!((ActorSched) e.getSrc()).getVisitedL()[0] && succVisitedinL(a, 0)) {
+					toVisit.add((ActorSched) e.getSrc());
+					((ActorSched) e.getSrc()).getVisitedL()[0] = true;
+				}
+			}
+			toVisit.remove(0);
+		}
 	}
 	
 	/**
