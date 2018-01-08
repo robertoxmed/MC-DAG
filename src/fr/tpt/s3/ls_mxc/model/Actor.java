@@ -175,6 +175,32 @@ public abstract class Actor {
 		return result;
 	}
 	
+	/**
+	 * Returns true if the actor is a source in L mode
+	 * @param l
+	 * @return
+	 */
+	public boolean isSourceinL (int l) {
+		for (Edge e : this.getRcvEdges()) {
+			if (e.getSrc().getCI(l) != 0)
+				return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Returns true if the actor is a sink in L mode
+	 * @param l
+	 * @return
+	 */
+	public boolean isSinkinL (int l) {
+		for (Edge e : this.getSndEdges()) {
+			if (e.getDest().getCI(l) != 0)
+				return false;
+		}
+		return true;
+	}
+	
 	/*
 	 * Getters and setters
 	 *

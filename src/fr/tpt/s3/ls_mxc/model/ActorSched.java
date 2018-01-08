@@ -36,6 +36,10 @@ public class ActorSched extends Actor {
 	private boolean visited;
 	private boolean visitedHI;
 	
+	// Used for N levels scheduling
+	private int LFTs[];
+	private int urgencies[];
+	
 	private double fProb;
 
 	/**
@@ -156,6 +160,29 @@ public class ActorSched extends Actor {
 
 	public void setPromoted(boolean promoted) {
 		this.promoted = promoted;
+	}
+
+
+	public int[] getLFTs() {
+		return LFTs;
+	}
+
+	public void setLFTs(int lFTs[]) {
+		LFTs = lFTs;
+	}
+
+
+	public int[] getUrgencies() {
+		return urgencies;
+	}
+
+
+	public void setUrgencies(int urgencies[]) {
+		this.urgencies = urgencies;
+	}
+	
+	public void setUrgency (int val, int idx) {
+		this.urgencies[idx] = val;
 	}
 
 }

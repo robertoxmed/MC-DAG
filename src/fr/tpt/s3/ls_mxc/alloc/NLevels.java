@@ -1,8 +1,11 @@
 package fr.tpt.s3.ls_mxc.alloc;
 
+import java.util.Hashtable;
+import java.util.List;
 import java.util.Set;
 
 import fr.tpt.s3.ls_mxc.model.Actor;
+import fr.tpt.s3.ls_mxc.model.ActorSched;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.util.MathMCDAG;
 
@@ -23,6 +26,8 @@ public class NLevels {
 	// Level, DAG id, Actor id
 	private int remainingTime[][][];
 	
+	// Current min activation time of HI tasks.
+	private Hashtable<String, List<Integer>> currMinAct;
 	
 	// Debugging boolean
 	private boolean debug;
@@ -93,6 +98,26 @@ public class NLevels {
 	}
 	
 	/**
+	 * Calculates the LFT of an actor in mode l which is a HI mode
+	 * @param a
+	 * @param l
+	 */
+	private void calcActorLFTrev (ActorSched a, int l, int dead) {
+		int ret = Integer.MAX_VALUE;
+		
+		if (a.isSourceinL(l))
+	}
+	
+	/**
+	 * Calculates the LFT of an actor in the LO(west) mode
+	 * @param a
+	 * @param l
+	 */
+	private void calcActorLFT (ActorSched a, int l, int dead) {
+		int ret = Integer.MAX_VALUE;
+	}
+	
+	/**
 	 * Builds the scheduling table of level l
 	 * @param l
 	 * @throws SchedulingException
@@ -112,7 +137,7 @@ public class NLevels {
 			try {
 				buildTable(i);
 			} catch (SchedulingException se) {
-				
+				System.err.println("[ERROR "+Thread.currentThread().getName()+"] Non schedulable example in mode "+i+".");
 			}
 		}
 	}
@@ -176,7 +201,13 @@ public class NLevels {
 	public void setRemainingTime(int remainingTime[][][]) {
 		this.remainingTime = remainingTime;
 	}
-	
-	
+
+	public Hashtable<String, List<Integer>> getCurrMinAct() {
+		return currMinAct;
+	}
+
+	public void setCurrMinAct(Hashtable<String, List<Integer>> currMinAct) {
+		this.currMinAct = currMinAct;
+	}
 	
 }
