@@ -36,6 +36,7 @@ public class AllocationThread implements Runnable{
 	private String inputFile;
 	private boolean outSchedFile;
 	private boolean outPRISMFile;
+	private boolean levels;
 	
 	private SingleDAG ls;
 	private MultiDAG msched;
@@ -195,5 +196,13 @@ public class AllocationThread implements Runnable{
 
 	public void setAuto(Automata auto) {
 		this.auto = auto;
+	}
+
+	public boolean isLevels() {
+		return levels;
+	}
+
+	public void setLevels(boolean levels) {
+		this.levels = levels;
 	}
 }

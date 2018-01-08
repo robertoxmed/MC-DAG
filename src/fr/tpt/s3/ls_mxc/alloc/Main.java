@@ -58,6 +58,10 @@ public class Main {
 		jobs.setRequired(false);
 		options.addOption(jobs);
 		
+		Option nlevels = new Option("n", "n-levels", false, "Model has N levels");
+		nlevels.setRequired(false);
+		options.addOption(nlevels);
+		
 		Option debugOpt = new Option("d", "debug", false, "Enabling debug.");
 		debugOpt.setRequired(false);
 		options.addOption(debugOpt);
@@ -80,6 +84,7 @@ public class Main {
 		boolean bOutSched = cmd.hasOption("out-scheduler");
 		boolean bOutPrism = cmd.hasOption("out-prism");
 		boolean debug = cmd.hasOption("debug");
+		boolean levels = cmd.hasOption("n-levels");
 		int nbFiles = inputFilePath.length;
 		
 		int nbJobs = 1;
@@ -96,9 +101,11 @@ public class Main {
 		while (i_files != nbFiles) {
 			AllocationThread ft = new AllocationThread(inputFilePath[i_files], bOutSched, bOutPrism, debug);
 			
+			ft.setLevels(levels);
 			executor.execute(ft);
 			i_files++;
 		}
+		
 		executor.shutdown();
 		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 		System.out.println("[FRAMEWORK Main] DONE");
