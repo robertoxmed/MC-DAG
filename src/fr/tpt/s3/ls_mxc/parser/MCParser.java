@@ -238,42 +238,13 @@ public class MCParser {
 							}
 						}
 						
-						a = new ActorSched(nb_actors++, e.getAttribute("name"),
-										   Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
-										   Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
+						a = new ActorSched(nb_actors++, e.getAttribute("name"),getNbLevels());
+						a.setcIs(wcets);
 						((ActorSched) a).setGraphDead(dag.getDeadline());
 						dag.getNodes().add(a);
 					}
 				}
 				
-				// List of fault tolerance mechanisms
-				NodeList ftList = eDag.getElementsByTagName("ftm");
-				for (int i = 0; i < ftList.getLength(); i++) {
-					Node n = ftList.item(i);
-					if (n.getNodeType() == Node.ELEMENT_NODE) {
-						Element e = (Element) n;
-						if (e.getAttribute("type").contains("voter")) {
-							ActorAvail a = new ActorAvail(nb_actors++, e.getAttribute("name"),
-												Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
-												Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
-							a.setfMechanism(true);
-							a.setfMechType(ActorAvail.VOTER);
-							a.setVotTask(e.getElementsByTagName("vtask").item(0).getTextContent());
-							((ActorAvail) dag.getNodebyName(e.getElementsByTagName("vtask").item(0).getTextContent())).setVoted(true);
-							a.setNbReplicas(Integer.parseInt(e.getElementsByTagName("replicas").item(0).getTextContent()));
-							dag.getNodes().add(a);
-						} else if (e.getAttribute("type").contains("mkfirm")) {
-							ActorAvail a = (ActorAvail) dag.getNodebyName(e.getAttribute("name"));
-							a.setfMechanism(true);
-							a.setfMechType(ActorAvail.MKFIRM);
-							a.setM(Integer.parseInt(e.getElementsByTagName("m").item(0).getTextContent()));
-							a.setK(Integer.parseInt(e.getElementsByTagName("k").item(0).getTextContent()));
-							a.setVoted(true);
-						} else {
-							System.out.println("Uknown FTM");
-						}
-					}
-				}
 				
 				// List of connections
 				NodeList ports = eDag.getElementsByTagName("ports");
@@ -292,7 +263,6 @@ public class MCParser {
 				dags.add(dag);
 				count++;
 			}
-			
 			
 		} catch (Exception e) {
 			e.printStackTrace();
