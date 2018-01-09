@@ -60,6 +60,19 @@ public class ActorSched extends Actor {
 		promoted = false;
 	}
 	
+	/**
+	 * Constructor whithout CIs
+	 * @param id
+	 * @param name
+	 */
+	public ActorSched (int id, String name, int nbLevels) {
+		super(id, name, nbLevels);
+		
+		LFTs = new int[nbLevels];
+		urgencies = new int[nbLevels];
+		visitedL = new boolean[nbLevels];
+	}
+	
 	
 	/*
 	 *  Getters & Setters

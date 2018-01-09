@@ -41,10 +41,10 @@ public abstract class Actor {
 	private boolean sinkHI;
 	private boolean sourceHI;
 	
-	public Actor (int id, String name, int nbModes) {
+	public Actor (int id, String name, int nbLevels) {
 		this.setId(id);
 		this.setName(name);
-		cIs = new int[nbModes];
+		cIs = new int[nbLevels];
 		this.setSink(false);
 		this.setSource(false);
 		this.setSinkHI(false);
