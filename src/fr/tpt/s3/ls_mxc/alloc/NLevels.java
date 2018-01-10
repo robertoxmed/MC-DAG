@@ -242,16 +242,44 @@ public class NLevels {
 	/**
 	 * Builds all the scheduling tables for the system
 	 */
-	private void buildAllTables () {
+	public void buildAllTables () {
 		initRemainTime();
 		initTables();
 		
-		for (int i = 0; i < getLevels(); i++) {
+		// Calculate LFTs and urgencies in all DAGs
+		for (DAG d : getMcDags()) {
+			calcLFTs(d);
+			if (isDebug()) printLFTs(d);
+		}
+		
+		// Build tables: more critical tables first
+		for (int i = getLevels() - 1; i >= 0; i--) {
 			try {
 				buildTable(i);
 			} catch (SchedulingException se) {
 				System.err.println("[ERROR "+Thread.currentThread().getName()+"] Non schedulable example in mode "+i+".");
 			}
+		}
+	}
+	
+	
+	/*
+	 * DEBUG functions
+	 */
+	
+	/**
+	 * Prints LFTs for all DAGs and all nodes in all the levels
+	 * @param d
+	 */
+	private void printLFTs (DAG d) {
+		System.out.println("[DEBUG "+Thread.currentThread().getName()+"] DAG "+d.getId()+" printing LFTs");
+		
+		for (Actor a : d.getNodes()) {
+			System.out.print("[DEBUG "+Thread.currentThread().getName()+"]\t Actor "+a.getName()+", ");
+			for (int i = 0; i < getLevels(); i++) {
+				System.out.print(((ActorSched)a).getLFTs()[i]+" ");
+			}
+			System.out.println("");
 		}
 	}
 	
