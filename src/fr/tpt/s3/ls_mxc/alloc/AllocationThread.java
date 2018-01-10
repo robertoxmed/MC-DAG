@@ -40,6 +40,7 @@ public class AllocationThread implements Runnable{
 	
 	private SingleDAG ls;
 	private MultiDAG msched;
+	private NLevels nlvl;
 	private Automata auto;
 	private boolean debug;
 	
@@ -55,71 +56,81 @@ public class AllocationThread implements Runnable{
 
 	@Override
 	public void run() {
-		mcp.readXML();
 		
-		if (!isOutSchedFile())
-			System.err.println("[WARNING] No output file has been specified for the scheduling tables.");
+		// File has a dual-criticality system
+		if (!isLevels()) {
+			mcp.readXML();
 		
-		// Only one DAG has to be scheduled in the multi-core architecture
-		if (dags.size() == 1) {
-			DAG dag = dags.iterator().next();
-			ls = new SingleDAG();
-			ls.setMxcDag(dag);
-			ls.setDeadline(dag.getDeadline());
-			ls.setNbCores(mcp.getNbCores());
-			ls.setDebug(debug);
-			
-			try {
-				ls.AllocAll();
-			} catch (SchedulingException e1) {
-				System.out.println("[ERROR] UniDAG: unable to schedule the example: "+this.getInputFile());
-				System.out.println(e1.getMessage());
-				System.exit(1);
-			}
-			mcp.setNbCores(ls.getNbCores());
-			mcp.sethPeriod(ls.getDeadline());
-			mcp.setsLO(ls.getS_LO());
-			mcp.setsHI(ls.getS_HI());
-			
-			if (isOutPRISMFile()) {
-				if (debug) System.out.println("[DEBUG] UniDAG: Creating the automata object.");
-				auto = new Automata(ls, dag);
-				auto.createAutomata();
-				mcp.setAuto(auto);
+			if (!isOutSchedFile())
+				System.err.println("[WARNING] No output file has been specified for the scheduling tables.");
+		
+			// Only one DAG has to be scheduled in the multi-core architecture
+			if (dags.size() == 1) {
+				DAG dag = dags.iterator().next();
+				ls = new SingleDAG();
+				ls.setMxcDag(dag);
+				ls.setDeadline(dag.getDeadline());
+				ls.setNbCores(mcp.getNbCores());
+				ls.setDebug(debug);
+				
 				try {
-					mcp.writePRISM();
-				} catch (IOException e) {
-					e.printStackTrace();
-					System.err.println("[WARNING] Error writting PRISM files "+outPRISMFile);
+					ls.AllocAll();
+				} catch (SchedulingException e1) {
+					System.out.println("[ERROR] UniDAG: unable to schedule the example: "+this.getInputFile());
+					System.out.println(e1.getMessage());
+					System.exit(1);
 				}
-				System.out.println("["+Thread.currentThread().getName()+"] PRISM file written.");
+				mcp.setNbCores(ls.getNbCores());
+				mcp.sethPeriod(ls.getDeadline());
+				mcp.setsLO(ls.getS_LO());
+				mcp.setsHI(ls.getS_HI());
+				
+				if (isOutPRISMFile()) {
+					if (debug) System.out.println("[DEBUG] UniDAG: Creating the automata object.");
+					auto = new Automata(ls, dag);
+					auto.createAutomata();
+					mcp.setAuto(auto);
+					try {
+						mcp.writePRISM();
+					} catch (IOException e) {
+						e.printStackTrace();
+						System.err.println("[WARNING] Error writting PRISM files "+outPRISMFile);
+					}
+					System.out.println("["+Thread.currentThread().getName()+"] PRISM file written.");
+				}
+			// Multiple DAGs neede to be scheduled
+			} else if (dags.size() > 1) {
+				msched = new MultiDAG(dags, mcp.getNbCores(), debug);
+				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] MultiDAG: "+dags.size()+" DAGs are going to be scheduled in "+mcp.getNbCores()+" cores.");
+				
+				try {
+					msched.allocAll();
+				} catch (SchedulingException e) {
+					System.err.println(e.getMessage());
+					System.err.println("[ERROR] MultiDAG: unable to schedule the example: "+mcp.getInputFile());
+					System.exit(1);
+				}
+				mcp.setNbCores(msched.getNbCores());
+				mcp.sethPeriod(msched.gethPeriod());
+				mcp.setsLO(msched.getsLO());
+				mcp.setsHI(msched.getsHI());
 			}
-		// Multiple DAGs neede to be scheduled
-		} else if (dags.size() > 1) {
-			msched = new MultiDAG(dags, mcp.getNbCores(), debug);
-			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] MultiDAG: "+dags.size()+" DAGs are going to be scheduled in "+mcp.getNbCores()+" cores.");
 			
-			try {
-				msched.allocAll();
-			} catch (SchedulingException e) {
-				System.err.println(e.getMessage());
-				System.err.println("[ERROR] MultiDAG: unable to schedule the example: "+mcp.getInputFile());
-				System.exit(1);
+			/* =============== Write results ================ */
+			if (isOutSchedFile()) {
+				try {
+					mcp.writeSched();
+				} catch (IOException e) {
+					System.err.println("[WARNING] Error writting scheduling tables to file "+outSchedFile);
+					e.printStackTrace();
+				}
 			}
-			mcp.setNbCores(msched.getNbCores());
-			mcp.sethPeriod(msched.gethPeriod());
-			mcp.setsLO(msched.getsLO());
-			mcp.setsHI(msched.getsHI());
-		}
-		
-		/* =============== Write results ================ */
-		if (isOutSchedFile()) {
-			try {
-				mcp.writeSched();
-			} catch (IOException e) {
-				System.err.println("[WARNING] Error writting scheduling tables to file "+outSchedFile);
-				e.printStackTrace();
-			}
+		} else {
+			mcp.readXMLNlevels();
+			
+			setNlvl(new NLevels(dags, mcp.getNbCores(), mcp.getNbLevels(), debug));
+			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] N levels: "+dags.size()+" DAGs are going to be scheduled in "+mcp.getNbCores()+" cores.");
+			nlvl.printDAGs();
 		}
 	}
 
@@ -204,5 +215,13 @@ public class AllocationThread implements Runnable{
 
 	public void setLevels(boolean levels) {
 		this.levels = levels;
+	}
+
+	public NLevels getNlvl() {
+		return nlvl;
+	}
+
+	public void setNlvl(NLevels nlvl) {
+		this.nlvl = nlvl;
 	}
 }

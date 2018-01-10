@@ -259,7 +259,7 @@ public class MCParser {
 								dag.getNodebyName(e.getAttribute("dstActor")));
 					}
 				}
-				dag.sanityChecks();
+				// dag.sanityChecks();
 				dags.add(dag);
 				count++;
 			}

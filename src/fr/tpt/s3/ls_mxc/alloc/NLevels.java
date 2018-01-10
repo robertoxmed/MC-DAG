@@ -255,6 +255,21 @@ public class NLevels {
 		}
 	}
 	
+	/**
+	 * Prints information about the DAGs
+	 */
+	public void printDAGs () {
+		System.out.println("[DEBUG "+Thread.currentThread().getName()+"] N levels: Number of DAGs "+getMcDags().size()+", on "+getLevels()+" levels.");
+		for (DAG d : getMcDags()) {
+			for (Actor a : d.getNodes()) {
+				System.out.print("[DEBUG "+Thread.currentThread().getName()+"]\t Actor "+a.getName()+", ");
+				for (int i = 0; i < getLevels(); i++)
+					System.out.print(a.getCI(i)+" ");
+				System.out.println("");
+			}
+		}
+	}
+	
 	/*
 	 * Getters & Setters
 	 */
