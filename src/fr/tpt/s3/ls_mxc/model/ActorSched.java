@@ -71,8 +71,13 @@ public class ActorSched extends Actor {
 		LFTs = new int[nbLevels];
 		urgencies = new int[nbLevels];
 		visitedL = new boolean[nbLevels];
+		
+		for (int i = 0; i < nbLevels; i++) {
+			LFTs[i] = Integer.MAX_VALUE;
+			urgencies[i] = Integer.MAX_VALUE;
+			visitedL[i] = false;
+		}
 	}
-	
 	
 	/*
 	 *  Getters & Setters

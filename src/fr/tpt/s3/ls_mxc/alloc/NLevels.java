@@ -1,7 +1,25 @@
+/*******************************************************************************
+ * Copyright (c) 2018 Roberto Medina
+ * Written by Roberto Medina (rmedina@telecom-paristech.fr)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
 package fr.tpt.s3.ls_mxc.alloc;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Hashtable;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -29,10 +47,14 @@ public class NLevels {
 	private int remainingTime[][][];
 	
 	// Current min activation time of HI tasks.
-	private Hashtable<String, List<Integer>> currMinAct;
+	private Hashtable<String, Integer> currMinAct;
 	
 	// Debugging boolean
 	private boolean debug;
+	
+	// Comparators to order Actors
+	private Comparator<ActorSched>[] hiComp;
+	private Comparator<ActorSched> loComp;
 		
 	/**
 	 * Constructor
@@ -53,6 +75,19 @@ public class NLevels {
 			for (int i = 0; i < getLevels(); i++) {
 				remainingTime[i][d.getId()] = new int[d.getNodes().size()];
 			}
+		}
+		
+		for (int i= 1; i < levels; i++) {
+			final int l = i;
+			hiComp[i] = new Comparator<ActorSched>() {
+				@Override
+				public int compare (ActorSched o1, ActorSched o2) {
+					if (o1.getUrgencies()[l] - o2.getUrgencies()[l] != 0)
+						return o1.getUrgencies()[l] - o2.getUrgencies()[l];
+					else
+						return o2.getId() - o1.getId();
+				}
+			};
 		}
 	}
 	
@@ -153,7 +188,7 @@ public class NLevels {
 	 */
 	private boolean succVisitedinL (ActorSched a, int l) {
 		for (Edge e : a.getSndEdges()) {
-			if (e.getDest().getCI(l) != 0 && !((ActorSched) e.getDest()).getVisitedL()[l]) {
+			if (e.getDest().getCI(l) != 0 && ((ActorSched) e.getDest()).getVisitedL()[l] == false) {
 				return false;
 			}
 		}
@@ -169,7 +204,7 @@ public class NLevels {
 	 */
 	private boolean predVisitedinL (ActorSched a, int l) {
 		for (Edge e : a.getRcvEdges()) {
-			if (e.getSrc().getCI(l) != 0 && !((ActorSched) e.getSrc()).getVisitedL()[l]) {
+			if (e.getSrc().getCI(l) != 0 && ((ActorSched) e.getSrc()).getVisitedL()[l] == false) {
 				return false;
 			}
 		}
@@ -188,8 +223,10 @@ public class NLevels {
 			
 			// Calculate sources in i mode
 			for (Actor a : d.getNodes()) {
-				if (a.isSourceinL(i))
+				if (a.isSourceinL(i)) {
 					toVisit.add((ActorSched) a);
+					((ActorSched) a).getVisitedL()[i] = true;
+				}
 			}
 			
 			// Visit all nodes iteratively
@@ -198,7 +235,7 @@ public class NLevels {
 				
 				calcActorLFTrev(a, i, d.getDeadline());
 				for (Edge e : a.getSndEdges()) {
-					if (e.getDest().getCI(i) != 0 && ((ActorSched) e.getDest()).getVisitedL()[i]
+					if (e.getDest().getCI(i) != 0 && !((ActorSched) e.getDest()).getVisitedL()[i]
 							&& predVisitedinL((ActorSched) e.getDest(), i)) {
 						toVisit.add((ActorSched) e.getDest());
 						((ActorSched) e.getDest()).getVisitedL()[i] = true;
@@ -212,8 +249,10 @@ public class NLevels {
 		ArrayList<ActorSched> toVisit = new ArrayList<>();
 		
 		for (Actor a : d.getNodes()) {
-			if (a.isSinkinL(0))
+			if (a.isSinkinL(0)) {
 				toVisit.add((ActorSched) a);
+				((ActorSched) a).getVisitedL()[0] = true;
+			}
 		}
 		
 		while (!toVisit.isEmpty()) {
@@ -236,6 +275,9 @@ public class NLevels {
 	 * @throws SchedulingException
 	 */
 	private void buildTable (int l) throws SchedulingException {
+		List<ActorSched> ready = new LinkedList<>();
+		List<ActorSched> scheduled = new LinkedList<>();
+		
 		
 	}
 	
@@ -277,7 +319,9 @@ public class NLevels {
 		for (Actor a : d.getNodes()) {
 			System.out.print("[DEBUG "+Thread.currentThread().getName()+"]\t Actor "+a.getName()+", ");
 			for (int i = 0; i < getLevels(); i++) {
-				System.out.print(((ActorSched)a).getLFTs()[i]+" ");
+				if (((ActorSched)a).getLFTs()[i] != Integer.MAX_VALUE)
+					System.out.print(((ActorSched)a).getLFTs()[i]);
+				System.out.print(" ");
 			}
 			System.out.println("");
 		}
@@ -294,6 +338,9 @@ public class NLevels {
 				for (int i = 0; i < getLevels(); i++)
 					System.out.print(a.getCI(i)+" ");
 				System.out.println("");
+				
+				for (Edge e : a.getSndEdges())
+					System.out.println("[DEBUG "+Thread.currentThread().getName()+"]\t\t Edge "+e.getSrc().getName()+" -> "+e.getDest().getName());
 			}
 		}
 	}
@@ -358,12 +405,12 @@ public class NLevels {
 		this.remainingTime = remainingTime;
 	}
 
-	public Hashtable<String, List<Integer>> getCurrMinAct() {
+	public Hashtable<String, Integer> getCurrMinAct() {
 		return currMinAct;
 	}
 
-	public void setCurrMinAct(Hashtable<String, List<Integer>> currMinAct) {
+	public void setCurrMinAct(Hashtable<String, Integer> currMinAct) {
 		this.currMinAct = currMinAct;
 	}
-	
+
 }

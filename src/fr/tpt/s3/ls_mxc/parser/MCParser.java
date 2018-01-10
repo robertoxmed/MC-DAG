@@ -245,7 +245,6 @@ public class MCParser {
 					}
 				}
 				
-				
 				// List of connections
 				NodeList ports = eDag.getElementsByTagName("ports");
 				NodeList pList = ports.item(0).getChildNodes();
