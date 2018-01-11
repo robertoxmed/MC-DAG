@@ -412,7 +412,6 @@ public class MultiDAG{
 	 */
 	private boolean isPossible (int slot, List<ActorSched> lMode, short mode) {
 		int m = 0;
-		boolean ret = true;
 		ListIterator<ActorSched> it = lMode.listIterator();
 		
 		while (it.hasNext()) {
@@ -431,10 +430,10 @@ public class MultiDAG{
 			}
 			
 			if (m > nbCores)
-				ret = false;
+				return false;
 		}
 		
-		return ret;
+		return true;
 	}
 	
 	/**
@@ -470,7 +469,7 @@ public class MultiDAG{
 			
 			// Check if it's worth to continue the allocation
 			if (!isPossible(s, lHI, ActorSched.HI)) {
-				SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] allocHI() MultiDAG: Not enough slot left");
+				SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] allocHI() MultiDAG: Not enough slots left.");
 				throw se;
 			}
 			

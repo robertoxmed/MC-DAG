@@ -203,15 +203,14 @@ public class ActorSched extends Actor {
 		this.urgencies = urgencies;
 	}
 	
-	public void setUrgency (int val, int idx) {
+	public void setUrgencyinL (int val, int idx) {
 		this.urgencies[idx] = val;
 	}
-
+	
 
 	public boolean[] getVisitedL() {
 		return visitedL;
 	}
-
 
 	public void setVisitedL(boolean visitedL[]) {
 		this.visitedL = visitedL;

@@ -18,9 +18,9 @@ package fr.tpt.s3.ls_mxc.alloc;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 
 import fr.tpt.s3.ls_mxc.model.Actor;
@@ -46,14 +46,10 @@ public class NLevels {
 	// Level, DAG id, Actor id
 	private int remainingTime[][][];
 	
-	// Current min activation time of HI tasks.
-	private Hashtable<String, Integer> currMinAct;
-	
 	// Debugging boolean
 	private boolean debug;
 	
 	// Comparators to order Actors
-	private Comparator<ActorSched>[] hiComp;
 	private Comparator<ActorSched> loComp;
 		
 	/**
@@ -77,18 +73,15 @@ public class NLevels {
 			}
 		}
 		
-		for (int i= 1; i < levels; i++) {
-			final int l = i;
-			hiComp[i] = new Comparator<ActorSched>() {
-				@Override
-				public int compare (ActorSched o1, ActorSched o2) {
-					if (o1.getUrgencies()[l] - o2.getUrgencies()[l] != 0)
-						return o1.getUrgencies()[l] - o2.getUrgencies()[l];
-					else
-						return o2.getId() - o1.getId();
-				}
-			};
-		}
+		setLoComp(new Comparator<ActorSched>() {
+			@Override
+			public int compare (ActorSched o1, ActorSched o2) {
+				if (o1.getUrgencies()[0] - o2.getUrgencies()[0] != 0)
+					return o1.getUrgencies()[0] - o2.getUrgencies()[0];
+				else
+					return o1.getId() - o2.getId();
+			}
+		});
 	}
 	
 	/**
@@ -176,7 +169,7 @@ public class NLevels {
 			}
 		}
 		a.setLFTinL(ret, l);
-		a.setUrgency(ret, l);
+		a.setUrgencyinL(ret, l);
 	}
 	
 	/**
@@ -270,14 +263,159 @@ public class NLevels {
 	}
 	
 	/**
+	 * Checks how many slots have been allocated for a in l mode until
+	 * time slot t.
+	 * @param a
+	 * @param t
+	 * @param l
+	 * @return
+	 */
+	private int scheduledUntilTinL (ActorSched a, int t, int l) {
+		int ret = 0;
+		int start = (int)(t / a.getGraphDead()) * a.getGraphDead();
+		
+		for (int i = start; i <= t; i++) {
+			for (int c = 0; c < nbCores; c++ ) {
+				if (sched[l][i][c] !=  null) {
+					if (sched[l][i][c].contentEquals(a.getName()))
+						ret++;
+				}
+			}
+		}
+		
+		return ret;
+	}
+	
+	/**
+	 * Resets temporary promotions of HI tasks
+	 */
+	private void resetPromotions() {
+		for (DAG d : getMcDags()) {
+			for (Actor a : d.getNodes()) {
+				if (a.getCI(1) != 0)
+					((ActorSched) a).setPromoted(false);
+			}
+		}
+	}
+	
+	/**
+	 * Calculates the laxity of the ready tasks that are on the list
+	 * @param list
+	 * @param slot
+	 * @param level
+	 */
+	private void calcLaxity(List<ActorSched> list, int slot, int level) {
+		for (ActorSched a : list) {
+			int relatSlot = slot % a.getGraphDead();
+			int dId = 0;
+			
+			// Look for the DAG id
+			for (DAG d : getMcDags()) {
+				for (Actor a2 : d.getNodes()) {
+					if (a2.getName().contentEquals(a.getName())) {
+						dId = d.getId();
+						break;
+					}
+				}
+			}
+			
+			// The laxity has to be calculated for a HI mode
+			if (level >= 1) {
+				// It's a HI task that might be promoted
+				if (level != getLevels() &&
+						(a.getCI(level) - remainingTime[level][dId][a.getId()]) - scheduledUntilTinL(a, slot, level + 1) < 0) {
+					a.setPromoted(true);
+					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
+					a.setUrgencyinL(0, level);
+				} else {
+					a.setUrgencyinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
+				}
+			} else { // Laxity in LO mode
+				a.setUrgencyinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
+			}
+		}
+	}
+	
+	/**
+	 * Functions that verifies if computing the scheduling table is worth it
+	 * @param list
+	 * @param slot
+	 * @param level
+	 * @return
+	 */
+	private boolean isPossible(List<ActorSched> list, int slot, int level) {
+		int m = 0;
+		ListIterator<ActorSched> lit = list.listIterator();
+		
+		while (lit.hasNext()) {
+			ActorSched a = lit.next();
+			
+			if (a.getUrgencies()[level] == 0)
+				m++;
+			else if (a.getUrgencies()[level] < 0)
+				return false;
+			
+			if (m > nbCores)
+				return false;
+		}
+		
+		return true;
+	}
+	
+	/**
 	 * Builds the scheduling table of level l
 	 * @param l
 	 * @throws SchedulingException
 	 */
-	private void buildTable (int l) throws SchedulingException {
+	private void buildHITable (int l) throws SchedulingException {
 		List<ActorSched> ready = new LinkedList<>();
 		List<ActorSched> scheduled = new LinkedList<>();
 		
+		// Add all sink nodes
+		for (DAG d : getMcDags()) {
+			for (Actor a : d.getNodes()) {
+				if (a.isSinkinL(l))
+					ready.add((ActorSched) a);
+			}
+		}
+		
+		calcLaxity(ready, 0, l);
+		ready.sort(new Comparator<ActorSched>() {
+			@Override
+			public int compare(ActorSched o1, ActorSched o2) {
+				if (o1.getUrgencies()[l] - o2.getUrgencies()[l] != 0)
+					return o1.getUrgencies()[l] - o2.getUrgencies()[l];
+				else
+					return o2.getId() - o1.getId();
+			}
+			
+		});
+		
+		// Allocate slot by slot the HI scheduling tables
+		ListIterator<ActorSched> lit = ready.listIterator();
+		boolean taskFinished = false;
+		
+		for (int s = hPeriod - 1; s >= 0; s--) {
+			if (isDebug()) {
+				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] allocHI(): @t = "+s+", tasks activated: ");
+				for (ActorSched a : ready)
+					System.out.print("L("+a.getName()+") = "+a.getUrgencyHI()+"; ");
+				System.out.println("");
+			}
+			
+			// Check if it's worth to continue the allocation
+			if (!isPossible(ready, s, l)) {
+				SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] buildHITable("+l+"): Not enough slots left.")
+			}
+		}
+		
+	}
+	
+	/**
+	 * Builds the LO scheduling table
+	 * @throws SchedulingException
+	 */
+	private void buildLOTable () throws SchedulingException {
 		
 	}
 	
@@ -295,12 +433,18 @@ public class NLevels {
 		}
 		
 		// Build tables: more critical tables first
-		for (int i = getLevels() - 1; i >= 0; i--) {
+		for (int i = getLevels() - 1; i >= 1; i--) {
 			try {
-				buildTable(i);
+				buildHITable(i);
 			} catch (SchedulingException se) {
 				System.err.println("[ERROR "+Thread.currentThread().getName()+"] Non schedulable example in mode "+i+".");
 			}
+		}
+		
+		try {
+			buildLOTable();
+		} catch (SchedulingException e) {
+			System.err.println("[ERROR "+Thread.currentThread().getName()+"] Non schedulable example in LO mode.");
 		}
 	}
 	
@@ -405,12 +549,12 @@ public class NLevels {
 		this.remainingTime = remainingTime;
 	}
 
-	public Hashtable<String, Integer> getCurrMinAct() {
-		return currMinAct;
+	public Comparator<ActorSched> getLoComp() {
+		return loComp;
 	}
 
-	public void setCurrMinAct(Hashtable<String, Integer> currMinAct) {
-		this.currMinAct = currMinAct;
+	public void setLoComp(Comparator<ActorSched> loComp) {
+		this.loComp = loComp;
 	}
 
 }
