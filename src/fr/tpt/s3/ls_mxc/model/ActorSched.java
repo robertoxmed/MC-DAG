@@ -40,6 +40,7 @@ public class ActorSched extends Actor {
 	private int LFTs[];
 	private int urgencies[];
 	private boolean visitedL[];
+	private int graphID;
 	
 	private double fProb;
 
@@ -214,6 +215,14 @@ public class ActorSched extends Actor {
 
 	public void setVisitedL(boolean visitedL[]) {
 		this.visitedL = visitedL;
+	}
+
+	public int getGraphID() {
+		return graphID;
+	}
+
+	public void setGraphID(int graphID) {
+		this.graphID = graphID;
 	}
 
 }

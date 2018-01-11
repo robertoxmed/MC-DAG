@@ -239,6 +239,7 @@ public class MCParser {
 						}
 						
 						a = new ActorSched(nb_actors++, e.getAttribute("name"),getNbLevels());
+						((ActorSched) a).setGraphID(count);
 						a.setcIs(wcets);
 						((ActorSched) a).setGraphDead(dag.getDeadline());
 						dag.getNodes().add(a);

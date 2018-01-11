@@ -307,17 +307,7 @@ public class NLevels {
 	private void calcLaxity(List<ActorSched> list, int slot, int level) {
 		for (ActorSched a : list) {
 			int relatSlot = slot % a.getGraphDead();
-			int dId = 0;
-			
-			// Look for the DAG id
-			for (DAG d : getMcDags()) {
-				for (Actor a2 : d.getNodes()) {
-					if (a2.getName().contentEquals(a.getName())) {
-						dId = d.getId();
-						break;
-					}
-				}
-			}
+			int dId = a.getGraphID();
 			
 			// The laxity has to be calculated for a HI mode
 			if (level >= 1) {
@@ -363,6 +353,16 @@ public class NLevels {
 	}
 	
 	/**
+	 * Checks for new activations in HI modes
+	 * @param sched
+	 * @param ready
+	 * @param level
+	 */
+	private void checkActivationHI (List<ActorSched> sched, List<ActorSched> ready, int level) {
+		
+	}
+	
+	/**
 	 * Builds the scheduling table of level l
 	 * @param l
 	 * @throws SchedulingException
@@ -405,8 +405,32 @@ public class NLevels {
 			
 			// Check if it's worth to continue the allocation
 			if (!isPossible(ready, s, l)) {
-				SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] buildHITable("+l+"): Not enough slots left.")
+				SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] buildHITable("+l+"): Not enough slots left.");
+				throw se;
 			}
+			
+			for (int c = getNbCores() - 1; c >=0; c--) {
+				// Find a top ready task
+				if (lit.hasNext()) {
+					ActorSched a = lit.next();
+					int val = remainingTime[l][a.getGraphID()][a.getId()];
+					
+					sched[l][s][c] = a .getName();
+					val--;
+					
+					// The task has been fully scheduled
+					if (val == 0) {
+						scheduled.add(a);
+						taskFinished = true;
+						lit.remove();
+					}
+					remainingTime[l][a.getGraphID()][a.getId()] = val;
+				}
+			}
+			
+			// It a task has been fully allocated check for new activations
+			if (taskFinished)
+				checkActivationHI(scheduled, ready, level);
 		}
 		
 	}
