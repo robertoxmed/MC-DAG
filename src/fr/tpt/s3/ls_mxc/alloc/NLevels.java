@@ -275,7 +275,7 @@ public class NLevels {
 		int start = (int)(t / a.getGraphDead()) * a.getGraphDead();
 		
 		for (int i = start; i <= t; i++) {
-			for (int c = 0; c < nbCores; c++ ) {
+			for (int c = 0; c < nbCores; c++) {
 				if (sched[l][i][c] !=  null) {
 					if (sched[l][i][c].contentEquals(a.getName()))
 						ret++;
@@ -386,7 +386,30 @@ public class NLevels {
 	 * @param level
 	 */
 	private void checkDAGActivation (List<ActorSched> sched, List<ActorSched> ready, int slot, int level) {
-		
+		for (DAG d : getMcDags()) {
+			// If the slot is a multiple of the deadline is a new activation
+			if (slot % d.getDeadline() == 0) {
+				ListIterator<ActorSched> it = sched.listIterator();
+				
+				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] checkDAGActivation(): DAG (id. "+d.getId()+") activation at slot "+slot);
+				for (Actor a : d.getNodes()) {
+					while (it.hasNext()) { // Remove nodes from the sched list
+						ActorSched a2 = it.next();
+						if (a.getName().contentEquals(a2.getName()))
+							it.remove();
+						
+					}
+					it = sched.listIterator();
+					// Re-init execution time
+					remainingTime[level][((ActorSched)a).getGraphID()][a.getId()] = a.getCI(level);
+					
+					if (level >= 1 && a.isSinkinL(level))
+						ready.add((ActorSched)a);
+					else if (a.isSourceinL(level))
+						ready.add((ActorSched)a);
+				}
+			}
+		}
 	}
 	
 	/**
@@ -460,8 +483,9 @@ public class NLevels {
 			
 			if (s != 0) {
 				// Check for new DAG activations
-				
+				checkDAGActivation(scheduled, ready, s, l);
 				// Update laxities for nodes
+				calcLaxity(ready, s, l);
 			}
 			ready.sort(new Comparator<ActorSched>() {
 				@Override
@@ -484,6 +508,8 @@ public class NLevels {
 	 */
 	private void buildLOTable () throws SchedulingException {
 		
+		
+		resetPromotions();
 	}
 	
 	/**
