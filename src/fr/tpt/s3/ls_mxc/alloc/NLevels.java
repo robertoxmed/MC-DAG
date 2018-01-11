@@ -359,6 +359,33 @@ public class NLevels {
 	 * @param level
 	 */
 	private void checkActivationHI (List<ActorSched> sched, List<ActorSched> ready, int level) {
+
+		for (ActorSched a : sched) {
+			// Check predecessors of task that was just allocated
+			for (Edge e : a.getRcvEdges()) {
+				ActorSched pred = (ActorSched) e.getSrc();
+				boolean add = true;
+				
+				// Check if all successors of the predecessor have been allocated
+				for (Edge e2 : pred.getSndEdges()) {
+					if (e2.getDest().getCI(level) != 0 && !sched.contains(e2.getDest()))
+						add = false;
+				}
+				
+				if (add && !ready.contains(pred) && remainingTime[level][a.getGraphID()][a.getId()] != 0)
+					ready.add(pred);
+			}
+		}
+	}
+	
+	/**
+	 * Checks for new activations of DAGs
+	 * @param sched
+	 * @param ready
+	 * @param slot
+	 * @param level
+	 */
+	private void checkDAGActivation (List<ActorSched> sched, List<ActorSched> ready, int slot, int level) {
 		
 	}
 	
@@ -388,7 +415,6 @@ public class NLevels {
 				else
 					return o2.getId() - o1.getId();
 			}
-			
 		});
 		
 		// Allocate slot by slot the HI scheduling tables
@@ -430,7 +456,24 @@ public class NLevels {
 			
 			// It a task has been fully allocated check for new activations
 			if (taskFinished)
-				checkActivationHI(scheduled, ready, level);
+				checkActivationHI(scheduled, ready, l);
+			
+			if (s != 0) {
+				// Check for new DAG activations
+				
+				// Update laxities for nodes
+			}
+			ready.sort(new Comparator<ActorSched>() {
+				@Override
+				public int compare(ActorSched o1, ActorSched o2) {
+					if (o1.getUrgencies()[l] - o2.getUrgencies()[l] != 0)
+						return o1.getUrgencies()[l] - o2.getUrgencies()[l];
+					else
+						return o2.getId() - o1.getId();
+				}
+			});
+			taskFinished = false;
+			lit = ready.listIterator();
 		}
 		
 	}
