@@ -546,7 +546,7 @@ public class MultiDAG{
 			}			
 			
 			for (int c = 0; c < getNbCores(); c++) {
-				// Find a ready task in the HI list
+				// Find a ready task in the LO list
 				if (lit.hasNext()) {
 					ActorSched a = lit.next();
 					int val = remainTLO.get(a.getName());

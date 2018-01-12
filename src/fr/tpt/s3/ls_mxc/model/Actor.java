@@ -181,6 +181,9 @@ public abstract class Actor {
 	 * @return
 	 */
 	public boolean isSourceinL (int l) {
+		if (this.getCI(l) == 0)
+			return false;
+		
 		for (Edge e : this.getRcvEdges()) {
 			if (e.getSrc().getCI(l) != 0)
 				return false;

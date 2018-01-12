@@ -379,6 +379,33 @@ public class NLevels {
 		}
 	}
 	
+	
+	/**
+	 * Checks for new activations in the LO mode
+	 * @param sched
+	 * @param ready
+	 * @param level
+	 */
+	private void checkActivationLO (List<ActorSched> sched, List<ActorSched> ready) {
+
+		for (ActorSched a : sched) {
+			// Check predecessors of task that was just allocated
+			for (Edge e : a.getSndEdges()) {
+				ActorSched succ = (ActorSched) e.getDest();
+				boolean add = true;
+				
+				// Check if all successors of the predecessor have been allocated
+				for (Edge e2 : succ.getRcvEdges()) {
+					if (!sched.contains(e2.getSrc()))
+						add = false;
+				}
+				
+				if (add && !ready.contains(succ) && remainingTime[0][succ.getGraphID()][succ.getId()] != 0)
+					ready.add(succ);
+			}
+		}
+	}
+	
 	/**
 	 * Checks for new activations of DAGs
 	 * @param sched
@@ -478,6 +505,8 @@ public class NLevels {
 				}
 			}
 			
+			resetPromotions();
+			
 			// It a task has been fully allocated check for new activations
 			if (taskFinished)
 				checkActivationHI(scheduled, ready, l);
@@ -508,9 +537,70 @@ public class NLevels {
 	 * @throws SchedulingException
 	 */
 	private void buildLOTable () throws SchedulingException {
+		List<ActorSched> ready = new LinkedList<>();
+		List<ActorSched> scheduled = new LinkedList<>();
 		
+		// Add all source nodes
+		for (DAG d : getMcDags()) {
+			for (Actor a : d.getNodes()) {
+				if (a.isSourceinL(0))
+					ready.add((ActorSched) a);
+			}
+		}
 		
-		resetPromotions();
+		calcLaxity(ready, 0, 0);
+		ready.sort(loComp);
+		
+		// Allocate slot by slot the scheduling table
+		ListIterator<ActorSched> lit = ready.listIterator();
+		boolean taskFinished = false;
+		
+		for (int s = 0; s < gethPeriod(); s++) {
+			if (isDebug()) {
+				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildHITable(0): @t = "+s+", tasks activated: ");
+				for (ActorSched a : ready)
+					System.out.print("L("+a.getName()+") = "+a.getUrgencies()[0]+"; ");
+				System.out.println("");
+			}
+			
+			// Verify that is still worth trying to compute the sched table
+			if (!isPossible(ready, s, 0)) {
+				SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] buildHITable(0): Not enough slots left.");
+				throw se;
+			}
+			
+			for (int c = 0; c < getNbCores(); c++) {
+				// Get the next element on the LO list
+				if (lit.hasNext()) {
+					ActorSched a = lit.next();
+					int val = remainingTime[0][a.getGraphID()][a.getId()];
+					
+					sched[0][s][c] = a.getName();
+					val--;
+					
+					if (val == 0) {
+						lit.remove();
+						scheduled.add(a);
+						taskFinished = true;
+					}
+					
+					remainingTime[0][a.getGraphID()][a.getId()] = val;
+				}
+			}
+			
+			resetPromotions();
+			
+			if (taskFinished)
+				checkActivationLO(scheduled, ready);
+			
+			if (s != hPeriod - 1) {
+				checkDAGActivation(scheduled, ready, s + 1, 0);
+				calcLaxity(ready, s + 1, 0);
+			}
+			ready.sort(loComp);
+			taskFinished = false;
+			lit = ready.listIterator();
+		}
 	}
 	
 	/**
