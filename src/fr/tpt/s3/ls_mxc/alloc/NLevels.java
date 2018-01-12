@@ -630,6 +630,8 @@ public class NLevels {
 		} catch (SchedulingException e) {
 			System.err.println("[ERROR "+Thread.currentThread().getName()+"] Non schedulable example in LO mode.");
 		}
+		
+		printTables();
 	}
 	
 	
@@ -671,6 +673,25 @@ public class NLevels {
 					System.out.println("[DEBUG "+Thread.currentThread().getName()+"]\t\t Edge "+e.getSrc().getName()+" -> "+e.getDest().getName());
 			}
 		}
+	}
+	
+	/**
+	 * Prints the scheduling tables
+	 */
+	public void printTables () {
+		for (int i = getLevels() - 1; i >= 0; i--) {
+			System.out.println("Scheduling table in mode "+ i+":");
+			for (int c = 0; c < getNbCores(); c++) {
+				for (int s = 0; s < gethPeriod(); s++) {
+					if (sched[i][s][c] != null)
+						System.out.print(sched[i][s][c]+" | ");
+					else
+						System.out.print("-- | ");
+				}
+				System.out.print("\n");
+			}
+		}
+		System.out.print("\n");
 	}
 	
 	/*
