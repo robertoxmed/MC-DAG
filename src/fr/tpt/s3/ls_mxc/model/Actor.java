@@ -194,6 +194,8 @@ public abstract class Actor {
 	 * @return
 	 */
 	public boolean isSinkinL (int l) {
+		if (this.getCI(l) == 0)
+			return false;
 		for (Edge e : this.getSndEdges()) {
 			if (e.getDest().getCI(l) != 0)
 				return false;

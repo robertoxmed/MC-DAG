@@ -91,6 +91,7 @@ public class NLevels {
 		for (int i = 0; i < getLevels(); i++) {
 			for (DAG d : getMcDags()) {
 				for (Actor a : d.getNodes()) {
+					if (debug) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] initRemainTime(): remain level "+i+" graph "+d.getId()+" node "+a.getName()+" time "+a.getCI(i)); 
 					remainingTime[i][d.getId()][a.getId()] = a.getCI(i);
 				}	
 			}
@@ -276,8 +277,8 @@ public class NLevels {
 		
 		for (int i = start; i <= t; i++) {
 			for (int c = 0; c < nbCores; c++) {
-				if (sched[l][i][c] !=  null) {
-					if (sched[l][i][c].contentEquals(a.getName()))
+				if (sched[l - 1][i][c] !=  null) {
+					if (sched[l - 1][i][c].contentEquals(a.getName()))
 						ret++;
 				}
 			}
@@ -372,7 +373,7 @@ public class NLevels {
 						add = false;
 				}
 				
-				if (add && !ready.contains(pred) && remainingTime[level][a.getGraphID()][a.getId()] != 0)
+				if (add && !ready.contains(pred) && remainingTime[level][pred.getGraphID()][pred.getId()] != 0)
 					ready.add(pred);
 			}
 		}
@@ -446,9 +447,9 @@ public class NLevels {
 		
 		for (int s = hPeriod - 1; s >= 0; s--) {
 			if (isDebug()) {
-				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] allocHI(): @t = "+s+", tasks activated: ");
+				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildHITable("+l+"): @t = "+s+", tasks activated: ");
 				for (ActorSched a : ready)
-					System.out.print("L("+a.getName()+") = "+a.getUrgencyHI()+"; ");
+					System.out.print("L("+a.getName()+") = "+a.getUrgencies()[l]+"; ");
 				System.out.println("");
 			}
 			
@@ -485,7 +486,7 @@ public class NLevels {
 				// Check for new DAG activations
 				checkDAGActivation(scheduled, ready, s, l);
 				// Update laxities for nodes
-				calcLaxity(ready, s, l);
+				calcLaxity(ready, gethPeriod() - s, l);
 			}
 			ready.sort(new Comparator<ActorSched>() {
 				@Override
