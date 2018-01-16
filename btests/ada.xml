@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mcsystem>
+	<mcdag name="Ada" deadline="18">
+		<actor name="A">
+			<clo>1</clo>
+			<chi>2</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="B">
+			<clo>7</clo>
+			<chi>0</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="C">
+			<clo>3</clo>
+			<chi>4</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="D">
+			<clo>5</clo>
+			<chi>6</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="E">
+			<clo>1</clo>
+			<chi>0</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="F">
+			<clo>3</clo>
+			<chi>6</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="G">
+			<clo>3</clo>
+			<chi>6</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="H">
+			<clo>2</clo>
+			<chi>0</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="I">
+			<clo>2</clo>
+			<chi>4</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="J">
+			<clo>1</clo>
+			<chi>2</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="K">
+			<clo>1</clo>
+			<chi>0</chi>
+			<fprob>0.0</fprob>
+		</actor>
+
+		<ports>
+			<port name="p1" srcActor="A" dstActor="B"/>
+			<port name="p3" srcActor="A" dstActor="C"/>
+			<port name="p4" srcActor="A" dstActor="D"/>
+			<port name="p5" srcActor="A" dstActor="G"/>
+			<port name="p6" srcActor="B" dstActor="E"/>
+			<port name="p7" srcActor="C" dstActor="E"/>
+			<port name="p8" srcActor="C" dstActor="F"/>
+			<port name="p9" srcActor="D" dstActor="F"/>
+			<port name="p10" srcActor="E" dstActor="H"/>
+			<port name="p11" srcActor="F" dstActor="I"/>
+			<port name="p12" srcActor="F" dstActor="J"/>
+			<port name="p13" srcActor="G" dstActor="J"/>
+			<port name="p14" srcActor="G" dstActor="K"/>
+			<port name="p15" srcActor="H" dstActor="K"/>
+			<port name="p16" srcActor="I" dstActor="K"/>
+
+		</ports>
+	</mcdag>
+	<cores number="2"/>
+</mcsystem>
+
