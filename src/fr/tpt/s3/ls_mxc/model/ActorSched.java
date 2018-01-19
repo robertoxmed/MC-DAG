@@ -41,6 +41,7 @@ public class ActorSched extends Actor {
 	private int urgencies[];
 	private boolean visitedL[];
 	private int graphID;
+	private boolean delayed;
 	
 	private double fProb;
 
@@ -78,6 +79,8 @@ public class ActorSched extends Actor {
 			urgencies[i] = Integer.MAX_VALUE;
 			visitedL[i] = false;
 		}
+		promoted = false;
+		delayed = false;
 	}
 	
 	/*
@@ -223,6 +226,14 @@ public class ActorSched extends Actor {
 
 	public void setGraphID(int graphID) {
 		this.graphID = graphID;
+	}
+
+	public boolean isDelayed() {
+		return delayed;
+	}
+
+	public void setDelayed(boolean delayed) {
+		this.delayed = delayed;
 	}
 
 }

@@ -25,7 +25,6 @@ public class AutoBoolean {
 		this.setOutput(output);
 	}
 
-
 	public String getTask() {
 		return Task;
 	}

@@ -91,12 +91,10 @@ public class NLevels {
 		for (int i = 0; i < getLevels(); i++) {
 			for (DAG d : getMcDags()) {
 				for (Actor a : d.getNodes()) {
-					if (debug) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] initRemainTime(): remain level "+i+" graph "+d.getId()+" node "+a.getName()+" time "+a.getCI(i)); 
 					remainingTime[i][d.getId()][a.getId()] = a.getCI(i);
 				}	
 			}
 		}
-		if (debug) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] initRemainTime(): Remaining time of actors initialized!");
 	}
 	
 	/**
@@ -288,6 +286,28 @@ public class NLevels {
 	}
 	
 	/**
+	 * Checks how many slots have been allocated for a in l mode in reverse
+	 * @param a
+	 * @param t
+	 * @param l
+	 * @return
+	 */
+	private int scheduledUntilTinLreverse (ActorSched a, int t, int l) {
+		int ret = 0;
+		int end = (int)(t / a.getGraphDead()) * a.getGraphDead();
+		
+		for (int i = end; i >= t; i--) {
+			for (int c = 0; c < nbCores; c++) {
+				if (sched[l - 1][i][c] !=  null) {
+					if (sched[l - 1][i][c].contentEquals(a.getName()))
+						ret++;
+				}
+			}
+		}
+		return ret;
+	}
+	
+	/**
 	 * Resets temporary promotions of HI tasks
 	 */
 	private void resetPromotions() {
@@ -295,6 +315,18 @@ public class NLevels {
 			for (Actor a : d.getNodes()) {
 				if (a.getCI(1) != 0)
 					((ActorSched) a).setPromoted(false);
+			}
+		}
+	}
+	
+	/**
+	 * Resets temporary delays of HI tasks
+	 */
+	private void resetDelays() {
+		for (DAG d : getMcDags()) {
+			for (Actor a : d.getNodes()) {
+				if (a.getCI(1) != 0)
+					((ActorSched) a).setDelayed(false);
 			}
 		}
 	}
@@ -312,16 +344,34 @@ public class NLevels {
 			
 			// The laxity has to be calculated for a HI mode
 			if (level >= 1) {
-				// It's a HI task that might be promoted
-				if (level != getLevels() &&
-						(a.getCI(level) - remainingTime[level][dId][a.getId()]) - scheduledUntilTinL(a, slot, level + 1) < 0) {
-					a.setPromoted(true);
-					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
-					a.setUrgencyinL(0, level);
+				// It's not the highest criticality level -> perform checks
+				if (level != getLevels() - 1) {
+					//Check if in the higher table the Ci(L+1) - Ci(L) has been allocated
+					if (scheduledUntilTinLreverse(a, slot, level + 1) - (a.getCI(level + 1) - a.getCI(level)) < 0) {
+						a.setDelayed(true);
+						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
+						a.setUrgencyinL(Integer.MAX_VALUE, level);
+					// Enforce safe mode condition 
+					} else if ((a.getCI(level) - remainingTime[level][dId][a.getId()]) - scheduledUntilTinLreverse(a, slot, level + 1) < 0){
+						a.setPromoted(true);
+						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
+						a.setUrgencyinL(0, level);
+					} else {
+						a.setUrgencyinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
+					}
 				} else {
 					a.setUrgencyinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 				}
-			} else { // Laxity in LO mode
+			// Laxity in LO mode
+			} else { 
+				if (a.getCI(1) > 0) {
+					if ((a.getCI(level) - remainingTime[level][dId][a.getId()]) - scheduledUntilTinL(a, slot, level + 1) < 0) {
+						a.setPromoted(true);
+						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
+						a.setUrgencyinL(0, level);
+					}
+				}
+					
 				a.setUrgencyinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 			}
 		}
@@ -490,6 +540,8 @@ public class NLevels {
 				// Find a top ready task
 				if (lit.hasNext()) {
 					ActorSched a = lit.next();
+					if (a.isDelayed())
+						break;
 					int val = remainingTime[l][a.getGraphID()][a.getId()];
 					
 					sched[l][s][c] = a .getName();
@@ -506,6 +558,7 @@ public class NLevels {
 			}
 			
 			resetPromotions();
+			resetDelays();
 			
 			// It a task has been fully allocated check for new activations
 			if (taskFinished)
