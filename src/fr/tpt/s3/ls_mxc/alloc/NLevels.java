@@ -275,8 +275,8 @@ public class NLevels {
 		
 		for (int i = start; i <= t; i++) {
 			for (int c = 0; c < nbCores; c++) {
-				if (sched[l - 1][i][c] !=  null) {
-					if (sched[l - 1][i][c].contentEquals(a.getName()))
+				if (sched[l][i][c] !=  null) {
+					if (sched[l][i][c].contentEquals(a.getName()))
 						ret++;
 				}
 			}
@@ -294,12 +294,12 @@ public class NLevels {
 	 */
 	private int scheduledUntilTinLreverse (ActorSched a, int t, int l) {
 		int ret = 0;
-		int end = (int)(t / a.getGraphDead()) * a.getGraphDead();
+		int end = ((int)(t / a.getGraphDead())+1) * a.getGraphDead();
 		
-		for (int i = end; i >= t; i--) {
+		for (int i = end - 1; i >= t; i--) {
 			for (int c = 0; c < nbCores; c++) {
-				if (sched[l - 1][i][c] !=  null) {
-					if (sched[l - 1][i][c].contentEquals(a.getName()))
+				if (sched[l][i][c] !=  null) {
+					if (sched[l][i][c].contentEquals(a.getName()))
 						ret++;
 				}
 			}
@@ -351,8 +351,9 @@ public class NLevels {
 						a.setDelayed(true);
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
 						a.setUrgencyinL(Integer.MAX_VALUE, level);
-					// Enforce safe mode condition 
-					} else if ((a.getCI(level) - remainingTime[level][dId][a.getId()]) - scheduledUntilTinLreverse(a, slot, level + 1) < 0){
+					// Enforce safe mode condition if 
+					} else if (a.getCI(level + 1) != 0 && 
+							(a.getCI(level) - remainingTime[level][dId][a.getId()]) - scheduledUntilTinL(a, slot, level+1) < 0){
 						a.setPromoted(true);
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
 						a.setUrgencyinL(0, level);
