@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mcsystem>
+	<mcdag name="D0" deadline="20">
+		<actor name="D0A1">
+			<clo>2</clo>
+			<chi>3</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="D0A2">
+			<clo>2</clo>
+			<chi>5</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="D0A3">
+			<clo>2</clo>
+			<chi>4</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="D0A4">
+			<clo>2</clo>
+			<chi>3</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="D0A5">
+			<clo>3</clo>
+			<chi>0</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="D0A6">
+			<clo>1</clo>
+			<chi>0</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="D0A7">
+			<clo>1</clo>
+			<chi>0</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<ports>
+			<port name="p1" srcActor="D0A1" dstActor="D0A2"/>
+			<port name="p2" srcActor="D0A1" dstActor="D0A3"/>
+			<port name="p3" srcActor="D0A2" dstActor="D0A4"/>
+			<port name="p4" srcActor="D0A3" dstActor="D0A4"/>
+			<port name="p5" srcActor="D0A4" dstActor="D0A5"/>
+			<port name="p6" srcActor="D0A4" dstActor="D0A6"/>
+			<port name="p7" srcActor="D0A6" dstActor="D0A7"/>
+		</ports>
+	</mcdag>
+	<mcdag name="D1" deadline="10">
+		<actor name="D1B1">
+			<clo>3</clo>
+			<chi>4</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="D1B2">
+			<clo>2</clo>
+			<chi>4</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="D1B3">
+			<clo>1</clo>
+			<chi>0</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="D1B4">
+			<clo>2</clo>
+			<chi>0</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="D1B5">
+			<clo>1</clo>
+			<chi>3</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="D1B6">
+			<clo>2</clo>
+			<chi>0</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="D1B7">
+			<clo>1</clo>
+			<chi>0</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<ports>
+			<port name="p1" srcActor="D1B1" dstActor="D1B2"/>
+			<port name="p2" srcActor="D1B2" dstActor="D1B3"/>
+			<port name="p3" srcActor="D1B3" dstActor="D1B4"/>
+			<port name="p4" srcActor="D1B5" dstActor="D1B2"/>
+			<port name="p5" srcActor="D1B5" dstActor="D1B6"/>
+			<port name="p6" srcActor="D1B6" dstActor="D1B3"/>
+			<port name="p7" srcActor="D1B3" dstActor="D1B7"/>
+		</ports>
+	</mcdag>
+	<cores number="2"/>
+</mcsystem>
+
