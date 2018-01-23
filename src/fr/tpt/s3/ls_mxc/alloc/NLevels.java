@@ -294,10 +294,22 @@ public class NLevels {
 	 */
 	private int scheduledUntilTinLreverse (ActorSched a, int t, int l) {
 		int ret = 0;
-		int end = ((int)(t / a.getGraphDead())+1) * a.getGraphDead();
-		int beginning = end - t;
+		int end = 0;
 		
-		for (int i = end - 1; i > beginning; i--) {
+		int realSlot = gethPeriod() - t;
+		
+		if (t == 0)
+			return 0;
+		
+		if ((int)(realSlot/a.getGraphDead()) <= 0 || realSlot % a.getGraphDead() == 0) {
+			end = a.getGraphDead();
+		} else {
+			end = ((int)(realSlot / a.getGraphDead()) + 1)  * a.getGraphDead();
+		}
+		
+		System.out.println("\t\t\t [schedut] task "+a.getName()+" end "+end+" slot "+realSlot);
+		
+		for (int i = end - 1; i > realSlot; i--) {
 			for (int c = 0; c < nbCores; c++) {
 				if (sched[l][i][c] !=  null) {
 					if (sched[l][i][c].contentEquals(a.getName()))
@@ -354,7 +366,7 @@ public class NLevels {
 						a.setUrgencyinL(Integer.MAX_VALUE, level);
 					// Enforce safe mode condition if 
 					} else if (a.getCI(level + 1) != 0 && 
-							(a.getCI(level) - remainingTime[level][dId][a.getId()]) - scheduledUntilTinL(a, slot, level+1) < 0){
+							(a.getCI(level) - remainingTime[level][dId][a.getId()]) - scheduledUntilTinL(a, slot, level+1) - (a.getCI(level + 1) - a.getCI(level))  < 0){
 						a.setPromoted(true);
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
 						a.setUrgencyinL(0, level);
@@ -483,10 +495,13 @@ public class NLevels {
 					// Re-init execution time
 					remainingTime[level][((ActorSched)a).getGraphID()][a.getId()] = a.getCI(level);
 					
-					if (level >= 1 && a.isSinkinL(level))
+					if (level >= 1 && a.isSinkinL(level)) {
 						ready.add((ActorSched)a);
-					else if (a.isSourceinL(level))
+						System.out.println("\t\t\t\t\t\t ADDING actor "+a.getName());
+					} else if (level == 0 && a.isSourceinL(level)) {
 						ready.add((ActorSched)a);
+						System.out.println("\t\t\t\t\t\t ADDING actor "+a.getName());
+					}
 				}
 			}
 		}
