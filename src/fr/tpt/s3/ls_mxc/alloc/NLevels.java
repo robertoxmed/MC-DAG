@@ -295,8 +295,9 @@ public class NLevels {
 	private int scheduledUntilTinLreverse (ActorSched a, int t, int l) {
 		int ret = 0;
 		int end = ((int)(t / a.getGraphDead())+1) * a.getGraphDead();
+		int beginning = end - t;
 		
-		for (int i = end - 1; i >= t; i--) {
+		for (int i = end - 1; i > beginning; i--) {
 			for (int c = 0; c < nbCores; c++) {
 				if (sched[l][i][c] !=  null) {
 					if (sched[l][i][c].contentEquals(a.getName()))
