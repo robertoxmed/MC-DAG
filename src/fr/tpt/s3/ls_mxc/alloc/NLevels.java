@@ -287,6 +287,7 @@ public class NLevels {
 	
 	/**
 	 * Checks how many slots have been allocated for a in l mode in reverse
+	 * from the deadline until the current slot
 	 * @param a
 	 * @param t
 	 * @param l
@@ -302,14 +303,14 @@ public class NLevels {
 			return 0;
 		
 		if ((int)(realSlot/a.getGraphDead()) <= 0 || realSlot % a.getGraphDead() == 0) {
-			end = a.getGraphDead();
+			end = a.getGraphDead() - 1;
 		} else {
-			end = ((int)(realSlot / a.getGraphDead()) + 1)  * a.getGraphDead();
+			end = ((int)(realSlot / a.getGraphDead()) + 1)  * a.getGraphDead() - 1;
 		}
 		
-		System.out.println("\t\t\t [schedut] task "+a.getName()+" end "+end+" slot "+realSlot);
+		//System.out.println("\t\t\t [schedut] task "+a.getName()+" end "+end+" slot "+realSlot);
 		
-		for (int i = end - 1; i > realSlot; i--) {
+		for (int i = end; i > realSlot; i--) {
 			for (int c = 0; c < nbCores; c++) {
 				if (sched[l][i][c] !=  null) {
 					if (sched[l][i][c].contentEquals(a.getName()))
@@ -357,19 +358,17 @@ public class NLevels {
 			
 			// The laxity has to be calculated for a HI mode
 			if (level >= 1) {
+
 				// It's not the highest criticality level -> perform checks
 				if (level != getLevels() - 1) {
+					int deltaI = a.getCI(level + 1) - a.getCI(level);
 					//Check if in the higher table the Ci(L+1) - Ci(L) has been allocated
-					if (scheduledUntilTinLreverse(a, slot, level + 1) - (a.getCI(level + 1) - a.getCI(level)) < 0) {
+					if (scheduledUntilTinLreverse(a, slot, level + 1) - deltaI < 0 ||
+							scheduledUntilTinLreverse(a, slot, level) - scheduledUntilTinLreverse(a, slot, level + 1) + deltaI == 0) {
+						
 						a.setDelayed(true);
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
-						a.setUrgencyinL(Integer.MAX_VALUE, level);
-					// Enforce safe mode condition if 
-					} else if (a.getCI(level + 1) != 0 && 
-							(a.getCI(level) - remainingTime[level][dId][a.getId()]) - scheduledUntilTinL(a, slot, level+1) - (a.getCI(level + 1) - a.getCI(level))  < 0){
-						a.setPromoted(true);
-						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
-						a.setUrgencyinL(0, level);
+						a.setUrgencyinL(Integer.MAX_VALUE, level);	
 					} else {
 						a.setUrgencyinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 					}
