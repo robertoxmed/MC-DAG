@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mcsystem>
+	<!-- Number of cores in the architecture -->
+	<cores number="2"/>
+	<!-- Number of criticality levels -->
+	<levels number="3"/>
+	<!-- Mixed-Criticality DAG(s) -->
+	<mcdag name="D0" deadline="20">
+		<actor name="D0A1">
+			<wcet number="0">2</wcet>
+			<wcet number="1">3</wcet>
+			<wcet number="2">4</wcet>
+		</actor>
+		<actor name="D0A2">
+			<wcet number="0">2</wcet>
+			<wcet number="1">5</wcet>
+			<wcet number="2">6</wcet>
+		</actor>
+		<actor name="D0A3">
+			<wcet number="0">2</wcet>
+			<wcet number="1">4</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<actor name="D0A4">
+			<wcet number="0">2</wcet>
+			<wcet number="1">3</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<actor name="D0A5">
+			<wcet number="0">3</wcet>
+			<wcet number="1">0</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<actor name="D0A6">
+			<wcet number="0">1</wcet>
+			<wcet number="1">0</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<actor name="D0A7">
+			<wcet number="0">1</wcet>
+			<wcet number="1">0</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+
+		<ports>
+			<port name="p_a0" srcActor="D0A1" dstActor="D0A2"/>
+			<port name="p_a1" srcActor="D0A1" dstActor="D0A3"/>
+			<port name="p_a2" srcActor="D0A2" dstActor="D0A4"/>
+			<port name="p_a3" srcActor="D0A3" dstActor="D0A4"/>
+			<port name="p_a4" srcActor="D0A4" dstActor="D0A5"/>
+			<port name="p_a5" srcActor="D0A4" dstActor="D0A6"/>
+			<port name="p_a6" srcActor="D0A6" dstActor="D0A7"/>
+		</ports>
+	</mcdag>
+	<mcdag name="D1" deadline="10">
+		<actor name="D1B1">
+			<wcet number="0">3</wcet>
+			<wcet number="1">3</wcet>
+			<wcet number="2">4</wcet>
+		</actor>
+		<actor name="D1B2">
+			<wcet number="0">1</wcet>
+			<wcet number="1">2</wcet>
+			<wcet number="2">3</wcet>
+		</actor>
+		<actor name="D1B3">
+			<wcet number="0">2</wcet>
+			<wcet number="1">4</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<actor name="D1B4">
+			<wcet number="0">2</wcet>
+			<wcet number="1">0</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<actor name="D1B5">
+			<wcet number="0">1</wcet>
+			<wcet number="1">0</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<actor name="D1B6">
+			<wcet number="0">2</wcet>
+			<wcet number="1">0</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<actor name="D1B7">
+			<wcet number="0">1</wcet>
+			<wcet number="1">0</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+
+		<ports>
+			<port name="p_b0" srcActor="D1B1" dstActor="D1B3"/>
+			<port name="p_b1" srcActor="D1B2" dstActor="D1B3"/>
+			<port name="p_b2" srcActor="D1B2" dstActor="D1B4"/>
+			<port name="p_b3" srcActor="D1B3" dstActor="D1B5"/>
+			<port name="p_b4" srcActor="D1B4" dstActor="D1B5"/>
+			<port name="p_b5" srcActor="D1B5" dstActor="D1B6"/>
+			<port name="p_b6" srcActor="D1B5" dstActor="D1B7"/>
+		</ports>
+	</mcdag>
+
+</mcsystem>
+
