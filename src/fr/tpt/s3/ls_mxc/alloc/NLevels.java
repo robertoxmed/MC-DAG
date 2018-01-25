@@ -363,12 +363,15 @@ public class NLevels {
 				if (level != getLevels() - 1) {
 					int deltaI = a.getCI(level + 1) - a.getCI(level);
 					//Check if in the higher table the Ci(L+1) - Ci(L) has been allocated
-					if (scheduledUntilTinLreverse(a, slot, level + 1) - deltaI < 0 ||
-							scheduledUntilTinLreverse(a, slot, level) - scheduledUntilTinLreverse(a, slot, level + 1) + deltaI == 0) {
-						
+					if (scheduledUntilTinLreverse(a, slot, level + 1) - deltaI < 0) {
 						a.setDelayed(true);
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
-						a.setUrgencyinL(Integer.MAX_VALUE, level);	
+						a.setUrgencyinL(Integer.MAX_VALUE, level);
+					} else if (scheduledUntilTinLreverse(a, slot, level) != 0 &&
+							scheduledUntilTinLreverse(a, slot, level) - scheduledUntilTinLreverse(a, slot, level + 1) + deltaI == 0) {
+						a.setDelayed(true);
+						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
+						a.setUrgencyinL(Integer.MAX_VALUE, level);
 					} else {
 						a.setUrgencyinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 					}
