@@ -46,7 +46,7 @@ public class AllocationThread implements Runnable{
 	
 	public AllocationThread(String iFile, boolean oSF, boolean oPF, boolean debug) {
 		dags = new HashSet<DAG>();
-		mcp = new MCParser(iFile, null, dags);
+		mcp = new MCParser(iFile, null, dags, oPF);
 		setOutPRISMFile(oPF);
 		if (isOutPRISMFile()) mcp.setOutPrismFile(iFile.substring(0, iFile.lastIndexOf('.')).concat(".pm"));
 		setOutSchedFile(oSF);

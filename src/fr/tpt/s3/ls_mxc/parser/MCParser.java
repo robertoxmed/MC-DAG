@@ -57,7 +57,8 @@ public class MCParser {
 	private String outPrismFile;
 	private String outGenFile;
 	private String outDotFile;
-	
+	private boolean bOutPrism;
+
 	// Only references do not have to be instantiated
 	private Set<DAG> dags;
 	private Automata auto;
@@ -70,10 +71,11 @@ public class MCParser {
 	private int nbCores;
 	private int nbLevels;
 	
-	public MCParser (String iFile, String oSFile,Set<DAG> dags) {
+	public MCParser (String iFile, String oSFile,Set<DAG> dags, boolean bop) {
 		setInputFile(iFile);
 		setOutSchedFile(oSFile);
 		setDags(dags);
+		bOutPrism = bop;
 	}
 	
 	public MCParser (String oGFile, UtilizationGenerator ug) {
@@ -122,7 +124,8 @@ public class MCParser {
 									Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
 									Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
 						}
-						((ActorSched) a).setfProb(Double.parseDouble(e.getElementsByTagName("fprob").item(0).getTextContent()));
+						if (isbOutPrism())
+							((ActorSched) a).setfProb(Double.parseDouble(e.getElementsByTagName("fprob").item(0).getTextContent()));
 						((ActorSched) a).setGraphDead(dag.getDeadline());
 						dag.getNodes().add(a);
 					}
@@ -866,5 +869,13 @@ public class MCParser {
 
 	public void setNbLevels(int nbLevels) {
 		this.nbLevels = nbLevels;
+	}
+	
+	public boolean isbOutPrism() {
+		return bOutPrism;
+	}
+
+	public void setbOutPrism(boolean bOutPrism) {
+		this.bOutPrism = bOutPrism;
 	}
 }
