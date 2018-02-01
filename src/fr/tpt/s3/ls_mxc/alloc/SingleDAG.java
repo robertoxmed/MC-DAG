@@ -47,8 +47,7 @@ public class SingleDAG{
 	private int weights_B[];
 	
 	// Scheduling tables, i: slot, j: task
-	private String sLO[][];
-	private String sHI[][];
+	private String sched[][][];
 	private String S_B[][];
 	private String S_HLFET[][];
 	private String S_HLFET_HI[][];
@@ -72,6 +71,23 @@ public class SingleDAG{
 	}
 	
 	public SingleDAG() {}
+	
+	/**
+	 * Initializes scheduling tables
+	 */
+	private void initTables () {
+		sched = new String[2][getDeadline()][getNbCores()];
+		
+		for (int i = 0; i < 2; i++) {
+			for (int j = 0; j < getDeadline(); j++) {
+				for (int k = 0; k < getNbCores(); k++) {
+					sched[i][j][k] = "-";
+				}
+			}
+		}
+		
+		if (debug) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] initTables(): Sched tables initialized!");
+	}
 	
 	/**
 	 * Calc weights for HLFET for both tables
@@ -165,16 +181,6 @@ public class SingleDAG{
 	 */
 	public void AllocHI() throws SchedulingException{
 		this.calcWeights(ActorSched.HI);
-		/* =============================================
-		 *  Initialization of variables used by the method & class
-		 ================================================*/
-		sHI = new String[deadline][nbCores];
-		// Initialize with 0s
-		for (int c = 0; c < nbCores; c++) {
-			for(int t = 0; t < deadline; t++) {
-				sHI[t][c] = "-";
-			}
-		}
 			
 		Start_HI = new int[mcDag.getNodes().size()];
 		int[] t_hi = new int[mcDag.getNodes().size()];
@@ -225,7 +231,7 @@ public class SingleDAG{
 			for(int c = 0; c < nbCores; c++) {
 				if (li_it.hasNext()){
 					ActorSched n = li_it.next(); // Get head of the list
-					sHI[t][c] = n.getName(); // Give the slot to the task
+					sched[1][t][c] = n.getName(); // Give the slot to the task
 					
 					// Decrement slots left for the task
 					t_hi[n.getId()] = t_hi[n.getId()] - 1;
@@ -274,16 +280,6 @@ public class SingleDAG{
 	 * @throws SchedulingException
 	 */
 	public void AllocLO() throws SchedulingException{
-		/* =============================================
-		 *  Initialization of variables used by the method
-		 ================================================*/
-		sLO = new String[deadline][nbCores];
-		// Initialize with 0s
-		for (int c = 0; c < nbCores; c++) {
-			for(int t = 0; t < deadline; t++) {
-				sLO[t][c] = "-";
-			}
-		}
 			
 		int[] t_lo = new int[mcDag.getNodes().size()];
 		
@@ -334,7 +330,7 @@ public class SingleDAG{
 				if (li_it.hasNext()){
 					ActorSched n = li_it.next(); // Get head of the list
 					
-					sLO[t][c] = n.getName(); // Give the slot to the task
+					sched[0][t][c] = n.getName(); // Give the slot to the task
 
 					// Decrement slots left for the task
 					t_lo[n.getId()] = t_lo[n.getId()] - 1;
@@ -606,6 +602,8 @@ public class SingleDAG{
 	 */
 	public boolean AllocAll() throws SchedulingException{
 		boolean ret = true;
+		
+		initTables();
 		
 		this.calcWeights(ActorSched.HI);
 		if (isDebug()) printW(ActorSched.HI);
@@ -879,7 +877,7 @@ public class SingleDAG{
 	public void printS_HI(){
 		for (int c = 0; c < nbCores; c++) {
 			for(int t = 0; t < deadline; t++) {
-				System.out.print(sHI[t][c]+" | ");
+				System.out.print(sched[1][t][c]+" | ");
 			}
 			System.out.print("\n");
 		}
@@ -893,7 +891,7 @@ public class SingleDAG{
 	public void printS_LO(){
 		for (int c = 0; c < nbCores; c++) {
 			for(int t = 0; t < deadline; t++) {
-				System.out.print(sLO[t][c]+" | ");
+				System.out.print(sched[0][t][c]+" | ");
 			}
 			System.out.print("\n");
 		}
@@ -952,13 +950,6 @@ public class SingleDAG{
 	public void setWeights_HI(int weights_HI[]) {
 		this.weights_HI = weights_HI;
 	}
-	public String[][] getS_HI() {
-		return sHI;
-	}
-
-	public void setS_HI(String[][] s_HI) {
-		sHI = s_HI;
-	}
 
 	public int[] getStart_HI() {
 		return Start_HI;
@@ -968,19 +959,19 @@ public class SingleDAG{
 		Start_HI = start_HI;
 	}
 
-	public String[][] getS_LO() {
-		return sLO;
-	}
-
-	public void setS_LO(String s_LO[][]) {
-		sLO = s_LO;
-	}
-	
 	public boolean isDebug() {
 		return debug;
 	}
 
 	public void setDebug(boolean debug) {
 		this.debug = debug;
+	}
+
+	public String[][][] getSched() {
+		return sched;
+	}
+
+	public void setSched(String sched[][][]) {
+		this.sched = sched;
 	}
 }

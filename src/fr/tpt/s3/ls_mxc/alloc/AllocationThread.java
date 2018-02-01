@@ -82,8 +82,7 @@ public class AllocationThread implements Runnable{
 				}
 				mcp.setNbCores(ls.getNbCores());
 				mcp.sethPeriod(ls.getDeadline());
-				mcp.setsLO(ls.getS_LO());
-				mcp.setsHI(ls.getS_HI());
+				mcp.setSched(ls.getSched());
 				
 				if (isOutPRISMFile()) {
 					if (debug) System.out.println("[DEBUG] UniDAG: Creating the automata object.");
@@ -112,26 +111,27 @@ public class AllocationThread implements Runnable{
 				}
 				mcp.setNbCores(msched.getNbCores());
 				mcp.sethPeriod(msched.gethPeriod());
-				mcp.setsLO(msched.getsLO());
-				mcp.setsHI(msched.getsHI());
+				mcp.setSched(msched.getSched());
 			}
 			
-			/* =============== Write results ================ */
-			if (isOutSchedFile()) {
-				try {
-					mcp.writeSched();
-				} catch (IOException e) {
-					System.err.println("[WARNING] Error writting scheduling tables to file "+outSchedFile);
-					e.printStackTrace();
-				}
-			}
-		} else {
+		} else { // The model is a N-level MCS
 			mcp.readXMLNlevels();
 			
 			setNlvl(new NLevels(dags, mcp.getNbCores(), mcp.getNbLevels(), debug));
 			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] N levels: "+dags.size()+" DAGs are going to be scheduled in "+mcp.getNbCores()+" cores.");
 			nlvl.printDAGs();
 			nlvl.buildAllTables();
+			mcp.setSched(nlvl.getSched());
+		}
+		
+		/* =============== Write results ================ */
+		if (isOutSchedFile()) {
+			try {
+				mcp.writeSched();
+			} catch (IOException e) {
+				System.err.println("[WARNING] Error writting scheduling tables to file "+outSchedFile);
+				e.printStackTrace();
+			}
 		}
 	}
 

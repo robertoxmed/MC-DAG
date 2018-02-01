@@ -65,8 +65,7 @@ public class MCParser {
 	private UtilizationGenerator ug;
 	
 	// Writing scheduling tables
-	private String[][] sLO;
-	private String[][] sHI;
+	private String[][][] sched;
 	private int hPeriod;
 	private int nbCores;
 	private int nbLevels;
@@ -76,6 +75,7 @@ public class MCParser {
 		setOutSchedFile(oSFile);
 		setDags(dags);
 		bOutPrism = bop;
+		this.setNbLevels(2);
 	}
 	
 	public MCParser (String oGFile, UtilizationGenerator ug) {
@@ -285,42 +285,25 @@ public class MCParser {
 			Element rootElement = doc.createElement("sched");
 			doc.appendChild(rootElement);
 			
-			// SHI table
-			Element shi = doc.createElement("shi");
-			rootElement.appendChild(shi);
-			for (int i = 0; i < this.getNbCores(); i++) {
-				Element core = doc.createElement("core");
-				Attr attrCoreNb = doc.createAttribute("number");
-				attrCoreNb.setNodeValue(String.valueOf(i));
-				core.setAttributeNode(attrCoreNb);
-				for (int j = 0; j < this.gethPeriod(); j++) {
-					Element slot = doc.createElement("slot");
-					Attr slotNb = doc.createAttribute("slot");
-					slotNb.setNodeValue(String.valueOf(j));
-					slot.setAttributeNodeNS(slotNb);
-					slot.appendChild(doc.createTextNode(this.getsHI()[j][i]));
-					core.appendChild(slot);
-				}
-				shi.appendChild(core);
-			}
 			
-			// SLO table
-			Element slo = doc.createElement("slo");
-			rootElement.appendChild(slo);
-			for (int i = 0; i < this.getNbCores(); i++) {
-				Element core = doc.createElement("core");
-				Attr attrCoreNb = doc.createAttribute("number");
-				attrCoreNb.setNodeValue(String.valueOf(i));
-				core.setAttributeNode(attrCoreNb);
-				for (int j = 0; j < this.gethPeriod(); j++) {
-					Element slot = doc.createElement("slot");
-					Attr slotNb = doc.createAttribute("slot");
-					slotNb.setNodeValue(String.valueOf(j));
-					slot.setAttributeNodeNS(slotNb);
-					slot.appendChild(doc.createTextNode(this.getsLO()[j][i]));
-					core.appendChild(slot);
+			for (int i = 0; i < this.getNbLevels(); i++) {
+				Element table = doc.createElement("Mode-"+i);
+				rootElement.appendChild(table);
+				for (int c = 0; c < this.getNbCores(); c++) {
+					Element core = doc.createElement("core");
+					Attr attrCoreNb = doc.createAttribute("number");
+					attrCoreNb.setNodeValue(String.valueOf(i));
+					core.setAttributeNode(attrCoreNb);
+					for (int s = 0; s < this.gethPeriod(); s++) {
+						Element slot = doc.createElement("slot");
+						Attr slotNb = doc.createAttribute("slot");
+						slotNb.setNodeValue(String.valueOf(s));
+						slot.setAttributeNodeNS(slotNb);
+						slot.appendChild(doc.createTextNode(this.getSched()[i][s][c]));
+						core.appendChild(slot);
+					}
+					table.appendChild(core);
 				}
-				slo.appendChild(core);
 			}
 			
 			// Write the content
@@ -839,22 +822,6 @@ public class MCParser {
 		this.outPrismFile = outPrismFile;
 	}
 
-	public String[][] getsLO() {
-		return sLO;
-	}
-
-	public void setsLO(String[][] sLO) {
-		this.sLO = sLO;
-	}
-
-	public String[][] getsHI() {
-		return sHI;
-	}
-
-	public void setsHI(String[][] sHI) {
-		this.sHI = sHI;
-	}
-
 	public int gethPeriod() {
 		return hPeriod;
 	}
@@ -877,5 +844,13 @@ public class MCParser {
 
 	public void setbOutPrism(boolean bOutPrism) {
 		this.bOutPrism = bOutPrism;
+	}
+
+	public String[][][] getSched() {
+		return sched;
+	}
+
+	public void setSched(String[][][] sched) {
+		this.sched = sched;
 	}
 }

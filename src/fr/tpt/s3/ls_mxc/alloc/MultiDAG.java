@@ -46,8 +46,7 @@ public class MultiDAG{
 	private Comparator<ActorSched> lLOComp;
 	
 	// Scheduling tables
-	private String sLO[][];
-	private String sHI[][];
+	private String sched[][][];
 
 	// Remaining time for all nodes
 	private Hashtable<String, Integer> remainTLO;
@@ -102,13 +101,14 @@ public class MultiDAG{
 		}
 		
 		sethPeriod(MathMCDAG.lcm(input));
-		sHI = new String[gethPeriod()][getNbCores()];
-		sLO = new String[gethPeriod()][getNbCores()];
 		
-		for (i = 0; i < gethPeriod(); i++) {
-			for (int j = 0; j < getNbCores(); j++) {
-				sHI[i][j] = "-";
-				sLO[i][j] = "-";
+		// Init scheduling tables
+		sched = new String[2][gethPeriod()][getNbCores()];
+		
+		for (i = 0; i < 2; i++) {
+			for (int j = 0; j < gethPeriod(); j++) {
+				for (int k = 0; k < getNbCores(); k++)
+					sched[i][j][k] = "-";
 			}
 		}
 		
@@ -354,8 +354,8 @@ public class MultiDAG{
 		
 		for (int i = start; i <= t; i++) {
 			for (int c = 0; c < nbCores; c++) {
-				if (sHI[i][c] != null) {
-					if (sHI[i][c].contentEquals(a.getName()))
+				if (sched[1][i][c] != null) {
+					if (sched[1][i][c].contentEquals(a.getName()))
 						ret++;
 				}
 			}
@@ -441,7 +441,7 @@ public class MultiDAG{
 	 * @throws SchedulingException
 	 */
 	public boolean allocHI () throws SchedulingException {
-		List<ActorSched> sched = new LinkedList<>();
+		List<ActorSched> completed = new LinkedList<>();
 		lHI = new ArrayList<ActorSched>();
 		
 		// Add all exit HI nodes to the ready list.
@@ -479,12 +479,12 @@ public class MultiDAG{
 					ActorSched a = lit.next();
 					int val = remainTHI.get(a.getName());
 					
-					sHI[s][c] = a.getName();
+					sched[1][s][c] = a.getName();
 					val--;
 					
 					// The task has been fully scheduled
 					if (val == 0) {
-						sched.add(a);
+						completed.add(a);
 						taskFinished = true;
 						lit.remove();
 					}
@@ -493,11 +493,11 @@ public class MultiDAG{
 			}
 			
 			if (taskFinished)
-				checkActorActivationHI(sched, lHI);
+				checkActorActivationHI(completed, lHI);
 
 			if (s != 0) {
 				// Check if DAGs need to be activated at the next slot
-				checkDAGActivation(s, sched, lHI, ActorSched.HI); 
+				checkDAGActivation(s, completed, lHI, ActorSched.HI); 
 				// Update laxities for nodes in the ready list
 				calcLaxity(lHI, gethPeriod() - s, ActorSched.HI);
 			}
@@ -513,7 +513,7 @@ public class MultiDAG{
 	 * @throws SchedulingException
 	 */
 	public boolean allocLO () throws SchedulingException{
-		List<ActorSched> sched = new LinkedList<>();
+		List<ActorSched> completed = new LinkedList<>();
 		lLO = new ArrayList<ActorSched>();
 		
 		// Add all HI nodes to the list.
@@ -551,12 +551,12 @@ public class MultiDAG{
 					ActorSched a = lit.next();
 					int val = remainTLO.get(a.getName());
 					
-					sLO[s][c] = a.getName();
+					sched[0][s][c] = a.getName();
 					val--;
 					
 					if (val == 0) {
 						lit.remove();
-						sched.add(a);
+						completed.add(a);
 						taskFinished = true;
 					}
 					remainTLO.put(a.getName(), val);
@@ -566,10 +566,10 @@ public class MultiDAG{
 			resetPromotion();
 			
 			if (taskFinished)
-				checkActorActivationLO(sched, lLO);
+				checkActorActivationLO(completed, lLO);
 			
 			if (s != hPeriod - 1) {
-				checkDAGActivation(s + 1, sched, lLO, ActorSched.LO);
+				checkDAGActivation(s + 1, completed, lLO, ActorSched.LO);
 				calcLaxity(lLO, s + 1, ActorSched.LO);
 			}
 			lLO.sort(lLOComp);
@@ -628,8 +628,8 @@ public class MultiDAG{
 	public void printSHI () {
 		for (int c = 0; c < getNbCores(); c++) {
 			for (int s = 0; s < gethPeriod(); s++) {
-				if (sHI[s][c] != null)
-					System.out.print(sHI[s][c]+" | ");
+				if (sched[1][s][c] != null)
+					System.out.print(sched[1][s][c]+" | ");
 				else
 					System.out.print("-- | ");
 			}
@@ -645,8 +645,8 @@ public class MultiDAG{
 	public void printSLO () {
 		for (int c = 0; c < getNbCores(); c++) {
 			for (int s = 0; s < gethPeriod(); s++) {
-				if (sLO[s][c] !=  null)
-					System.out.print(sLO[s][c]+" | ");
+				if (sched[0][s][c] !=  null)
+					System.out.print(sched[0][s][c]+" | ");
 				else
 					System.out.print("-- | ");
 			}
@@ -664,22 +664,6 @@ public class MultiDAG{
 
 	public void setNbCores(int nbCores) {
 		this.nbCores = nbCores;
-	}
-
-	public String[][] getsLO() {
-		return sLO;
-	}
-
-	public void setsLO(String[][] sLO) {
-		this.sLO = sLO;
-	}
-
-	public String[][] getsHI() {
-		return sHI;
-	}
-
-	public void setsHI(String[][] sHI) {
-		this.sHI = sHI;
 	}
 
 	public List<ActorSched> getlLO() {
@@ -736,5 +720,13 @@ public class MultiDAG{
 
 	public void setlHIComp(Comparator<ActorSched> lHIComp) {
 		this.lHIComp = lHIComp;
+	}
+
+	public String[][][] getSched() {
+		return sched;
+	}
+
+	public void setSched(String sched[][][]) {
+		this.sched = sched;
 	}
 }

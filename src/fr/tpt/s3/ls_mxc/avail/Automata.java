@@ -68,8 +68,8 @@ public class Automata {
 		int c_t = 0;
 		for (int i = 0; i < ls.getDeadline(); i++){
 			for (int j = 0; j < ls.getNbCores(); j++) {
-				if (ls.getS_LO()[i] != null && ls.getS_LO()[i][j] != null) {
-					if (ls.getS_LO()[i][j].contentEquals(task))
+				if (ls.getSched()[0][i] != null && ls.getSched()[0][i][j] != null) {
+					if (ls.getSched()[0][i][j].contentEquals(task))
 						c_t = i;
 				}
 			}
@@ -114,7 +114,7 @@ public class Automata {
 		int c_t = 0;
 		for (int i = 0; i < ls.getDeadline(); i++){
 			for (int j = 0; j < ls.getNbCores(); j++) {
-				if (ls.getS_HI()[i][j].contentEquals(task))
+				if (ls.getSched()[1][i][j].contentEquals(task))
 					c_t = i;
 			}
 		}

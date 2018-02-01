@@ -112,8 +112,7 @@ public class NLevels {
 		sethPeriod(MathMCDAG.lcm(input));
 		
 		// Init scheduling tables
-		for (i = 0; i < getLevels(); i++)
-			sched = new String[getLevels()][gethPeriod()][getNbCores()];
+		sched = new String[getLevels()][gethPeriod()][getNbCores()];
 		
 		for (i = 0; i < getLevels(); i++) {
 			for (int j = 0; j < gethPeriod(); j++) {
