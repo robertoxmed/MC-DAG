@@ -43,6 +43,9 @@ public class ActorSched extends Actor {
 	private int graphID;
 	private boolean delayed;
 	
+	// Non preemptive version
+	private boolean running;
+	
 	private double fProb;
 
 	/**
@@ -234,6 +237,14 @@ public class ActorSched extends Actor {
 
 	public void setDelayed(boolean delayed) {
 		this.delayed = delayed;
+	}
+
+	public boolean isRunning() {
+		return running;
+	}
+
+	public void setRunning(boolean running) {
+		this.running = running;
 	}
 
 }

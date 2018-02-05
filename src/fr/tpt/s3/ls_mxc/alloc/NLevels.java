@@ -600,7 +600,6 @@ public class NLevels {
 			taskFinished = false;
 			lit = ready.listIterator();
 		}
-		
 	}
 	
 	/**
@@ -704,6 +703,163 @@ public class NLevels {
 		
 		printTables();
 	}
+	
+	
+	/*
+	 * Non-preemptive version of the scheduler
+	 */
+	
+	/**
+	 * Checks if it's the first time a task is being scheduled
+	 * @param l
+	 * @return
+	 */
+	private boolean firstTimeRunning (int l, ActorSched a) {
+		if (remainingTime[l][a.getGraphID()][a.getId()] == a.getCI(l))
+			return true;
+		return false;
+	}
+	
+	/**
+	 * Method that builds the HI scheduling table without preemption
+	 * @param l
+	 * @throws SchedulingException
+	 */
+	private void buildHInopreempt (int l) throws SchedulingException {
+		List<ActorSched> ready = new LinkedList<>();
+		List<ActorSched> scheduled = new LinkedList<>();
+		
+		// Add all sink nodes
+		for (DAG d : getMcDags()) {
+			for (Actor a : d.getNodes()) {
+				if (a.isSinkinL(l))
+					ready.add((ActorSched) a);
+			}
+		}
+		
+		calcLaxity(ready, 0, l);
+		ready.sort(new Comparator<ActorSched>() {
+			@Override
+			public int compare(ActorSched o1, ActorSched o2) {
+				if (o1.getUrgencies()[l] - o2.getUrgencies()[l] != 0)
+					return o1.getUrgencies()[l] - o2.getUrgencies()[l];
+				else
+					return o2.getId() - o1.getId();
+			}
+		});
+		
+		// Allocate slot by slot the HI scheduling tables
+		ListIterator<ActorSched> lit = ready.listIterator();
+		boolean taskFinished = false;
+		
+		for (int s = hPeriod - 1; s >= 0; s--) {
+			if (isDebug()) {
+				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildHITable("+l+"): @t = "+s+", tasks activated: ");
+				for (ActorSched a : ready)
+					System.out.print("L("+a.getName()+") = "+a.getUrgencies()[l]+" Running = "+a.isRunning()+"; ");
+				System.out.println("");
+			}
+			
+			// Check if it's worth to continue the allocation
+			if (!isPossible(ready, s, l)) {
+				SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] buildHITable("+l+"): Not enough slots left.");
+				throw se;
+			}
+			
+			for (int c = getNbCores() - 1; c >=0; c--) {
+				// Find a top ready task
+				if (lit.hasNext()) {
+					ActorSched a = lit.next();
+					if (a.isDelayed() || a.isRunning())
+						break;
+					int val = remainingTime[l][a.getGraphID()][a.getId()];
+					
+					if (firstTimeRunning(l, a))
+						a.setRunning(true);
+					
+					sched[l][s][c] = a .getName();
+					val--;
+					
+					// The task has been fully scheduled
+					if (val == 0) {
+						scheduled.add(a);
+						taskFinished = true;
+						lit.remove();
+						a.setRunning(false);
+					}
+					remainingTime[l][a.getGraphID()][a.getId()] = val;
+				}
+			}
+			
+			resetPromotions();
+			resetDelays();
+			
+			// It a task has been fully allocated check for new activations
+			if (taskFinished)
+				checkActivationHI(scheduled, ready, l);
+			
+			if (s != 0) {
+				// Check for new DAG activations
+				checkDAGActivation(scheduled, ready, s, l);
+				// Update laxities for nodes
+				calcLaxity(ready, gethPeriod() - s, l);
+			}
+			ready.sort(new Comparator<ActorSched>() {
+				@Override
+				public int compare(ActorSched o1, ActorSched o2) {
+					if (o1.getUrgencies()[l] - o2.getUrgencies()[l] != 0)
+						return o1.getUrgencies()[l] - o2.getUrgencies()[l];
+					else
+						return o2.getId() - o1.getId();
+				}
+			});
+			taskFinished = false;
+			lit = ready.listIterator();
+		}
+	}
+	
+	/**
+	 * Method that tries to schedule the system in LO mode with no preemption
+	 * @throws SchedulingException
+	 */
+	private void buildLOnopreempt () throws SchedulingException {
+		
+	}
+	
+	/**
+	 * 
+	 */
+	private void buildAllnonpreempt() {
+		initRemainTime();
+		initTables();
+		
+		// Calculate LFTs and urgencies in all DAGs
+		for (DAG d : getMcDags()) {
+			calcLFTs(d);
+			if (isDebug()) printLFTs(d);
+		}
+		
+		// Build tables: more critical tables first
+		for (int i = getLevels() - 1; i >= 1; i--) {
+			try {
+				buildHInopreempt(i);
+			} catch (SchedulingException se) {
+				System.err.println("[ERROR "+Thread.currentThread().getName()+"] Non schedulable example in mode "+i+".");
+			}
+		}
+		
+		try {
+			buildLOTable();
+		} catch (SchedulingException e) {
+			System.err.println("[ERROR "+Thread.currentThread().getName()+"] Non schedulable example in LO mode.");
+		}
+		
+		printTables();
+	}
+	
+	/*
+	 * Benchmarking functions
+	 */
 	
 	
 	/*
