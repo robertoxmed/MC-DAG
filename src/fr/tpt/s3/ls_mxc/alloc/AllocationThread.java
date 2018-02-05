@@ -120,7 +120,7 @@ public class AllocationThread implements Runnable{
 			setNlvl(new NLevels(dags, mcp.getNbCores(), mcp.getNbLevels(), debug));
 			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] N levels: "+dags.size()+" DAGs are going to be scheduled in "+mcp.getNbCores()+" cores.");
 			nlvl.printDAGs();
-			nlvl.buildAllTables();
+			nlvl.buildAllnonpreempt();
 			mcp.setSched(nlvl.getSched());
 		}
 		
