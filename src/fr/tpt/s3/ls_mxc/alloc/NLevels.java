@@ -28,6 +28,7 @@ import fr.tpt.s3.ls_mxc.model.Actor;
 import fr.tpt.s3.ls_mxc.model.ActorSched;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
+import fr.tpt.s3.ls_mxc.util.AlignScheduler;
 import fr.tpt.s3.ls_mxc.util.MathMCDAG;
 
 public class NLevels {
@@ -699,6 +700,9 @@ public class NLevels {
 			System.err.println("[ERROR "+Thread.currentThread().getName()+"] Non schedulable example in LO mode.");
 		}
 		
+		for (int i = 0; i < getLevels(); i++)
+			AlignScheduler.align(sched, i, gethPeriod(), getNbCores());
+		
 		printTables();
 	}
 	
@@ -984,6 +988,9 @@ public class NLevels {
 		} catch (SchedulingException e) {
 			System.err.println("[ERROR "+Thread.currentThread().getName()+"] Non schedulable example in LO mode.");
 		}
+		
+		for (int i = 0; i < getLevels(); i++)
+			AlignScheduler.align(sched, i, gethPeriod(), getNbCores());
 		
 		printTables();
 	}
