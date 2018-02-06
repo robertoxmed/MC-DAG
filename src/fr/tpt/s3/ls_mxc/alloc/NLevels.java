@@ -18,6 +18,7 @@ package fr.tpt.s3.ls_mxc.alloc;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -496,13 +497,10 @@ public class NLevels {
 					// Re-init execution time
 					remainingTime[level][((ActorSched)a).getGraphID()][a.getId()] = a.getCI(level);
 					
-					if (level >= 1 && a.isSinkinL(level)) {
+					if (level >= 1 && a.isSinkinL(level))
 						ready.add((ActorSched)a);
-						System.out.println("\t\t\t\t\t\t ADDING actor "+a.getName());
-					} else if (level == 0 && a.isSourceinL(level)) {
+					else if (level == 0 && a.isSourceinL(level))
 						ready.add((ActorSched)a);
-						System.out.println("\t\t\t\t\t\t ADDING actor "+a.getName());
-					}
 				}
 			}
 		}
@@ -763,6 +761,29 @@ public class NLevels {
 		}
 	}
 	
+	
+	/**
+	 * Method to set running tasks at the beginning of the ready list
+	 * @param list
+	 */
+	private void setRunningFirst (List<ActorSched> list) {
+		List<ActorSched> promoted = new LinkedList<>();
+		Iterator<ActorSched> lit = list.iterator();
+		
+		while (lit.hasNext()) {
+			ActorSched a = lit.next();
+			
+			if (a.isRunning()) {
+				lit.remove();
+				promoted.add(a);
+			}
+		}
+		
+		for (ActorSched a : promoted)
+			list.add(0, a);
+	
+	}
+	
 	/**
 	 * Method that builds the HI scheduling table without preemption
 	 * @param l
@@ -796,11 +817,10 @@ public class NLevels {
 		boolean taskFinished = false;
 		
 		for (int s = hPeriod - 1; s >= 0; s--) {
-			boolean freeCores = false;
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildHInopreempt("+l+"): @t = "+s+", tasks activated: ");
 				for (ActorSched a : ready)
-					System.out.print("L("+a.getName()+") = "+a.getUrgencies()[l]+" Running = "+a.isRunning()+"; ");
+					System.out.print("L("+a.getName()+") = "+a.getUrgencies()[l]+" R = "+a.isRunning()+"; ");
 				System.out.println("");
 			}
 			
@@ -814,7 +834,7 @@ public class NLevels {
 				// Find a top ready task
 				if (lit.hasNext()) {
 					ActorSched a = lit.next();
-					if (a.isDelayed() || a.isRunning())
+					if (a.isDelayed())
 						break;
 					int val = remainingTime[l][a.getGraphID()][a.getId()];
 					
@@ -835,12 +855,7 @@ public class NLevels {
 						a.setRunning(false);
 					}
 					remainingTime[l][a.getGraphID()][a.getId()] = val;
-				} else {
-					freeCores = true;
-					if (isDebug())
-						System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildHInopreempt("+l+"): @t = "+s+", at least one free core");
-				}
-					
+				}	
 			}
 			
 			resetPromotions();
@@ -850,24 +865,22 @@ public class NLevels {
 			if (taskFinished)
 				checkActivationHI(scheduled, ready, l);
 			
-			if (s != 0) // Check for new DAG activations
+			if (s != 0) {// Check for new DAG activations
 				checkDAGActivation(scheduled, ready, s, l);
-			if (freeCores) 	// Update laxities for nodes only if there are free cores
+				// Update laxities for nodes only if there are free cores
 				calcLaxitynopreempt(ready, gethPeriod() - s, l);
+			}
 		
 			ready.sort(new Comparator<ActorSched>() {
 				@Override
 				public int compare(ActorSched o1, ActorSched o2) {
-					if (o1.isRunning() && !o2.isRunning())
-						return 1;
-					else if (!o1.isRunning() && o2.isRunning())
-						return -1;
-					else if (o1.getUrgencies()[l] - o2.getUrgencies()[l] != 0)
+					if (o1.getUrgencies()[l] - o2.getUrgencies()[l] != 0)
 						return o1.getUrgencies()[l] - o2.getUrgencies()[l];
 					else
 						return o2.getId() - o1.getId();
 				}
 			});
+			setRunningFirst(ready);
 			taskFinished = false;
 			lit = ready.listIterator();
 		}
