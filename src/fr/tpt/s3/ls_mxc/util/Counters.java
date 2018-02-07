@@ -55,7 +55,55 @@ public class Counters {
 		
 	}
 	
-	public static void countPreemptions (String sched[][][], Hashtable<ActorSched, Integer> refs, int level, int hPeriod, int nbCores) {
+	public static void countPreemptions (String sched[][][], Hashtable<ActorSched, Integer> refs, int levels, int hPeriod, int nbCores) {
 		
+		Set<ActorSched> keys = refs.keySet();
+		@SuppressWarnings("unchecked")
+		Hashtable<ActorSched, Integer>[] remaining = new Hashtable[levels];
+		
+		// Init remaining times
+		for (ActorSched a : keys) {
+			for (int i = 0; i < levels; i++) 
+			remaining[i].put(a, a.getCI(levels));
+		}
+		
+		// Iterate through actors to check the number of preemptions
+		for (ActorSched a : keys) {
+			int preempts = refs.get(a);
+			// Iterate through all the levels
+			for (int l = 0; l < levels; l++) {
+				// Check the number of activations a task has
+				int nbActivations = a.getGraphDead() / hPeriod;
+				
+				for (int s = 1; s < hPeriod; s++) {
+					int val = remaining[l].get(a);
+					
+					for (int c = 0; c < nbCores; c++) {
+						// The task is running
+						if (sched[l][s][c].contentEquals(a.getName())) {
+							boolean wasRunning = false;
+							
+							// Check if the task was running in the previous slot
+							for (int c2 = 0; c2 < nbCores; c++) {
+								if (sched[l][s - 1][c2].contentEquals(a.getName())) {
+									wasRunning = true;
+									break;
+								}
+							}
+							// The task wasn't running and it isn't the first it is executed was a preemption at this point
+							if (!wasRunning && val != a.getCI(l))
+								preempts++;
+							
+							val--;							
+							if (val == 0 && nbActivations != 0)
+									remaining[l].put(a, a.getCI(l));
+							else
+								remaining[l].put(a, val);
+						}
+					}
+				}
+			}
+			refs.put(a, preempts);
+		}
 	}
 }
