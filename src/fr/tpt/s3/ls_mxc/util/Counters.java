@@ -23,7 +23,14 @@ import fr.tpt.s3.ls_mxc.model.ActorSched;
 
 public class Counters {
 
-	
+	/**
+	 * Method that counts the number of context switches for all tasks
+	 * @param sched
+	 * @param refs
+	 * @param nbLevels
+	 * @param hPeriod
+	 * @param nbCores
+	 */
 	public static void countContextSwitch (String sched[][][], Hashtable<ActorSched, Integer> refs, int nbLevels, int hPeriod, int nbCores) {
 		// Check for all tasks how many context switches it has
 		Set<ActorSched> keys = refs.keySet();
@@ -96,7 +103,7 @@ public class Counters {
 							
 							val--;							
 							if (val == 0 && nbActivations != 0)
-									remaining[l].put(a, a.getCI(l));
+								remaining[l].put(a, a.getCI(l));
 							else
 								remaining[l].put(a, val);
 						}
