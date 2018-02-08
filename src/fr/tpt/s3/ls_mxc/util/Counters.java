@@ -62,6 +62,14 @@ public class Counters {
 		
 	}
 	
+	/**
+	 * Method to count the number of preemptions for each task
+	 * @param sched
+	 * @param refs
+	 * @param levels
+	 * @param hPeriod
+	 * @param nbCores
+	 */
 	public static void countPreemptions (String sched[][][], Hashtable<ActorSched, Integer> refs, int levels, int hPeriod, int nbCores) {
 		
 		Set<ActorSched> keys = refs.keySet();
