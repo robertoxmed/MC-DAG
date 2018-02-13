@@ -1,7 +1,9 @@
 package fr.tpt.s3.ls_mxc.generator;
 
+import java.util.HashSet;
 import java.util.Set;
 
+import fr.tpt.s3.ls_mxc.model.Actor;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.util.RandomNumberGenerator;
 
@@ -21,6 +23,8 @@ public class NLevelsGenerator {
 	private RandomNumberGenerator rng;
 	private boolean debug;
 	
+	private int possibleDeadlines[] = {10, 15, 20, 30, 14, 12}; 
+	
 	public NLevelsGenerator (double minU, double maxU, double eProb, int levels, int paraDegree, boolean debug) {
 		setUserMinU(minU);
 		setUserMaxU(maxU);
@@ -34,7 +38,41 @@ public class NLevelsGenerator {
 	 * Method that generates a random graph
 	 */
 	public void GenerateGraph() {
+		int id = 0;
+		DAG d = new DAG();
+		Set<Actor> nodes = new HashSet<Actor>();
+		int rank;
 		
+		int idxDeadline = rng.randomUnifInt(0, possibleDeadlines.length - 1);
+		int rDead = possibleDeadlines[idxDeadline];
+		
+		double rU[] = new double[nbLevels];
+		int budgets[] = new int[nbLevels];
+		int cBounds[] = new int[nbLevels];
+			
+		for (int i = 0; i < nbLevels; i++) {
+			if (i != 0)
+				rU[i] = rng.randomUnifDouble(rU[i - 1], userMinU + ((userMaxU - userMinU) / nbLevels) * (i+1));
+			else 
+				rU[i] = rng.randomUnifDouble(userMinU, userMinU + ((userMaxU - userMinU) / nbLevels) * (i+1));
+			budgets[i] = (int) Math.ceil(rDead * rU[i]);
+			cBounds[i] = (int) Math.ceil(rDead / 2); 
+		}
+		
+		if (isDebug()) {
+			System.out.print("[DEBUG] GenerateGraph: Generating a graph with parameters ");
+			for (int i = 0; i < nbLevels; i++)
+				System.out.print("U["+i+"] = "+rU[i]+"; ");
+			System.out.println("deadline = "+rDead);
+			System.out.println("[DEBUG] GenerateGraph: >>> Generating HI tasks first.");
+		}
+		
+		// Generate nodes for all levels
+		for (int i = 0; i < nbLevels; i++) {
+			// Node generation block
+			
+			// Shrinking procedure
+		}
 	}
 	
 	
@@ -90,11 +128,9 @@ public class NLevelsGenerator {
 		this.rng = rng;
 	}
 
-
 	public double getUserMinU() {
 		return userMinU;
 	}
-
 
 	public void setUserMinU(double userMinU) {
 		this.userMinU = userMinU;
