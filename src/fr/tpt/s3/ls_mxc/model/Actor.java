@@ -32,6 +32,7 @@ public abstract class Actor {
 	
 	private int cpFromNodeLO;
 	private int cpFromNodeHI;
+	private int cpFromNode[];
 	
 	private Set<Edge> rcvEdges;
 	private Set<Edge> sndEdges;
@@ -51,6 +52,7 @@ public abstract class Actor {
 		this.setSourceHI(false);
 		rcvEdges = new HashSet<Edge>();
 		sndEdges = new HashSet<Edge>();
+		cpFromNode = new int[nbLevels];
 	}
 	
 	/**
@@ -153,6 +155,37 @@ public abstract class Actor {
 				this.setCpFromNodeHI(max);
 			}
 			
+			return max;
+		}
+	}
+	
+	/**
+	 * Calculates the critical Path from a given node
+	 * @param n
+	 * @param mode
+	 * @return
+	 */
+	public int CPfromNode (int level) {
+		
+		if (this.getRcvEdges().size() == 0) {
+			this.getCpFromNode()[level] = this.getCI(level);
+			return this.getCI(level);
+		} else {
+			int max = 0;
+			int tmp = 0;
+			Iterator<Edge> it_e = this.getRcvEdges().iterator();
+			
+			while (it_e.hasNext()){
+				Edge e = it_e.next();
+				
+				tmp = e.getSrc().getCpFromNode()[level];
+				if (max < tmp)
+					max = tmp;
+			}
+			
+			max += this.getCI(level);
+			this.getCpFromNode()[level] = max;
+
 			return max;
 		}
 	}
@@ -296,5 +329,13 @@ public abstract class Actor {
 
 	public void setCpFromNodeHI(int cpFromNodeHI) {
 		this.cpFromNodeHI = cpFromNodeHI;
+	}
+
+	public int[] getCpFromNode() {
+		return cpFromNode;
+	}
+
+	public void setCpFromNode(int cpFromNode[]) {
+		this.cpFromNode = cpFromNode;
 	}
 }

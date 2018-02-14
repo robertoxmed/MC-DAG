@@ -133,7 +133,7 @@ public class UtilizationGenerator {
 						ActorSched src = (ActorSched) it_n.next();
 						// Test if the rank of the source is lower and if the CP
 						// is not reached
-						if (rng.randomUnifInt(1, 100) <= edgeProb && n.getRank() > src.getRank()
+						if (rng.randomUnifInt(0, 100) <= edgeProb && n.getRank() > src.getRank()
 								&& src.getCpFromNodeHI() + n.getCI(1) <= rDead) {
 							Edge e = new Edge(src, n);
 							src.getSndEdges().add(e);

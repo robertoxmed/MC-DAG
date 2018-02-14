@@ -1,10 +1,13 @@
 package fr.tpt.s3.ls_mxc.generator;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import fr.tpt.s3.ls_mxc.model.Actor;
+import fr.tpt.s3.ls_mxc.model.ActorSched;
 import fr.tpt.s3.ls_mxc.model.DAG;
+import fr.tpt.s3.ls_mxc.model.Edge;
 import fr.tpt.s3.ls_mxc.util.RandomNumberGenerator;
 
 public class NLevelsGenerator {
@@ -35,6 +38,19 @@ public class NLevelsGenerator {
 	}
 	
 	/**
+	 * Function that prints the current parameters of the node
+	 * @param a
+	 */
+	private void debugNode (Actor a, String func) {
+		
+		System.out.println("[DEBUG] "+func+": Node "+a.getId()+" Ci(HI) = "+a.getCI(1)+" Ci(LO) = "+a.getCI(0));
+		for (Edge e : a.getRcvEdges())
+			System.out.println("\t Rcv Edge "+e.getSrc().getId()+" -> "+a.getId());
+		for (Edge e : a.getSndEdges())
+			System.out.println("\t Snd Edge "+a.getId()+" -> "+e.getDest().getId());
+	}
+	
+	/**
 	 * Method that generates a random graph
 	 */
 	public void GenerateGraph() {
@@ -52,9 +68,9 @@ public class NLevelsGenerator {
 			
 		for (int i = 0; i < nbLevels; i++) {
 			if (i != 0)
-				rU[i] = rng.randomUnifDouble(rU[i - 1], userMinU + ((userMaxU - userMinU) / nbLevels) * (i+1));
+				rU[i] = rng.randomUnifDouble(rU[i - 1], rU[0] + ((userMaxU - rU[0]) / nbLevels) * (i+1));
 			else 
-				rU[i] = rng.randomUnifDouble(userMinU, userMinU + ((userMaxU - userMinU) / nbLevels) * (i+1));
+				rU[i] = rng.randomUnifDouble(userMinU, userMaxU);
 			budgets[i] = (int) Math.ceil(rDead * rU[i]);
 			cBounds[i] = (int) Math.ceil(rDead / 2); 
 		}
@@ -68,11 +84,62 @@ public class NLevelsGenerator {
 		}
 		
 		// Generate nodes for all levels
-		for (int i = 0; i < nbLevels; i++) {
+		for (int i = nbLevels - 1; i >= 0; i--) {
+			
 			// Node generation block
+			rank = 0;
+			
+			while (budgets[i] != 0) {
+				int nodesPerRank = rng.randomUnifInt(1, parallelismDegree);
+				
+				for (int j = 0; j < nodesPerRank && budgets[i] > 0; j++) {
+					ActorSched n = new ActorSched(id, Integer.toString(id), nbLevels);
+					
+					// Roll the Ci
+					n.getcIs()[i] = rng.randomUnifInt(2, cBounds[i]);
+					if (budgets[i] - n.getCI(i) > 0) {
+						budgets[i] -= n.getCI(i);
+					} else {
+						n.getcIs()[i] = budgets[i];
+						budgets[i] = 0;
+					}
+					
+					n.setRank(rank);
+					// Not a source node
+					if (rank != 0) {
+						// Iterate through the nodes to create an edge
+						Iterator<Actor> it_n = nodes.iterator();
+						while (it_n.hasNext()) {
+							ActorSched src = (ActorSched) it_n.next();
+							
+							/* Roll a probability of having an edge between nodes
+							 * Make sure that the deadline is not reached
+							 */
+							if (rng.randomUnifDouble(0, 100) <= edgeProb && n.getRank() > src.getRank()
+								&& src.getCpFromNode()[i] + n.getCI(i) <= rDead) {
+								@SuppressWarnings("unused")
+								Edge e = new Edge(src,n);
+							}
+						}
+					}
+					// Set the Ci for inferior levels
+					if (i >= 1)
+						n.getcIs()[i - 1] = n.getCI(i);
+					nodes.add(n);
+					n.CPfromNode(i);
+					id++;
+					if (isDebug()) {
+						String func = Thread.currentThread().getStackTrace()[1].getMethodName();
+						debugNode(n, func);
+					}
+				}
+				rank++;
+			}
 			
 			// Shrinking procedure
 		}
+		
+		d.setNodes(nodes);
 	}
 	
 	
