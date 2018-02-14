@@ -116,7 +116,8 @@ public class NLevelsGenerator {
 							 * Make sure that the deadline is not reached
 							 */
 							if (rng.randomUnifDouble(0, 100) <= edgeProb && n.getRank() > src.getRank()
-								&& src.getCpFromNode()[i] + n.getCI(i) <= rDead) {
+								&& src.getCpFromNode()[i] + n.getCI(i) <= rDead
+								&& src.getCI(i) != 0) {
 								@SuppressWarnings("unused")
 								Edge e = new Edge(src,n);
 							}
@@ -136,10 +137,61 @@ public class NLevelsGenerator {
 				rank++;
 			}
 			
-			// Shrinking procedure
+			// Shrinking procedure only for HI tasks
+			if (i >= 1) {
+				double minU = rU[i] / 2;
+				int wantedBudget = (int) Math.ceil(minU * rDead);
+				int actualBudget = (int) Math.ceil(rU[i] * rDead);
+				Iterator<Actor> it_n;
+				
+				while (wantedBudget < actualBudget && !allNodesAreMin(nodes, i)) {
+					it_n = nodes.iterator();
+					while (it_n.hasNext()) {
+						ActorSched n = (ActorSched) it_n.next();
+						
+						n.getcIs()[i] = rng.randomUnifInt(1, n.getCI(i));
+						actualBudget -= n.getCI(i - 1);
+						if (actualBudget < 0)
+							actualBudget = 0;
+					}
+				}
+				
+				if (isDebug()) {
+					System.out.println("[DEBUG] GenerateGraph(): >>> Deflation of tasks in mode "+i+" finished");
+					for (Actor a : nodes) 
+						debugNode(a, "GenerateGraph()");
+				}
+				
+				it_n = nodes.iterator();
+				actualBudget = 0;
+				while (it_n.hasNext()) {
+					Actor a = it_n.next();
+					a.CPfromNode(i - 1);
+					actualBudget += a.getCI(i - 1);
+				}
+				// Update remaining budgets
+				budgets[i - 1] -= actualBudget;				
+			}
 		}
 		
 		d.setNodes(nodes);
+		d.setDeadline(rDead);
+		d.setId(getGennedDAGs().size());
+		getGennedDAGs().add(d);
+	}
+	
+	/**
+	 * Verifies if all the nodes in the set have the minimum execution time
+	 * @param nodes
+	 * @param level
+	 * @return
+	 */
+	private boolean allNodesAreMin(Set<Actor> nodes, int level) {
+		for (Actor a : nodes) {
+			if (a.getCI(level) != 1)
+				return false;
+		}
+		return true;
 	}
 	
 	
