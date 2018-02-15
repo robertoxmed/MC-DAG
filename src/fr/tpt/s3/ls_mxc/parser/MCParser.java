@@ -706,21 +706,17 @@ public class MCParser {
 			
 			out.write("digraph test{\n");
 			
-			// HI nodes color
+			
 			for (DAG d : ug.getGennedDAGs()) {
 				for (Actor a : d.getNodes()) {
-					if (a.getCI(1) != 0)
-						out.write("\"D"+d.getId()+"N"+a.getName()+"\" [label=\"D"+d.getId()+"N"+a.getName()+"\\n"+a.getCI(1)+"/"+a.getCI(0)+"\",style=filled,color=lightgrey]\n");
-				}
-			}
-			out.write("\n");
-
-			// LO nodes color
-			out.write("\tnode [shape=circle, color=white]; ");
-			for (DAG d : ug.getGennedDAGs()) {
-				for (Actor a : d.getNodes()) {
-					if (a.getCI(1) == 0)
-						out.write("\"D"+d.getId()+"N"+a.getName()+"\" [label=\"D"+d.getId()+"N"+a.getName()+"\\n"+a.getCI(1)+"/"+a.getCI(0)+"\",style=filled,color=white]\n");
+					out.write("\"D"+d.getId()+"N"+a.getName()+"\" [label=\"D"+d.getId()+"N"+a.getName()+"\\n");
+					for (int i = ug.getNbLevels() - 1; i >= 0; i--) {
+						if (i != 0)
+							out.write(a.getCI(i)+"/");
+						else
+							out.write(a.getCI(i)+"\"]\n");
+						
+					}
 				}
 			}
 			out.write("\n");

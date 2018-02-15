@@ -123,8 +123,7 @@ public class NLevelsGenerator {
 							 * Make sure that the deadline is not reached
 							 */
 							if (rng.randomUnifDouble(0, 100) <= edgeProb && n.getRank() > src.getRank()
-								&& src.getCpFromNode()[i] + n.getCI(i) <= rDead
-								&& src.getCI(i) != 0) {
+								&& src.getCpFromNode()[i] + n.getCI(i) <= rDead) {
 								@SuppressWarnings("unused")
 								Edge e = new Edge(src,n);
 							}
@@ -140,7 +139,6 @@ public class NLevelsGenerator {
 						debugNode(n, "GenerateGraph()");
 				}
 				rank++;
-				System.out.println("Test");
 			}
 			
 			// Shrinking procedure only for HI tasks
@@ -157,7 +155,7 @@ public class NLevelsGenerator {
 					while (it_n.hasNext()) {
 						ActorSched n = (ActorSched) it_n.next();
 						
-						n.getcIs()[i] = rng.randomUnifInt(1, n.getCI(i));
+						n.getcIs()[i - 1] = rng.randomUnifInt(1, n.getCI(i));
 						actualBudget -= n.getCI(i - 1);
 						if (actualBudget < 0)
 							actualBudget = 0;
