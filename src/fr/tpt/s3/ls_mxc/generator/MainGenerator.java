@@ -35,33 +35,25 @@ public class MainGenerator {
 		/* ============================ Command line ================= */
 		Options options = new Options();
 		
-		Option o_hi = new Option("h", "hi_utilization", true, "Max HI Utilization");
+		Option o_hi = new Option("mu", "max_utilization", true, "Max HI Utilization");
 		o_hi.setRequired(true);
 		options.addOption(o_hi);
 		
-		Option o_lo = new Option("l", "lo_utilization", true, "Max LO Utilization");
+		Option o_lo = new Option("lu", "low_utilization", true, "Max LO Utilization");
 		o_lo.setRequired(true);
 		options.addOption(o_lo);
-		
-		Option o_hi_lo = new Option("hl", "hi_lo_utilization", true, "Max HI Utilization in LO mode");
-		o_hi_lo.setRequired(true);
-		options.addOption(o_hi_lo);
-		
-		Option o_lo_u = new Option("lu", "lower_ut", true, "Lower bound utilization");
-		o_lo_u.setRequired(true);
-		options.addOption(o_lo_u);
-		
+				
 		Option o_eprob = new Option("e", "eprobability", true, "Probability of edges");
 		o_eprob.setRequired(true);
 		options.addOption(o_eprob);
 		
+		Option o_levels = new Option("l", "levels", true, "Number of criticality levels");
+		o_levels.setRequired(true);
+		options.addOption(o_levels);
+		
 		Option o_para = new Option("p", "parallelism", true, "Max parallelism for the DAGs");
 		o_para.setRequired(true);
 		options.addOption(o_para);
-		
-		Option o_cp = new Option("cp", "critical_path", true, "Max critical path of the DAGs");
-		o_cp.setRequired(true);
-		options.addOption(o_cp);
 		
 		Option o_nbdags = new Option("nd", "num_dags", true, "Number of DAGs");
 		o_nbdags.setRequired(true);
@@ -70,10 +62,6 @@ public class MainGenerator {
 		Option o_nbfiles = new Option("nf", "num_files", true, "Number of files");
 		o_nbfiles.setRequired(true);
 		options.addOption(o_nbfiles);
-		
-		Option o_cores = new Option("c", "cores", true, "Number of cores");
-		o_cores.setRequired(true);
-		options.addOption(o_cores);
 		
 		Option o_out = new Option("o", "output", true, "Output file for the DAG");
 		o_out.setRequired(true);
@@ -105,16 +93,13 @@ public class MainGenerator {
 			return;
 		}
 		
-		double userHI = Double.parseDouble(cmd.getOptionValue("hi_utilization"));
-		double userLO = Double.parseDouble(cmd.getOptionValue("lo_utilization"));
-		double UserHIinLO = Double.parseDouble(cmd.getOptionValue("hi_lo_utilization"));
-		double userLowerBound = Double.parseDouble(cmd.getOptionValue("lower_ut"));
+		double maxU = Double.parseDouble(cmd.getOptionValue("max_utilization"));
+		double minU = Double.parseDouble(cmd.getOptionValue("low_utilization"));
 		int edgeProb = Integer.parseInt(cmd.getOptionValue("eprobability"));
-		int cp = Integer.parseInt(cmd.getOptionValue("critical_path"));
+		int levels = Integer.parseInt(cmd.getOptionValue("levels"));
 		int nbDags = Integer.parseInt(cmd.getOptionValue("num_dags"));
 		int nbFiles = Integer.parseInt(cmd.getOptionValue("num_files"));
 		int para = Integer.parseInt(cmd.getOptionValue("parallelism"));
-		int cores = Integer.parseInt(cmd.getOptionValue("cores"));
 		boolean graph = cmd.hasOption("graphviz");	
 		boolean debug = cmd.hasOption("debug");	
 		String output = cmd.getOptionValue("output");
@@ -141,7 +126,7 @@ public class MainGenerator {
 			
 			for (int i = 0; i < nbJobs && count < nbFiles; i++) {
 				String outFile = output.substring(0, output.lastIndexOf('.')).concat("-"+count+".xml");
-				GeneratorThread gt = new GeneratorThread(userLO, userHI, cp, edgeProb, UserHIinLO, userLowerBound, para, cores, nbDags, outFile, graph, debug);
+				GeneratorThread gt = new GeneratorThread(minU, maxU, edgeProb, levels, para, nbDags, outFile, graph, debug);
 				threads[i] = new Thread(gt);
 				threads[i].setName("GeneratorThread-"+i);
 				launched++;

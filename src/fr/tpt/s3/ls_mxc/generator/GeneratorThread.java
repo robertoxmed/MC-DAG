@@ -21,15 +21,14 @@ import fr.tpt.s3.ls_mxc.parser.MCParser;
 
 public class GeneratorThread implements Runnable{
 
-	private UtilizationGenerator ug;
+	private NLevelsGenerator ug;
 	private MCParser mcp;
 	private boolean graphBool;
 	private boolean debug;
 	
-	public GeneratorThread (double uLO, double uHI, int cp, int edProb,
-			double uHIinLO, double lowerU, int para, int cores, int nbDags, String outFile,
-			boolean graphBool, boolean debug) {
-		ug = new UtilizationGenerator(uLO, uHI, cp, edProb, uHIinLO, lowerU, para, cores, nbDags, debug);
+	public GeneratorThread (double minU, double maxU, double eProb, int levels, int pDegree,
+			int nbDags, String outFile,	boolean graphBool, boolean debug) {
+		ug = new NLevelsGenerator(minU, maxU, eProb, levels, pDegree, nbDags, debug);
 		mcp = new MCParser(outFile, ug);
 		setDebug(debug);
 		setGraphBool(graphBool);
@@ -37,9 +36,9 @@ public class GeneratorThread implements Runnable{
 	
 	@Override
 	public void run() {
-		for (int i = 0; i < ug.getNbDags(); i++) {
+		for (int i = 0; i < ug.getNbDAGs(); i++) {
 			if (isDebug()) System.out.println("[DEBUG] Generating DAG #"+i);
-			ug.GenenrateGraph();
+			ug.GenerateGraph();
 		}
 
 		// Write the file
@@ -62,11 +61,11 @@ public class GeneratorThread implements Runnable{
 	/*
 	 * Getters & setters
 	 */
-	public UtilizationGenerator getUg() {
+	public NLevelsGenerator getUg() {
 		return ug;
 	}
 
-	public void setUg(UtilizationGenerator ug) {
+	public void setUg(NLevelsGenerator ug) {
 		this.ug = ug;
 	}
 	

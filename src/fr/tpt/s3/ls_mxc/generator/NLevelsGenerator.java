@@ -14,6 +14,7 @@ public class NLevelsGenerator {
 
 	// Set of generated graphs
 	private Set<DAG> gennedDAGs;
+	private int nbDAGs;
 	
 	// Parameters for the generation
 	private double edgeProb;
@@ -28,12 +29,14 @@ public class NLevelsGenerator {
 	
 	private int possibleDeadlines[] = {10, 15, 20, 30, 14, 12}; 
 	
-	public NLevelsGenerator (double minU, double maxU, double eProb, int levels, int paraDegree, boolean debug) {
+	public NLevelsGenerator (double minU, double maxU, double eProb, int levels, int paraDegree, int nbDAGs,
+			boolean debug) {
 		setUserMinU(minU);
 		setUserMaxU(maxU);
 		setEdgeProb(eProb);
 		setNbLevels(levels);
 		setParallelismDegree(paraDegree);
+		setNbDAGs(nbDAGs);
 		setDebug(debug);
 	}
 	
@@ -263,5 +266,13 @@ public class NLevelsGenerator {
 
 	public void setNbLevels(int nbLevels) {
 		this.nbLevels = nbLevels;
+	}
+
+	public int getNbDAGs() {
+		return nbDAGs;
+	}
+
+	public void setNbDAGs(int nbDAGs) {
+		this.nbDAGs = nbDAGs;
 	}
 }

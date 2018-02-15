@@ -43,7 +43,7 @@ import fr.tpt.s3.ls_mxc.avail.FTM;
 import fr.tpt.s3.ls_mxc.avail.Formula;
 import fr.tpt.s3.ls_mxc.avail.State;
 import fr.tpt.s3.ls_mxc.avail.Transition;
-import fr.tpt.s3.ls_mxc.generator.UtilizationGenerator;
+import fr.tpt.s3.ls_mxc.generator.NLevelsGenerator;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
 import fr.tpt.s3.ls_mxc.model.Actor;
@@ -62,7 +62,7 @@ public class MCParser {
 	// Only references do not have to be instantiated
 	private Set<DAG> dags;
 	private Automata auto;
-	private UtilizationGenerator ug;
+	private NLevelsGenerator ug;
 	
 	// Writing scheduling tables
 	private String[][][] sched;
@@ -78,7 +78,7 @@ public class MCParser {
 		this.setNbLevels(2);
 	}
 	
-	public MCParser (String oGFile, UtilizationGenerator ug) {
+	public MCParser (String oGFile, NLevelsGenerator ug) {
 		setOutGenFile(oGFile);
 		setUg(ug);
 	}
@@ -619,11 +619,11 @@ public class MCParser {
 			Element rootElement = doc.createElement("mcsystem");
 			doc.appendChild(rootElement);
 			
-			for (DAG d : ug.getGenDAG()) {
+			for (DAG d : ug.getGennedDAGs()) {
 				// MC DAG
 				Element mcdag = doc.createElement("mcdag");
 				Attr dagName = doc.createAttribute("name");
-				dagName.setValue("genned-"+ug.getUserU_LO()+"-"+ug.getUserU_HI()+"-ed-"+ug.getEdgeProb()+"-"+d.getId());
+				dagName.setValue("genned-"+d.getId()+"-ed-"+ug.getEdgeProb()+"-"+d.getId());
 				Attr dagDead = doc.createAttribute("deadline");
 				dagDead.setValue(String.valueOf(d.getDeadline()));
 				mcdag.setAttributeNodeNS(dagName);
@@ -675,7 +675,7 @@ public class MCParser {
 			// Number of cores of the architecture
 			Element cores = doc.createElement("cores");
 			Attr nbCores = doc.createAttribute("number");
-			nbCores.setValue(String.valueOf(ug.getNbCores()));
+			nbCores.setValue(String.valueOf(1));
 			cores.setAttributeNode(nbCores);
 			rootElement.appendChild(cores);
 			
@@ -707,7 +707,7 @@ public class MCParser {
 			out.write("digraph test{\n");
 			
 			// HI nodes color
-			for (DAG d : ug.getGenDAG()) {
+			for (DAG d : ug.getGennedDAGs()) {
 				for (Actor a : d.getNodes()) {
 					if (a.getCI(1) != 0)
 						out.write("\"D"+d.getId()+"N"+a.getName()+"\" [label=\"D"+d.getId()+"N"+a.getName()+"\\n"+a.getCI(1)+"/"+a.getCI(0)+"\",style=filled,color=lightgrey]\n");
@@ -717,7 +717,7 @@ public class MCParser {
 
 			// LO nodes color
 			out.write("\tnode [shape=circle, color=white]; ");
-			for (DAG d : ug.getGenDAG()) {
+			for (DAG d : ug.getGennedDAGs()) {
 				for (Actor a : d.getNodes()) {
 					if (a.getCI(1) == 0)
 						out.write("\"D"+d.getId()+"N"+a.getName()+"\" [label=\"D"+d.getId()+"N"+a.getName()+"\\n"+a.getCI(1)+"/"+a.getCI(0)+"\",style=filled,color=white]\n");
@@ -726,7 +726,7 @@ public class MCParser {
 			out.write("\n");
 			
 			// Create the edges between the nodes
-			for (DAG d : ug.getGenDAG()) {
+			for (DAG d : ug.getGennedDAGs()) {
 				for (Actor a : d.getNodes()) {
 					for (Edge e : a.getSndEdges())
 						out.write("\tD"+d.getId()+"N"+e.getSrc().getName()+" -> D"+d.getId()+"N"+e.getDest().getName()+";\n");
@@ -782,11 +782,11 @@ public class MCParser {
 		this.outGenFile = outGenFile;
 	}
 
-	public UtilizationGenerator getUg() {
+	public NLevelsGenerator getUg() {
 		return ug;
 	}
 
-	public void setUg(UtilizationGenerator ug) {
+	public void setUg(NLevelsGenerator ug) {
 		this.ug = ug;
 	}
 
