@@ -37,7 +37,7 @@ public class GeneratorThread implements Runnable{
 	@Override
 	public void run() {
 		for (int i = 0; i < ug.getNbDAGs(); i++) {
-			if (isDebug()) System.out.println("[DEBUG] Generating DAG #"+i);
+			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] Generating DAG #"+i+" of "+ug.getNbDAGs());
 			ug.GenerateGraph();
 		}
 

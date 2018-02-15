@@ -48,7 +48,10 @@ public class NLevelsGenerator {
 	 */
 	private void debugNode (Actor a, String func) {
 		
-		System.out.println("[DEBUG] "+func+": Node "+a.getId()+" Ci(HI) = "+a.getCI(1)+" Ci(LO) = "+a.getCI(0));
+		System.out.print("[DEBUG "+Thread.currentThread().getName()+"] "+func+": Node "+a.getId());
+		for (int i = nbLevels - 1; i >= 0; i--)
+			System.out.print(" C("+i+") = "+a.getCI(i)+";");
+		System.out.println("");
 		for (Edge e : a.getRcvEdges())
 			System.out.println("\t Rcv Edge "+e.getSrc().getId()+" -> "+a.getId());
 		for (Edge e : a.getSndEdges())
@@ -81,11 +84,10 @@ public class NLevelsGenerator {
 		}
 		
 		if (isDebug()) {
-			System.out.print("[DEBUG] GenerateGraph: Generating a graph with parameters ");
+			System.out.print("[DEBUG "+Thread.currentThread().getName()+"] GenerateGraph: Generating a graph with parameters ");
 			for (int i = 0; i < nbLevels; i++)
 				System.out.print("U["+i+"] = "+rU[i]+"; ");
 			System.out.println("deadline = "+rDead);
-			System.out.println("[DEBUG] GenerateGraph: >>> Generating HI tasks first.");
 		}
 		
 		// Generate nodes for all levels
@@ -94,7 +96,7 @@ public class NLevelsGenerator {
 			// Node generation block
 			rank = 0;
 			
-			while (budgets[i] != 0) {
+			while (budgets[i] > 0) {
 				int nodesPerRank = rng.randomUnifInt(1, parallelismDegree);
 				
 				for (int j = 0; j < nodesPerRank && budgets[i] > 0; j++) {
@@ -134,17 +136,18 @@ public class NLevelsGenerator {
 					nodes.add(n);
 					n.CPfromNode(i);
 					id++;
-					if (isDebug()) {
-						String func = Thread.currentThread().getStackTrace()[1].getMethodName();
-						debugNode(n, func);
-					}
+					if (isDebug())
+						debugNode(n, "GenerateGraph()");
 				}
 				rank++;
+				System.out.println("Test");
 			}
 			
 			// Shrinking procedure only for HI tasks
 			if (i >= 1) {
-				double minU = rU[i] / 2;
+				System.out.println("Shrinking for mode "+i);
+
+				double minU = rU[i - 1] / 2;
 				int wantedBudget = (int) Math.ceil(minU * rDead);
 				int actualBudget = (int) Math.ceil(rU[i] * rDead);
 				Iterator<Actor> it_n;
@@ -162,7 +165,7 @@ public class NLevelsGenerator {
 				}
 				
 				if (isDebug()) {
-					System.out.println("[DEBUG] GenerateGraph(): >>> Deflation of tasks in mode "+i+" finished");
+					System.out.println("[DEBUG "+Thread.currentThread().getName()+"] GenerateGraph(): >>> Deflation of tasks in mode "+i+" finished");
 					for (Actor a : nodes) 
 						debugNode(a, "GenerateGraph()");
 				}
@@ -183,6 +186,9 @@ public class NLevelsGenerator {
 		d.setDeadline(rDead);
 		d.setId(getGennedDAGs().size());
 		getGennedDAGs().add(d);
+		
+		if (isDebug())
+			System.out.println("[DEBUG"+Thread.currentThread().getName()+"] GenerateGraph(): DAG generation completed");
 	}
 	
 	/**
