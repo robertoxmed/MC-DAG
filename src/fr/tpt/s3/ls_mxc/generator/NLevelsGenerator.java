@@ -38,6 +38,8 @@ public class NLevelsGenerator {
 		setParallelismDegree(paraDegree);
 		setNbDAGs(nbDAGs);
 		setDebug(debug);
+		rng = new RandomNumberGenerator();
+		gennedDAGs = new HashSet<>();
 	}
 	
 	/**
