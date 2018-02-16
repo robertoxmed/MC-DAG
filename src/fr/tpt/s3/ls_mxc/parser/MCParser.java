@@ -217,7 +217,7 @@ public class MCParser {
 				DAG dag	= new DAG();
 				dag.setId(count);
 				dag.setDeadline(Integer.parseInt(eDag.getAttribute("deadline")));
-				
+				dag.setLevels(getNbLevels());
 				// Instantiate the DAG
 				int nb_actors = 0;
 				

@@ -19,8 +19,11 @@ package fr.tpt.s3.ls_mxc.bench.preempts;
 import java.util.HashSet;
 import java.util.Set;
 
+import fr.tpt.s3.ls_mxc.alloc.NLevels;
+import fr.tpt.s3.ls_mxc.model.Actor;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.parser.MCParser;
+import fr.tpt.s3.ls_mxc.util.MathMCDAG;
 
 /**
  * Benchmarking thread that allocates a system with a preemptive and
@@ -44,10 +47,45 @@ public class BenchThread implements Runnable{
 		mcp = new MCParser(inputFile, null, dags, false);		
 	}
 	
+	/**
+	 * Internal function to count the number of cores needed to schedule the system
+	 * @return
+	 */
+	private int minCores () {
+		int ret = 0;
+		int hPeriod = 0;
+		int[] input = new int[getDags().size()];
+		int i = 0;
+		double[][] us = new double[mcp.getNbLevels()][getDags().size()];
+		
+		for (DAG d : getDags()) {
+			input[i] = d.getDeadline();
+			i++;
+		}
+		
+		hPeriod = MathMCDAG.lcm(input);
+		
+		for (int l = 0; l < mcp.getNbLevels(); l++) {
+			
+			for (DAG d : getDags()) {
+				us[l][d.getId()] = 0;
+				int nbActivations = (int) (hPeriod / d.getDeadline());
+			
+				for (Actor a : d.getNodes()) {
+					us[l][d.getId()] += a.getCI(l);
+				}
+				us[l][d.getId()] = us[l][d.getId()] / d.getDeadline();  
+			}
+		}
+		
+		return ret;
+	}
+	
+	
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
-		
+		mcp.readXMLNlevels();
+		NLevels nlvl = new NLevels(dags, minCores(), mcp.getNbLevels(), debug);
 	}
 
 	/*

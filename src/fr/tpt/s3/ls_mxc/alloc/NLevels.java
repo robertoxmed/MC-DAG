@@ -18,6 +18,7 @@ package fr.tpt.s3.ls_mxc.alloc;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,8 +30,14 @@ import fr.tpt.s3.ls_mxc.model.ActorSched;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
 import fr.tpt.s3.ls_mxc.util.AlignScheduler;
+import fr.tpt.s3.ls_mxc.util.Counters;
 import fr.tpt.s3.ls_mxc.util.MathMCDAG;
 
+/**
+ * Allocator of DAGs for N levels of criticality
+ * @author roberto
+ *
+ */
 public class NLevels {
 	
 	// Set of DAGs to be scheduled
@@ -53,6 +60,10 @@ public class NLevels {
 	
 	// Comparators to order Actors
 	private Comparator<ActorSched> loComp;
+	
+	// Counter of ctx switches & preemptions per task
+	private Hashtable<ActorSched, Integer> ctxSwitch;
+	private Hashtable<ActorSched, Integer> preempts;
 		
 	/**
 	 * Constructor
@@ -84,6 +95,9 @@ public class NLevels {
 					return o1.getId() - o2.getId();
 			}
 		});
+	
+		setCtxSwitch(new Hashtable<ActorSched, Integer>());
+		preempts = new Hashtable<ActorSched, Integer>();
 	}
 	
 	/**
@@ -704,6 +718,18 @@ public class NLevels {
 			AlignScheduler.align(sched, i, gethPeriod(), getNbCores());
 		
 		printTables();
+		
+		// Count preemptions
+		
+		for (DAG d : getMcDags()) {
+			for (Actor a : d.getNodes()) {
+				ctxSwitch.put((ActorSched) a, 0);
+				preempts.put((ActorSched)a, 0);
+			}
+		}
+		
+		Counters.countContextSwitch(sched, ctxSwitch, getLevels(), hPeriod, nbCores);
+		Counters.countPreemptions(sched, preempts, getLevels(), hPeriod, nbCores);
 	}
 	
 	
@@ -785,7 +811,7 @@ public class NLevels {
 		
 		for (ActorSched a : promoted)
 			list.add(0, a);
-	
+
 	}
 	
 	/**
@@ -996,11 +1022,6 @@ public class NLevels {
 	}
 	
 	/*
-	 * Benchmarking functions
-	 */
-	
-	
-	/*
 	 * DEBUG functions
 	 */
 	
@@ -1125,6 +1146,22 @@ public class NLevels {
 
 	public void setLoComp(Comparator<ActorSched> loComp) {
 		this.loComp = loComp;
+	}
+
+	public Hashtable<ActorSched, Integer> getPreempts() {
+		return preempts;
+	}
+
+	public void setPreempts(Hashtable<ActorSched, Integer> preempts) {
+		this.preempts = preempts;
+	}
+
+	public Hashtable<ActorSched, Integer> getCtxSwitch() {
+		return ctxSwitch;
+	}
+
+	public void setCtxSwitch(Hashtable<ActorSched, Integer> ctxSwitch) {
+		this.ctxSwitch = ctxSwitch;
 	}
 
 }

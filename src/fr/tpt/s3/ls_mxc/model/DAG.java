@@ -37,6 +37,7 @@ public class DAG {
 	private Set<Actor> sourcesHI;
 	private int critPath;
 	private int deadline;
+	private int levels;
 	
 	public DAG() {
 		nodes = new HashSet<Actor>();
@@ -158,7 +159,34 @@ public class DAG {
 	 * @return
 	 */
 	public double getU () {
-		double ret = (this.getUHI() > this.getULO()) ? this.getUHI() : this.getULO();
+		double ret = 0.0;
+		
+		for (int i = 0; i < getLevels(); i++) {
+			double uL = 0.0;
+			for (Actor a : getNodes()) {
+				uL += a.getCI(i);
+			}
+			uL = uL / getDeadline();
+			
+			if (uL > ret)
+				ret = uL;
+		}
+		
+		return ret;
+	}
+	
+	/**
+	 * Returns the utilization value for the DAG at level i
+	 * @param i
+	 * @return
+	 */
+	public double getUi (int i) {
+		double ret = 0;
+		
+		for (Actor a : getNodes())
+			ret += a.getCI(i);
+		
+		ret = ret / getDeadline();
 		
 		return ret;
 	}
@@ -287,5 +315,13 @@ public class DAG {
 
 	public void setSourcesHI(Set<Actor> sourcesHI) {
 		this.sourcesHI = sourcesHI;
+	}
+
+	public int getLevels() {
+		return levels;
+	}
+
+	public void setLevels(int levels) {
+		this.levels = levels;
 	}
 }
