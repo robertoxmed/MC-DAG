@@ -21,6 +21,12 @@ import java.util.Set;
 
 import fr.tpt.s3.ls_mxc.model.ActorSched;
 
+/**
+ * Utility class to count the number of context switches and preemptions
+ * on a scheduling table
+ * @author roberto
+ *
+ */
 public class Counters {
 
 	/**

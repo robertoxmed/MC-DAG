@@ -16,6 +16,80 @@
  *******************************************************************************/
 package fr.tpt.s3.ls_mxc.bench.preempts;
 
-public class BenchThread {
+import java.util.HashSet;
+import java.util.Set;
 
+import fr.tpt.s3.ls_mxc.model.DAG;
+import fr.tpt.s3.ls_mxc.parser.MCParser;
+
+/**
+ * Benchmarking thread that allocates a system with a preemptive and
+ * non preemptive algorithm
+ * @author roberto
+ *
+ */
+public class BenchThread implements Runnable{
+
+	private Set<DAG> dags;
+	private MCParser mcp;
+	private String inputFile;
+	private String outputFile;
+	private boolean debug;
+	
+	public BenchThread (String input, String output, boolean debug) {
+		setInputFile(input);
+		setOutputFile(output);
+		setDebug(debug);
+		dags = new HashSet<DAG>();
+		mcp = new MCParser(inputFile, null, dags, false);		
+	}
+	
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/*
+	 * Getters and setters
+	 */
+	public Set<DAG> getDags() {
+		return dags;
+	}
+
+	public void setDags(Set<DAG> dags) {
+		this.dags = dags;
+	}
+
+	public MCParser getMcp() {
+		return mcp;
+	}
+
+	public void setMcp(MCParser mcp) {
+		this.mcp = mcp;
+	}
+
+	public String getInputFile() {
+		return inputFile;
+	}
+
+	public void setInputFile(String inputFile) {
+		this.inputFile = inputFile;
+	}
+
+	public String getOutputFile() {
+		return outputFile;
+	}
+
+	public void setOutputFile(String outputFile) {
+		this.outputFile = outputFile;
+	}
+
+	public boolean isDebug() {
+		return debug;
+	}
+
+	public void setDebug(boolean debug) {
+		this.debug = debug;
+	}
 }

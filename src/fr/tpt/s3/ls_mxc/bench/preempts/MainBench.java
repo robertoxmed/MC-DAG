@@ -17,6 +17,10 @@
 package fr.tpt.s3.ls_mxc.bench.preempts;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -80,7 +84,25 @@ public class MainBench {
 			nbJobs = Integer.parseInt(cmd.getOptionValue("jobs"));
 		
 		// Write the header of the result file
+		PrintWriter writer = new PrintWriter(outputFilePath, "UTF-8");
+		writer.println("Thread; File; Activations; Preemptive; Non-preemptive");
+		writer.close();
 		
+		// Create the pool of threads and launch the experiments
+		int iFiles = 0;
+		ExecutorService executor = Executors.newFixedThreadPool(nbJobs);
+		
+		while (iFiles != nbFiles) {
+			BenchThread bt = new BenchThread(inputFilePath[iFiles], outputFilePath, boolDebug);
+			
+			executor.execute(bt);
+			iFiles++;
+		}
+		
+		executor.shutdown();
+		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		
+		System.out.println("[BENCH Main] DONE!");
 	}
 
 }
