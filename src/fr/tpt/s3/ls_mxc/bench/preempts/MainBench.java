@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Roberto Medina
+ * Copyright (c) 2018 Roberto Medina
  * Written by Roberto Medina (rmedina@telecom-paristech.fr)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,13 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package fr.tpt.s3.ls_mxc.bench.dac;
+package fr.tpt.s3.ls_mxc.bench.preempts;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -31,13 +27,14 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 /**
- * These benchmarks compares us to the state of the art techniques
- * of multiDAG scheduling for MxC systems
+ * These benchmarks test the acceptance rate of the non-preemptive vs preemptive
+ * version of the allocation algorithm
  * @author roberto
  *
  */
 public class MainBench {
-
+	
+	
 	public static void main (String[] args) throws IOException, InterruptedException {
 		
 		// Command line options
@@ -48,15 +45,15 @@ public class MainBench {
 		input.setArgs(Option.UNLIMITED_VALUES);
 		options.addOption(input);
 		
-		Option output = new Option("o", "output", true, "File where results have to be written.");
+		Option output = new Option("o", "output", true, "File to write results");
 		output.setRequired(true);
 		options.addOption(output);
 		
-		Option jobs = new Option("j", "jobs", true, "Number of threads to be launched.");
+		Option jobs = new Option("j", "jobs", true, "Number of threads");
 		jobs.setRequired(false);
 		options.addOption(jobs);
 		
-		Option debug = new Option("d", "debug", false, "Debug logs.");
+		Option debug = new Option("d", "debug", false, "Debug");
 		debug.setRequired(false);
 		options.addOption(debug);
 		
@@ -66,9 +63,9 @@ public class MainBench {
 		
 		try {
 			cmd = parser.parse(options, args);
-		} catch (ParseException e ) {
+		} catch (ParseException e) {
 			System.err.println(e.getMessage());
-			formatter.printHelp("Benchmarks MultiDAG", options);
+			formatter.printHelp("Benchmarks Preemption", options);
 			System.exit(1);
 			return;
 		}
@@ -78,51 +75,12 @@ public class MainBench {
 		boolean boolDebug = cmd.hasOption("debug");
 		int nbJobs = 1;
 		int nbFiles = inputFilePath.length;
-				
+		
 		if (cmd.hasOption("jobs"))
 			nbJobs = Integer.parseInt(cmd.getOptionValue("jobs"));
 		
-		/*
-		 * Write the fields at the beginning of the output file
-		 */
-		PrintWriter writer = new PrintWriter(outputFilePath, "UTF-8");
-		writer.println("Thread; File; Federated; FSched (?) ; Laxity; LSched (?); Utilization");
-		writer.close();
+		// Write the header of the result file
 		
-		/*
-		 *  While files need to be allocated
-		 *  run the tests in the pool of threads
-		 */
-		
-		int i_files = 0;
-		ExecutorService executor = Executors.newFixedThreadPool(nbJobs);
-		
-		while (i_files != nbFiles) {
-			BenchThread bt = new BenchThread(inputFilePath[i_files], outputFilePath, boolDebug);
-			
-			executor.execute(bt);
-			i_files++;
-		}
-		executor.shutdown();
-		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-		
-		int i_files2 = 0;
-		String outFile2 = outputFilePath.substring(0, outputFilePath.lastIndexOf('.')).concat("-schedulability.csv");
-		writer = new PrintWriter(outFile2, "UTF-8");
-		writer.println("Thread; File; FSched (?) ; LSched (?); Utilization");
-		writer.close();
-		
-		ExecutorService executor2 = Executors.newFixedThreadPool(nbJobs);
-		while (i_files2 != nbFiles) {
-			BenchThread2 bt2 = new BenchThread2(inputFilePath[i_files2], outFile2, boolDebug);
-			
-			executor2.execute(bt2);
-			i_files2++;
-		}
-		
-		executor2.shutdown();
-		executor2.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-
-		System.out.println("[BENCH Main] DONE");
 	}
+
 }

@@ -748,7 +748,6 @@ public class MCParser {
 		return inputFile;
 	}
 
-
 	public void setInputFile(String inputFile) {
 		this.inputFile = inputFile;
 	}
@@ -756,7 +755,6 @@ public class MCParser {
 	public Automata getAuto() {
 		return auto;
 	}
-
 
 	public void setAuto(Automata auto) {
 		this.auto = auto;

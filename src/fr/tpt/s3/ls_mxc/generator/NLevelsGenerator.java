@@ -27,7 +27,7 @@ public class NLevelsGenerator {
 	private RandomNumberGenerator rng;
 	private boolean debug;
 	
-	private int possibleDeadlines[] = {10, 15, 20, 30, 14, 12}; 
+	private int possibleDeadlines[] = {40, 20, 30, 50}; 
 	
 	public NLevelsGenerator (double minU, double maxU, double eProb, int levels, int paraDegree, int nbDAGs,
 			boolean debug) {
@@ -80,7 +80,7 @@ public class NLevelsGenerator {
 			else 
 				rU[i] = rng.randomUnifDouble(userMinU, userMaxU);
 			budgets[i] = (int) Math.ceil(rDead * rU[i]);
-			cBounds[i] = (int) Math.ceil(rDead / 2); 
+			cBounds[i] = (int) Math.ceil(rDead / 4); 
 		}
 		
 		if (isDebug()) {
@@ -103,7 +103,7 @@ public class NLevelsGenerator {
 					ActorSched n = new ActorSched(id, Integer.toString(id), nbLevels);
 					
 					// Roll the Ci
-					n.getcIs()[i] = rng.randomUnifInt(2, cBounds[i]);
+					n.getcIs()[i] = rng.randomUnifInt(1, cBounds[i]);
 					if (budgets[i] - n.getCI(i) > 0) {
 						budgets[i] -= n.getCI(i);
 					} else {
