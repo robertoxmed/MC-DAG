@@ -85,7 +85,7 @@ public class MainBench {
 		
 		// Write the header of the result file
 		PrintWriter writer = new PrintWriter(outputFilePath, "UTF-8");
-		writer.println("Thread; File; Schedulable; Activations; Preemptive; Non-preemptive");
+		writer.println("Thread; File; Schedulable Preempt; Activations; Context Switch; Preemptions; Schedulable Non-Preemptive; Activations; Context Switch; Non-preemptive");
 		writer.close();
 		
 		// Create the pool of threads and launch the experiments

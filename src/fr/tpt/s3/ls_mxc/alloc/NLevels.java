@@ -62,6 +62,7 @@ public class NLevels {
 	private Comparator<ActorSched> loComp;
 	
 	// Counter of ctx switches & preemptions per task
+	private int activations;
 	private Hashtable<ActorSched, Integer> ctxSwitch;
 	private Hashtable<ActorSched, Integer> preempts;
 		
@@ -97,7 +98,8 @@ public class NLevels {
 		});
 	
 		setCtxSwitch(new Hashtable<ActorSched, Integer>());
-		preempts = new Hashtable<ActorSched, Integer>();
+		setPreempts(new Hashtable<ActorSched, Integer>());
+		setActivations(0);
 	}
 	
 	/**
@@ -454,8 +456,10 @@ public class NLevels {
 						add = false;
 				}
 				
-				if (add && !ready.contains(pred) && remainingTime[level][pred.getGraphID()][pred.getId()] != 0)
+				if (add && !ready.contains(pred) && remainingTime[level][pred.getGraphID()][pred.getId()] != 0) {
 					ready.add(pred);
+					activations++;
+				}
 			}
 		}
 	}
@@ -481,8 +485,10 @@ public class NLevels {
 						add = false;
 				}
 				
-				if (add && !ready.contains(succ) && remainingTime[0][succ.getGraphID()][succ.getId()] != 0)
+				if (add && !ready.contains(succ) && remainingTime[0][succ.getGraphID()][succ.getId()] != 0) {
 					ready.add(succ);
+					activations++;
+				}
 			}
 		}
 	}
@@ -512,10 +518,13 @@ public class NLevels {
 					// Re-init execution time
 					remainingTime[level][((ActorSched)a).getGraphID()][a.getId()] = a.getCI(level);
 					
-					if (level >= 1 && a.isSinkinL(level))
+					if (level >= 1 && a.isSinkinL(level)) {
 						ready.add((ActorSched)a);
-					else if (level == 0 && a.isSourceinL(level))
+						activations++;
+					} else if (level == 0 && a.isSourceinL(level)) {
 						ready.add((ActorSched)a);
+						activations++;
+					}
 				}
 			}
 		}
@@ -626,8 +635,10 @@ public class NLevels {
 		// Add all source nodes
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
-				if (a.isSourceinL(0))
+				if (a.isSourceinL(0)) {
 					ready.add((ActorSched) a);
+					activations++;
+				}
 			}
 		}
 		
@@ -1143,6 +1154,14 @@ public class NLevels {
 
 	public void setCtxSwitch(Hashtable<ActorSched, Integer> ctxSwitch) {
 		this.ctxSwitch = ctxSwitch;
+	}
+
+	public int getActivations() {
+		return activations;
+	}
+
+	public void setActivations(int activations) {
+		this.activations = activations;
 	}
 
 }

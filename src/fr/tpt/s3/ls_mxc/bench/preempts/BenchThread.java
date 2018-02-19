@@ -16,13 +16,16 @@
  *******************************************************************************/
 package fr.tpt.s3.ls_mxc.bench.preempts;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.HashSet;
 import java.util.Set;
 
 import fr.tpt.s3.ls_mxc.alloc.NLevels;
 import fr.tpt.s3.ls_mxc.alloc.SchedulingException;
-import fr.tpt.s3.ls_mxc.model.Actor;
+import fr.tpt.s3.ls_mxc.model.ActorSched;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.parser.MCParser;
 import fr.tpt.s3.ls_mxc.util.MathMCDAG;
@@ -96,7 +99,26 @@ public class BenchThread implements Runnable{
 	 * @throws IOException
 	 */
 	private synchronized void writeResults(NLevels nlvl, NLevels nlvlno) throws IOException{
+		Writer output;
+		int ctxtSwitchP = 0;
+		int ctxtSwitchNP = 0;
+		int preemptsP = 0;
+		int preemptsNP = 0;
+		Set<ActorSched> actorKeys = nlvl.getCtxSwitch().keySet();
+		output = new BufferedWriter(new FileWriter(getOutputFile(), true));
 		
+		for (ActorSched a : actorKeys) {
+			ctxtSwitchNP += nlvl.getCtxSwitch().get(a);
+			ctxtSwitchNP += nlvlno.getCtxSwitch().get(a);
+			preemptsP += nlvl.getPreempts().get(a);
+			preemptsNP += nlvl.getPreempts().get(a);
+		}
+		
+		output.write(Thread.currentThread().getName()+"; "+isSchedPreempt()+"; "+nlvl.getActivations()+"; "+
+				     ctxtSwitchP+"; "+preemptsP+"; "+isSchedNoPreempt()+"; "+nlvlno.getActivations()+"; "+
+					 ctxtSwitchNP+"; "+preemptsNP);
+		
+		output.close();
 	}
 	
 	
