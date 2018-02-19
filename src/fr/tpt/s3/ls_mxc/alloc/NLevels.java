@@ -689,7 +689,7 @@ public class NLevels {
 	/**
 	 * Builds all the scheduling tables for the system
 	 */
-	public void buildAllTables () {
+	public void buildAllTables () throws SchedulingException {
 		initRemainTime();
 		initTables();
 		
@@ -700,27 +700,17 @@ public class NLevels {
 		}
 		
 		// Build tables: more critical tables first
-		for (int i = getLevels() - 1; i >= 1; i--) {
-			try {
-				buildHITable(i);
-			} catch (SchedulingException se) {
-				System.err.println("[ERROR "+Thread.currentThread().getName()+"] Non schedulable example in mode "+i+".");
-			}
-		}
-		
-		try {
-			buildLOTable();
-		} catch (SchedulingException e) {
-			System.err.println("[ERROR "+Thread.currentThread().getName()+"] Non schedulable example in LO mode.");
-		}
+		for (int i = getLevels() - 1; i >= 1; i--)			
+			buildHITable(i);
+
+		buildLOTable();		
 		
 		for (int i = 0; i < getLevels(); i++)
 			AlignScheduler.align(sched, i, gethPeriod(), getNbCores());
 		
-		printTables();
+		if (isDebug()) printTables();
 		
 		// Count preemptions
-		
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
 				ctxSwitch.put((ActorSched) a, 0);
@@ -990,7 +980,7 @@ public class NLevels {
 	/**
 	 * Builds all scheduling tables with no preemption
 	 */
-	public void buildAllnonpreempt() {
+	public void buildAllnonpreempt() throws SchedulingException {
 		initRemainTime();
 		initTables();
 		
@@ -1001,24 +991,15 @@ public class NLevels {
 		}
 		
 		// Build tables: more critical tables first
-		for (int i = getLevels() - 1; i >= 1; i--) {
-			try {
-				buildHInopreempt(i);
-			} catch (SchedulingException se) {
-				System.err.println("[ERROR "+Thread.currentThread().getName()+"] Non schedulable example in mode "+i+".");
-			}
-		}
+		for (int i = getLevels() - 1; i >= 1; i--)
+			buildHInopreempt(i);
 		
-		try {
-			buildLOnopreempt();
-		} catch (SchedulingException e) {
-			System.err.println("[ERROR "+Thread.currentThread().getName()+"] Non schedulable example in LO mode.");
-		}
-		
+		buildLOnopreempt();
+				
 		for (int i = 0; i < getLevels(); i++)
 			AlignScheduler.align(sched, i, gethPeriod(), getNbCores());
 		
-		printTables();
+		if(isDebug()) printTables();
 	}
 	
 	/*

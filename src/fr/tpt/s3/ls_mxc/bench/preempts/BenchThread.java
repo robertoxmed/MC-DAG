@@ -16,10 +16,12 @@
  *******************************************************************************/
 package fr.tpt.s3.ls_mxc.bench.preempts;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
 import fr.tpt.s3.ls_mxc.alloc.NLevels;
+import fr.tpt.s3.ls_mxc.alloc.SchedulingException;
 import fr.tpt.s3.ls_mxc.model.Actor;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.parser.MCParser;
@@ -37,6 +39,8 @@ public class BenchThread implements Runnable{
 	private MCParser mcp;
 	private String inputFile;
 	private String outputFile;
+	private boolean schedPreempt;
+	private boolean schedNoPreempt;
 	private boolean debug;
 	
 	public BenchThread (String input, String output, boolean debug) {
@@ -56,7 +60,7 @@ public class BenchThread implements Runnable{
 		int hPeriod = 0;
 		int[] input = new int[getDags().size()];
 		int i = 0;
-		double[][] us = new double[mcp.getNbLevels()][getDags().size()];
+		double[] us = new double[mcp.getNbLevels()];
 		
 		for (DAG d : getDags()) {
 			input[i] = d.getDeadline();
@@ -65,27 +69,71 @@ public class BenchThread implements Runnable{
 		
 		hPeriod = MathMCDAG.lcm(input);
 		
+		// Calculate utilization of the system per level
 		for (int l = 0; l < mcp.getNbLevels(); l++) {
 			
 			for (DAG d : getDags()) {
-				us[l][d.getId()] = 0;
 				int nbActivations = (int) (hPeriod / d.getDeadline());
-			
-				for (Actor a : d.getNodes()) {
-					us[l][d.getId()] += a.getCI(l);
-				}
-				us[l][d.getId()] = us[l][d.getId()] / d.getDeadline();  
+
+				us[l] += d.getUi(l) * nbActivations;  
 			}
+			us[l] = us[l] / hPeriod;
+		}
+		
+		// Get the max utilization
+		for (int l = 0; l < mcp.getNbLevels(); l++) {
+			if (ret < us[l])
+				ret = (int) (Math.ceil(us[l]));
 		}
 		
 		return ret;
 	}
 	
+	/**
+	 * Function that writes the results of number of preemptions on a file
+	 * @param nlvl
+	 * @param nlvlno
+	 * @throws IOException
+	 */
+	private synchronized void writeResults(NLevels nlvl, NLevels nlvlno) throws IOException{
+		
+	}
+	
 	
 	@Override
 	public void run() {
+		// Read from the file to get the system
 		mcp.readXMLNlevels();
-		NLevels nlvl = new NLevels(dags, minCores(), mcp.getNbLevels(), debug);
+		
+		int minCores = minCores();
+		NLevels nlvlPreempt = new NLevels(dags, minCores, mcp.getNbLevels(), debug);
+		NLevels nlvlNoPreempt = new NLevels(dags, minCores, mcp.getNbLevels(), debug);
+		
+		if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] Minimum number of cores = "+minCores);
+		
+		// Build the preemptive version of the algorithm
+		try {
+			nlvlPreempt.buildAllTables();
+		} catch (SchedulingException se) {
+			se.printStackTrace();
+			setSchedPreempt(false);
+		}
+		
+		// Build the non preemptive version of the algorithm
+		try {
+			nlvlNoPreempt.buildAllnonpreempt();
+		} catch (SchedulingException se) {
+			se.printStackTrace();
+			setSchedNoPreempt(false);
+		}
+		
+		// Try to write the results on a file
+		try {
+			writeResults(nlvlPreempt, nlvlNoPreempt);
+		} catch (IOException ie) {
+			ie.printStackTrace();
+			System.exit(20);
+		}
 	}
 
 	/*
@@ -129,5 +177,21 @@ public class BenchThread implements Runnable{
 
 	public void setDebug(boolean debug) {
 		this.debug = debug;
+	}
+
+	public boolean isSchedPreempt() {
+		return schedPreempt;
+	}
+
+	public void setSchedPreempt(boolean schedPreempt) {
+		this.schedPreempt = schedPreempt;
+	}
+
+	public boolean isSchedNoPreempt() {
+		return schedNoPreempt;
+	}
+
+	public void setSchedNoPreempt(boolean schedNoPreempt) {
+		this.schedNoPreempt = schedNoPreempt;
 	}
 }
