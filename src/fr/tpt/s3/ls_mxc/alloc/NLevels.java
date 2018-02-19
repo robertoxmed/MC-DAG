@@ -731,16 +731,6 @@ public class NLevels {
 		
 		Counters.countContextSwitch(sched, ctxSwitch, getLevels(), hPeriod, nbCores);
 		Counters.countPreemptions(sched, preempts, getLevels(), hPeriod, nbCores);
-		System.out.println("[DEBUG "+Thread.currentThread().getName()+"] Preempts donezo");
-
-		
-		if (isDebug()) {
-			Set<ActorSched> keys = ctxSwitch.keySet();
-			
-			for (ActorSched a : keys) {
-				System.out.println("[DEBUG "+Thread.currentThread().getName()+"] Task "+a.getName()+" context switches "+ctxSwitch.get(a)+" preemptions "+preempts.get(a));
-			}
-		}
 	}
 	
 	
