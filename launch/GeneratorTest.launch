@@ -7,6 +7,6 @@
 <listEntry value="1"/>
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="fr.tpt.s3.ls_mxc.generator.MainGenerator"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-d -g -e 40 -mu 2  -lu 1 -nd 2 -nf 10 -p 2 -l 3 -o btests/test1.xml"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-d -g -e 20 -mu 2  -lu 1 -nd 2 -nf 100 -p 1 -l 3 -o btests/test1.xml -j 5"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="LS_mxc"/>
 </launchConfiguration>
