@@ -82,10 +82,13 @@ public class Counters {
 		@SuppressWarnings("unchecked")
 		Hashtable<ActorSched, Integer>[] remaining = new Hashtable[levels];
 		
+		for (int i = 0; i < levels; i++)
+			remaining[i] = new Hashtable<ActorSched, Integer>();
+		
 		// Init remaining times
 		for (ActorSched a : keys) {
-			for (int i = 0; i < levels; i++) 
-			remaining[i].put(a, a.getCI(levels));
+			for (int i = 0; i < levels; i++)
+				remaining[i].put(a, a.getCI(i));
 		}
 		
 		// Iterate through actors to check the number of preemptions
@@ -94,7 +97,7 @@ public class Counters {
 			// Iterate through all the levels
 			for (int l = 0; l < levels; l++) {
 				// Check the number of activations a task has
-				int nbActivations = a.getGraphDead() / hPeriod;
+				int nbActivations = (int)(a.getGraphDead() / hPeriod);
 				
 				for (int s = 1; s < hPeriod; s++) {
 					int val = remaining[l].get(a);
@@ -105,7 +108,7 @@ public class Counters {
 							boolean wasRunning = false;
 							
 							// Check if the task was running in the previous slot
-							for (int c2 = 0; c2 < nbCores; c++) {
+							for (int c2 = 0; c2 < nbCores; c2++) {
 								if (sched[l][s - 1][c2].contentEquals(a.getName())) {
 									wasRunning = true;
 									break;
@@ -116,10 +119,12 @@ public class Counters {
 								preempts++;
 							
 							val--;							
-							if (val == 0 && nbActivations != 0)
+							if (val == 0 && nbActivations != 0) {
 								remaining[l].put(a, a.getCI(l));
-							else
+								nbActivations--;
+							} else {
 								remaining[l].put(a, val);
+							}
 						}
 					}
 				}

@@ -121,7 +121,7 @@ public class AllocationThread implements Runnable{
 			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] N levels: "+dags.size()+" DAGs are going to be scheduled in "+mcp.getNbCores()+" cores.");
 			nlvl.printDAGs();
 			try {
-				nlvl.buildAllnonpreempt();
+				nlvl.buildAllTables();
 			} catch (SchedulingException e) {
 				e.printStackTrace();
 			}
