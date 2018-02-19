@@ -49,6 +49,14 @@ public class Counters {
 				for (int s = 0; s < hPeriod; s++) {
 					if (s != 0) { // Check if task was running in the previous slot
 						boolean wasRunning = false;
+						boolean isRunning = false;
+						
+						for (int c = 0; c < nbCores; c++) {
+							if (sched[l][s][c].contains(a.getName())) {
+								isRunning = true;
+								break;
+							}
+						}
 						
 						for (int c = 0; c < nbCores; c++) {
 							if (sched[l][s - 1][c].contains(a.getName())) {
@@ -57,13 +65,12 @@ public class Counters {
 							}
 						}
 						
-						if (!wasRunning)
-							refs.put(a, nbContSwitch + 1);	
-					} else {
-						refs.put(a, nbContSwitch + 1);
-					}
+						if (!wasRunning && isRunning)
+							nbContSwitch++;	
+					}					
 				}
 			}
+			refs.put(a, nbContSwitch);
 		}
 		
 	}
