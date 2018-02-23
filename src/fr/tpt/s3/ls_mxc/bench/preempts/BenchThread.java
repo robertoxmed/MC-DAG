@@ -121,7 +121,6 @@ public class BenchThread implements Runnable{
 		output.close();
 	}
 	
-	
 	@Override
 	public void run() {
 		// Read from the file to get the system

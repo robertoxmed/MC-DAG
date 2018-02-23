@@ -43,6 +43,7 @@ public class GeneratorThread implements Runnable{
 
 		// Write the file
 		try {
+			mcp.setNbLevels(ug.getNbLevels());
 			mcp.writeGennedDAG();
 			if (isGraphBool()) {
 				System.out.println("Dot : "+mcp.getOutGenFile().concat(".dot"));

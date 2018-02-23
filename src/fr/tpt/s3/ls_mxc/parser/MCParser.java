@@ -635,15 +635,15 @@ public class MCParser {
 					Attr actorNb = doc.createAttribute("name");
 					actorNb.setNodeValue("D"+d.getId()+"N"+a.getId());
 					actor.setAttributeNode(actorNb);
-					// Add Ci HI and LO
-					Element chi = doc.createElement("chi");
-					chi.appendChild(doc.createTextNode(String.valueOf(a.getCI(1))));
-					Element clo = doc.createElement("clo");
-					clo.appendChild(doc.createTextNode(String.valueOf(a.getCI(0))));
+					// Add Cis
+					for (int i = 0; i < nbLevels; i++) {
+						Element ci = doc.createElement("wcet");
+						ci.setAttribute("number", Integer.toString(i));
+						ci.appendChild(doc.createTextNode(String.valueOf(a.getCI(i))));
+						actor.appendChild(ci);
+					}
 					Element fprob = doc.createElement("fprob");
 					fprob.appendChild(doc.createTextNode("0.0"));
-					actor.appendChild(chi);
-					actor.appendChild(clo);
 					actor.appendChild(fprob);
 					mcdag.appendChild(actor);
 				}
@@ -678,6 +678,11 @@ public class MCParser {
 			nbCores.setValue(String.valueOf(1));
 			cores.setAttributeNode(nbCores);
 			rootElement.appendChild(cores);
+			
+			// Number of levels of the system
+			Element levels = doc.createElement("levels");
+			levels.setAttribute("number", String.valueOf(nbLevels));
+			rootElement.appendChild(levels);
 			
 			// Write the content
 			TransformerFactory tFactory = TransformerFactory.newInstance();
