@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Simplified Flight Control System -->
+<mcsystem>
+	<mcdag name="FCS" deadline="50">
+		<actor name="GNA_0">
+			<clo>5</clo>
+			<chi>5</chi>
+		</actor>
+		<actor name="PF_0">
+			<clo>5</clo>
+			<chi>7</chi>
+		</actor>
+		<actor name="PL_0">
+			<clo>2</clo>
+			<chi>5</chi>
+		</actor>
+		<actor name="SF_0">
+			<clo>2</clo>
+			<chi>0</chi>
+		</actor>
+		<actor name="SL_0">
+			<clo>3</clo>
+			<chi>0</chi>
+		</actor>
+		<actor name="GF_0">
+			<clo>6</clo>
+			<chi>0</chi>
+		</actor>
+		<actor name="GL_0">
+			<clo>2</clo>
+			<chi>0</chi>
+		</actor>
+		<actor name="GNA_1">
+			<clo>5</clo>
+			<chi>5</chi>
+		</actor>
+		<actor name="PF_1">
+			<clo>5</clo>
+			<chi>7</chi>
+		</actor>
+		<actor name="PL_1">
+			<clo>2</clo>
+			<chi>5</chi>
+		</actor>
+		<actor name="SF_1">
+			<clo>2</clo>
+			<chi>0</chi>
+		</actor>
+		<actor name="SL_1">
+			<clo>3</clo>
+			<chi>0</chi>
+		</actor>
+		<ports>
+			<port name="p1" srcActor="GNA_0" dstActor="PF_0"/>
+			<port name="p2" srcActor="PF_0" dstActor="PL_0"/>
+			<port name="p3" srcActor="GNA_0" dstActor="GF_0"/>
+			<port name="p4" srcActor="SF_0" dstActor="SL_0"/>
+			<port name="p5" srcActor="PL_0" dstActor="SF_0"/>
+			<port name="p6" srcActor="GF_0" dstActor="GL_0"/>
+			<port name="p7" srcActor="GNA_1" dstActor="PF_1"/>
+			<port name="p8" srcActor="PF_1" dstActor="PL_1"/>
+			<port name="p9" srcActor="GL_1" dstActor="PL_1"/>
+			<port name="p10" srcActor="SF_1" dstActor="SL_1"/>
+			<port name="p11" srcActor="PL_1" dstActor="SL_1"/>
+		</ports>
+	</mcdag>
+	<cores number="2"/>
+</mcsystem>
+

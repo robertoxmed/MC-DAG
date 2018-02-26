@@ -114,13 +114,12 @@ public class BenchThread implements Runnable{
 			preemptsNP += nlvl.getPreempts().get(a);
 		}
 		
-		output.write(Thread.currentThread().getName()+"; "+isSchedPreempt()+"; "+nlvl.getActivations()+"; "+
+		output.write(Thread.currentThread().getName()+"; "+inputFile+"; "+isSchedPreempt()+"; "+nlvl.getActivations()+"; "+
 				     ctxtSwitchP+"; "+preemptsP+"; "+isSchedNoPreempt()+"; "+nlvlno.getActivations()+"; "+
-					 ctxtSwitchNP+"; "+preemptsNP);
+					 ctxtSwitchNP+"; "+preemptsNP+"\n");
 		
 		output.close();
 	}
-	
 	
 	@Override
 	public void run() {

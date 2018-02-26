@@ -72,7 +72,6 @@ public class Counters {
 			}
 			refs.put(a, nbContSwitch);
 		}
-		
 	}
 	
 	/**
