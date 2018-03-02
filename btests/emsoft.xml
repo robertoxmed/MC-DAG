@@ -4,36 +4,36 @@
 	<mcdag name="Montage" deadline="20">
 		<actor name="M_PP1">
 			<clo>3</clo>
-			<chi>3</chi>
+			<chi>4</chi>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="M_PP2">
 			<clo>3</clo>
-			<chi>3</chi>
+			<chi>4</chi>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="M_Diff1">
 			<clo>2</clo>
-			<chi>2</chi>
+			<chi>3</chi>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="M_Diff2">
 			<clo>2</clo>
-			<chi>2</chi>
+			<chi>3</chi>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="M_Conct">
 			<clo>3</clo>
-			<chi>3</chi>
+			<chi>4</chi>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="M_Back1">
-			<clo>1</clo>
+			<clo>2</clo>
 			<chi>0</chi>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="M_Back2">
-			<clo>1</clo>
+			<clo>2</clo>
 			<chi>0</chi>
 			<fprob>0.0</fprob>
 		</actor>
@@ -43,7 +43,7 @@
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="M_Shrk">
-			<clo>1</clo>
+			<clo>2</clo>
 			<chi>0</chi>
 			<fprob>0.0</fprob>
 		</actor>
@@ -65,17 +65,17 @@
 	<mcdag name="FCS" deadline="10">
 		<actor name="F_GPS">
 			<clo>2</clo>
-			<chi>4</chi>
+			<chi>3</chi>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="F_Recv">
-			<clo>1</clo>
-			<chi>2</chi>
+			<clo>2</clo>
+			<chi>3</chi>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="F_FCtrl">
-			<clo>2</clo>
-			<chi>3</chi>
+			<clo>3</clo>
+			<chi>4</chi>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="F_ACtrl">
@@ -85,11 +85,21 @@
 		</actor>
 		<actor name="F_Log">
 			<clo>2</clo>
-			<chi>0</chi>
+			<chi>3</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="F_FPlan">
+			<clo>2</clo>
+			<chi>3</chi>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="F_Trans">
-			<clo>1</clo>
+			<clo>2</clo>
+			<chi>0</chi>
+			<fprob>0.0</fprob>
+		</actor>
+		<actor name="F_Trans2">
+			<clo>2</clo>
 			<chi>0</chi>
 			<fprob>0.0</fprob>
 		</actor>
@@ -98,10 +108,13 @@
 			<port name="p2" srcActor="F_Recv" dstActor="F_FCtrl"/>
 			<port name="p3" srcActor="F_FCtrl" dstActor="F_ACtrl"/>
 			<port name="p4" srcActor="F_FCtrl" dstActor="F_Log"/>
-			<port name="p5" srcActor="F_ACtrl" dstActor="F_Log"/>
+			<port name="p5" srcActor="F_FCtrl" dstActor="F_FPlan"/>
 			<port name="p6" srcActor="F_Log" dstActor="F_Trans"/>
+			<port name="p7" srcActor="F_FPlan" dstActor="F_Trans"/>
+			<port name="p8" srcActor="F_Log" dstActor="F_Trans2"/>
+			<port name="p9" srcActor="F_FPlan" dstActor="F_Trans2"/>
 		</ports>
 	</mcdag>
-	<cores number="2"/>
+	<cores number="3"/>
 </mcsystem>
 
