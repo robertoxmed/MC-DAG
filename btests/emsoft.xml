@@ -3,12 +3,12 @@
 	<!-- Image processing workflow -->
 	<mcdag name="Montage" deadline="20">
 		<actor name="M_PP1">
-			<clo>3</clo>
+			<clo>4</clo>
 			<chi>4</chi>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="M_PP2">
-			<clo>3</clo>
+			<clo>4</clo>
 			<chi>4</chi>
 			<fprob>0.0</fprob>
 		</actor>
@@ -90,11 +90,11 @@
 		</actor>
 		<actor name="F_FPlan">
 			<clo>2</clo>
-			<chi>3</chi>
+			<chi>0</chi>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="F_Trans">
-			<clo>2</clo>
+			<clo>3</clo>
 			<chi>0</chi>
 			<fprob>0.0</fprob>
 		</actor>
