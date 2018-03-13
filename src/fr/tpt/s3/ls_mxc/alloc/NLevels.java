@@ -339,18 +339,6 @@ public class NLevels {
 	}
 	
 	/**
-	 * Resets temporary promotions of HI tasks
-	 */
-	private void resetPromotions() {
-		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
-				if (a.getCI(1) != 0)
-					((ActorSched) a).setPromoted(false);
-			}
-		}
-	}
-	
-	/**
 	 * Resets temporary delays of HI tasks
 	 */
 	private void resetDelays() {
@@ -399,7 +387,6 @@ public class NLevels {
 			} else { 
 				if (a.getCI(1) > 0) {
 					if ((a.getCI(level) - remainingTime[level][dId][a.getId()]) - scheduledUntilTinL(a, slot, level + 1) < 0) {
-						a.setPromoted(true);
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
 						a.setUrgencyinL(0, level);
 					}
@@ -597,7 +584,6 @@ public class NLevels {
 				}
 			}
 			
-			resetPromotions();
 			resetDelays();
 			
 			// It a task has been fully allocated check for new activations
@@ -681,8 +667,6 @@ public class NLevels {
 					remainingTime[0][a.getGraphID()][a.getId()] = val;
 				}
 			}
-			
-			resetPromotions();
 			
 			if (taskFinished)
 				checkActivationLO(scheduled, ready);
@@ -781,7 +765,6 @@ public class NLevels {
 			} else { 
 				if (a.getCI(1) > 0) {
 					if ((a.getCI(level) - remainingTime[level][dId][a.getId()]) - scheduledUntilTinL(a, slot, level + 1) < 0) {
-						a.setPromoted(true);
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxitynopreempt(): Promotion of task "+a.getName()+" at slot @t = "+slot);
 						a.setUrgencyinL(0, level);
 					}
@@ -889,7 +872,6 @@ public class NLevels {
 				}	
 			}
 			
-			resetPromotions();
 			resetDelays();
 			
 			// It a task has been fully allocated check for new activations
@@ -972,9 +954,7 @@ public class NLevels {
 					remainingTime[0][a.getGraphID()][a.getId()] = val;
 				}
 			}
-			
-			resetPromotions();
-			
+						
 			if (taskFinished)
 				checkActivationLO(scheduled, ready);
 			

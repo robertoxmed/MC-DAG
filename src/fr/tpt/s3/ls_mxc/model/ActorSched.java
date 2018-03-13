@@ -29,7 +29,6 @@ public class ActorSched extends Actor {
 	// Used for multiDAG scheduling
 	private int graphDead;
 	private int LFTLO;
-	private boolean promoted;
 	private int LFTHI;
 	private int urgencyLO;
 	private int urgencyHI;
@@ -62,7 +61,6 @@ public class ActorSched extends Actor {
 		urgencyLO = Integer.MAX_VALUE;
 		visited = false;
 		visitedHI = false;
-		promoted = false;
 	}
 	
 	/**
@@ -82,7 +80,6 @@ public class ActorSched extends Actor {
 			urgencies[i] = Integer.MAX_VALUE;
 			visitedL[i] = false;
 		}
-		promoted = false;
 		delayed = false;
 	}
 	
@@ -179,15 +176,6 @@ public class ActorSched extends Actor {
 	public void setGraphDead(int graphDead) {
 		this.graphDead = graphDead;
 	}
-
-	public boolean isPromoted() {
-		return promoted;
-	}
-
-	public void setPromoted(boolean promoted) {
-		this.promoted = promoted;
-	}
-
 
 	public int[] getLFTs() {
 		return LFTs;

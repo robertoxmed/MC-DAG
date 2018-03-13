@@ -260,8 +260,10 @@ public class MultiDAG{
 			
 				// 	Check all successors of the predecessor
 				for (Edge e2 : pred.getSndEdges()) {
-					if (e2.getDest().getCI(1) != 0 && !sched.contains(e2.getDest()))
+					if (e2.getDest().getCI(1) != 0 && !sched.contains(e2.getDest())) {
 						add = false;
+						break;
+					}
 				}
 			
 				if (add && !ready.contains(pred) && remainTHI.get(pred.getName()) != 0)
@@ -363,18 +365,7 @@ public class MultiDAG{
 		return ret; 
 	}
 	
-	/**
-	 * Resets temporary promotions of HI tasks
-	 */
-	private void resetPromotion () {
-		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
-				if (a.getCI(1) != 0) {
-					((ActorSched) a).setPromoted(false);
-				}
-			}
-		}
-	}
+
 	
 	/**
 	 * Updates the laxity of each actor that is currently activated
@@ -392,7 +383,6 @@ public class MultiDAG{
 				// Promote HI tasks that need to be scheduled at this slot
 				if (a.getCI(1) != 0) {
 					if ((a.getCI(0) - remainTLO.get(a.getName())) - scheduledUntilT(a, slot) < 0) {
-						a.setPromoted(true);
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
 						a.setUrgencyLO(0);
 					} else {
@@ -562,9 +552,7 @@ public class MultiDAG{
 					remainTLO.put(a.getName(), val);
 				}
 			}
-			
-			resetPromotion();
-			
+						
 			if (taskFinished)
 				checkActorActivationLO(completed, lLO);
 			
@@ -595,11 +583,14 @@ public class MultiDAG{
 		initRemainT();
 		if (!allocHI())
 			return false;
+		//AlignScheduler.align(getSched(), 1, hPeriod, nbCores);
 		if (isDebug()) printSHI();
 		
 		if (!allocLO())
 			return false;
+		//AlignScheduler.align(getSched(), 0, hPeriod, nbCores);
 		if (isDebug()) printSLO();
+		
 		
 		return ret;
 	}
