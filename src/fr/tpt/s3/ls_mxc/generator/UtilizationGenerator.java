@@ -134,7 +134,7 @@ public class UtilizationGenerator {
 						// Test if the rank of the source is lower and if the CP
 						// is not reached
 						if (rng.randomUnifInt(0, 100) <= edgeProb && n.getRank() > src.getRank()
-								&& src.getCpFromNodeHI() + n.getCI(1) <= rDead) {
+								&& src.getCpFromNode()[1] + n.getCI(1) <= rDead) {
 							Edge e = new Edge(src, n);
 							src.getSndEdges().add(e);
 							n.getRcvEdges().add(e);
@@ -221,7 +221,7 @@ public class UtilizationGenerator {
 						// Test if the rank of the source is lower and if the CP
 						// is not reached
 						if (rng.randomUnifInt(1,100) <= edgeProb && n.getRank() > src.getRank()
-								&& src.getCpFromNodeLO() + n.getCI(0) <= rDead &&
+								&& src.getCpFromNode()[0] + n.getCI(0) <= rDead &&
 								allowedCommunitcation(src, n)) {
 							Edge e = new Edge(src, n);
 							src.getSndEdges().add(e);
@@ -324,7 +324,7 @@ public class UtilizationGenerator {
 						if (mode == ActorSched.LO && !n.equals(n2)) {
 							if (n.getRank() < n2.getRank() &&
 									allowedCommunitcation(n, n2) &&
-									n.getCpFromNodeLO() + n2.getCI(0) <= userCp){
+									n.getCpFromNode()[0] + n2.getCI(0) <= userCp){
 								
 								Edge e = new Edge(n, n2);
 								added = true;
@@ -334,7 +334,7 @@ public class UtilizationGenerator {
 								n2.CPfromNode(mode);
 							} else if (n.getRank() > n2.getRank() &&
 									allowedCommunitcation(n2,n) &&
-									n2.getCpFromNodeLO() + n.getCI(0) <= userCp) {
+									n2.getCpFromNode()[0] + n.getCI(0) <= userCp) {
 								Edge e = new Edge(n2, n);
 								added = true;
 								if ((n.getCI(1) == 0 && n2.getCI(1) != 0) ||
@@ -345,13 +345,13 @@ public class UtilizationGenerator {
 						} else if (mode == ActorSched.HI && !n.equals(n2)){
 							if (n.getRank() < n2.getRank() &&
 									allowedCommunitcation(n, n2) &&
-									n.getCpFromNodeHI() + n2.getCI(1) <= userCp){
+									n.getCpFromNode()[1] + n2.getCI(1) <= userCp){
 								Edge e = new Edge(n, n2);
 								added = true;
 								n.CPfromNode(mode);
 							} else if (n.getRank() > n2.getRank() &&
 									allowedCommunitcation(n2,n) &&
-									n2.getCpFromNodeHI() + n.getCI(1) <= userCp) {
+									n2.getCpFromNode()[1] + n.getCI(1) <= userCp) {
 								Edge e = new Edge(n2, n);
 								added = true;
 								n.CPfromNode(mode);
@@ -364,39 +364,6 @@ public class UtilizationGenerator {
 		}
 	}
 	
-	public void addHtoL(DAG d) {
-		ActorSched hi = null;
-		ActorSched lo = null;
-		Iterator<Actor> it_n = d.getNodes().iterator();
-		
-		while (HtoL == false) {
-
-			while (it_n.hasNext()) { // Find a HI task
-				ActorSched n = (ActorSched) it_n.next();
-				if (n.getRank() < 2 && n.getCI(1) > 0) {
-					hi = n;
-				}
-			}
-
-			it_n = d.getNodes().iterator();
-			while (it_n.hasNext()) { // Find a HI task
-				ActorSched n = (ActorSched) it_n.next();
-				if (n.getRank() > 2 && n.getCI(1) == 0) {
-					lo = n;
-				}
-			}
-
-			if (hi.getRank() < lo.getRank() &&
-					allowedCommunitcation(hi, lo) &&
-					hi.getCpFromNodeLO() + lo.getCI(0) <= userCp) {
-				Edge e = new Edge(hi, lo);
-				hi.getSndEdges().add(e);
-				lo.getRcvEdges().add(e);
-				lo.CPfromNode(ActorSched.LO);
-				this.setHtoL(true);
-			}
-		}
-	}
 	
 	/**
 	 * Getters and setters

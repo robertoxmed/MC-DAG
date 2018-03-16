@@ -286,8 +286,10 @@ public class MultiDAG{
 			
 				// 	Check all successors of the predecessor
 				for (Edge e2 : succ.getRcvEdges()) {
-					if (!sched.contains(e2.getSrc()))
+					if (!sched.contains(e2.getSrc())) {
 						add = false;
+						break;
+					}
 				}
 			
 				if (add && !ready.contains(succ) && remainTLO.get(succ.getName()) != 0)

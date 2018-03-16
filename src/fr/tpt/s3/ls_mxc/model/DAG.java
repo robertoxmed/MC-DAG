@@ -82,10 +82,10 @@ public class DAG {
 		int cp = 0;
 		
 		for(int i = 0; i < this.getNodes().size(); i++) {
-			if (cp < this.getNodebyID(i).getCpFromNodeLO())
-				cp = this.getNodebyID(i).getCpFromNodeLO();
-			if (cp < this.getNodebyID(i).getCpFromNodeHI())
-				cp = this.getNodebyID(i).getCpFromNodeHI();
+			if (cp < this.getNodebyID(i).getCpFromNode()[0])
+				cp = this.getNodebyID(i).getCpFromNode()[0];
+			if (cp < this.getNodebyID(i).getCpFromNode()[1])
+				cp = this.getNodebyID(i).getCpFromNode()[1];
 		}
 		this.setCritPath(cp);
 		return cp;
