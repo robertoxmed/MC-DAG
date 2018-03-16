@@ -57,7 +57,6 @@ public class SingleDAG{
 	
 	private boolean debug;
 
-
 	/**
 	 * Constructor of LS
 	 * @param dln Deadline

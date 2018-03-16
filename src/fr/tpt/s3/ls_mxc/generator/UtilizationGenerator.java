@@ -364,7 +364,6 @@ public class UtilizationGenerator {
 		}
 	}
 	
-	
 	/**
 	 * Getters and setters
 	 */

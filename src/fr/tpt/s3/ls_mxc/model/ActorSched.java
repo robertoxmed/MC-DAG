@@ -30,8 +30,6 @@ public class ActorSched extends Actor {
 	private int graphDead;
 	private int LFTLO;
 	private int LFTHI;
-	private int urgencyLO;
-	private int urgencyHI;
 	private boolean visited;
 	private boolean visitedHI;
 	
@@ -57,8 +55,7 @@ public class ActorSched extends Actor {
 		this.getcIs()[1] = cHI;
 		LFTHI = Integer.MAX_VALUE;
 		LFTLO = Integer.MAX_VALUE;
-		urgencyHI = Integer.MAX_VALUE;
-		urgencyLO = Integer.MAX_VALUE;
+		urgencies = new int[2];
 		visited = false;
 		visitedHI = false;
 	}
@@ -119,22 +116,6 @@ public class ActorSched extends Actor {
 
 	public void setWeight_B(int weight_B) {
 		this.wB = weight_B;
-	}
-
-	public int getUrgencyLO() {
-		return urgencyLO;
-	}
-
-	public void setUrgencyLO(int urgencyLO) {
-		this.urgencyLO = urgencyLO;
-	}
-
-	public int getUrgencyHI() {
-		return urgencyHI;
-	}
-
-	public void setUrgencyHI(int urgencyHI) {
-		this.urgencyHI = urgencyHI;
 	}
 
 	public boolean isVisited() {
