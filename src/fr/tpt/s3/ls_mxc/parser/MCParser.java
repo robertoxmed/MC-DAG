@@ -675,7 +675,7 @@ public class MCParser {
 			// Number of cores of the architecture
 			Element cores = doc.createElement("cores");
 			Attr nbCores = doc.createAttribute("number");
-			nbCores.setValue(String.valueOf(1));
+			nbCores.setValue(String.valueOf(minCoresNlevels(ug.getGennedDAGs(), nbLevels)));
 			cores.setAttributeNode(nbCores);
 			rootElement.appendChild(cores);
 			
@@ -695,6 +695,36 @@ public class MCParser {
 		} catch (Exception ie) {
 			ie.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Private function to calculate the minimum number of cores needed to schedule a multi-DAG
+	 * multi-level system
+	 * @param setDAGs
+	 * @param lvl
+	 * @return
+	 */
+	private int minCoresNlevels (Set<DAG> setDAGs, int lvl) {
+		double[] sums = new double[lvl];
+		double max = 0;
+		int cores = 0;
+		
+		for (DAG d : setDAGs) {
+			for (int i = 0; i < lvl; i++) {
+				sums[i] += d.getUi(i);
+			}
+		}
+		
+		// Look for the max
+		for (int i = 0; i < lvl; i++) {
+			if (max < sums[i])
+				max = sums[i];
+		}
+		
+		// Ceil for number of cores
+		cores = (int) Math.ceil(max);
+		
+		return cores;
 	}
 	
 	/**
