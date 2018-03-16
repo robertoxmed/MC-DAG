@@ -40,7 +40,10 @@ public class Transition {
 		setfSet(new LinkedList<Formula>());
 	}
 	
-
+	/**
+	 * Getters and setters
+	 * @return
+	 */
 	public State getSrc() {
 		return src;
 	}

@@ -367,8 +367,6 @@ public class MultiDAG{
 		return ret; 
 	}
 	
-
-	
 	/**
 	 * Updates the laxity of each actor that is currently activated
 	 * @param list
