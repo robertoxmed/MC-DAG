@@ -94,17 +94,17 @@ public class MainBench {
 		 *  run the tests in the pool of threads
 		 */
 		
-		int i_files = 0;
-		ExecutorService executor = Executors.newFixedThreadPool(nbJobs);
-		
-		while (i_files != nbFiles) {
-			BenchThread bt = new BenchThread(inputFilePath[i_files], outputFilePath, boolDebug);
-			
-			executor.execute(bt);
-			i_files++;
-		}
-		executor.shutdown();
-		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+//		int i_files = 0;
+//		ExecutorService executor = Executors.newFixedThreadPool(nbJobs);
+//		
+//		while (i_files != nbFiles) {
+//			BenchThread bt = new BenchThread(inputFilePath[i_files], outputFilePath, boolDebug);
+//			
+//			executor.execute(bt);
+//			i_files++;
+//		}
+//		executor.shutdown();
+//		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 		
 		int i_files2 = 0;
 		String outFile2 = outputFilePath.substring(0, outputFilePath.lastIndexOf('.')).concat("-schedulability.csv");
