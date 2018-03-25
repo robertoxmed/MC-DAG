@@ -8,7 +8,7 @@ i = 0
 j = 0
 
 for u in np.arange(1.05, 2, 0.05):
-    g_cmd = "java -jar bin/generator.jar -c 4 -cp 30 -e 40 -h "+str(u)+" -lu "+str(u)+" -hl 0.5 -l "+str(u)+" -nd 4 -nf 1000 -o btests/test"+str(u)+".xml -p 2 -j  8 -g"
+    g_cmd = "java -jar bin/generator.jar  -e 40 -mu "+str(u)+" -lu "+str(u)+" -nd 2 -l 2 -nf 1000 -o btests/test"+str(u)+".xml -p 2 -j 8 -g"
     ret = os.system(g_cmd)
     i += 1
 
