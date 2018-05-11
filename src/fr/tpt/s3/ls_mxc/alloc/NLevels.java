@@ -386,13 +386,14 @@ public class NLevels {
 			// Laxity in LO mode
 			} else {
 				// If it's a HI task
-				if (a.getCI(1) > 0) {
+				if (a.getCI(level + 1) > 0) {
 					// Promotion needed for the task
 					if ((a.getCI(level) - remainingTime[level][dId][a.getId()]) - scheduledUntilTinL(a, slot, level + 1) < 0) {
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
 						a.setLaxityinL(0, level);
+					} else {
+						a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 					}
-					a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 				} else {
 					a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 				}
