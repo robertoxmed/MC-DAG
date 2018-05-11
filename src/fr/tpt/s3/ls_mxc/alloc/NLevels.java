@@ -89,8 +89,8 @@ public class NLevels {
 		setLoComp(new Comparator<ActorSched>() {
 			@Override
 			public int compare (ActorSched o1, ActorSched o2) {
-				if (o1.getUrgencies()[0] - o2.getUrgencies()[0] != 0)
-					return o1.getUrgencies()[0] - o2.getUrgencies()[0];
+				if (o1.getLaxities()[0] - o2.getLaxities()[0] != 0)
+					return o1.getLaxities()[0] - o2.getLaxities()[0];
 				else
 					return o1.getId() - o2.getId();
 			}
@@ -369,12 +369,10 @@ public class NLevels {
 					int deltaI = a.getCI(level + 1) - a.getCI(level);
 					//Check if in the higher table the Ci(L+1) - Ci(L) has been allocated
 					if (scheduledUntilTinLreverse(a, slot, level + 1) - deltaI < 0) {
-						a.setDelayed(true);
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
 						a.setLaxityinL(Integer.MAX_VALUE, level);
 					} else if (scheduledUntilTinLreverse(a, slot, level) != 0 &&
 							scheduledUntilTinLreverse(a, slot, level) - scheduledUntilTinLreverse(a, slot, level + 1) + deltaI == 0) {
-						a.setDelayed(true);
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
 						a.setLaxityinL(Integer.MAX_VALUE, level);
 					} else {
@@ -402,6 +400,52 @@ public class NLevels {
 	}
 	
 	/**
+	 * Method to preveent preemptions when tasks have the same laxity
+	 * the equality is only interesting on the last element m of the list
+	 * where m is the number of available cores
+	 * @param ready
+	 */
+	private void checkForEqualities (List<ActorSched> ready, int level) {
+		
+		// There are enough elements in the ready list to test
+		// for equalities
+		if (ready.size() > getNbCores()) {
+			int nbTasksEqualityinReady = 1;
+			int eqLax = ready.get(getNbCores() - 1).getLaxities()[level];
+			boolean eq = (ready.get(getNbCores() - 2).getLaxities()[level] == eqLax) ? true : false;
+			List<ActorSched> eqList = new LinkedList<ActorSched>();
+			int index = getNbCores() - 2;
+			
+			// Check nodes before the last element
+			while (eq && index >= 0) {
+				nbTasksEqualityinReady++;
+				eqList.add(ready.get(index));
+				index--;
+				eq = (ready.get(index).getLaxities()[level] == eqLax) ? true : false;
+			}
+			
+			eq = (ready.get(getNbCores()).getLaxities()[level] == eqLax) ? true : false;
+			index = getNbCores();
+			// Check nodes after the last element
+			while (eq) {
+				eqList.add(ready.get(index));
+				index++;
+				eq = (ready.get(index).getLaxities()[level] == eqLax) ? true : false;
+			}
+			
+			// Sort equality list
+			
+			
+			
+			// Update delayed booleans
+			for (int i = getNbCores() - nbTasksEqualityinReady; i < getNbCores() + nbTasksEqualityinReady; i++) {
+				
+			}
+		}
+		
+	}
+	
+	/**
 	 * Functions that verifies if computing the scheduling table is worth it
 	 * @param list
 	 * @param slot
@@ -415,9 +459,9 @@ public class NLevels {
 		while (lit.hasNext()) {
 			ActorSched a = lit.next();
 			
-			if (a.getUrgencies()[level] == 0)
+			if (a.getLaxities()[level] == 0)
 				m++;
-			else if (a.getUrgencies()[level] < 0)
+			else if (a.getLaxities()[level] < 0)
 				return false;
 			
 			if (m > nbCores)
@@ -542,8 +586,8 @@ public class NLevels {
 		ready.sort(new Comparator<ActorSched>() {
 			@Override
 			public int compare(ActorSched o1, ActorSched o2) {
-				if (o1.getUrgencies()[l] - o2.getUrgencies()[l] != 0)
-					return o1.getUrgencies()[l] - o2.getUrgencies()[l];
+				if (o1.getLaxities()[l] - o2.getLaxities()[l] != 0)
+					return o1.getLaxities()[l] - o2.getLaxities()[l];
 				else
 					return o2.getId() - o1.getId();
 			}
@@ -557,7 +601,7 @@ public class NLevels {
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildHITable("+l+"): @t = "+s+", tasks activated: ");
 				for (ActorSched a : ready)
-					System.out.print("L("+a.getName()+") = "+a.getUrgencies()[l]+"; ");
+					System.out.print("L("+a.getName()+") = "+a.getLaxities()[l]+"; ");
 				System.out.println("");
 			}
 			
@@ -603,8 +647,8 @@ public class NLevels {
 			ready.sort(new Comparator<ActorSched>() {
 				@Override
 				public int compare(ActorSched o1, ActorSched o2) {
-					if (o1.getUrgencies()[l] - o2.getUrgencies()[l] != 0)
-						return o1.getUrgencies()[l] - o2.getUrgencies()[l];
+					if (o1.getLaxities()[l] - o2.getLaxities()[l] != 0)
+						return o1.getLaxities()[l] - o2.getLaxities()[l];
 					else
 						return o2.getId() - o1.getId();
 				}
@@ -643,7 +687,7 @@ public class NLevels {
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildHITable(0): @t = "+s+", tasks activated: ");
 				for (ActorSched a : ready)
-					System.out.print("L("+a.getName()+") = "+a.getUrgencies()[0]+"; ");
+					System.out.print("L("+a.getName()+") = "+a.getLaxities()[0]+"; ");
 				System.out.println("");
 			}
 			
@@ -823,8 +867,8 @@ public class NLevels {
 		ready.sort(new Comparator<ActorSched>() {
 			@Override
 			public int compare(ActorSched o1, ActorSched o2) {
-				if (o1.getUrgencies()[l] - o2.getUrgencies()[l] != 0)
-					return o1.getUrgencies()[l] - o2.getUrgencies()[l];
+				if (o1.getLaxities()[l] - o2.getLaxities()[l] != 0)
+					return o1.getLaxities()[l] - o2.getLaxities()[l];
 				else
 					return o2.getId() - o1.getId();
 			}
@@ -838,7 +882,7 @@ public class NLevels {
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildHInopreempt("+l+"): @t = "+s+", tasks activated: ");
 				for (ActorSched a : ready)
-					System.out.print("L("+a.getName()+") = "+a.getUrgencies()[l]+" R = "+a.isRunning()+"; ");
+					System.out.print("L("+a.getName()+") = "+a.getLaxities()[l]+" R = "+a.isRunning()+"; ");
 				System.out.println("");
 			}
 			
@@ -891,8 +935,8 @@ public class NLevels {
 			ready.sort(new Comparator<ActorSched>() {
 				@Override
 				public int compare(ActorSched o1, ActorSched o2) {
-					if (o1.getUrgencies()[l] - o2.getUrgencies()[l] != 0)
-						return o1.getUrgencies()[l] - o2.getUrgencies()[l];
+					if (o1.getLaxities()[l] - o2.getLaxities()[l] != 0)
+						return o1.getLaxities()[l] - o2.getLaxities()[l];
 					else
 						return o2.getId() - o1.getId();
 				}
@@ -930,7 +974,7 @@ public class NLevels {
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildHITable(0): @t = "+s+", tasks activated: ");
 				for (ActorSched a : ready)
-					System.out.print("L("+a.getName()+") = "+a.getUrgencies()[0]+"; ");
+					System.out.print("L("+a.getName()+") = "+a.getLaxities()[0]+"; ");
 				System.out.println("");
 			}
 			

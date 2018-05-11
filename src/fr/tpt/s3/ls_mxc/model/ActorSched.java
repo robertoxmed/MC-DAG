@@ -189,7 +189,7 @@ public class ActorSched extends Actor {
 		this.getLFTs()[l] = val;
 	}
 
-	public int[] getUrgencies() {
+	public int[] getLaxities() {
 		return laxity;
 	}
 

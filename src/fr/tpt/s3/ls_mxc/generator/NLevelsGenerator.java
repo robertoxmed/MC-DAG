@@ -27,7 +27,7 @@ public class NLevelsGenerator {
 	private RandomNumberGenerator rng;
 	private boolean debug;
 	
-	private int possibleDeadlines[] = {40, 20, 30, 50}; 
+	private int possibleDeadlines[] = {15, 20, 30, 40, 50, 100, 300}; 
 	
 	public NLevelsGenerator (double minU, double maxU, double eProb, int levels, int paraDegree, int nbDAGs,
 			boolean debug) {
