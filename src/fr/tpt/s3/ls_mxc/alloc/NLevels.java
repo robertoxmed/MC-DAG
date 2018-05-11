@@ -29,7 +29,6 @@ import fr.tpt.s3.ls_mxc.model.Actor;
 import fr.tpt.s3.ls_mxc.model.ActorSched;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
-import fr.tpt.s3.ls_mxc.util.AlignScheduler;
 import fr.tpt.s3.ls_mxc.util.Counters;
 import fr.tpt.s3.ls_mxc.util.MathMCDAG;
 
@@ -185,7 +184,7 @@ public class NLevels {
 			}
 		}
 		a.setLFTinL(ret, l);
-		a.setUrgencyinL(ret, l);
+		a.setLaxityinL(ret, l);
 	}
 	
 	/**
@@ -197,7 +196,7 @@ public class NLevels {
 	 */
 	private boolean succVisitedinL (ActorSched a, int l) {
 		for (Edge e : a.getSndEdges()) {
-			if (e.getDest().getCI(l) != 0 && ((ActorSched) e.getDest()).getVisitedL()[l] == false) {
+			if (e.getDest().getCI(l) != 0 && !((ActorSched) e.getDest()).getVisitedL()[l]) {
 				return false;
 			}
 		}
@@ -232,10 +231,8 @@ public class NLevels {
 			
 			// Calculate sources in i mode
 			for (Actor a : d.getNodes()) {
-				if (a.isSourceinL(i)) {
+				if (a.isSourceinL(i))
 					toVisit.add((ActorSched) a);
-					((ActorSched) a).getVisitedL()[i] = true;
-				}
 			}
 			
 			// Visit all nodes iteratively
@@ -243,11 +240,13 @@ public class NLevels {
 				ActorSched a = toVisit.get(0);
 				
 				calcActorLFTrev(a, i, d.getDeadline());
+				((ActorSched) a).getVisitedL()[i] = true;
+
 				for (Edge e : a.getSndEdges()) {
 					if (e.getDest().getCI(i) != 0 && !((ActorSched) e.getDest()).getVisitedL()[i]
-							&& predVisitedinL((ActorSched) e.getDest(), i)) {
+							&& predVisitedinL((ActorSched) e.getDest(), i)
+							&& !toVisit.contains((ActorSched) e.getDest())) {
 						toVisit.add((ActorSched) e.getDest());
-						((ActorSched) e.getDest()).getVisitedL()[i] = true;
 					}
 				}
 				toVisit.remove(0);
@@ -258,20 +257,21 @@ public class NLevels {
 		ArrayList<ActorSched> toVisit = new ArrayList<>();
 		
 		for (Actor a : d.getNodes()) {
-			if (a.isSinkinL(0)) {
+			if (a.isSinkinL(0))
 				toVisit.add((ActorSched) a);
-				((ActorSched) a).getVisitedL()[0] = true;
-			}
 		}
 		
 		while (!toVisit.isEmpty()) {
 			ActorSched a = toVisit.get(0);
 			
 			calcActorLFT(a, 0, d.getDeadline());
+			((ActorSched) a).getVisitedL()[0] = true;
+			
 			for (Edge e : a.getRcvEdges()) {
-				if (!((ActorSched) e.getSrc()).getVisitedL()[0] && succVisitedinL(a, 0)) {
+				// SrcTask hasn't been visited and all its successors were visited
+				if (!((ActorSched) e.getSrc()).getVisitedL()[0] && succVisitedinL(a, 0)
+						&& !toVisit.contains((ActorSched) e.getSrc())) {
 					toVisit.add((ActorSched) e.getSrc());
-					((ActorSched) e.getSrc()).getVisitedL()[0] = true;
 				}
 			}
 			toVisit.remove(0);
@@ -371,28 +371,31 @@ public class NLevels {
 					if (scheduledUntilTinLreverse(a, slot, level + 1) - deltaI < 0) {
 						a.setDelayed(true);
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
-						a.setUrgencyinL(Integer.MAX_VALUE, level);
+						a.setLaxityinL(Integer.MAX_VALUE, level);
 					} else if (scheduledUntilTinLreverse(a, slot, level) != 0 &&
 							scheduledUntilTinLreverse(a, slot, level) - scheduledUntilTinLreverse(a, slot, level + 1) + deltaI == 0) {
 						a.setDelayed(true);
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
-						a.setUrgencyinL(Integer.MAX_VALUE, level);
+						a.setLaxityinL(Integer.MAX_VALUE, level);
 					} else {
-						a.setUrgencyinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
+						a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 					}
 				} else {
-					a.setUrgencyinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
+					a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 				}
 			// Laxity in LO mode
-			} else { 
+			} else {
+				// If it's a HI task
 				if (a.getCI(1) > 0) {
+					// Promotion needed for the task
 					if ((a.getCI(level) - remainingTime[level][dId][a.getId()]) - scheduledUntilTinL(a, slot, level + 1) < 0) {
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
-						a.setUrgencyinL(0, level);
+						a.setLaxityinL(0, level);
 					}
+					a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
+				} else {
+					a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 				}
-					
-				a.setUrgencyinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 			}
 		}
 	}
@@ -700,8 +703,8 @@ public class NLevels {
 
 		buildLOTable();		
 		
-		for (int i = 0; i < getLevels(); i++)
-			AlignScheduler.align(sched, i, gethPeriod(), getNbCores());
+		/*for (int i = 0; i < getLevels(); i++)
+			AlignScheduler.align(sched, i, gethPeriod(), getNbCores());*/
 		
 		if (isDebug()) printTables();
 		
@@ -754,23 +757,23 @@ public class NLevels {
 					if (scheduledUntilTinLreverse(a, slot, level + 1) - deltaI < 0) {
 						a.setDelayed(true);
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxitynopreempt(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
-						a.setUrgencyinL(Integer.MAX_VALUE, level);
+						a.setLaxityinL(Integer.MAX_VALUE, level);
 					} else {
-						a.setUrgencyinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
+						a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 					}
 				} else {
-					a.setUrgencyinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
+					a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 				}
 			// Laxity in LO mode
 			} else { 
 				if (a.getCI(1) > 0) {
 					if ((a.getCI(level) - remainingTime[level][dId][a.getId()]) - scheduledUntilTinL(a, slot, level + 1) < 0) {
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxitynopreempt(): Promotion of task "+a.getName()+" at slot @t = "+slot);
-						a.setUrgencyinL(0, level);
+						a.setLaxityinL(0, level);
 					}
 				}
 					
-				a.setUrgencyinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
+				a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 			}
 		}
 	}
@@ -855,7 +858,7 @@ public class NLevels {
 					if (firstTimeRunning(l, a)) {
 						a.setRunning(true);
 						// Promote the task with the highest priority -> non preemptable
-						a.setUrgencyinL(0, l);
+						a.setLaxityinL(0, l);
 					}
 					
 					sched[l][s][c] = a .getName();
@@ -987,8 +990,8 @@ public class NLevels {
 		
 		buildLOnopreempt();
 				
-		for (int i = 0; i < getLevels(); i++)
-			AlignScheduler.align(sched, i, gethPeriod(), getNbCores());
+		/* for (int i = 0; i < getLevels(); i++)
+			AlignScheduler.align(sched, i, gethPeriod(), getNbCores());*/
 		
 		if(isDebug()) printTables();
 	}

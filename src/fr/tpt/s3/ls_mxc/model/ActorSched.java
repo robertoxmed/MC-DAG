@@ -37,7 +37,7 @@ public class ActorSched extends Actor {
 	
 	// Used for N levels scheduling
 	private int LFTs[];
-	private int urgencies[];
+	private int laxity[];
 	private boolean visitedL[];
 	private int graphID;
 	private boolean delayed;
@@ -72,12 +72,12 @@ public class ActorSched extends Actor {
 		super(id, name, nbLevels);
 		
 		LFTs = new int[nbLevels];
-		urgencies = new int[nbLevels];
+		laxity = new int[nbLevels];
 		visitedL = new boolean[nbLevels];
 		
 		for (int i = 0; i < nbLevels; i++) {
 			LFTs[i] = Integer.MAX_VALUE;
-			urgencies[i] = Integer.MAX_VALUE;
+			laxity[i] = Integer.MAX_VALUE;
 			visitedL[i] = false;
 		}
 		delayed = false;
@@ -190,16 +190,16 @@ public class ActorSched extends Actor {
 	}
 
 	public int[] getUrgencies() {
-		return urgencies;
+		return laxity;
 	}
 
 
-	public void setUrgencies(int urgencies[]) {
-		this.urgencies = urgencies;
+	public void setLaxities(int urgencies[]) {
+		this.laxity = urgencies;
 	}
 	
-	public void setUrgencyinL (int val, int idx) {
-		this.urgencies[idx] = val;
+	public void setLaxityinL (int val, int idx) {
+		this.laxity[idx] = val;
 	}
 	
 
