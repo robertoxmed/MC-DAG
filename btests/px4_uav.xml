@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mcsystem>
+	<!-- Image processing workflow -->
+	<mcdag name="Montage" deadline="15">
+		<actor name="M_Cap1">
+			<clo>4</clo>
+			<chi>4</chi>
+		</actor>
+		<actor name="M_Cap2">
+			<clo>4</clo>
+			<chi>4</chi>
+		</actor>
+		<actor name="M_Diff1">
+			<clo>2</clo>
+			<chi>3</chi>
+		</actor>
+		<actor name="M_Diff2">
+			<clo>2</clo>
+			<chi>3</chi>
+		</actor>
+		<actor name="M_Diff3">
+			<clo>2</clo>
+			<chi>3</chi>
+		</actor>
+		<actor name="M_Cat">
+			<clo>3</clo>
+			<chi>4</chi>
+		</actor>
+		<actor name="M_Back1">
+			<clo>2</clo>
+			<chi>0</chi>
+		</actor>
+		<actor name="M_Back2">
+			<clo>2</clo>
+			<chi>0</chi>
+		</actor>
+		<actor name="M_Enco">
+			<clo>2</clo>
+			<chi>0</chi>
+		</actor>
+		<actor name="M_Trans">
+			<clo>1</clo>
+			<chi>0</chi>
+		</actor>
+		<ports>
+			<port name="p1" srcActor="M_Cap1" dstActor="M_Diff1"/>
+			<port name="p2" srcActor="M_Cap1" dstActor="M_Diff2"/>
+			<port name="p3" srcActor="M_Cap1" dstActor="M_Diff3"/>
+			<port name="p4" srcActor="M_Cap2" dstActor="M_Diff1"/>
+			<port name="p5" srcActor="M_Cap2" dstActor="M_Diff2"/>
+			<port name="p6" srcActor="M_Cap2" dstActor="M_Diff3"/>
+			<port name="p7" srcActor="M_Cap1" dstActor="M_Back1"/>
+			<port name="p8" srcActor="M_Cap2" dstActor="M_Back2"/>
+			<port name="p9" srcActor="M_Diff1" dstActor="M_Cat"/>
+			<port name="p10" srcActor="M_Diff2" dstActor="M_Cat"/>
+			<port name="p11" srcActor="M_Diff3" dstActor="M_Cat"/>
+			<port name="p12" srcActor="M_Cat" dstActor="M_Back1"/>
+			<port name="p13" srcActor="M_Cat" dstActor="M_Back2"/>
+			<port name="p14" srcActor="M_Back1" dstActor="M_Enco"/>
+			<port name="p15" srcActor="M_Back2" dstActor="M_Enco"/>
+			<port name="p16" srcActor="M_Enco" dstActor="M_Trans"/>
+		</ports>
+	</mcdag>
+	<!-- Flight control system -->
+	<mcdag name="FCS" deadline="30">
+		<actor name="F_Sens">
+			<clo>2</clo>
+			<chi>3</chi>
+		</actor>
+		<actor name="F_RC">
+			<clo>2</clo>
+			<chi>2</chi>
+		</actor>
+		<actor name="F_PosE">
+			<clo>3</clo>
+			<chi>5</chi>
+		</actor>
+		<actor name="F_AttE">
+			<clo>2</clo>
+			<chi>4</chi>
+		</actor>
+		<actor name="F_Nav">
+			<clo>5</clo>
+			<chi>7</chi>
+		</actor>
+		<actor name="F_PosC">
+			<clo>3</clo>
+			<chi>4</chi>
+		</actor>
+		<actor name="F_AttC">
+			<clo>3</clo>
+			<chi>4</chi>
+		</actor>
+		<actor name="F_Mix">
+			<clo>3</clo>
+			<chi>0</chi>
+		</actor>
+		<actor name="F_Actu">
+			<clo>2</clo>
+			<chi>0</chi>
+		</actor>
+		<actor name="F_Log">
+			<clo>3</clo>
+			<chi>0</chi>
+		</actor>
+		<actor name="F_Shar">
+			<clo>3</clo>
+			<chi>0</chi>
+		</actor>
+		<ports>
+			<port name="p1" srcActor="F_Sens" dstActor="F_PosE"/>
+			<port name="p2" srcActor="F_Sens" dstActor="F_AttE"/>
+			<port name="p3" srcActor="F_PosE" dstActor="F_Nav"/>
+			<port name="p4" srcActor="F_PosE" dstActor="F_AttC"/>
+			<port name="p5" srcActor="F_PosE" dstActor="F_PosC"/>
+			<port name="p6" srcActor="F_AttE" dstActor="F_Nav"/>
+			<port name="p7" srcActor="F_AttE" dstActor="F_AttC"/>
+			<port name="p8" srcActor="F_AttE" dstActor="F_PosC"/>
+			<port name="p9" srcActor="F_RC" dstActor="F_PosC"/>
+			<port name="p10" srcActor="F_RC" dstActor="F_AttC"/>
+			<port name="p11" srcActor="F_Nav" dstActor="F_AttC"/>
+			<port name="p12" srcActor="F_PosC" dstActor="F_AttC"/>
+			<port name="p15" srcActor="F_AttC" dstActor="F_Mix"/>
+			<port name="p16" srcActor="F_AttC" dstActor="F_Log"/>
+			<port name="p17" srcActor="F_Mix" dstActor="F_Actu"/>
+			<port name="p18" srcActor="F_Log" dstActor="F_Shar"/>
+		</ports>
+	</mcdag>
+	<cores number="3"/>
+</mcsystem>
+

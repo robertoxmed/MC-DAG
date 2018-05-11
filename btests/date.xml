@@ -22,7 +22,7 @@
 			<fprob>0.01</fprob>
 		</actor>
 		<actor name="Shar0">
-			<clo>3</clo>
+			<clo>4</clo>
 			<chi>0</chi>
 			<fprob>0.01</fprob>
 		</actor>

@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mcsystem>
+	<!-- Number of cores -->
+	<cores number="3"/>
+	<!-- Number of criticality levels -->
+	<levels number="2"/>
+	<!-- Image processing workflow -->
+	<mcdag name="Montage" deadline="15">
+		<actor name="M_Cap1">
+			<wcet number="0">4</wcet>
+			<wcet number="1">4</wcet>
+		</actor>
+		<actor name="M_Cap2">
+			<wcet number="0">4</wcet>
+			<wcet number="1">4</wcet>
+		</actor>
+		<actor name="M_Diff1">
+			<wcet number="0">2</wcet>
+			<wcet number="1">3</wcet>
+		</actor>
+		<actor name="M_Diff2">
+			<wcet number="0">2</wcet>
+			<wcet number="1">3</wcet>
+		</actor>
+		<actor name="M_Diff3">
+			<wcet number="0">2</wcet>
+			<wcet number="1">3</wcet>
+		</actor>
+		<actor name="M_Cat">
+			<wcet number="0">3</wcet>
+			<wcet number="1">4</wcet>
+		</actor>
+		<actor name="M_Back1">
+			<wcet number="0">2</wcet>
+			<wcet number="1">0</wcet>
+		</actor>
+		<actor name="M_Back2">
+			<wcet number="0">2</wcet>
+			<wcet number="1">0</wcet>
+		</actor>
+		<actor name="M_Enco">
+			<wcet number="0">2</wcet>
+			<wcet number="1">0</wcet>
+		</actor>
+		<actor name="M_Trans">
+			<wcet number="0">1</wcet>
+			<wcet number="1">0</wcet>
+		</actor>
+		<ports>
+			<port name="p1" srcActor="M_Cap1" dstActor="M_Diff1"/>
+			<port name="p2" srcActor="M_Cap1" dstActor="M_Diff2"/>
+			<port name="p3" srcActor="M_Cap1" dstActor="M_Diff3"/>
+			<port name="p4" srcActor="M_Cap2" dstActor="M_Diff1"/>
+			<port name="p5" srcActor="M_Cap2" dstActor="M_Diff2"/>
+			<port name="p6" srcActor="M_Cap2" dstActor="M_Diff3"/>
+			<port name="p7" srcActor="M_Cap1" dstActor="M_Back1"/>
+			<port name="p8" srcActor="M_Cap2" dstActor="M_Back2"/>
+			<port name="p9" srcActor="M_Diff1" dstActor="M_Cat"/>
+			<port name="p10" srcActor="M_Diff2" dstActor="M_Cat"/>
+			<port name="p11" srcActor="M_Diff3" dstActor="M_Cat"/>
+			<port name="p12" srcActor="M_Cat" dstActor="M_Back1"/>
+			<port name="p13" srcActor="M_Cat" dstActor="M_Back2"/>
+			<port name="p14" srcActor="M_Back1" dstActor="M_Enco"/>
+			<port name="p15" srcActor="M_Back2" dstActor="M_Enco"/>
+			<port name="p16" srcActor="M_Enco" dstActor="M_Trans"/>
+		</ports>
+	</mcdag>
+	<!-- Flight control system -->
+	<mcdag name="FCS" deadline="30">
+		<actor name="F_Sens">
+			<wcet number="0">2</wcet>
+			<wcet number="1">3</wcet>
+		</actor>
+		<actor name="F_RC">
+			<wcet number="0">2</wcet>
+			<wcet number="1">2</wcet>
+		</actor>
+		<actor name="F_PosE">
+			<wcet number="0">3</wcet>
+			<wcet number="1">5</wcet>
+		</actor>
+		<actor name="F_AttE">
+			<wcet number="0">2</wcet>
+			<wcet number="1">4</wcet>
+		</actor>
+		<actor name="F_Nav">
+			<wcet number="0">5</wcet>
+			<wcet number="1">7</wcet>
+		</actor>
+		<actor name="F_PosC">
+			<wcet number="0">3</wcet>
+			<wcet number="1">4</wcet>
+		</actor>
+		<actor name="F_AttC">
+			<wcet number="0">3</wcet>
+			<wcet number="1">4</wcet>
+		</actor>
+		<actor name="F_Mix">
+			<wcet number="0">3</wcet>
+			<wcet number="1">0</wcet>
+		</actor>
+		<actor name="F_Actu">
+			<wcet number="0">2</wcet>
+			<wcet number="1">0</wcet>
+		</actor>
+		<actor name="F_Log">
+			<wcet number="0">3</wcet>
+			<wcet number="1">0</wcet>
+		</actor>
+		<actor name="F_Shar">
+			<wcet number="0">3</wcet>
+			<wcet number="1">0</wcet>
+		</actor>
+		<ports>
+			<port name="p1" srcActor="F_Sens" dstActor="F_PosE"/>
+			<port name="p2" srcActor="F_Sens" dstActor="F_AttE"/>
+			<port name="p3" srcActor="F_PosE" dstActor="F_Nav"/>
+			<port name="p4" srcActor="F_PosE" dstActor="F_AttC"/>
+			<port name="p5" srcActor="F_PosE" dstActor="F_PosC"/>
+			<port name="p6" srcActor="F_AttE" dstActor="F_Nav"/>
+			<port name="p7" srcActor="F_AttE" dstActor="F_AttC"/>
+			<port name="p8" srcActor="F_AttE" dstActor="F_PosC"/>
+			<port name="p9" srcActor="F_RC" dstActor="F_PosC"/>
+			<port name="p10" srcActor="F_RC" dstActor="F_AttC"/>
+			<port name="p11" srcActor="F_Nav" dstActor="F_AttC"/>
+			<port name="p12" srcActor="F_PosC" dstActor="F_AttC"/>
+			<port name="p13" srcActor="F_AttC" dstActor="F_Mix"/>
+			<port name="p14" srcActor="F_AttC" dstActor="F_Log"/>
+			<port name="p15" srcActor="F_Mix" dstActor="F_Actu"/>
+			<port name="p16" srcActor="F_Log" dstActor="F_Shar"/>
+		</ports>
+	</mcdag>
+</mcsystem>
+
