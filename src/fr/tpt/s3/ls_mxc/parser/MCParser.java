@@ -116,9 +116,21 @@ public class MCParser {
 						Element e = (Element) n;
 						Actor a;
 						if (outPrismFile == null) {
-							a = new ActorSched(nb_actors++, e.getAttribute("name"),
-											Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
-											Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
+							int[] wcets = new int[2];
+							// Initialize all the WCET of a node
+							NodeList wList = e.getElementsByTagName("wcet");
+							for (int j = 0; j < getNbLevels(); j++) {
+								Node w = wList.item(j);
+								if (w.getNodeType() == Node.ELEMENT_NODE) {
+									Element we = (Element) w;
+									
+									wcets[Integer.parseInt(we.getAttribute("number"))] = Integer.parseInt(we.getTextContent());
+								}
+							}
+							
+							a = new ActorSched(nb_actors++, e.getAttribute("name"),getNbLevels());
+							((ActorSched) a).setGraphID(count);
+							a.setcIs(wcets);
 						} else {
 							a = new ActorAvail(nb_actors++, e.getAttribute("name"),
 									Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),

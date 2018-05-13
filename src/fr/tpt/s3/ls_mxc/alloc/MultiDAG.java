@@ -68,8 +68,8 @@ public class MultiDAG{
 		lHIComp = new Comparator<ActorSched>() {
 			@Override
 			public int compare(ActorSched o1, ActorSched o2) {
-				if (o1.getUrgencyHI() - o2.getUrgencyHI() != 0)
-					return o1.getUrgencyHI() - o2.getUrgencyHI();
+				if (o1.getLaxities()[1] - o2.getLaxities()[1] != 0)
+					return o1.getLaxities()[1] - o2.getLaxities()[1];
 				else
 					return o2.getId() - o1.getId();
 			}			
@@ -78,8 +78,8 @@ public class MultiDAG{
 		lLOComp = new Comparator<ActorSched>() {
 			@Override
 			public int compare(ActorSched o1, ActorSched o2) {
-				if (o1.getUrgencyLO() - o2.getUrgencyLO() != 0)
-					return o1.getUrgencyLO() - o2.getUrgencyLO();
+				if (o1.getLaxities()[0] - o2.getLaxities()[0] != 0)
+					return o1.getLaxities()[0] - o2.getLaxities()[0];
 				else
 					return o1.getId() - o2.getId();
 			}		
@@ -131,13 +131,13 @@ public class MultiDAG{
 			int test = Integer.MAX_VALUE;
 
 			for (Edge e : a.getRcvEdges()) {
-				test = ((ActorSched) e.getSrc()).getLFTHI() - e.getSrc().getCI(1);
+				test = ((ActorSched) e.getSrc()).getLFTs()[1] - e.getSrc().getCI(1);
 				
 				if (test < ret)
 					ret = test;
 			}
 		}
-		a.setLFTHI(ret);
+		a.getLFTs()[1] = ret;
 	}
 	
 	private void calcActorLFTLO (ActorSched a, int deadline) {
@@ -149,13 +149,13 @@ public class MultiDAG{
 			int test = Integer.MAX_VALUE;
 
 			for (Edge e : a.getSndEdges()) {
-				test = ((ActorSched) e.getDest()).getLFTLO() - e.getDest().getCI(0);
+				test = ((ActorSched) e.getDest()).getLFTs()[0] - e.getDest().getCI(0);
 				if (test < ret)
 					ret = test;
 			}
 		}
-		a.setLFTLO(ret);
-		a.setUrgencyLO(ret);
+		a.getLFTs()[0] = ret;
+		a.getLaxities()[0] = ret;
 	}
 	
 	/**
@@ -168,7 +168,7 @@ public class MultiDAG{
 		boolean ret = true;
 		
 		for (Edge e : a.getSndEdges()) {
-			if (!((ActorSched) e.getDest()).isVisited())
+			if (!((ActorSched) e.getDest()).getVisitedL()[0])
 				return false;
 		}
 		return ret;
@@ -184,7 +184,7 @@ public class MultiDAG{
 		boolean ret = true;
 		
 		for (Edge e : a.getRcvEdges()) {
-			if (e.getSrc().getCI(1) != 0 && !((ActorSched) e.getSrc()).isVisitedHI())
+			if (e.getSrc().getCI(1) != 0 && !((ActorSched) e.getSrc()).getVisitedL()[1])
 				return false;
 		}
 		
@@ -201,12 +201,12 @@ public class MultiDAG{
 		
 		for (Actor a : d.getSinks()) {
 			toVisit.add((ActorSched) a);
-			((ActorSched) a).setVisited(true);
+			((ActorSched) a).getVisitedL()[0] = true;
 		}
 		
 		for (Actor a : d.getSourcesHI()) {
 			toVisitHI.add((ActorSched) a);
-			((ActorSched) a).setVisitedHI(true);
+			((ActorSched) a).getVisitedL()[1] = true;
 		}
 		
 		while (toVisit.size() != 0) {
@@ -214,9 +214,9 @@ public class MultiDAG{
 			
 			calcActorLFTLO(a, d.getDeadline());
 			for (Edge e : a.getRcvEdges()) {
-				if (!((ActorSched) e.getSrc()).isVisited() && succVisited((ActorSched) e.getSrc())) {
+				if (!((ActorSched) e.getSrc()).getVisitedL()[0] && succVisited((ActorSched) e.getSrc())) {
 					toVisit.add((ActorSched) e.getSrc());
-					((ActorSched) e.getSrc()).setVisited(true);
+					((ActorSched) e.getSrc()).getVisitedL()[0] = true;
 				}
 			}
 			toVisit.remove(0);
@@ -227,10 +227,10 @@ public class MultiDAG{
 			
 			calcActorLFTHI(a, d.getDeadline());
 			for (Edge e : a.getSndEdges()) {
-				if (e.getDest().getCI(1) != 0 && !((ActorSched) e.getDest()).isVisitedHI()
+				if (e.getDest().getCI(1) != 0 && !((ActorSched) e.getDest()).getVisitedL()[1]
 						&& succVisitedHI((ActorSched) e.getDest())) {
 					toVisitHI.add((ActorSched) e.getDest());
-					((ActorSched) e.getDest()).setVisitedHI(true);
+					((ActorSched) e.getDest()).getVisitedL()[1] = true;
 				}
 			}
 			toVisitHI.remove(0);
@@ -364,7 +364,6 @@ public class MultiDAG{
 		}
 		return ret; 
 	}
-	
 
 	
 	/**
@@ -378,18 +377,18 @@ public class MultiDAG{
 			int relatSlot = slot % a.getGraphDead();
 					
 			if (mode == ActorSched.HI) { // Laxity in HI mode
-				a.setUrgencyHI(a.getLFTHI() - relatSlot - remainTHI.get(a.getName()));
+				a.setLaxityinL(a.getLFTs()[1] - relatSlot - remainTHI.get(a.getName()), 1);
 			} else  {// Laxity in LO mode
 				// Promote HI tasks that need to be scheduled at this slot
 				if (a.getCI(1) != 0) {
 					if ((a.getCI(0) - remainTLO.get(a.getName())) - scheduledUntilT(a, slot) < 0) {
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
-						a.setUrgencyLO(0);
+						a.setLaxityinL(0, 0);
 					} else {
-						a.setUrgencyLO(a.getLFTLO() - relatSlot - remainTLO.get(a.getName()));
+						a.setLaxityinL(a.getLaxities()[0] - relatSlot - remainTLO.get(a.getName()), 0);
 					}
 				} else {
-					a.setUrgencyLO(a.getLFTLO() - relatSlot - remainTLO.get(a.getName()));
+					a.setLaxityinL(a.getLaxities()[0] - relatSlot - remainTLO.get(a.getName()), 0);
 				}
 			}
 		}
@@ -408,14 +407,14 @@ public class MultiDAG{
 			ActorSched a = it.next();
 			
 			if (mode == ActorSched.HI) {
-				if (a.getUrgencyHI() == 0)
+				if (a.getLaxities()[1] == 0)
 					m++;
-				else if (a.getUrgencyHI() < 0)
+				else if (a.getLaxities()[1] < 0)
 					return false;					
 			} else {
-				if (a.getUrgencyLO() == 0)
+				if (a.getLaxities()[0] == 0)
 					m++;
-				else if (a.getUrgencyLO() < 0)
+				else if (a.getLaxities()[0] < 0)
 					return false;
 			}
 			
@@ -453,7 +452,7 @@ public class MultiDAG{
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] allocHI(): @t = "+s+", tasks activated: ");
 				for (ActorSched a : lHI)
-					System.out.print("L("+a.getName()+") = "+a.getUrgencyHI()+"; ");
+					System.out.print("L("+a.getName()+") = "+a.getLaxities()[1]+"; ");
 				System.out.println("");
 			}
 			
@@ -525,7 +524,7 @@ public class MultiDAG{
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] allocLO(): @t = "+s+", tasks activated: ");
 				for (ActorSched a : lLO)
-					System.out.print("L("+a.getName()+") = "+a.getUrgencyLO()+"; ");
+					System.out.print("L("+a.getName()+") = "+a.getLaxities()[0]+"; ");
 				System.out.println("");
 			}
 			
@@ -605,8 +604,8 @@ public class MultiDAG{
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] printLFT(): DAG "+d.getId()+"; Actor "+a.getName()
-									+"; LFT LO "+((ActorSched) a).getLFTLO());
-				if (a.getCI(1) != 0) System.out.print("; LFT HI "+((ActorSched) a).getLFTHI());
+									+"; LFT LO "+((ActorSched) a).getLFTs()[0]);
+				if (a.getCI(1) != 0) System.out.print("; LFT HI "+((ActorSched) a).getLFTs()[1]);
 				System.out.println(".");
 			}
 		}

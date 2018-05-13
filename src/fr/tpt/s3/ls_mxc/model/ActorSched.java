@@ -26,14 +26,8 @@ public class ActorSched extends Actor {
 	// Used for DAG generation
 	private int rank;
 
-	// Used for multiDAG scheduling
+	// Used for multiDAG scheduling N level
 	private int graphDead;
-	private int LFTLO;
-	private int LFTHI;
-	private int urgencyLO;
-	private int urgencyHI;
-	private boolean visited;
-	private boolean visitedHI;
 	
 	// Used for N levels scheduling
 	private int LFTs[];
@@ -46,22 +40,6 @@ public class ActorSched extends Actor {
 	private boolean running;
 	
 	private double fProb;
-
-	/**
-	 * Constructors
-	 */
-	public ActorSched(int id, String name, int cLO, int cHI){
-		super(id, name, 2);
-		
-		this.getcIs()[0] = cLO;
-		this.getcIs()[1] = cHI;
-		LFTHI = Integer.MAX_VALUE;
-		LFTLO = Integer.MAX_VALUE;
-		urgencyHI = Integer.MAX_VALUE;
-		urgencyLO = Integer.MAX_VALUE;
-		visited = false;
-		visitedHI = false;
-	}
 	
 	/**
 	 * Constructor whithout CIs
@@ -121,54 +99,6 @@ public class ActorSched extends Actor {
 		this.wB = weight_B;
 	}
 
-	public int getUrgencyLO() {
-		return urgencyLO;
-	}
-
-	public void setUrgencyLO(int urgencyLO) {
-		this.urgencyLO = urgencyLO;
-	}
-
-	public int getUrgencyHI() {
-		return urgencyHI;
-	}
-
-	public void setUrgencyHI(int urgencyHI) {
-		this.urgencyHI = urgencyHI;
-	}
-
-	public boolean isVisited() {
-		return visited;
-	}
-
-	public void setVisited(boolean visited) {
-		this.visited = visited;
-	}
-
-	public boolean isVisitedHI() {
-		return visitedHI;
-	}
-
-	public void setVisitedHI(boolean visitedHI) {
-		this.visitedHI = visitedHI;
-	}
-
-	public int getLFTLO() {
-		return LFTLO;
-	}
-
-	public void setLFTLO(int lFTLO) {
-		LFTLO = lFTLO;
-	}
-
-	public int getLFTHI() {
-		return LFTHI;
-	}
-
-	public void setLFTHI(int lFTHI) {
-		LFTHI = lFTHI;
-	}
-
 	public int getGraphDead() {
 		return graphDead;
 	}
@@ -198,8 +128,8 @@ public class ActorSched extends Actor {
 		this.laxity = urgencies;
 	}
 	
-	public void setLaxityinL (int val, int idx) {
-		this.laxity[idx] = val;
+	public void setLaxityinL (int val, int level) {
+		this.laxity[level] = val;
 	}
 	
 

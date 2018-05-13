@@ -59,6 +59,7 @@ public class NLevels {
 	
 	// Comparators to order Actors
 	private Comparator<ActorSched> loComp;
+	private Comparator<ActorSched> eqComp;
 	
 	// Counter of ctx switches & preemptions per task
 	private int activations;
@@ -434,8 +435,15 @@ public class NLevels {
 			}
 			
 			// Sort equality list
-			
-			
+			eqList.sort(new Comparator<ActorSched>() {
+				@Override
+				public int compare (ActorSched o1, ActorSched o2) {
+					if (o1.getLFTs()[level] - o2.getLFTs()[level] != 0)
+						return o1.getLFTs()[level] - o2.getLFTs()[level];
+					else
+						return o1.getId() - o2.getId();
+				}
+			});
 			
 			// Update delayed booleans
 			for (int i = getNbCores() - nbTasksEqualityinReady; i < getNbCores() + nbTasksEqualityinReady; i++) {
@@ -843,7 +851,6 @@ public class NLevels {
 		
 		for (ActorSched a : promoted)
 			list.add(0, a);
-
 	}
 	
 	/**
@@ -1190,6 +1197,14 @@ public class NLevels {
 
 	public void setActivations(int activations) {
 		this.activations = activations;
+	}
+
+	public Comparator<ActorSched> getEqComp() {
+		return eqComp;
+	}
+
+	public void setEqComp(Comparator<ActorSched> eqComp) {
+		this.eqComp = eqComp;
 	}
 
 }
