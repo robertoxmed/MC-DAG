@@ -46,6 +46,8 @@ public class NLevels {
 	private int hPeriod;
 	private int levels;
 	
+	private boolean inEquality;
+	
 	// Scheduling tables
 	private String sched[][][];
 	
@@ -184,7 +186,6 @@ public class NLevels {
 			}
 		}
 		a.setLFTinL(ret, l);
-		a.setLaxityinL(ret, l);
 	}
 	
 	/**
@@ -411,41 +412,71 @@ public class NLevels {
 		if (ready.size() > getNbCores()) {
 			int nbTasksEqualityinReady = 1;
 			int eqLax = ready.get(getNbCores() - 1).getLaxities()[level];
+			int index = getNbCores() - 2;
+			int count = 0;	// nb of tasks with same laxity already in the ready queue
 			boolean eq = (ready.get(getNbCores() - 2).getLaxities()[level] == eqLax) ? true : false;
 			List<ActorSched> eqList = new LinkedList<ActorSched>();
-			int index = getNbCores() - 2;
-			
-			// Check nodes before the last element
+
+			// Check nodes before the last schedulable element
 			while (eq && index >= 0) {
 				nbTasksEqualityinReady++;
 				eqList.add(ready.get(index));
 				index--;
-				eq = (ready.get(index).getLaxities()[level] == eqLax) ? true : false;
+				if (index > 0)
+					eq = (ready.get(index).getLaxities()[level] == eqLax) ? true : false;
+				else
+					eq = false;
 			}
 			
+			count = nbTasksEqualityinReady;
+			
 			eq = (ready.get(getNbCores()).getLaxities()[level] == eqLax) ? true : false;
-			index = getNbCores();
+			index = getNbCores() - 1;
 			// Check nodes after the last element
+		
 			while (eq) {
 				eqList.add(ready.get(index));
 				index++;
-				eq = (ready.get(index).getLaxities()[level] == eqLax) ? true : false;
+				if (index < ready.size())
+					eq = (ready.get(index).getLaxities()[level] == eqLax) ? true : false;
+				else
+					eq = false;
 			}
 			
-			// Sort equality list
-			eqList.sort(new Comparator<ActorSched>() {
-				@Override
-				public int compare (ActorSched o1, ActorSched o2) {
-					if (o1.getLFTs()[level] - o2.getLFTs()[level] != 0)
-						return o1.getLFTs()[level] - o2.getLFTs()[level];
-					else
-						return o1.getId() - o2.getId();
-				}
-			});
+			boolean list = false;
 			
-			// Update delayed booleans
-			for (int i = getNbCores() - nbTasksEqualityinReady; i < getNbCores() + nbTasksEqualityinReady; i++) {
+			if (eqList.size() != 0)
+				list = true;
+			
+			// Sort equality list
+			if (list) {
+				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] checkForEqualities(): Equalities of laxities");
+				eqList.sort(new Comparator<ActorSched>() {
+					@Override
+					public int compare (ActorSched o1, ActorSched o2) {
+						if (o1.getLFTs()[level] - o2.getLFTs()[level] != 0)
+							return o1.getLFTs()[level] - o2.getLFTs()[level];
+						else
+							return o1.getId() - o2.getId();
+					}
+				});
 				
+				// Update delayed booleans
+				int remain = count - 1;
+				index = getNbCores() - count;
+				
+				while (remain > 0) {
+					ActorSched a = ready.get(index);
+					
+					for (ActorSched eqAct : eqList) {
+						if (a.equals(eqAct)) {
+							remain--;
+						} else {
+							a.setDelayed(true);
+						}
+					}
+					index++;
+				}
 			}
 		}
 	}
@@ -683,6 +714,7 @@ public class NLevels {
 		
 		calcLaxity(ready, 0, 0);
 		ready.sort(loComp);
+		checkForEqualities(ready, 0);
 		
 		// Allocate slot by slot the scheduling table
 		ListIterator<ActorSched> lit = ready.listIterator();
@@ -729,6 +761,7 @@ public class NLevels {
 				calcLaxity(ready, s + 1, 0);
 			}
 			ready.sort(loComp);
+			checkForEqualities(ready, 0);
 			taskFinished = false;
 			lit = ready.listIterator();
 		}
@@ -927,6 +960,14 @@ public class NLevels {
 
 	public void setEqComp(Comparator<ActorSched> eqComp) {
 		this.eqComp = eqComp;
+	}
+
+	public boolean isInEquality() {
+		return inEquality;
+	}
+
+	public void setInEquality(boolean inEquality) {
+		this.inEquality = inEquality;
 	}
 
 }
