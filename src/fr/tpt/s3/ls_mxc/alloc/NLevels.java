@@ -19,7 +19,6 @@ package fr.tpt.s3.ls_mxc.alloc;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -197,7 +196,7 @@ public class NLevels {
 	 */
 	private boolean succVisitedinL (ActorSched a, int l) {
 		for (Edge e : a.getSndEdges()) {
-			if (e.getDest().getCI(l) != 0 && !((ActorSched) e.getDest()).getVisitedL()[l]) {
+			if (e.getDest().getCI(l) == 0 && ((ActorSched) e.getDest()).getVisitedL()[l] == false) {
 				return false;
 			}
 		}
@@ -264,13 +263,12 @@ public class NLevels {
 		
 		while (!toVisit.isEmpty()) {
 			ActorSched a = toVisit.get(0);
-			
+		
 			calcActorLFT(a, 0, d.getDeadline());
-			((ActorSched) a).getVisitedL()[0] = true;
-			
 			for (Edge e : a.getRcvEdges()) {
 				// SrcTask hasn't been visited and all its successors were visited
-				if (!((ActorSched) e.getSrc()).getVisitedL()[0] && succVisitedinL(a, 0)
+				if (!((ActorSched) e.getSrc()).getVisitedL()[0]
+						&& succVisitedinL((ActorSched) e.getSrc(), 0)
 						&& !toVisit.contains((ActorSched) e.getSrc())) {
 					toVisit.add((ActorSched) e.getSrc());
 				}
@@ -450,7 +448,6 @@ public class NLevels {
 				
 			}
 		}
-		
 	}
 	
 	/**
@@ -771,281 +768,6 @@ public class NLevels {
 		
 		Counters.countContextSwitch(sched, ctxSwitch, getLevels(), hPeriod, nbCores);
 		Counters.countPreemptions(sched, preempts, getLevels(), hPeriod, nbCores);
-	}
-	
-	
-	/*
-	 * Non-preemptive version of the scheduler
-	 */
-	
-	/**
-	 * Checks if it's the first time a task is being scheduled
-	 * @param l
-	 * @return
-	 */
-	private boolean firstTimeRunning (int l, ActorSched a) {
-		if (remainingTime[l][a.getGraphID()][a.getId()] == a.getCI(l))
-			return true;
-		return false;
-	}
-	
-	/**
-	 * Function that calculates laxities for a non preemptive version of the algorithm
-	 * @param list
-	 * @param slot
-	 * @param level
-	 */
-	private void calcLaxitynopreempt (List<ActorSched> list, int slot, int level) {
-		for (ActorSched a : list) {
-			int relatSlot = slot % a.getGraphDead();
-			int dId = a.getGraphID();
-			
-			// The laxity has to be calculated for a HI mode
-			if (level >= 1) {
-
-				// It's not the highest criticality level -> perform checks
-				if (level != getLevels() - 1) {
-					int deltaI = a.getCI(level + 1) - a.getCI(level);
-					//Check if in the higher table the Ci(L+1) - Ci(L) has been allocated
-					if (scheduledUntilTinLreverse(a, slot, level + 1) - deltaI < 0) {
-						a.setDelayed(true);
-						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxitynopreempt(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
-						a.setLaxityinL(Integer.MAX_VALUE, level);
-					} else {
-						a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
-					}
-				} else {
-					a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
-				}
-			// Laxity in LO mode
-			} else { 
-				if (a.getCI(1) > 0) {
-					if ((a.getCI(level) - remainingTime[level][dId][a.getId()]) - scheduledUntilTinL(a, slot, level + 1) < 0) {
-						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxitynopreempt(): Promotion of task "+a.getName()+" at slot @t = "+slot);
-						a.setLaxityinL(0, level);
-					}
-				}
-					
-				a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
-			}
-		}
-	}
-	
-	
-	/**
-	 * Method to set running tasks at the beginning of the ready list
-	 * @param list
-	 */
-	private void setRunningFirst (List<ActorSched> list) {
-		List<ActorSched> promoted = new LinkedList<>();
-		Iterator<ActorSched> lit = list.iterator();
-		
-		while (lit.hasNext()) {
-			ActorSched a = lit.next();
-			
-			if (a.isRunning()) {
-				lit.remove();
-				promoted.add(a);
-			}
-		}
-		
-		for (ActorSched a : promoted)
-			list.add(0, a);
-	}
-	
-	/**
-	 * Method that builds the HI scheduling table without preemption
-	 * @param l
-	 * @throws SchedulingException
-	 */
-	private void buildHInopreempt (int l) throws SchedulingException {
-		List<ActorSched> ready = new LinkedList<>();
-		List<ActorSched> scheduled = new LinkedList<>();
-		
-		// Add all sink nodes
-		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
-				if (a.isSinkinL(l))
-					ready.add((ActorSched) a);
-			}
-		}
-		
-		calcLaxitynopreempt(ready, 0, l);
-		ready.sort(new Comparator<ActorSched>() {
-			@Override
-			public int compare(ActorSched o1, ActorSched o2) {
-				if (o1.getLaxities()[l] - o2.getLaxities()[l] != 0)
-					return o1.getLaxities()[l] - o2.getLaxities()[l];
-				else
-					return o2.getId() - o1.getId();
-			}
-		});
-		
-		// Allocate slot by slot the HI scheduling tables
-		ListIterator<ActorSched> lit = ready.listIterator();
-		boolean taskFinished = false;
-		
-		for (int s = hPeriod - 1; s >= 0; s--) {
-			if (isDebug()) {
-				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildHInopreempt("+l+"): @t = "+s+", tasks activated: ");
-				for (ActorSched a : ready)
-					System.out.print("L("+a.getName()+") = "+a.getLaxities()[l]+" R = "+a.isRunning()+"; ");
-				System.out.println("");
-			}
-			
-			// Check if it's worth to continue the allocation
-			if (!isPossible(ready, s, l)) {
-				SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] buildHInopreempt("+l+"): Not enough slots left.");
-				throw se;
-			}
-			
-			for (int c = getNbCores() - 1; c >=0; c--) {
-				// Find a top ready task
-				if (lit.hasNext()) {
-					ActorSched a = lit.next();
-					if (a.isDelayed())
-						break;
-					int val = remainingTime[l][a.getGraphID()][a.getId()];
-					
-					if (firstTimeRunning(l, a)) {
-						a.setRunning(true);
-						// Promote the task with the highest priority -> non preemptable
-						a.setLaxityinL(0, l);
-					}
-					
-					sched[l][s][c] = a .getName();
-					val--;
-					
-					// The task has been fully scheduled
-					if (val == 0) {
-						scheduled.add(a);
-						taskFinished = true;
-						lit.remove();
-						a.setRunning(false);
-					}
-					remainingTime[l][a.getGraphID()][a.getId()] = val;
-				}	
-			}
-			
-			resetDelays();
-			
-			// It a task has been fully allocated check for new activations
-			if (taskFinished)
-				checkActivationHI(scheduled, ready, l);
-			
-			if (s != 0) {// Check for new DAG activations
-				checkDAGActivation(scheduled, ready, s, l);
-				// Update laxities for nodes only if there are free cores
-				calcLaxitynopreempt(ready, gethPeriod() - s, l);
-			}
-		
-			ready.sort(new Comparator<ActorSched>() {
-				@Override
-				public int compare(ActorSched o1, ActorSched o2) {
-					if (o1.getLaxities()[l] - o2.getLaxities()[l] != 0)
-						return o1.getLaxities()[l] - o2.getLaxities()[l];
-					else
-						return o2.getId() - o1.getId();
-				}
-			});
-			setRunningFirst(ready);
-			taskFinished = false;
-			lit = ready.listIterator();
-		}
-	}
-	
-	/**
-	 * Method that tries to schedule the system in LO mode with no preemption
-	 * @throws SchedulingException
-	 */
-	private void buildLOnopreempt () throws SchedulingException {
-		List<ActorSched> ready = new LinkedList<>();
-		List<ActorSched> scheduled = new LinkedList<>();
-		
-		// Add all source nodes
-		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
-				if (a.isSourceinL(0))
-					ready.add((ActorSched) a);
-			}
-		}
-		
-		calcLaxity(ready, 0, 0);
-		ready.sort(loComp);
-		
-		// Allocate slot by slot the scheduling table
-		ListIterator<ActorSched> lit = ready.listIterator();
-		boolean taskFinished = false;
-		
-		for (int s = 0; s < gethPeriod(); s++) {
-			if (isDebug()) {
-				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildHITable(0): @t = "+s+", tasks activated: ");
-				for (ActorSched a : ready)
-					System.out.print("L("+a.getName()+") = "+a.getLaxities()[0]+"; ");
-				System.out.println("");
-			}
-			
-			// Verify that is still worth trying to compute the sched table
-			if (!isPossible(ready, s, 0)) {
-				SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] buildHITable(0): Not enough slots left.");
-				throw se;
-			}
-			
-			for (int c = 0; c < getNbCores(); c++) {
-				// Get the next element on the LO list
-				if (lit.hasNext()) {
-					ActorSched a = lit.next();
-					int val = remainingTime[0][a.getGraphID()][a.getId()];
-					
-					sched[0][s][c] = a.getName();
-					val--;
-					
-					if (val == 0) {
-						lit.remove();
-						scheduled.add(a);
-						taskFinished = true;
-					}
-					
-					remainingTime[0][a.getGraphID()][a.getId()] = val;
-				}
-			}
-						
-			if (taskFinished)
-				checkActivationLO(scheduled, ready);
-			
-			if (s != hPeriod - 1) {
-				checkDAGActivation(scheduled, ready, s + 1, 0);
-				calcLaxity(ready, s + 1, 0);
-			}
-			ready.sort(loComp);
-			taskFinished = false;
-			lit = ready.listIterator();
-		}
-	}
-	
-	/**
-	 * Builds all scheduling tables with no preemption
-	 */
-	public void buildAllnonpreempt() throws SchedulingException {
-		initRemainTime();
-		initTables();
-		
-		// Calculate LFTs and urgencies in all DAGs
-		for (DAG d : getMcDags()) {
-			calcLFTs(d);
-			if (isDebug()) printLFTs(d);
-		}
-		
-		// Build tables: more critical tables first
-		for (int i = getLevels() - 1; i >= 1; i--)
-			buildHInopreempt(i);
-		
-		buildLOnopreempt();
-				
-		/* for (int i = 0; i < getLevels(); i++)
-			AlignScheduler.align(sched, i, gethPeriod(), getNbCores());*/
-		
-		if(isDebug()) printTables();
 	}
 	
 	/*

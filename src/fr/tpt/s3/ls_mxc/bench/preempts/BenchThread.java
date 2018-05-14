@@ -140,14 +140,6 @@ public class BenchThread implements Runnable{
 			setSchedPreempt(false);
 		}
 		
-		// Build the non preemptive version of the algorithm
-		try {
-			nlvlNoPreempt.buildAllnonpreempt();
-		} catch (SchedulingException se) {
-			se.printStackTrace();
-			setSchedNoPreempt(false);
-		}
-		
 		// Try to write the results on a file
 		try {
 			writeResults(nlvlPreempt, nlvlNoPreempt);
