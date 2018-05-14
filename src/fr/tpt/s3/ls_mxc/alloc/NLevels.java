@@ -461,6 +461,13 @@ public class NLevels {
 					}
 				});
 				
+				if (isDebug()) {
+					System.out.print("[DEBUG "+Thread.currentThread().getName()+"] checkForEqualities(): tasks in equality: ");
+					for (ActorSched a : eqList)
+						System.out.print(a.getName()+" Laxity "+a.getLaxities()[level]+"; ");
+					System.out.println("");
+				}
+				
 				// Update delayed booleans
 				int remain = count - 1;
 				index = getNbCores() - count;
