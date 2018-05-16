@@ -95,9 +95,7 @@ public class AllocationThread implements Runnable{
 				System.out.println("["+Thread.currentThread().getName()+"] PRISM file written.");
 			}
 			
-		} else { // The model is has multiple DAGs
-			mcp.readXMLNlevels();
-			
+		} else { // The model is has multiple DAGs			
 			setNlvl(new NLevels(dags, mcp.getNbCores(), mcp.getNbLevels(), debug));
 			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] N levels: "+dags.size()+" DAGs are going to be scheduled in "+mcp.getNbCores()+" cores.");
 			nlvl.printDAGs();

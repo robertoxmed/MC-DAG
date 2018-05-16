@@ -31,7 +31,8 @@ public class ActorAvail extends ActorSched {
 	private int K;
 	
 	public ActorAvail (int id, String name, int[] wcet) {
-		super(id, name, cLO, cHI);
+		super(id, name, wcet.length);
+		this.setcIs(wcet);
 	}
 	
 	/*

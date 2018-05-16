@@ -171,7 +171,7 @@ public class BenchThread2 implements Runnable {
 	
 	@Override
 	public void run() {
-		mcp.readXMLNlevels();
+		mcp.readXML();
 		int nbCores = minCoresLaxity();
 		
 		// Test federated approach		

@@ -124,7 +124,7 @@ public class BenchThread implements Runnable{
 	@Override
 	public void run() {
 		// Read from the file to get the system
-		mcp.readXMLNlevels();
+		mcp.readXML();
 		
 		int minCores = minCores();
 		NLevels nlvlPreempt = new NLevels(dags, minCores, mcp.getNbLevels(), debug);

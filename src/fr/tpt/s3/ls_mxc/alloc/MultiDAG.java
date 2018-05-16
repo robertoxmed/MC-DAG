@@ -131,13 +131,13 @@ public class MultiDAG{
 			int test = Integer.MAX_VALUE;
 
 			for (Edge e : a.getRcvEdges()) {
-				test = ((ActorSched) e.getSrc()).getLFTHI() - e.getSrc().getCI(1);
+				test = ((ActorSched) e.getSrc()).getLFTs()[1] - e.getSrc().getCI(1);
 				
 				if (test < ret)
 					ret = test;
 			}
 		}
-		a.setLFTHI(ret);
+		a.setLFTinL(ret, 1);
 	}
 	
 	private void calcActorLFTLO (ActorSched a, int deadline) {
@@ -149,13 +149,12 @@ public class MultiDAG{
 			int test = Integer.MAX_VALUE;
 
 			for (Edge e : a.getSndEdges()) {
-				test = ((ActorSched) e.getDest()).getLFTLO() - e.getDest().getCI(0);
+				test = ((ActorSched) e.getDest()).getLFTs()[0] - e.getDest().getCI(0);
 				if (test < ret)
 					ret = test;
 			}
 		}
-		a.setLFTLO(ret);
-		a.getUrgencies()[0] = ret;
+		a.setLFTinL(ret, 0);
 	}
 	
 	/**
@@ -168,7 +167,7 @@ public class MultiDAG{
 		boolean ret = true;
 		
 		for (Edge e : a.getSndEdges()) {
-			if (!((ActorSched) e.getDest()).isVisited())
+			if (!((ActorSched) e.getDest()).getVisitedL()[0])
 				return false;
 		}
 		return ret;
@@ -184,7 +183,7 @@ public class MultiDAG{
 		boolean ret = true;
 		
 		for (Edge e : a.getRcvEdges()) {
-			if (e.getSrc().getCI(1) != 0 && !((ActorSched) e.getSrc()).isVisitedHI())
+			if (e.getSrc().getCI(1) != 0 && !((ActorSched) e.getSrc()).getVisitedL()[1])
 				return false;
 		}
 		
@@ -201,12 +200,12 @@ public class MultiDAG{
 		
 		for (Actor a : d.getSinks()) {
 			toVisit.add((ActorSched) a);
-			((ActorSched) a).setVisited(true);
+			((ActorSched) a).getVisitedL()[0] = true;
 		}
 		
 		for (Actor a : d.getSourcesHI()) {
 			toVisitHI.add((ActorSched) a);
-			((ActorSched) a).setVisitedHI(true);
+			((ActorSched) a).getVisitedL()[1] = true;
 		}
 		
 		while (toVisit.size() != 0) {
@@ -214,9 +213,9 @@ public class MultiDAG{
 			
 			calcActorLFTLO(a, d.getDeadline());
 			for (Edge e : a.getRcvEdges()) {
-				if (!((ActorSched) e.getSrc()).isVisited() && succVisited((ActorSched) e.getSrc())) {
+				if (!((ActorSched) e.getSrc()).getVisitedL()[0] && succVisited((ActorSched) e.getSrc())) {
 					toVisit.add((ActorSched) e.getSrc());
-					((ActorSched) e.getSrc()).setVisited(true);
+					((ActorSched) e.getSrc()).getVisitedL()[0] = true;
 				}
 			}
 			toVisit.remove(0);
@@ -227,10 +226,10 @@ public class MultiDAG{
 			
 			calcActorLFTHI(a, d.getDeadline());
 			for (Edge e : a.getSndEdges()) {
-				if (e.getDest().getCI(1) != 0 && !((ActorSched) e.getDest()).isVisitedHI()
+				if (e.getDest().getCI(1) != 0 && !((ActorSched) e.getDest()).getVisitedL()[1]
 						&& succVisitedHI((ActorSched) e.getDest())) {
 					toVisitHI.add((ActorSched) e.getDest());
-					((ActorSched) e.getDest()).setVisitedHI(true);
+					((ActorSched) e.getDest()).getVisitedL()[1] = true;
 				}
 			}
 			toVisitHI.remove(0);
@@ -378,7 +377,7 @@ public class MultiDAG{
 			int relatSlot = slot % a.getGraphDead();
 					
 			if (mode == ActorSched.HI) { // Laxity in HI mode
-				a.getUrgencies()[1] = a.getLFTHI() - relatSlot - remainTHI.get(a.getName());
+				a.getUrgencies()[1] = a.getLFTs()[1] - relatSlot - remainTHI.get(a.getName());
 			} else  {// Laxity in LO mode
 				// Promote HI tasks that need to be scheduled at this slot
 				if (a.getCI(1) != 0) {
@@ -386,10 +385,10 @@ public class MultiDAG{
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
 						a.getUrgencies()[0]  = 0;
 					} else {
-						a.getUrgencies()[0] = a.getLFTLO() - relatSlot - remainTLO.get(a.getName());
+						a.getUrgencies()[0] = a.getLFTs()[0] - relatSlot - remainTLO.get(a.getName());
 					}
 				} else {
-					a.getUrgencies()[0] = a.getLFTLO() - relatSlot - remainTLO.get(a.getName());
+					a.getUrgencies()[0] = a.getLFTs()[0] - relatSlot - remainTLO.get(a.getName());
 				}
 			}
 		}
@@ -605,8 +604,8 @@ public class MultiDAG{
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] printLFT(): DAG "+d.getId()+"; Actor "+a.getName()
-									+"; LFT LO "+((ActorSched) a).getLFTLO());
-				if (a.getCI(1) != 0) System.out.print("; LFT HI "+((ActorSched) a).getLFTHI());
+									+"; LFT LO "+((ActorSched) a).getLFTs()[0]);
+				if (a.getCI(1) != 0) System.out.print("; LFT HI "+((ActorSched) a).getLFTs()[1]);
 				System.out.println(".");
 			}
 		}
