@@ -30,7 +30,7 @@ public class ActorAvail extends ActorSched {
 	private int M;
 	private int K;
 	
-	public ActorAvail (int id, String name, int cLO, int cHI) {
+	public ActorAvail (int id, String name, int[] wcet) {
 		super(id, name, cLO, cHI);
 	}
 	

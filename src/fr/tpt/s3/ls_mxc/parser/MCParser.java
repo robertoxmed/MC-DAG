@@ -188,7 +188,7 @@ public class MCParser {
 	/**
 	 * Reads the XML file for a N level MC System
 	 */
-	public void readXMLNlevels () {
+	public void readXML () {
 		try {
 			File iFile = new File(inputFile);
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -241,11 +241,30 @@ public class MCParser {
 							}
 						}
 						
-						a = new ActorSched(nb_actors++, e.getAttribute("name"),getNbLevels());
+						if (!isbOutPrism()) {
+							a = new ActorSched(nb_actors++, e.getAttribute("name"),getNbLevels());
+							a.setcIs(wcets);
+						} else {
+							a = new ActorAvail(nb_actors++, e.getAttribute("name"), wcets[0], wcets[1]);
+							((ActorSched) a).setfProb(Double.parseDouble(e.getElementsByTagName("fprob").item(0).getTextContent()));
+						}
+							
 						((ActorSched) a).setGraphID(count);
-						a.setcIs(wcets);
 						((ActorSched) a).setGraphDead(dag.getDeadline());
 						dag.getNodes().add(a);
+					}
+				}
+					
+				// List of fault tolerance mechanisms
+				NodeList ftList = eDag.getElementsByTagName("ftm");
+				for (int i = 0; i < ftList.getLength(); i++) {
+					Node n = ftList.item(i);
+					if (n.getNodeType() == Node.ELEMENT_NODE) {
+						Element e = (Element) n;
+						
+						if (e.getAttribute("trype").contains("voter")) {
+							
+						}
 					}
 				}
 				
