@@ -40,7 +40,7 @@ public class ActorSched extends Actor {
 	private boolean running;
 	
 	private double fProb;
-	
+
 	/**
 	 * Constructor whithout CIs
 	 * @param id

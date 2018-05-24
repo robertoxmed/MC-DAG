@@ -2,38 +2,38 @@
 <mcsystem>
 	<mcdag name="D0" deadline="20">
 		<actor name="D0A1">
-			<clo>2</clo>
-			<chi>3</chi>
+			<wcet number="0">2</wcet>
+			<wcet number="1">3</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="D0A2">
-			<clo>2</clo>
-			<chi>5</chi>
+			<wcet number="0">2</wcet>
+			<wcet number="1">5</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="D0A3">
-			<clo>2</clo>
-			<chi>4</chi>
+			<wcet number="0">2</wcet>
+			<wcet number="1">4</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="D0A4">
-			<clo>2</clo>
-			<chi>3</chi>
+			<wcet number="0">2</wcet>
+			<wcet number="1">3</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="D0A5">
-			<clo>3</clo>
-			<chi>0</chi>
+			<wcet number="0">3</wcet>
+			<wcet number="1">0</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="D0A6">
-			<clo>1</clo>
-			<chi>0</chi>
+			<wcet number="0">1</wcet>
+			<wcet number="1">0</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="D0A7">
-			<clo>1</clo>
-			<chi>0</chi>
+			<wcet number="0">1</wcet>
+			<wcet number="1">0</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<ports>
@@ -48,38 +48,38 @@
 	</mcdag>
 	<mcdag name="D1" deadline="10">
 		<actor name="D1B1">
-			<clo>3</clo>
-			<chi>4</chi>
+			<wcet number="0">3</wcet>
+			<wcet number="1">4</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="D1B2">
-			<clo>2</clo>
-			<chi>4</chi>
+			<wcet number="0">2</wcet>
+			<wcet number="1">4</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="D1B3">
-			<clo>1</clo>
-			<chi>0</chi>
+			<wcet number="0">1</wcet>
+			<wcet number="1">0</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="D1B4">
-			<clo>2</clo>
-			<chi>0</chi>
+			<wcet number="0">2</wcet>
+			<wcet number="1">0</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="D1B5">
-			<clo>1</clo>
-			<chi>3</chi>
+			<wcet number="0">1</wcet>
+			<wcet number="1">3</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="D1B6">
-			<clo>2</clo>
-			<chi>0</chi>
+			<wcet number="0">2</wcet>
+			<wcet number="1">0</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="D1B7">
-			<clo>1</clo>
-			<chi>0</chi>
+			<wcet number="0">1</wcet>
+			<wcet number="1">0</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<ports>
@@ -93,5 +93,6 @@
 		</ports>
 	</mcdag>
 	<cores number="2"/>
+	<levels number="2"/>
 </mcsystem>
 

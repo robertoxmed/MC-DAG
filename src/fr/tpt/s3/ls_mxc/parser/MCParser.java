@@ -84,123 +84,9 @@ public class MCParser {
 	}
 	
 	/**
-	 * Reads the XML file and creates actors and edges
-	 */
-	public void readXML () {
-		try {
-			File iFile = new File(inputFile);
-			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-			
-			// Root element
-			Document doc = dBuilder.parse(iFile);
-			doc.getDocumentElement().normalize();
-			
-			NodeList eList = doc.getElementsByTagName("mcdag");
-			int count = 0;
-			
-			for (int d = 0; d < eList.getLength(); d++) {
-				Element eDag = (Element) eList.item(d);
-				DAG dag	= new DAG();
-				dag.setId(count);
-				dag.setDeadline(Integer.parseInt(eDag.getAttribute("deadline")));
-				
-				// Instantiate the DAG
-				int nb_actors = 0;
-				
-				// List of actors in the DAG
-				NodeList nList = eDag.getElementsByTagName("actor");
-				for (int i = 0; i < nList.getLength(); i++) {
-					Node n = nList.item(i);
-					if (n.getNodeType() == Node.ELEMENT_NODE) {
-						Element e = (Element) n;
-						Actor a;
-						if (outPrismFile == null) {
-							int[] wcets = new int[2];
-							// Initialize all the WCET of a node
-							NodeList wList = e.getElementsByTagName("wcet");
-							for (int j = 0; j < getNbLevels(); j++) {
-								Node w = wList.item(j);
-								if (w.getNodeType() == Node.ELEMENT_NODE) {
-									Element we = (Element) w;
-									
-									wcets[Integer.parseInt(we.getAttribute("number"))] = Integer.parseInt(we.getTextContent());
-								}
-							}
-							
-							a = new ActorSched(nb_actors++, e.getAttribute("name"),getNbLevels());
-							((ActorSched) a).setGraphID(count);
-							a.setcIs(wcets);
-						} else {
-							a = new ActorAvail(nb_actors++, e.getAttribute("name"),
-									Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
-									Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
-						}
-						if (isbOutPrism())
-							((ActorSched) a).setfProb(Double.parseDouble(e.getElementsByTagName("fprob").item(0).getTextContent()));
-						((ActorSched) a).setGraphDead(dag.getDeadline());
-						dag.getNodes().add(a);
-					}
-				}
-				
-				// List of fault tolerance mechanisms
-				NodeList ftList = eDag.getElementsByTagName("ftm");
-				for (int i = 0; i < ftList.getLength(); i++) {
-					Node n = ftList.item(i);
-					if (n.getNodeType() == Node.ELEMENT_NODE) {
-						Element e = (Element) n;
-						if (e.getAttribute("type").contains("voter")) {
-							ActorAvail a = new ActorAvail(nb_actors++, e.getAttribute("name"),
-												Integer.parseInt(e.getElementsByTagName("clo").item(0).getTextContent()),
-												Integer.parseInt(e.getElementsByTagName("chi").item(0).getTextContent()));
-							a.setfMechanism(true);
-							a.setfMechType(ActorAvail.VOTER);
-							a.setVotTask(e.getElementsByTagName("vtask").item(0).getTextContent());
-							((ActorAvail) dag.getNodebyName(e.getElementsByTagName("vtask").item(0).getTextContent())).setVoted(true);
-							a.setNbReplicas(Integer.parseInt(e.getElementsByTagName("replicas").item(0).getTextContent()));
-							dag.getNodes().add(a);
-						} else if (e.getAttribute("type").contains("mkfirm")) {
-							ActorAvail a = (ActorAvail) dag.getNodebyName(e.getAttribute("name"));
-							a.setfMechanism(true);
-							a.setfMechType(ActorAvail.MKFIRM);
-							a.setM(Integer.parseInt(e.getElementsByTagName("m").item(0).getTextContent()));
-							a.setK(Integer.parseInt(e.getElementsByTagName("k").item(0).getTextContent()));
-							a.setVoted(true);
-						} else {
-							System.out.println("Uknown FTM");
-						}
-					}
-				}
-				
-				// List of connections
-				NodeList ports = eDag.getElementsByTagName("ports");
-				NodeList pList = ports.item(0).getChildNodes();
-				for (int i = 0; i < pList.getLength(); i++) {
-					Node n = pList.item(i);
-					if (n.getNodeType() == Node.ELEMENT_NODE) {
-						Element e = (Element) n;
-						// Creating the edge adds it to the corresponding nodes
-						@SuppressWarnings("unused")
-						Edge ed = new Edge(dag.getNodebyName(e.getAttribute("srcActor")),
-								dag.getNodebyName(e.getAttribute("dstActor")));
-					}
-				}
-				dag.sanityChecks();
-				dags.add(dag);
-				count++;
-			}
-			NodeList cList = doc.getElementsByTagName("cores");
-			Element c = (Element) cList.item(0);
-			setNbCores(Integer.parseInt(c.getAttribute("number")));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	/**
 	 * Reads the XML file for a N level MC System
 	 */
-	public void readXMLNlevels () {
+	public void readXML() {
 		try {
 			File iFile = new File(inputFile);
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -253,11 +139,57 @@ public class MCParser {
 							}
 						}
 						
-						a = new ActorSched(nb_actors++, e.getAttribute("name"),getNbLevels());
+						if (!isbOutPrism()) {
+							a = new ActorSched(nb_actors++, e.getAttribute("name"),getNbLevels());
+							a.setcIs(wcets);
+						} else {
+							a = new ActorAvail(nb_actors++, e.getAttribute("name"), wcets);
+							((ActorSched) a).setfProb(Double.parseDouble(e.getElementsByTagName("fprob").item(0).getTextContent()));
+						}
+							
 						((ActorSched) a).setGraphID(count);
-						a.setcIs(wcets);
 						((ActorSched) a).setGraphDead(dag.getDeadline());
 						dag.getNodes().add(a);
+					}
+				}
+					
+				// List of fault tolerance mechanisms
+				NodeList ftList = eDag.getElementsByTagName("ftm");
+				for (int i = 0; i < ftList.getLength(); i++) {
+					Node n = ftList.item(i);
+					if (n.getNodeType() == Node.ELEMENT_NODE) {
+						Element e = (Element) n;
+						
+						if (e.getAttribute("type").contains("voter")) {
+							// Initialize all the WCET of a node							
+							NodeList wList = e.getElementsByTagName("wcet");
+							int[] wcets = new int[getNbLevels()];
+
+							for (int j = 0; j < getNbLevels(); j++) {
+								Node w = wList.item(j);
+								if (w.getNodeType() == Node.ELEMENT_NODE) {
+									Element we = (Element) w;
+									
+									wcets[Integer.parseInt(we.getAttribute("number"))] = Integer.parseInt(we.getTextContent());
+								}
+							}
+							ActorAvail a = new ActorAvail(nb_actors++, e.getAttribute("name"), wcets);
+							a.setfMechanism(true);
+							a.setfMechType(ActorAvail.VOTER);
+							a.setVotTask(e.getElementsByTagName("vtask").item(0).getTextContent());
+							((ActorAvail) dag.getNodebyName(e.getElementsByTagName("vtask").item(0).getTextContent())).setVoted(true);
+							a.setNbReplicas(Integer.parseInt(e.getElementsByTagName("replicas").item(0).getTextContent()));
+							dag.getNodes().add(a);
+						} else if (e.getAttribute("type").contains("mkfirm")) {
+							ActorAvail a = (ActorAvail) dag.getNodebyName(e.getAttribute("name"));
+							a.setfMechanism(true);
+							a.setfMechType(ActorAvail.MKFIRM);
+							a.setM(Integer.parseInt(e.getElementsByTagName("m").item(0).getTextContent()));
+							a.setK(Integer.parseInt(e.getElementsByTagName("k").item(0).getTextContent()));
+							a.setVoted(true);
+						} else {
+							System.err.println("[WARNING] Uknown fault tolerant mechanism.");
+						}
 					}
 				}
 				
@@ -687,7 +619,7 @@ public class MCParser {
 			// Number of cores of the architecture
 			Element cores = doc.createElement("cores");
 			Attr nbCores = doc.createAttribute("number");
-			nbCores.setValue(String.valueOf(1));
+			nbCores.setValue(String.valueOf(minCoresNlevels(ug.getGennedDAGs(), nbLevels)));
 			cores.setAttributeNode(nbCores);
 			rootElement.appendChild(cores);
 			
@@ -707,6 +639,36 @@ public class MCParser {
 		} catch (Exception ie) {
 			ie.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Private function to calculate the minimum number of cores needed to schedule a multi-DAG
+	 * multi-level system
+	 * @param setDAGs
+	 * @param lvl
+	 * @return
+	 */
+	private int minCoresNlevels (Set<DAG> setDAGs, int lvl) {
+		double[] sums = new double[lvl];
+		double max = 0;
+		int cores = 0;
+		
+		for (DAG d : setDAGs) {
+			for (int i = 0; i < lvl; i++) {
+				sums[i] += d.getUi(i);
+			}
+		}
+		
+		// Look for the max
+		for (int i = 0; i < lvl; i++) {
+			if (max < sums[i])
+				max = sums[i];
+		}
+		
+		// Ceil for number of cores
+		cores = (int) Math.ceil(max);
+		
+		return cores;
 	}
 	
 	/**

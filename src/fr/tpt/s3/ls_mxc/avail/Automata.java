@@ -271,8 +271,7 @@ public class Automata {
 	        sets.add(set);
 	    }       
 	    return sets;
-	}  
-	
+	}
 	
 	/**
 	 * Procedure links the states by creating Transitions objects
@@ -359,10 +358,6 @@ public class Automata {
 		}
 		
 		in = d.getNodes_HI().iterator();
-//		while (in.hasNext()) {
-//			Actor n = in.next();
-//			this.calcCompTimeHI(n.getName());
-//		}
 		State sH = new State(nbStates++, "SHI", 0);
 		hiSched.add(sH);
 				

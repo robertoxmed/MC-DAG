@@ -3,9 +3,15 @@
 	<!-- Definition of simple elements -->
 	<xs:element name="wcet" type="xs:integer"/>
 
+	<!-- Definition of attributes -->
+	<xs:attribute name="number" type="xs:integer"/>
+
 	<!-- Definition of complex elements -->
 	<xs:element name="mcsystem">
 		<xs:complexType>
+			<xs:sequence>
+				<xs:element
+			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
 </xs:schema>

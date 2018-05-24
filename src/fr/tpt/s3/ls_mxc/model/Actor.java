@@ -30,8 +30,6 @@ public abstract class Actor {
 	
 	private int[] cIs;
 	
-	private int cpFromNodeLO;
-	private int cpFromNodeHI;
 	private int cpFromNode[];
 	
 	private Set<Edge> rcvEdges;
@@ -124,10 +122,10 @@ public abstract class Actor {
 		
 		if (this.getRcvEdges().size() == 0) {
 			if (mode == 0) {
-				this.setCpFromNodeLO(this.getcIs()[0]);
+				getCpFromNode()[mode] = this.getcIs()[0];
 				return this.getcIs()[0];
 			} else {
-				this.setCpFromNodeHI(this.getcIs()[1]);
+				getCpFromNode()[mode] = this.getcIs()[1];
 				return this.getcIs()[1];
 			}
 		} else {
@@ -149,10 +147,10 @@ public abstract class Actor {
 			}
 			if (mode == ActorSched.LO) {
 				max += this.getcIs()[0];
-				this.setCpFromNodeLO(max);
+				getCpFromNode()[mode] = max;
 			} else {
 				max += this.getcIs()[1];
-				this.setCpFromNodeHI(max);
+				getCpFromNode()[mode] = max;
 			}
 			
 			return max;
@@ -313,22 +311,6 @@ public abstract class Actor {
 	
 	public void setSourceHI(boolean sourceHI) {
 		this.sourceHI = sourceHI;
-	}
-
-	public int getCpFromNodeLO() {
-		return cpFromNodeLO;
-	}
-
-	public void setCpFromNodeLO(int cpFromNodeLO) {
-		this.cpFromNodeLO = cpFromNodeLO;
-	}
-
-	public int getCpFromNodeHI() {
-		return cpFromNodeHI;
-	}
-
-	public void setCpFromNodeHI(int cpFromNodeHI) {
-		this.cpFromNodeHI = cpFromNodeHI;
 	}
 
 	public int[] getCpFromNode() {
