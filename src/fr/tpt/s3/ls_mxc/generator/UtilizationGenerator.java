@@ -99,8 +99,8 @@ public class UtilizationGenerator {
 		 
 		int budgetHI = (int) Math.ceil(rDead * rUHI);
 		int budgetLO = (int) Math.ceil(rDead * rULO);		
-		int CHIBound = (int) Math.ceil(rDead / 2);
-		int CLOBound = (int) Math.ceil(rDead / 2);
+		int CHIBound = (int) Math.ceil(rDead);
+		int CLOBound = (int) Math.ceil(rDead);
 		
 		if (isDebug()) {
 			System.out.println("[DEBUG] GenerateGraph: Generating a graph with parameters, ULO = "+rULO+", UHI = "+rUHI+
@@ -115,7 +115,7 @@ public class UtilizationGenerator {
 			// Roll a number of nodes to add to the level
 			int nodesPerRank = rng.randomUnifInt(1,paraDegree);
 			for (int j=0; j < nodesPerRank && budgetHI > 0; j++) {
-				ActorSched n = new ActorSched(id, Integer.toString(id), 0, 0);
+				ActorSched n = new ActorSched(id, Integer.toString(id), 2);
 			
 				// Roll a C_HI and test if budget is left
 				n.getcIs()[1] = rng.randomUnifInt(2, CHIBound);
@@ -200,7 +200,7 @@ public class UtilizationGenerator {
 			// Roll a number of nodes to add to the level
 			int nodesPerRank = rng.randomUnifInt(1, (int)(paraDegree / 2));
 			for (int j=0; j < nodesPerRank && budgetLO > 0; j++) {
-				ActorSched n = new ActorSched(id, Integer.toString(id), 0, 0);
+				ActorSched n = new ActorSched(id, Integer.toString(id), 2);
 			
 				// Roll a C_LO and test if budget is left
 				n.getcIs()[1] = 0;

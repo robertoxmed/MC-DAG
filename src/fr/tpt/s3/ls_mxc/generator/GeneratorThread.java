@@ -27,8 +27,8 @@ public class GeneratorThread implements Runnable{
 	private boolean debug;
 	
 	public GeneratorThread (double minU, double maxU, double eProb, int levels, int pDegree,
-			int nbDags, String outFile,	boolean graphBool, boolean debug) {
-		ug = new NLevelsGenerator(minU, maxU, eProb, levels, pDegree, nbDags, debug);
+			int nbDags, int rfactor, String outFile,	boolean graphBool, boolean debug) {
+		ug = new NLevelsGenerator(minU, maxU, eProb, levels, pDegree, nbDags, rfactor, debug);
 		mcp = new MCParser(outFile, ug);
 		setDebug(debug);
 		setGraphBool(graphBool);

@@ -22,15 +22,16 @@ public class NLevelsGenerator {
 	private double userMaxU;
 	private int nbLevels;
 	private int parallelismDegree;
+	private int rfactor;
 	
 	// Utilities
 	private RandomNumberGenerator rng;
 	private boolean debug;
 	
-	private int possibleDeadlines[] = {15, 20, 30, 40, 50, 100, 300}; 
+	private int possibleDeadlines[] = {15, 20, 30, 40, 50}; 
 	
 	public NLevelsGenerator (double minU, double maxU, double eProb, int levels, int paraDegree, int nbDAGs,
-			boolean debug) {
+			int rfactor, boolean debug) {
 		setUserMinU(minU);
 		setUserMaxU(maxU);
 		setEdgeProb(eProb);
@@ -38,6 +39,7 @@ public class NLevelsGenerator {
 		setParallelismDegree(paraDegree);
 		setNbDAGs(nbDAGs);
 		setDebug(debug);
+		setRfactor(rfactor);
 		rng = new RandomNumberGenerator();
 		gennedDAGs = new HashSet<>();
 	}
@@ -66,6 +68,7 @@ public class NLevelsGenerator {
 		DAG d = new DAG();
 		Set<Actor> nodes = new HashSet<Actor>();
 		int rank;
+		int prevRank;
 		
 		int idxDeadline = rng.randomUnifInt(0, possibleDeadlines.length - 1);
 		int rDead = possibleDeadlines[idxDeadline];
@@ -80,7 +83,7 @@ public class NLevelsGenerator {
 			else 
 				rU[i] = rng.randomUnifDouble(userMinU, userMaxU);
 			budgets[i] = (int) Math.ceil(rDead * rU[i]);
-			cBounds[i] = (int) Math.ceil(rDead / 4); 
+			cBounds[i] = (int) Math.ceil(rDead / 2); 
 		}
 		
 		if (isDebug()) {
@@ -90,17 +93,20 @@ public class NLevelsGenerator {
 			System.out.println("deadline = "+rDead);
 		}
 		
+		prevRank = 0;
 		// Generate nodes for all levels
 		for (int i = nbLevels - 1; i >= 0; i--) {
 			
 			// Node generation block
-			rank = 0;
+			rank = rng.randomUnifInt(0, prevRank);
 			
 			while (budgets[i] > 0) {
 				int nodesPerRank = rng.randomUnifInt(1, parallelismDegree);
 				
-				for (int j = 0; j < nodesPerRank && budgets[i] > 0; j++) {
+				for (int j = 0; j < nodesPerRank || budgets[i] < 0; j++) {
 					ActorSched n = new ActorSched(id, Integer.toString(id), nbLevels);
+					
+					System.out.println("RANKKKKK "+rank);
 					
 					// Roll the Ci
 					n.getcIs()[i] = rng.randomUnifInt(1, cBounds[i]);
@@ -122,7 +128,8 @@ public class NLevelsGenerator {
 							/* Roll a probability of having an edge between nodes
 							 * Make sure that the deadline is not reached
 							 */
-							if (rng.randomUnifDouble(0, 100) <= edgeProb && n.getRank() > src.getRank()
+							if (rng.randomUnifDouble(0, 100) <= edgeProb
+								&& n.getRank() > src.getRank()
 								&& src.getCpFromNode()[i] + n.getCI(i) <= rDead) {
 								@SuppressWarnings("unused")
 								Edge e = new Edge(src,n);
@@ -141,11 +148,11 @@ public class NLevelsGenerator {
 				rank++;
 			}
 			
+			prevRank = rank;
 			// Shrinking procedure only for HI tasks
 			if (i >= 1) {
-				System.out.println("Shrinking for mode "+i);
-
-				double minU = rU[i - 1] / 2;
+				// Shrinking depends on the reduction factor
+				double minU = rU[i - 1] / getRfactor();
 				int wantedBudget = (int) Math.ceil(minU * rDead);
 				int actualBudget = (int) Math.ceil(rU[i] * rDead);
 				Iterator<Actor> it_n;
@@ -280,5 +287,13 @@ public class NLevelsGenerator {
 
 	public void setNbDAGs(int nbDAGs) {
 		this.nbDAGs = nbDAGs;
+	}
+
+	public int getRfactor() {
+		return rfactor;
+	}
+
+	public void setRfactor(int rfactor) {
+		this.rfactor = rfactor;
 	}
 }

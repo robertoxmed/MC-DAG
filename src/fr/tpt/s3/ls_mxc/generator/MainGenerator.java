@@ -35,11 +35,11 @@ public class MainGenerator {
 		/* ============================ Command line ================= */
 		Options options = new Options();
 		
-		Option o_hi = new Option("mu", "max_utilization", true, "Max HI Utilization");
+		Option o_hi = new Option("mu", "max_utilization", true, "Upper bound utilization");
 		o_hi.setRequired(true);
 		options.addOption(o_hi);
 		
-		Option o_lo = new Option("lu", "low_utilization", true, "Max LO Utilization");
+		Option o_lo = new Option("lu", "low_utilization", true, "Lower bound utilization");
 		o_lo.setRequired(true);
 		options.addOption(o_lo);
 				
@@ -62,6 +62,10 @@ public class MainGenerator {
 		Option o_nbfiles = new Option("nf", "num_files", true, "Number of files");
 		o_nbfiles.setRequired(true);
 		options.addOption(o_nbfiles);
+		
+		Option o_rfactor = new Option("rf", "reduc_factor", true, "Reduction factor for criticality modes");
+		o_rfactor.setRequired(false);
+		options.addOption(o_rfactor);
 		
 		Option o_out = new Option("o", "output", true, "Output file for the DAG");
 		o_out.setRequired(true);
@@ -100,6 +104,9 @@ public class MainGenerator {
 		int nbDags = Integer.parseInt(cmd.getOptionValue("num_dags"));
 		int nbFiles = Integer.parseInt(cmd.getOptionValue("num_files"));
 		int para = Integer.parseInt(cmd.getOptionValue("parallelism"));
+		int rfactor = 2;
+		if (cmd.hasOption("reduc_factor"))
+			 rfactor = Integer.parseInt(cmd.getOptionValue("reduc_factor"));
 		boolean graph = cmd.hasOption("graphviz");	
 		boolean debug = cmd.hasOption("debug");	
 		String output = cmd.getOptionValue("output");
@@ -126,7 +133,7 @@ public class MainGenerator {
 			
 			for (int i = 0; i < nbJobs && count < nbFiles; i++) {
 				String outFile = output.substring(0, output.lastIndexOf('.')).concat("-"+count+".xml");
-				GeneratorThread gt = new GeneratorThread(minU, maxU, edgeProb, levels, para, nbDags, outFile, graph, debug);
+				GeneratorThread gt = new GeneratorThread(minU, maxU, edgeProb, levels, para, nbDags, rfactor, outFile, graph, debug);
 				threads[i] = new Thread(gt);
 				threads[i].setName("GeneratorThread-"+i);
 				launched++;
