@@ -68,8 +68,8 @@ public class MultiDAG{
 		lHIComp = new Comparator<ActorSched>() {
 			@Override
 			public int compare(ActorSched o1, ActorSched o2) {
-				if (o1.getUrgencies()[1] - o2.getUrgencies()[1] != 0)
-					return o1.getUrgencies()[1] - o2.getUrgencies()[1];
+				if (o1.getLaxities()[1] - o2.getLaxities()[1] != 0)
+					return o1.getLaxities()[1] - o2.getLaxities()[1];
 				else
 					return o2.getId() - o1.getId();
 			}			
@@ -78,8 +78,8 @@ public class MultiDAG{
 		lLOComp = new Comparator<ActorSched>() {
 			@Override
 			public int compare(ActorSched o1, ActorSched o2) {
-				if (o1.getUrgencies()[0] - o2.getUrgencies()[0] != 0)
-					return o1.getUrgencies()[0] - o2.getUrgencies()[0];
+				if (o1.getLaxities()[0] - o2.getLaxities()[0] != 0)
+					return o1.getLaxities()[0] - o2.getLaxities()[0];
 				else
 					return o1.getId() - o2.getId();
 			}		
@@ -377,18 +377,18 @@ public class MultiDAG{
 			int relatSlot = slot % a.getGraphDead();
 					
 			if (mode == ActorSched.HI) { // Laxity in HI mode
-				a.getUrgencies()[1] = a.getLFTs()[1] - relatSlot - remainTHI.get(a.getName());
+				a.getLaxities()[1] = a.getLFTs()[1] - relatSlot - remainTHI.get(a.getName());
 			} else  {// Laxity in LO mode
 				// Promote HI tasks that need to be scheduled at this slot
 				if (a.getCI(1) != 0) {
 					if ((a.getCI(0) - remainTLO.get(a.getName())) - scheduledUntilT(a, slot) < 0) {
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
-						a.getUrgencies()[0]  = 0;
+						a.getLaxities()[0]  = 0;
 					} else {
-						a.getUrgencies()[0] = a.getLFTs()[0] - relatSlot - remainTLO.get(a.getName());
+						a.getLaxities()[0] = a.getLFTs()[0] - relatSlot - remainTLO.get(a.getName());
 					}
 				} else {
-					a.getUrgencies()[0] = a.getLFTs()[0] - relatSlot - remainTLO.get(a.getName());
+					a.getLaxities()[0] = a.getLFTs()[0] - relatSlot - remainTLO.get(a.getName());
 				}
 			}
 		}
@@ -407,14 +407,14 @@ public class MultiDAG{
 			ActorSched a = it.next();
 			
 			if (mode == ActorSched.HI) {
-				if (a.getUrgencies()[1] == 0)
+				if (a.getLaxities()[1] == 0)
 					m++;
-				else if (a.getUrgencies()[1] < 0)
+				else if (a.getLaxities()[1] < 0)
 					return false;					
 			} else {
-				if (a.getUrgencies()[0] == 0)
+				if (a.getLaxities()[0] == 0)
 					m++;
-				else if (a.getUrgencies()[0] < 0)
+				else if (a.getLaxities()[0] < 0)
 					return false;
 			}
 			
@@ -452,7 +452,7 @@ public class MultiDAG{
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] allocHI(): @t = "+s+", tasks activated: ");
 				for (ActorSched a : lHI)
-					System.out.print("L("+a.getName()+") = "+a.getUrgencies()[1]+"; ");
+					System.out.print("L("+a.getName()+") = "+a.getLaxities()[1]+"; ");
 				System.out.println("");
 			}
 			
@@ -524,7 +524,7 @@ public class MultiDAG{
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] allocLO(): @t = "+s+", tasks activated: ");
 				for (ActorSched a : lLO)
-					System.out.print("L("+a.getName()+") = "+a.getUrgencies()[0]+"; ");
+					System.out.print("L("+a.getName()+") = "+a.getLaxities()[0]+"; ");
 				System.out.println("");
 			}
 			
