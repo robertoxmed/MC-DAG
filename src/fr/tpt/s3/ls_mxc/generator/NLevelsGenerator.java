@@ -53,7 +53,7 @@ public class NLevelsGenerator {
 		System.out.print("[DEBUG "+Thread.currentThread().getName()+"] "+func+": Node "+a.getId());
 		for (int i = nbLevels - 1; i >= 0; i--)
 			System.out.print(" C("+i+") = "+a.getCI(i)+";");
-		System.out.println("");
+		System.out.println(" Rank "+ ((ActorSched) a).getRank());
 		for (Edge e : a.getRcvEdges())
 			System.out.println("\t Rcv Edge "+e.getSrc().getId()+" -> "+a.getId());
 		for (Edge e : a.getSndEdges())
@@ -83,7 +83,7 @@ public class NLevelsGenerator {
 			else 
 				rU[i] = rng.randomUnifDouble(userMinU, userMaxU);
 			budgets[i] = (int) Math.ceil(rDead * rU[i]);
-			cBounds[i] = (int) Math.ceil(rDead / 2); 
+			cBounds[i] = (int) Math.ceil(rDead); 
 		}
 		
 		if (isDebug()) {
@@ -106,10 +106,12 @@ public class NLevelsGenerator {
 				for (int j = 0; j < nodesPerRank || budgets[i] < 0; j++) {
 					ActorSched n = new ActorSched(id, Integer.toString(id), nbLevels);
 					
-					System.out.println("RANKKKKK "+rank);
-					
 					// Roll the Ci
-					n.getcIs()[i] = rng.randomUnifInt(1, cBounds[i]);
+					if (budgets[i] >= rDead)
+						n.getcIs()[i] = rng.randomUnifInt(1, rDead);
+					else
+						n.getcIs()[i] = rng.randomUnifInt(1, budgets[i]);
+						
 					if (budgets[i] - n.getCI(i) > 0) {
 						budgets[i] -= n.getCI(i);
 					} else {
@@ -133,6 +135,11 @@ public class NLevelsGenerator {
 								&& src.getCpFromNode()[i] + n.getCI(i) <= rDead) {
 								@SuppressWarnings("unused")
 								Edge e = new Edge(src,n);
+								
+								/* Once the edge is added the critical path needs to
+								 * be updated
+								 */
+								src.CPfromNode(i);
 							}
 						}
 					}
