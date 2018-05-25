@@ -28,7 +28,7 @@ public class NLevelsGenerator {
 	private RandomNumberGenerator rng;
 	private boolean debug;
 	
-	private int possibleDeadlines[] = {20, 30, 50, 100, 250, 300}; 
+	private int possibleDeadlines[] = {30, 50, 60, 80, 100}; 
 	
 	public NLevelsGenerator (double maxU, int nbTasks,
 			double eProb, int levels, int paraDegree, int nbDAGs,
@@ -62,6 +62,26 @@ public class NLevelsGenerator {
 	}
 	
 	/**
+	 * UUnifast implementation
+	 * @param uSet
+	 * @param u
+	 * @return
+	 */
+	private void uunifast (double uSet[], double u) {
+		
+		double sum = u;
+		double nextSum;
+		
+		for (int i = 0; i < uSet.length; i++) {
+			nextSum = sum * Math.pow(rng.randomUnifDouble(0.0, 1.0), 1.0 / (uSet.length - (i + 1)));
+			uSet[i] = sum - nextSum;
+			sum = nextSum;
+		}
+	}
+	
+	/**
+	
+	/**
 	 * UunifastDiscard implementation
 	 * @param uSet
 	 * @param u
@@ -87,7 +107,7 @@ public class NLevelsGenerator {
 	}
 	
 	/**
-	 * Function that resets Ranks on nodes that have no edges
+	 * Method that resets Ranks on nodes that have no edges
 	 * -> They become source edges
 	 * @param level
 	 */
@@ -98,12 +118,10 @@ public class NLevelsGenerator {
 		}
 	}
 	
-
-	
 	/**
 	 * Method that generates a random graph
 	 */
-	public void GenerateGraph() {
+	protected void GenerateGraph(double utilization) {
 		int id = 0;
 		DAG d = new DAG();
 		Set<Actor> nodes = new HashSet<Actor>();
@@ -127,9 +145,8 @@ public class NLevelsGenerator {
 		 */
 
 		for (int i = 0; i < nbLevels; i++) {
-			
 			tasks[i] = (int) (nbTasks / nbLevels);
-			rU[i] = userMaxU;
+			rU[i] = utilization;
 			budgets[i] = (int) Math.ceil(rDead * rU[i]);
 			cBounds[i] = (int) Math.ceil(rDead); 
 		}
@@ -156,7 +173,7 @@ public class NLevelsGenerator {
 			int tasksToGen = tasks[i];
 			double uSet[] = new double[tasksToGen];
 			
-			while (!uunifastDiscard(uSet, rU[i]))
+			while (!uunifastDiscard(uSet, (budgets[i] / rDead)))
 				System.out.println("[DEBUG "+Thread.currentThread().getName()+"] GenerateGraph: Running uunifastDiscard for mode "+i);
 			
 			while (budgets[i] > 0 && tasksToGen > 0) {
@@ -274,6 +291,26 @@ public class NLevelsGenerator {
 				return false;
 		}
 		return true;
+	}
+	
+	/**
+	 * Method that generates all DAGs in the system
+	 * the utilization for the system is uniformly distributed between
+	 * the set of DAGs
+	 * @return
+	 */
+	protected void genAllDags () {
+		
+		// Apply Uunifast on the utilization for the DAGs
+		double[] uSet =  new double[getNbDAGs()];
+		uunifast(uSet, getUserMaxU());
+		
+		
+		// Call genDAG with the utilization found
+		for (int i = 0; i < getNbDAGs(); i++) {
+			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] Generating DAG #"+(i+1)+" of "+getNbDAGs());
+			GenerateGraph(uSet[i]);
+		}
 	}
 	
 	

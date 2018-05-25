@@ -38,22 +38,17 @@ public class GeneratorThread implements Runnable{
 	
 	@Override
 	public void run() {
-		for (int i = 0; i < ug.getNbDAGs(); i++) {
-			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] Generating DAG #"+i+" of "+ug.getNbDAGs());
-			ug.GenerateGraph();
-		}
+
+		ug.genAllDags();
 
 		// Write the file
 		try {
 			mcp.setNbLevels(ug.getNbLevels());
 			mcp.writeGennedDAG();
 			if (isGraphBool()) {
-				System.out.println("Dot : "+mcp.getOutGenFile().concat(".dot"));
 				mcp.setOutDotFile(mcp.getOutGenFile().concat(".dot"));
-				
 				mcp.writeDot();
 			}
-			System.out.println(Thread.currentThread().getName()+"> Written generated DAG(s)!");
 		} catch (IOException e) {
 			System.err.println("[ERROR] Failed to write the XML file in the generator " + e.getMessage());
 			System.exit(1);
