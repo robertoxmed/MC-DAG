@@ -18,22 +18,23 @@ public class NLevelsGenerator {
 	
 	// Parameters for the generation
 	private double edgeProb;
-	private double userMinU;
 	private double userMaxU;
 	private int nbLevels;
 	private int parallelismDegree;
 	private int rfactor;
+	private int nbTasks;
 	
 	// Utilities
 	private RandomNumberGenerator rng;
 	private boolean debug;
 	
-	private int possibleDeadlines[] = {15, 20, 30, 40, 50}; 
+	private int possibleDeadlines[] = {20, 30, 50, 100, 250, 300}; 
 	
-	public NLevelsGenerator (double minU, double maxU, double eProb, int levels, int paraDegree, int nbDAGs,
+	public NLevelsGenerator (double maxU, int nbTasks,
+			double eProb, int levels, int paraDegree, int nbDAGs,
 			int rfactor, boolean debug) {
-		setUserMinU(minU);
 		setUserMaxU(maxU);
+		setNbTasks(nbTasks);
 		setEdgeProb(eProb);
 		setNbLevels(levels);
 		setParallelismDegree(paraDegree);
@@ -61,6 +62,45 @@ public class NLevelsGenerator {
 	}
 	
 	/**
+	 * UunifastDiscard implementation
+	 * @param uSet
+	 * @param u
+	 * @return
+	 */
+	private boolean uunifastDiscard (double uSet[], double u) {
+		
+		double sum = u;
+		double nextSum;
+		
+		for (int i = 0; i < uSet.length; i++) {
+			nextSum = sum * Math.pow(rng.randomUnifDouble(0.0, 1.0), 1.0 / (uSet.length - i));
+			uSet[i] = sum - nextSum;
+			sum = nextSum;
+		}
+		
+		for (int i = 0; i < uSet.length; i++) {
+			if (uSet[i] > 1)
+				return false;
+		}
+		
+		return true;
+	}
+	
+	/**
+	 * Function that resets Ranks on nodes that have no edges
+	 * -> They become source edges
+	 * @param level
+	 */
+	private void resetRanks (Set<Actor> nodes, int level) {
+		for (Actor a : nodes) {
+			if (a.getSndEdges().size() == 0 && a.getRcvEdges().size() == 0)
+				((ActorSched) a).setRank(0);
+		}
+	}
+	
+
+	
+	/**
 	 * Method that generates a random graph
 	 */
 	public void GenerateGraph() {
@@ -73,15 +113,23 @@ public class NLevelsGenerator {
 		int idxDeadline = rng.randomUnifInt(0, possibleDeadlines.length - 1);
 		int rDead = possibleDeadlines[idxDeadline];
 		
+		
+		/* Init phase:
+		 * 	Utilization per mode + budgets per mode
+		 *  Deadline given to graph
+		 */
 		double rU[] = new double[nbLevels];
 		int budgets[] = new int[nbLevels];
 		int cBounds[] = new int[nbLevels];
-			
+		int tasks[] = new int[nbLevels];
+		
+		/* Random distribution of utilization between the bounds
+		 */
+
 		for (int i = 0; i < nbLevels; i++) {
-			if (i != 0)
-				rU[i] = rng.randomUnifDouble(rU[i - 1], rU[0] + ((userMaxU - rU[0]) / nbLevels) * (i+1));
-			else 
-				rU[i] = rng.randomUnifDouble(userMinU, userMaxU);
+			
+			tasks[i] = (int) (nbTasks / nbLevels);
+			rU[i] = userMaxU;
 			budgets[i] = (int) Math.ceil(rDead * rU[i]);
 			cBounds[i] = (int) Math.ceil(rDead); 
 		}
@@ -91,27 +139,35 @@ public class NLevelsGenerator {
 			for (int i = 0; i < nbLevels; i++)
 				System.out.print("U["+i+"] = "+rU[i]+"; ");
 			System.out.println("deadline = "+rDead);
+			System.out.print("[DEBUG "+Thread.currentThread().getName()+"] GenerateGraph: Number of tasks per mode");
+			for (int i = 0; i < nbLevels; i++)
+				System.out.print("NbTasks["+i+"] = "+tasks[i]+"; ");
+			System.out.println("");
 		}
 		
-		prevRank = 0;
 		// Generate nodes for all levels
+		prevRank = 0;
 		for (int i = nbLevels - 1; i >= 0; i--) {
 			
 			// Node generation block
 			rank = rng.randomUnifInt(0, prevRank);
 			
-			while (budgets[i] > 0) {
+			// Number of tasks to generate in mode i
+			int tasksToGen = tasks[i];
+			double uSet[] = new double[tasksToGen];
+			
+			while (!uunifastDiscard(uSet, rU[i]))
+				System.out.println("[DEBUG "+Thread.currentThread().getName()+"] GenerateGraph: Running uunifastDiscard for mode "+i);
+			
+			while (budgets[i] > 0 && tasksToGen > 0) {
 				int nodesPerRank = rng.randomUnifInt(1, parallelismDegree);
 				
 				for (int j = 0; j < nodesPerRank || budgets[i] < 0; j++) {
 					ActorSched n = new ActorSched(id, Integer.toString(id), nbLevels);
 					
-					// Roll the Ci
-					if (budgets[i] >= rDead)
-						n.getcIs()[i] = rng.randomUnifInt(1, rDead);
-					else
-						n.getcIs()[i] = rng.randomUnifInt(1, budgets[i]);
-						
+					// Transform uSet to budget
+					n.getcIs()[i] = (int) Math.ceil((rDead * uSet[tasks[i] - tasksToGen]));
+		
 					if (budgets[i] - n.getCI(i) > 0) {
 						budgets[i] -= n.getCI(i);
 					} else {
@@ -147,6 +203,7 @@ public class NLevelsGenerator {
 					if (i >= 1)
 						n.getcIs()[i - 1] = n.getCI(i);
 					nodes.add(n);
+					tasksToGen--;
 					n.CPfromNode(i);
 					id++;
 					if (isDebug())
@@ -192,6 +249,8 @@ public class NLevelsGenerator {
 				// Update remaining budgets
 				budgets[i - 1] -= actualBudget;				
 			}
+			
+			resetRanks(nodes, i);
 		}
 		
 		d.setNodes(nodes);
@@ -269,20 +328,10 @@ public class NLevelsGenerator {
 	public void setRng(RandomNumberGenerator rng) {
 		this.rng = rng;
 	}
-
-	public double getUserMinU() {
-		return userMinU;
-	}
-
-	public void setUserMinU(double userMinU) {
-		this.userMinU = userMinU;
-	}
-
-
+	
 	public int getNbLevels() {
 		return nbLevels;
 	}
-
 
 	public void setNbLevels(int nbLevels) {
 		this.nbLevels = nbLevels;
@@ -302,5 +351,13 @@ public class NLevelsGenerator {
 
 	public void setRfactor(int rfactor) {
 		this.rfactor = rfactor;
+	}
+
+	public int getNbTasks() {
+		return nbTasks;
+	}
+
+	public void setNbTasks(int nbTasks) {
+		this.nbTasks = nbTasks;
 	}
 }

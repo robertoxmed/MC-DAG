@@ -39,9 +39,9 @@ public class MainGenerator {
 		o_hi.setRequired(true);
 		options.addOption(o_hi);
 		
-		Option o_lo = new Option("lu", "low_utilization", true, "Lower bound utilization");
-		o_lo.setRequired(true);
-		options.addOption(o_lo);
+		Option o_tasks = new Option("nt", "nb_tasks", true, "Number of tasks for the system");
+		o_tasks.setRequired(true);
+		options.addOption(o_tasks);
 				
 		Option o_eprob = new Option("e", "eprobability", true, "Probability of edges");
 		o_eprob.setRequired(true);
@@ -98,22 +98,21 @@ public class MainGenerator {
 		}
 		
 		double maxU = Double.parseDouble(cmd.getOptionValue("max_utilization"));
-		double minU = Double.parseDouble(cmd.getOptionValue("low_utilization"));
 		int edgeProb = Integer.parseInt(cmd.getOptionValue("eprobability"));
 		int levels = Integer.parseInt(cmd.getOptionValue("levels"));
 		int nbDags = Integer.parseInt(cmd.getOptionValue("num_dags"));
 		int nbFiles = Integer.parseInt(cmd.getOptionValue("num_files"));
 		int para = Integer.parseInt(cmd.getOptionValue("parallelism"));
-		int rfactor = 2;
-		if (cmd.hasOption("reduc_factor"))
-			 rfactor = Integer.parseInt(cmd.getOptionValue("reduc_factor"));
+		int nbTasks = Integer.parseInt(cmd.getOptionValue("nb_tasks"));
 		boolean graph = cmd.hasOption("graphviz");	
 		boolean debug = cmd.hasOption("debug");	
 		String output = cmd.getOptionValue("output");
 		int nbJobs = 1;
 		if (cmd.hasOption("jobs"))
 			nbJobs = Integer.parseInt(cmd.getOptionValue("jobs"));
-		
+		int rfactor = 2;
+		if (cmd.hasOption("reduc_factor"))
+			 rfactor = Integer.parseInt(cmd.getOptionValue("reduc_factor"));
 		/* ============================= Generator parameters ============================= */
 		
 		if (nbFiles < 0 || nbDags < 0 || nbJobs < 0) {
@@ -133,7 +132,8 @@ public class MainGenerator {
 			
 			for (int i = 0; i < nbJobs && count < nbFiles; i++) {
 				String outFile = output.substring(0, output.lastIndexOf('.')).concat("-"+count+".xml");
-				GeneratorThread gt = new GeneratorThread(minU, maxU, edgeProb, levels, para, nbDags, rfactor, outFile, graph, debug);
+				GeneratorThread gt = new GeneratorThread(maxU, nbTasks, edgeProb,
+									levels, para, nbDags, rfactor, outFile, graph, debug);
 				threads[i] = new Thread(gt);
 				threads[i].setName("GeneratorThread-"+i);
 				launched++;
