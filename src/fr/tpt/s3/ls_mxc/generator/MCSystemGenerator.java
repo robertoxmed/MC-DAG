@@ -90,7 +90,7 @@ public class MCSystemGenerator {
 		
 		double sum = u;
 		double nextSum;
-		
+					
 		for (int i = 0; i < uSet.length; i++) {
 			nextSum = sum * Math.pow(rng.randomUnifDouble(0.0, 1.0), 1.0 / (uSet.length - i));
 			uSet[i] = sum - nextSum;
@@ -103,6 +103,17 @@ public class MCSystemGenerator {
 		}
 		
 		return true;
+	}
+	
+	/**
+	 * Debug function for utilization given to tasks
+	 * @param uSet
+	 */
+	private void printUset (double uSet[]) {
+		System.out.print("[DEBUG "+Thread.currentThread().getName()+"] GenerateGraph():");
+		for (int i = 0; i < uSet.length; i++)
+			System.out.print(" U_Task["+ i + "] = " + uSet[i]);
+		System.out.println("");
 	}
 	
 	/**
@@ -129,7 +140,6 @@ public class MCSystemGenerator {
 		
 		int idxDeadline = rng.randomUnifInt(0, possibleDeadlines.length - 1);
 		int rDead = possibleDeadlines[idxDeadline];
-		
 		
 		/* Init phase:
 		 * 	Utilization per mode + budgets per mode
@@ -158,7 +168,7 @@ public class MCSystemGenerator {
 			System.out.print("[DEBUG "+Thread.currentThread().getName()+"] GenerateGraph: Number of tasks per mode");
 			for (int i = 0; i < nbLevels; i++)
 				System.out.print("NbTasks["+i+"] = "+tasks[i]+"; ");
-			System.out.println("");
+			System.out.println(" buget "+budgets[1]);
 		}
 		
 		// Generate nodes for all levels
@@ -171,11 +181,15 @@ public class MCSystemGenerator {
 			// Number of tasks to generate in mode i
 			int tasksToGen = tasks[i];
 			double uSet[] = new double[tasksToGen];
+			double uInMode = (double) budgets[i] / rDead;
 			
-			while (!uunifastDiscard(uSet, (budgets[i] / rDead))) {
-				if (isDebug())
+			while (!uunifastDiscard(uSet, uInMode)) {
+				if (isDebug()) {
 					System.out.println("[DEBUG "+Thread.currentThread().getName()+"] GenerateGraph: Running uunifastDiscard for mode "+i);
+				}
 			}
+			
+			if (isDebug()) printUset(uSet);
 			
 			while (budgets[i] > 0 && tasksToGen > 0) {
 				int nodesPerRank = rng.randomUnifInt(1, parallelismDegree);
@@ -267,7 +281,8 @@ public class MCSystemGenerator {
 				// Update remaining budgets
 				budgets[i - 1] -= actualBudget;				
 			}
-			
+			// Nodes that have no edges become source nodes
+			// their rank is reset
 			resetRanks(nodes, i);
 		}
 		
@@ -277,7 +292,7 @@ public class MCSystemGenerator {
 		getGennedDAGs().add(d);
 		
 		if (isDebug())
-			System.out.println("[DEBUG"+Thread.currentThread().getName()+"] GenerateGraph(): DAG generation completed");
+			System.out.println("[DEBUG "+Thread.currentThread().getName()+"] GenerateGraph(): DAG generation completed");
 	}
 	
 	/**
@@ -305,7 +320,6 @@ public class MCSystemGenerator {
 		// Apply Uunifast on the utilization for the DAGs
 		double[] uSet =  new double[getNbDAGs()];
 		uunifast(uSet, getUserMaxU());
-		
 		
 		// Call genDAG with the utilization found
 		for (int i = 0; i < getNbDAGs(); i++) {
