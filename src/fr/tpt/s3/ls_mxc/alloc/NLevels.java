@@ -721,7 +721,7 @@ public class NLevels {
 		
 		calcLaxity(ready, 0, 0);
 		ready.sort(loComp);
-		checkForEqualities(ready, 0);
+		//checkForEqualities(ready, 0);
 		
 		// Allocate slot by slot the scheduling table
 		ListIterator<ActorSched> lit = ready.listIterator();
@@ -768,7 +768,7 @@ public class NLevels {
 				calcLaxity(ready, s + 1, 0);
 			}
 			ready.sort(loComp);
-			checkForEqualities(ready, 0);
+			//checkForEqualities(ready, 0);
 			taskFinished = false;
 			lit = ready.listIterator();
 		}

@@ -21,7 +21,7 @@ import fr.tpt.s3.ls_mxc.parser.MCParser;
 
 public class GeneratorThread implements Runnable{
 
-	private NLevelsGenerator ug;
+	private MCSystemGenerator ug;
 	private MCParser mcp;
 	private boolean graphBool;
 	private boolean debug;
@@ -29,7 +29,7 @@ public class GeneratorThread implements Runnable{
 	public GeneratorThread (double maxU, int nbTasks, double eProb, int levels,
 			int pDegree, int nbDags, int rfactor, String outFile, boolean graphBool, boolean debug) {
 		
-		ug = new NLevelsGenerator(maxU, nbTasks, eProb, levels, pDegree,
+		ug = new MCSystemGenerator(maxU, nbTasks, eProb, levels, pDegree,
 								  nbDags, rfactor, debug);
 		mcp = new MCParser(outFile, ug);
 		setDebug(debug);
@@ -59,11 +59,11 @@ public class GeneratorThread implements Runnable{
 	/*
 	 * Getters & setters
 	 */
-	public NLevelsGenerator getUg() {
+	public MCSystemGenerator getUg() {
 		return ug;
 	}
 
-	public void setUg(NLevelsGenerator ug) {
+	public void setUg(MCSystemGenerator ug) {
 		this.ug = ug;
 	}
 	

@@ -43,7 +43,7 @@ import fr.tpt.s3.ls_mxc.avail.FTM;
 import fr.tpt.s3.ls_mxc.avail.Formula;
 import fr.tpt.s3.ls_mxc.avail.State;
 import fr.tpt.s3.ls_mxc.avail.Transition;
-import fr.tpt.s3.ls_mxc.generator.NLevelsGenerator;
+import fr.tpt.s3.ls_mxc.generator.MCSystemGenerator;
 import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
 import fr.tpt.s3.ls_mxc.model.Actor;
@@ -62,7 +62,7 @@ public class MCParser {
 	// Only references do not have to be instantiated
 	private Set<DAG> dags;
 	private Automata auto;
-	private NLevelsGenerator ug;
+	private MCSystemGenerator ug;
 	
 	// Writing scheduling tables
 	private String[][][] sched;
@@ -78,7 +78,7 @@ public class MCParser {
 		this.setNbLevels(2);
 	}
 	
-	public MCParser (String oGFile, NLevelsGenerator ug) {
+	public MCParser (String oGFile, MCSystemGenerator ug) {
 		setOutGenFile(oGFile);
 		setUg(ug);
 	}
@@ -755,11 +755,11 @@ public class MCParser {
 		this.outGenFile = outGenFile;
 	}
 
-	public NLevelsGenerator getUg() {
+	public MCSystemGenerator getUg() {
 		return ug;
 	}
 
-	public void setUg(NLevelsGenerator ug) {
+	public void setUg(MCSystemGenerator ug) {
 		this.ug = ug;
 	}
 

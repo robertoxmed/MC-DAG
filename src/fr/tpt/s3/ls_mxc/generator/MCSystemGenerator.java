@@ -10,7 +10,7 @@ import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.model.Edge;
 import fr.tpt.s3.ls_mxc.util.RandomNumberGenerator;
 
-public class NLevelsGenerator {
+public class MCSystemGenerator {
 
 	// Set of generated graphs
 	private Set<DAG> gennedDAGs;
@@ -30,7 +30,7 @@ public class NLevelsGenerator {
 	
 	private int possibleDeadlines[] = {30, 50, 60, 80, 100}; 
 	
-	public NLevelsGenerator (double maxU, int nbTasks,
+	public MCSystemGenerator (double maxU, int nbTasks,
 			double eProb, int levels, int paraDegree, int nbDAGs,
 			int rfactor, boolean debug) {
 		setUserMaxU(maxU);
@@ -65,7 +65,6 @@ public class NLevelsGenerator {
 	 * UUnifast implementation
 	 * @param uSet
 	 * @param u
-	 * @return
 	 */
 	private void uunifast (double uSet[], double u) {
 		
@@ -173,8 +172,10 @@ public class NLevelsGenerator {
 			int tasksToGen = tasks[i];
 			double uSet[] = new double[tasksToGen];
 			
-			while (!uunifastDiscard(uSet, (budgets[i] / rDead)))
-				System.out.println("[DEBUG "+Thread.currentThread().getName()+"] GenerateGraph: Running uunifastDiscard for mode "+i);
+			while (!uunifastDiscard(uSet, (budgets[i] / rDead))) {
+				if (isDebug())
+					System.out.println("[DEBUG "+Thread.currentThread().getName()+"] GenerateGraph: Running uunifastDiscard for mode "+i);
+			}
 			
 			while (budgets[i] > 0 && tasksToGen > 0) {
 				int nodesPerRank = rng.randomUnifInt(1, parallelismDegree);
