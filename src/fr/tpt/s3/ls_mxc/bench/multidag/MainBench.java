@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package fr.tpt.s3.ls_mxc.bench.dac;
+package fr.tpt.s3.ls_mxc.bench.multidag;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -93,19 +93,7 @@ public class MainBench {
 		 *  While files need to be allocated
 		 *  run the tests in the pool of threads
 		 */
-		
-//		int i_files = 0;
-//		ExecutorService executor = Executors.newFixedThreadPool(nbJobs);
-//		
-//		while (i_files != nbFiles) {
-//			BenchThread bt = new BenchThread(inputFilePath[i_files], outputFilePath, boolDebug);
-//			
-//			executor.execute(bt);
-//			i_files++;
-//		}
-//		executor.shutdown();
-//		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-		
+	
 		int i_files2 = 0;
 		String outFile2 = outputFilePath.substring(0, outputFilePath.lastIndexOf('.')).concat("-schedulability.csv");
 		writer = new PrintWriter(outFile2, "UTF-8");
@@ -114,7 +102,7 @@ public class MainBench {
 		
 		ExecutorService executor2 = Executors.newFixedThreadPool(nbJobs);
 		while (i_files2 != nbFiles) {
-			BenchThread2 bt2 = new BenchThread2(inputFilePath[i_files2], outFile2, boolDebug);
+			BenchThread bt2 = new BenchThread(inputFilePath[i_files2], outFile2, boolDebug);
 			
 			executor2.execute(bt2);
 			i_files2++;

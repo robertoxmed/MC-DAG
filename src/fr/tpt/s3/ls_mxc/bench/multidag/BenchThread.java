@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package fr.tpt.s3.ls_mxc.bench.dac;
+package fr.tpt.s3.ls_mxc.bench.multidag;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -31,7 +31,7 @@ import fr.tpt.s3.ls_mxc.model.DAG;
 import fr.tpt.s3.ls_mxc.parser.MCParser;
 import fr.tpt.s3.ls_mxc.util.MathMCDAG;
 
-public class BenchThread2 implements Runnable {
+public class BenchThread implements Runnable {
 	
 	private Set<DAG> dags;
 	private MCParser mcp;
@@ -42,7 +42,7 @@ public class BenchThread2 implements Runnable {
 	private boolean schedFede;
 	private boolean schedLax;
 	
-	public BenchThread2 (String input, String output, boolean debug) {
+	public BenchThread (String input, String output, boolean debug) {
 		setInputFile(input);
 		dags = new HashSet<DAG>();
 		setOutputFile(output);
