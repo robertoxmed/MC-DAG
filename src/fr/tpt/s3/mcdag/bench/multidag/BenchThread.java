@@ -124,7 +124,7 @@ public class BenchThread implements Runnable {
 		// Test federated approach
 		// Make a copy of the system instance
 		Set<DAG> copyDags = new HashSet<DAG>(dags);
-		Federated fed = new Federated(copyDags, nbCores);
+		Federated fed = new Federated(copyDags, nbCores, debug);
 		
 		try {
 			fed.buildTables();

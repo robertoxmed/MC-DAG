@@ -36,7 +36,7 @@ public class Federated {
 	 * @param system
 	 * @param architecture
 	 */
-	public Federated (Set<DAG> system, int architecture) {
+	public Federated (Set<DAG> system, int architecture, boolean debug) {
 		setMcDags(system);
 		setNbCores(architecture);
 		setDebug(debug);
@@ -75,28 +75,31 @@ public class Federated {
 		
 		// Look for sinks first
 		for (Actor a : d.getNodes()) {
-			if (a.getSndEdges().size() == 0 &&
-					a.getCI(level) != 0)
-				toVisit.add((ActorSched)a);
+			boolean add = true;
+			for (Edge e : a.getSndEdges()) {
+				if (e.getDest().getCI(level) != 0) {
+					add = false;
+					break;
+				}
+			}
+			if (add)
+				toVisit.add((ActorSched)a);		
 		}
 		
 		// Iterate through nodes and compute their HLFET
 		while (toVisit.size() != 0) {
 			ActorSched a = toVisit.get(0);
 			
-			if (a.getSndEdges().size() == 0) {
-				a.getHlfet()[level] = a.getCI(level);
-			} else {
-				// Look for the max on the SndEdges
-				int max = 0;
+			// Look for the max on the SndEdges
+			int max = 0;
 				
-				for (Edge e : a.getSndEdges()) {
-					ActorSched dest = (ActorSched) e.getDest();
-					if (dest.getHlfet()[level] > max)
-						max = a.getHlfet()[level];
-				}
-				a.getHlfet()[level] = max + a.getCI(level);
+			for (Edge e : a.getSndEdges()) {
+				ActorSched dest = (ActorSched) e.getDest();
+				if (dest.getCI(level) != 0 &&
+						dest.getHlfet()[level] > max)
+					max = a.getHlfet()[level];
 			}
+			a.getHlfet()[level] = max + a.getCI(level);
 			
 			a.getVisitedL()[level] = true;
 	
@@ -106,14 +109,14 @@ public class Federated {
 				
 				for (Edge e2 : test.getSndEdges()) {
 					ActorSched dest = (ActorSched) e2.getDest();
-					if (!dest.getVisitedL()[level]) {
+					if (!dest.getVisitedL()[level] && dest.getCI(level) != 0) {
 						allSuccVisited = false;
 						break;
 					}
 				}
 				
-				if (allSuccVisited && a.getCI(level) != 0 && !toVisit.contains((ActorSched)a))
-					toVisit.add((ActorSched)a);
+				if (allSuccVisited && test.getCI(level) != 0 && !toVisit.contains((ActorSched)test))
+					toVisit.add((ActorSched)test);
 			}
 			toVisit.remove(0);
 		}
@@ -193,7 +196,6 @@ public class Federated {
 		ListIterator<ActorSched> rit = ready.listIterator();
 		ListIterator<ActorSched> pit = prioOrder.listIterator();
 
-		
 		// Iterate through the number of cores
 		for (int s = 0; s < d.getDeadline(); s++) {
 			if (isDebug()) {
@@ -213,7 +215,7 @@ public class Federated {
 			ArrayList<ActorSched> toSched = new ArrayList<>();
 			int coreBudget = d.getMinCores();
 			
-			while (coreBudget != 0) {
+			while (coreBudget != 0 || ready.size() == 0) {
 				if (pit.hasNext()) {
 					ActorSched a = pit.next();
 				
@@ -252,10 +254,8 @@ public class Federated {
 					pit.remove();
 					rit.remove();
 				}
-				
 				c++;
 			}
-			
 			
 			// Check if we have new activations
 			if (taskFinished) {
@@ -305,6 +305,7 @@ public class Federated {
 		
 		// Check for scheduling of heavy DAGs
 		for (DAG d : heavyDAGs) {
+			System.out.println(">>>>>>>>>>>>>>>>>>> Testing dag"+d.getId());
 			
 			List<ActorSched> hiPrioOrder = new LinkedList<>();
 			List<ActorSched> loPrioOrder = new LinkedList<>();
@@ -318,14 +319,31 @@ public class Federated {
 					}
 				}
 			}
+			printDAG(d);
 			
 			calcHLFETs(d, 1, hiPrioOrder);
 			calcHLFETs(d, 0, loPrioOrder);
+			
+			if (isDebug()) printHLFETLevels(d);
 			
 			buildHITable(d, sched, hiPrioOrder);
 			
 			buildLOTable(d, sched, loPrioOrder);
 		}
+	}
+	
+	/*
+	 * DEBUG FUNCTIONS
+	 */
+	private void printHLFETLevels (DAG d) {
+		for (Actor a : d.getNodes())
+			System.out.println("Node "+a.getName()+" HLEFT(HI) "+((ActorSched)a).getHlfet()[1]+" HLFET(LO) "+((ActorSched)a).getHlfet()[0]);
+	}
+	
+	private void printDAG (DAG d) {
+		for (Actor a : d.getNodes())
+			System.out.println("Node "+a.getName()+" Ci(HI) "+((ActorSched)a).getCI(1)+" Ci(LO) "+((ActorSched)a).getCI(0));
+
 	}
 
 	/*
