@@ -322,7 +322,7 @@ public class Federated {
 					}  else  { // Check if other HI tasks were running
 						for (ActorSched check : ready) {
 							if (check.isRunning() && !toSched.contains(check) 
-									&& check.getCI(1) != 0) {
+									&& check.getCI(1) != 0 && coreBudget > 0) {
 								coreBudget--;
 								toSched.add(check);
 							}
@@ -347,9 +347,12 @@ public class Federated {
 						toSched.add(a);
 					} else { // Check if other LO tasks were already running
 						for (ActorSched check : ready) {
-							if (check.isRunning() && check.getCI(1) == 0 && !toSched.contains(check)) {
+							if (check.isRunning() && check.getCI(1) == 0 &&
+									!toSched.contains(check) && coreBudget > 0) {
 								coreBudget--;
 								toSched.add(check);
+							} else if (check.isRunning() && coreBudget <= 0) {
+								check.setRunning(false);
 							}
 						}
 					}

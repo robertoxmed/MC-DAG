@@ -28,7 +28,7 @@ public class MCSystemGenerator {
 	private RandomNumberGenerator rng;
 	private boolean debug;
 	
-	private int possibleDeadlines[] = {30, 50, 60, 80, 100}; 
+	private int possibleDeadlines[] = {100, 200, 250, 500}; 
 	
 	public MCSystemGenerator (double maxU, int nbTasks,
 			double eProb, int levels, int paraDegree, int nbDAGs,

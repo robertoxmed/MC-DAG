@@ -16,8 +16,12 @@
  *******************************************************************************/
 package fr.tpt.s3.mcdag.bench.multidag;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Writer;
+import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -52,6 +56,14 @@ public class MainBench {
 		output.setRequired(true);
 		options.addOption(output);
 		
+		Option uUti = new Option("u", "utilization", true, "Utilization.");
+		uUti.setRequired(true);
+		options.addOption(uUti);
+		
+		Option output2 = new Option("ot", "output-total", true, "File where total results are being written");
+		output2.setRequired(true);
+		options.addOption(output2);
+		
 		Option jobs = new Option("j", "jobs", true, "Number of threads to be launched.");
 		jobs.setRequired(false);
 		options.addOption(jobs);
@@ -75,6 +87,9 @@ public class MainBench {
 		
 		String inputFilePath[] = cmd.getOptionValues("input");
 		String outputFilePath = cmd.getOptionValue("output");
+		String outputFilePath2 = cmd.getOptionValue("output-total");
+		double utilization = Double.parseDouble(cmd.getOptionValue("utilization"));
+
 		boolean boolDebug = cmd.hasOption("debug");
 		int nbJobs = 1;
 		int nbFiles = inputFilePath.length;
@@ -103,7 +118,41 @@ public class MainBench {
 		
 		executor2.shutdown();
 		executor2.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		
+		int fedTotal = 0;
+		int schedTotal = 0;
+		// Read lines in file and do average
+		int i = 0;
+		@SuppressWarnings("resource")
+		Scanner line = new Scanner(outFile);
+		while (line.hasNextLine()) {
+			String s = line.nextLine();
+			if (i != 0) { // To skip the first line
+				try (Scanner inLine = new Scanner(s).useDelimiter("; ")) {
+					int j = 0;
+					
+					while (inLine.hasNext()) {
+						if (j == 2) {
+							String val = inLine.next();
+							fedTotal += Integer.parseInt(val);
+						} else if (j == 3) {
+							String val = inLine.next();
+							fedTotal += Integer.parseInt(val);
+						}
+						j++;
+					}
+				}
+			}
+		}
+		
+		// Write percentage
+		double fedPerc = (double)(fedTotal/nbFiles) * 100;
+		double laxPerc = (double)(schedTotal/nbFiles) * 100;
 
+		@SuppressWarnings("resource")
+		Writer wOutput = new BufferedWriter(new FileWriter(outputFilePath2, true));
+		wOutput.write(Thread.currentThread().getName()+"; "+utilization+"; "+fedPerc+"; "+laxPerc+"\n");
+		
 		System.out.println("[BENCH Main] DONE");
 	}
 }

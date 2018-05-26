@@ -30,7 +30,6 @@ import fr.tpt.s3.mcdag.model.Actor;
 import fr.tpt.s3.mcdag.model.ActorSched;
 import fr.tpt.s3.mcdag.model.DAG;
 import fr.tpt.s3.mcdag.parser.MCParser;
-import fr.tpt.s3.mcdag.util.MathMCDAG;
 
 public class BenchThread implements Runnable {
 	
@@ -48,50 +47,10 @@ public class BenchThread implements Runnable {
 		dags = new HashSet<DAG>();
 		setOutputFile(output);
 		setDebug(debug);
-		setSchedFede(false);
+		setSchedFede(true);
 		setSchedLax(true);
 		mcp = new MCParser(inputFile, null, dags, false);
 	}
-	
-	/**
-	 * Internal function that calculates the minimum number of cores
-	 * to use with a laxity based scheduler
-	 * @return
-	 */
-	@SuppressWarnings("unused")
-	private int minCoresLaxity () {
-		int ret = 0;
-		int hPeriod = 0;
-		int[] input = new int[getDags().size()];
-		int i = 0;
-		double uLO = 0.0;
-		double uHI = 0.0;
-		double uMax = 0.0;
-		
-		for (DAG d : getDags()) {
-			input[i] = d.getDeadline();
-			i++;
-		}		
-	
-		hPeriod = MathMCDAG.lcm(input);
-		
-		for (DAG d : getDags()) {
-			int nbActivations = (int) (hPeriod / d.getDeadline());
-			
-			for (Actor a : d.getNodes()) {
-				if (a.getCI(1) != 0)
-					uHI += nbActivations * a.getCI(1);
-				uLO += nbActivations * a.getCI(0);
-			}
-		}
-		uLO = uLO / hPeriod;
-		uHI = uHI / hPeriod;
-		uMax = (uHI > uLO) ? uHI : uLO;
-		ret = (int) (Math.ceil(uMax));
-		
-		return ret;
-	}
-
 	
 	/**
 	 * Writes the results of the thread in the text file
@@ -112,7 +71,7 @@ public class BenchThread implements Runnable {
 		for (DAG d : dags)
 			uDAGs += d.getUmax();
 		
-		output.write(Thread.currentThread().getName()+"; "+getInputFile()+"; "+outBFSched+"; "+outBLSched+"; "+uDAGs+";\n");
+		output.write(Thread.currentThread().getName()+"; "+getInputFile()+"; "+outBFSched+"; "+outBLSched+"; "+uDAGs+"\n");
 		output.close();
 	}
 	
