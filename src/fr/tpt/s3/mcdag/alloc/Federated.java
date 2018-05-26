@@ -75,15 +75,21 @@ public class Federated {
 		
 		// Look for sinks first
 		for (Actor a : d.getNodes()) {
-			boolean add = true;
-			for (Edge e : a.getSndEdges()) {
-				if (e.getDest().getCI(level) != 0) {
-					add = false;
-					break;
+			if (a.getCI(level) != 0) {
+				if (a.getSndEdges().size() == 0 && a.getCI(level) != 0) {
+					toVisit.add((ActorSched)a);
+				} else {
+					boolean add = true;
+					
+					for (Edge e : a.getSndEdges()) {
+						if (e.getDest().getCI(level) != 0)
+							add = false;
+					}
+					if (add) {
+						toVisit.add((ActorSched)a);
+					}
 				}
 			}
-			if (add)
-				toVisit.add((ActorSched)a);		
 		}
 		
 		// Iterate through nodes and compute their HLFET
@@ -96,13 +102,13 @@ public class Federated {
 			for (Edge e : a.getSndEdges()) {
 				ActorSched dest = (ActorSched) e.getDest();
 				if (dest.getCI(level) != 0 &&
-						dest.getHlfet()[level] > max)
-					max = a.getHlfet()[level];
+						dest.getHlfet()[level] > max) {
+					max = dest.getHlfet()[level];
+				}
 			}
 			a.getHlfet()[level] = max + a.getCI(level);
-			
 			a.getVisitedL()[level] = true;
-	
+
 			for (Edge e : a.getRcvEdges()) {
 				boolean allSuccVisited = true;
 				Actor test = e.getSrc();
@@ -167,10 +173,11 @@ public class Federated {
 					}
 				}
 				
-				if (add)
+				if (add && remainingTime[dest.getId()] != 0)
 					ready.add(dest);
 			}
 			scheduled.remove(sched);
+			ready.remove(sched);
 		}
 	}
 	
@@ -193,7 +200,6 @@ public class Federated {
 		
 		ready.sort(hiComp);
 		
-		ListIterator<ActorSched> rit = ready.listIterator();
 		ListIterator<ActorSched> pit = prioOrder.listIterator();
 
 		// Iterate through the number of cores
@@ -215,28 +221,27 @@ public class Federated {
 			ArrayList<ActorSched> toSched = new ArrayList<>();
 			int coreBudget = d.getMinCores();
 			
-			while (coreBudget != 0 || ready.size() == 0) {
-				if (pit.hasNext()) {
-					ActorSched a = pit.next();
+			while (pit.hasNext() && coreBudget > 0) {
+				ActorSched a = pit.next();
 				
-					// 	The priority actor is in the ready queue
-					if (ready.contains(a)) {
-						if (a.isRunning()) { // Task was already running previous slot
-							coreBudget--;
-							toSched.add(a);
-						} else  { // Check if other tasks were running
-							for (ActorSched check : ready) {
-								if (check.isRunning()) {
-									coreBudget--;
-									toSched.add(a);
-								}
+				// 	The priority actor is in the ready queue
+				if (ready.contains(a)) {
+					if (a.isRunning()) { // Task was already running previous slot
+						coreBudget--;
+						toSched.add(a);
+					} else  { // Check if other tasks were running
+						for (ActorSched check : ready) {
+							if (check.isRunning()) {
+								coreBudget--;
+								toSched.add(a);
 							}
-						} 
-						// If no other task was running start scheduling
-						if (coreBudget > 0) {
-							toSched.add(a);
-							a.setRunning(true);
 						}
+					} 
+					// If no other task was running start scheduling
+					if (coreBudget > 0) {
+						toSched.add(a);
+						a.setRunning(true);
+						coreBudget--;
 					}
 				}
 			}
@@ -252,7 +257,6 @@ public class Federated {
 					scheduled.add(a);
 					taskFinished = true;
 					pit.remove();
-					rit.remove();
 				}
 				c++;
 			}
@@ -263,6 +267,7 @@ public class Federated {
 				ready.sort(hiComp);
 				taskFinished = false;
 			}
+			pit = prioOrder.listIterator();
 		}
 		
 	}
