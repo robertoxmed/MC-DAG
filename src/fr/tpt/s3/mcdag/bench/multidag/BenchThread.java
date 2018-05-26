@@ -24,9 +24,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 import fr.tpt.s3.mcdag.alloc.Federated;
-import fr.tpt.s3.mcdag.alloc.NLevels;
+import fr.tpt.s3.mcdag.alloc.MultiDAG;
 import fr.tpt.s3.mcdag.alloc.SchedulingException;
 import fr.tpt.s3.mcdag.model.Actor;
+import fr.tpt.s3.mcdag.model.ActorSched;
 import fr.tpt.s3.mcdag.model.DAG;
 import fr.tpt.s3.mcdag.parser.MCParser;
 import fr.tpt.s3.mcdag.util.MathMCDAG;
@@ -115,6 +116,15 @@ public class BenchThread implements Runnable {
 		output.close();
 	}
 	
+	private void resetVisited (Set<DAG> sd) {
+		for (DAG d : sd) {
+			for (Actor a : d.getNodes()) {
+				((ActorSched) a).getVisitedL()[0] = false;
+				((ActorSched) a).getVisitedL()[1] = false;
+			}
+		}
+	}
+	
 	
 	@Override
 	public void run() {
@@ -134,10 +144,13 @@ public class BenchThread implements Runnable {
 		}
 	
 		// Test laxity
-		NLevels nlvl = new NLevels(dags, nbCores, 2, false);
+		MultiDAG mdag = new MultiDAG(dags, nbCores, debug);
+		// NLevels nlvl = new NLevels(dags, nbCores, 2, debug);
 		
 		try {
-			nlvl.buildAllTables();
+			resetVisited(dags);
+			mdag.allocAll();
+			// nlvl.buildAllTables();
 		} catch (SchedulingException se) {
 			setSchedLax(false);
 			if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] LAXITY non schedulable with "+nbCores+" cores.");

@@ -66,7 +66,7 @@ public class Federated {
 			remainingTime[i] = 0;
 		
 		for (Actor a : d.getNodes())
-			remainingTime[a.getId()] = a.getcIs()[level];		
+			remainingTime[a.getId()] = a.getCI(level);
 	}
 	
 	private void calcHLFETs (DAG d, int level, List<ActorSched> prioOrder) {
@@ -158,7 +158,9 @@ public class Federated {
 	
 	private void checkNewActivations (List<ActorSched> scheduled, List<ActorSched> ready, int remainingTime[]) {
 		// Check from the scheduled tasks the new activations
-		for (ActorSched sched : scheduled) {
+		ListIterator<ActorSched> lit = scheduled.listIterator();
+		while (lit.hasNext()) {
+			ActorSched sched = lit.next();
 			// Check destination nodes
 			for (Edge eDest : sched.getSndEdges()) {
 				ActorSched dest = (ActorSched) eDest.getDest();
@@ -173,10 +175,11 @@ public class Federated {
 					}
 				}
 				
-				if (add && remainingTime[dest.getId()] != 0)
+				if (add && remainingTime[dest.getId()] != 0) {
 					ready.add(dest);
+				}
 			}
-			scheduled.remove(sched);
+			lit.remove();
 			ready.remove(sched);
 		}
 	}
@@ -231,14 +234,14 @@ public class Federated {
 						toSched.add(a);
 					} else  { // Check if other tasks were running
 						for (ActorSched check : ready) {
-							if (check.isRunning()) {
+							if (check.isRunning() && !toSched.contains(check)) {
 								coreBudget--;
-								toSched.add(a);
+								toSched.add(check);
 							}
 						}
 					} 
 					// If no other task was running start scheduling
-					if (coreBudget > 0) {
+					if (coreBudget > 0 && !toSched.contains(a)) {
 						toSched.add(a);
 						a.setRunning(true);
 						coreBudget--;
@@ -249,14 +252,12 @@ public class Federated {
 			// Allocate
 			int c = 0;
 			for (ActorSched a : toSched) {
-				sched[1][s][c] = a.getName();
-				
-				remainingTime[a.getId()]--;
-				
+				sched[1][s][c] = a.getName();	
+				remainingTime[a.getId()] = remainingTime[a.getId()] - 1;
+
 				if (remainingTime[a.getId()] == 0) {
 					scheduled.add(a);
 					taskFinished = true;
-					pit.remove();
 				}
 				c++;
 			}
@@ -272,8 +273,117 @@ public class Federated {
 		
 	}
 	
-	private void buildLOTable (DAG d, String sched[][][], List<ActorSched> prioOrder) throws SchedulingException {
+	private void buildLOTable (DAG d, String sched[][][], List<ActorSched> loPrioOrder, List<ActorSched> hiPrioOrder) throws SchedulingException {
+		List<ActorSched> ready = new LinkedList<ActorSched>();
+		List<ActorSched> scheduled = new LinkedList<ActorSched>();
+		int[] remainingTime = new int[d.getNodes().size()];
+		boolean taskFinished = false;
 		
+		// Init remaining time and tables
+		initRemainingTimes(d, remainingTime, 0);
+		
+		for (Actor a : d.getNodes()) {
+			if (a.getRcvEdges().size() == 0)
+				ready.add((ActorSched)a);
+		}
+		
+		ready.sort(loComp);
+		ListIterator<ActorSched> hpit = hiPrioOrder.listIterator();
+		ListIterator<ActorSched> lpit = loPrioOrder.listIterator();
+
+		// Iterate through the number of cores
+		for (int s = 0; s < d.getDeadline(); s++) {
+			if (isDebug()) {
+				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildLOTable(): @t = "+s+", tasks activated: ");
+				for (ActorSched a : ready)
+					System.out.print("H("+a.getName()+") = "+a.getHlfet()[0]+"; ");
+				System.out.println("");
+			}
+			
+			// There aren't enough slots to continue the allocation
+			if (!enoughSlots(ready, s, d.getDeadline(), d.getMinCores(), remainingTime)) {
+				SchedulingException se = new SchedulingException("[ERROR"+Thread.currentThread().getName()+"] buildLOTable(): Failed to schedule at time "+s);
+				throw se;
+			}
+			
+			// Construct the schedulable elements
+			ArrayList<ActorSched> toSched = new ArrayList<>();
+			int coreBudget = d.getMinCores();
+			
+			// Check the priority ordering of HI tasks first
+			while (hpit.hasNext() && coreBudget > 0) {
+				ActorSched a = hpit.next();
+				
+				// Priority task is in the ready queue
+				if (ready.contains(a)) { 
+					if (a.isRunning()) { // Task was already running previous slot
+						coreBudget--;
+						toSched.add(a);
+					}  else  { // Check if other HI tasks were running
+						for (ActorSched check : ready) {
+							if (check.isRunning() && !toSched.contains(check) 
+									&& check.getCI(1) != 0) {
+								coreBudget--;
+								toSched.add(check);
+							}
+						}
+					}
+					// In this case HI tasks can preempt LO ones
+					if (coreBudget > 0 && !toSched.contains(a)) {
+						toSched.add(a);
+						a.setRunning(true);
+						coreBudget--;
+					}
+				}
+			}
+			
+			// Check if we can allocate LO tasks
+			while (lpit.hasNext() && coreBudget > 0) {
+				ActorSched a = lpit.next();
+				
+				if (ready.contains(a)) { // LO task is ready
+					if (a.isRunning()) {
+						coreBudget--;
+						toSched.add(a);
+					} else { // Check if other LO tasks were already running
+						for (ActorSched check : ready) {
+							if (check.isRunning() && check.getCI(1) == 0 && !toSched.contains(check)) {
+								coreBudget--;
+								toSched.add(check);
+							}
+						}
+					}
+					// LO task can start being scheduled
+					if (coreBudget > 0 && !toSched.contains(a)) {
+						toSched.add(a);
+						a.setRunning(true);
+						coreBudget--;
+					}
+				}
+			}
+			
+			// Allocate
+			int c = 0;
+			for (ActorSched a : toSched) {
+				sched[0][s][c] = a.getName();
+				remainingTime[a.getId()] = remainingTime[a.getId()] - 1;
+
+				if (remainingTime[a.getId()] == 0) {
+					scheduled.add(a);
+					taskFinished = true;
+				}
+				c++;
+			}
+			
+			// Check if we have new activations
+			if (taskFinished) {
+				checkNewActivations(scheduled, ready, remainingTime);
+				ready.sort(loComp);
+				taskFinished = false;
+			}
+			hpit = hiPrioOrder.listIterator();
+			lpit = loPrioOrder.listIterator();
+		}
 	}
 	
 	public void buildTables () throws SchedulingException {
@@ -282,6 +392,7 @@ public class Federated {
 		double uLightDAGs = 0.0;
 		Set<DAG> heavyDAGs = new HashSet<DAG>();
 		Set<DAG> lightDAGs = new HashSet<DAG>();
+		
 		
 		// Separate heavy and light DAGs
 		// Check if we have enough cores in the architecture
@@ -309,9 +420,7 @@ public class Federated {
 		}
 		
 		// Check for scheduling of heavy DAGs
-		for (DAG d : heavyDAGs) {
-			System.out.println(">>>>>>>>>>>>>>>>>>> Testing dag"+d.getId());
-			
+		for (DAG d : heavyDAGs) {			
 			List<ActorSched> hiPrioOrder = new LinkedList<>();
 			List<ActorSched> loPrioOrder = new LinkedList<>();
 			// Init sched table
@@ -324,16 +433,24 @@ public class Federated {
 					}
 				}
 			}
-			printDAG(d);
+			if (isDebug()) printDAG(d);
 			
 			calcHLFETs(d, 1, hiPrioOrder);
 			calcHLFETs(d, 0, loPrioOrder);
 			
+			ListIterator<ActorSched> lit = loPrioOrder.listIterator();
+			while (lit.hasNext()) {
+				ActorSched a = lit.next();
+				if (a.getCI(1) > 0)
+					lit.remove();
+			}
+			loPrioOrder.sort(loComp);
+			
+			
 			if (isDebug()) printHLFETLevels(d);
 			
 			buildHITable(d, sched, hiPrioOrder);
-			
-			buildLOTable(d, sched, loPrioOrder);
+			buildLOTable(d, sched, loPrioOrder, hiPrioOrder);
 		}
 	}
 	
