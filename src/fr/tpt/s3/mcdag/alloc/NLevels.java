@@ -496,7 +496,7 @@ public class NLevels {
 	 * @param level
 	 * @return
 	 */
-	private boolean isPossible(List<ActorSched> list, int slot, int level) {
+	private boolean isPossible (List<ActorSched> list, int slot, int level) {
 		int m = 0;
 		ListIterator<ActorSched> lit = list.listIterator();
 		
@@ -663,7 +663,7 @@ public class NLevels {
 						break;
 					int val = remainingTime[l][a.getGraphID()][a.getId()];
 					
-					sched[l][s][c] = a .getName();
+					sched[l][s][c] = a.getName();
 					val--;
 					
 					// The task has been fully scheduled

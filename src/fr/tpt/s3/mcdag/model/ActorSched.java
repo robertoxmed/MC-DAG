@@ -19,9 +19,7 @@ package fr.tpt.s3.mcdag.model;
 public class ActorSched extends Actor {
 	
 	// Used for singleDAG scheduling
-	private int wLO;
-	private int wHI;
-	private int wB;
+	private int[] hlfet;
 	
 	// Used for DAG generation
 	private int rank;
@@ -49,15 +47,18 @@ public class ActorSched extends Actor {
 	public ActorSched (int id, String name, int nbLevels) {
 		super(id, name, nbLevels);
 		
+		hlfet = new int[nbLevels];
 		LFTs = new int[nbLevels];
 		laxity = new int[nbLevels];
 		visitedL = new boolean[nbLevels];
 		
 		for (int i = 0; i < nbLevels; i++) {
+			hlfet[i] = 0;
 			LFTs[i] = Integer.MAX_VALUE;
 			laxity[i] = Integer.MAX_VALUE;
 			visitedL[i] = false;
 		}
+		running = false;
 		delayed = false;
 	}
 	
@@ -70,18 +71,6 @@ public class ActorSched extends Actor {
 	public void setfProb(double fProb) {
 		this.fProb = fProb;
 	}
-	public int getWeightLO(){
-		return this.wLO;
-	}
-	public void setWeightLO(int w_lo){
-		this.wLO = w_lo;
-	}
-	public int getWeightHI(){
-		return this.wHI;
-	}
-	public void setWeightHI(int w_hi){
-		this.wHI = w_hi;
-	}
 
 	public int getRank() {
 		return rank;
@@ -89,14 +78,6 @@ public class ActorSched extends Actor {
 
 	public void setRank(int rank) {
 		this.rank = rank;
-	}
-
-	public int getWeightB() {
-		return wB;
-	}
-
-	public void setWeightB(int weight_B) {
-		this.wB = weight_B;
 	}
 
 	public int getGraphDead() {
@@ -163,6 +144,14 @@ public class ActorSched extends Actor {
 
 	public void setRunning(boolean running) {
 		this.running = running;
+	}
+
+	public int[] getHlfet() {
+		return hlfet;
+	}
+
+	public void setHlfet(int[] hlfet) {
+		this.hlfet = hlfet;
 	}
 
 }

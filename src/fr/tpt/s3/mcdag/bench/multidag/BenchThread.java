@@ -26,7 +26,6 @@ import java.util.Set;
 import fr.tpt.s3.mcdag.alloc.Federated;
 import fr.tpt.s3.mcdag.alloc.NLevels;
 import fr.tpt.s3.mcdag.alloc.SchedulingException;
-import fr.tpt.s3.mcdag.alloc.SingleDAG;
 import fr.tpt.s3.mcdag.model.Actor;
 import fr.tpt.s3.mcdag.model.DAG;
 import fr.tpt.s3.mcdag.parser.MCParser;
@@ -116,55 +115,16 @@ public class BenchThread implements Runnable {
 		output.close();
 	}
 	
-	/**
-	 * Tests if all the DAGs are schedulable with the federated approach
-	 * @param nbCores
-	 * @return
-	 * @throws SchedulingException 
-	 */
-	private void testFederated (int nbCores) {
-		Set<DAG> clusteredDAGs = new HashSet<DAG>();
-		int coresBudget = nbCores;
-		double uRestLO = 0.0;
-		double uRestHI = 0.0;
-		double uRestMax = 0.0;
-		
-		for (DAG d : dags) {
-			if (d.getUHI() >= 1 || d.getULO() >= 1) {
-				clusteredDAGs.add(d);
-				coresBudget -= d.getMinCores();
-			} else {
-				uRestLO += d.getULO();
-				uRestHI += d.getUHI();
-			}
-		}
-		uRestMax += (uRestHI > uRestLO) ? uRestHI : uRestLO;
-		coresBudget -= (int) Math.ceil(uRestMax);
-		
-		if (coresBudget < 0) {
-			setSchedFede(false);
-			return;
-		}
-		
-		for (DAG d : clusteredDAGs) {
-			SingleDAG ls = new SingleDAG(d.getDeadline(), d.getMinCores(), d);
-			try {
-				ls.CheckBaruah();
-			} catch (SchedulingException se) {
-				setSchedFede(false);
-				return;
-			}
-		}
-		this.setSchedFede(true);
-	}
 	
 	@Override
 	public void run() {
 		mcp.readXML();
 		int nbCores = 4;
 		
-		// Test federated approach		
-		Federated fed = new Federated(dags, nbCores);
+		// Test federated approach
+		// Make a copy of the system instance
+		Set<DAG> copyDags = new HashSet<DAG>(dags);
+		Federated fed = new Federated(copyDags, nbCores);
 		
 		try {
 			fed.buildTables();
@@ -251,6 +211,4 @@ public class BenchThread implements Runnable {
 	public void setSchedLax(boolean schedLax) {
 		this.schedLax = schedLax;
 	}
-
-
 }
