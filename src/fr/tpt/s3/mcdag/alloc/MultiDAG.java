@@ -446,11 +446,33 @@ public class MultiDAG{
 		return true;
 	}
 	
+	private boolean enoughSlots (int slot, List<ActorSched> ready, short mode) {
+		
+		ListIterator<ActorSched> lit = ready.listIterator();
+		int sumCi = 0;
+		int left = (gethPeriod() - slot) * getNbCores();
+		
+		while (lit.hasNext()) {
+			ActorSched a = lit.next();
+			
+			if (mode == Actor.HI)
+				sumCi += a.getCI(1);
+			else
+				sumCi += a.getCI(0);
+			
+		}
+		
+		if (sumCi > left)
+			return false;
+		
+		return true;
+	}
+	
 	/**
 	 * Allocates the DAGs in the HI mode and registers virtual deadlines
 	 * @throws SchedulingException
 	 */
-	public boolean allocHI () throws SchedulingException {
+	public void allocHI () throws SchedulingException {
 		List<ActorSched> completed = new LinkedList<>();
 		lHI = new ArrayList<ActorSched>();
 		
@@ -492,6 +514,11 @@ public class MultiDAG{
 				throw se;
 			}
 			
+//			if (!enoughSlots(gethPeriod() - s, lHI, ActorSched.HI)) {
+//				SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] allocHI() MultiDAG: Not enough slots left.");
+//				throw se;
+//			}
+			
 			for (int c = getNbCores() - 1; c >= 0; c--) {
 				// Find a ready task in the HI list
 				if (lit.hasNext()) {
@@ -524,14 +551,17 @@ public class MultiDAG{
 			taskFinished = false;
 			lit = lHI.listIterator();
 		}
-		return true;
+		if (lHI.size() != 0) {
+			SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] allocHI() MultiDAG: Not enough slots left.");
+			throw se;
+		}
 	}
 	
 	/**
 	 * Allocates the DAGs in LO mode
 	 * @throws SchedulingException
 	 */
-	public boolean allocLO () throws SchedulingException{
+	public void allocLO () throws SchedulingException{
 		List<ActorSched> completed = new LinkedList<>();
 		lLO = new ArrayList<ActorSched>();
 		
@@ -562,7 +592,12 @@ public class MultiDAG{
 			if (!isPossible(s, lLO, ActorSched.LO)) {
 				SchedulingException se = new SchedulingException("[WARNING "+Thread.currentThread().getName()+"] allocLO() MultiDAG: Not enough slot left");
 				throw se;
-			}			
+			}
+			
+			if (!enoughSlots(s, lLO, ActorSched.LO)) {
+				SchedulingException se = new SchedulingException("[WARNING "+Thread.currentThread().getName()+"] allocLO() MultiDAG: Not enough slot left");
+				throw se;
+			}
 			
 			for (int c = 0; c < getNbCores(); c++) {
 				// Find a ready task in the LO list
@@ -593,7 +628,10 @@ public class MultiDAG{
 			taskFinished = false;
 			lit = lLO.listIterator();
 		}
-		return true;
+		if (lHI.size() != 0) {
+			SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] allocHI() MultiDAG: Not enough slots left.");
+			throw se;
+		}
 	}
 	
 	/**

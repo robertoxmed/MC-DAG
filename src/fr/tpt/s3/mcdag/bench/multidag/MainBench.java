@@ -17,6 +17,7 @@
 package fr.tpt.s3.mcdag.bench.multidag;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -64,6 +65,10 @@ public class MainBench {
 		output2.setRequired(true);
 		options.addOption(output2);
 		
+		Option oCores = new Option("c", "cores", true, "Cores given to the test");
+		oCores.setRequired(true);
+		options.addOption(oCores);
+		
 		Option jobs = new Option("j", "jobs", true, "Number of threads to be launched.");
 		jobs.setRequired(false);
 		options.addOption(jobs);
@@ -96,6 +101,8 @@ public class MainBench {
 				
 		if (cmd.hasOption("jobs"))
 			nbJobs = Integer.parseInt(cmd.getOptionValue("jobs"));
+		
+		int nbCores = Integer.parseInt(cmd.getOptionValue("cores"));
 	
 		/*
 		 *  While files need to be allocated
@@ -105,12 +112,12 @@ public class MainBench {
 		int i_files2 = 0;
 		String outFile = outputFilePath.substring(0, outputFilePath.lastIndexOf('.')).concat("-schedulability.csv");
 		PrintWriter writer = new PrintWriter(outFile, "UTF-8");
-		writer.println("Thread; File; FSched (?) ; LSched (?); Utilization");
+		writer.println("Thread; File; FSched (?); LSched (?); Utilization");
 		writer.close();
 		
 		ExecutorService executor2 = Executors.newFixedThreadPool(nbJobs);
 		while (i_files2 != nbFiles) {
-			BenchThread bt2 = new BenchThread(inputFilePath[i_files2], outFile, boolDebug);
+			BenchThread bt2 = new BenchThread(inputFilePath[i_files2], outFile, nbCores, boolDebug);
 			
 			executor2.execute(bt2);
 			i_files2++;
@@ -120,38 +127,39 @@ public class MainBench {
 		executor2.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 		
 		int fedTotal = 0;
-		int schedTotal = 0;
+		int laxTotal = 0;
 		// Read lines in file and do average
 		int i = 0;
+		File f = new File(outFile);
 		@SuppressWarnings("resource")
-		Scanner line = new Scanner(outFile);
+		Scanner line = new Scanner(f);
 		while (line.hasNextLine()) {
 			String s = line.nextLine();
-			if (i != 0) { // To skip the first line
+			if (i > 0) { // To skip the first line
 				try (Scanner inLine = new Scanner(s).useDelimiter("; ")) {
 					int j = 0;
 					
 					while (inLine.hasNext()) {
+						String val = inLine.next();
 						if (j == 2) {
-							String val = inLine.next();
 							fedTotal += Integer.parseInt(val);
 						} else if (j == 3) {
-							String val = inLine.next();
-							fedTotal += Integer.parseInt(val);
+							laxTotal += Integer.parseInt(val);
 						}
 						j++;
 					}
 				}
 			}
+			i++;
 		}
 		
 		// Write percentage
-		double fedPerc = (double)(fedTotal/nbFiles) * 100;
-		double laxPerc = (double)(schedTotal/nbFiles) * 100;
+		double fedPerc = (double) fedTotal / nbFiles;
+		double laxPerc = (double) laxTotal / nbFiles;
 
-		@SuppressWarnings("resource")
 		Writer wOutput = new BufferedWriter(new FileWriter(outputFilePath2, true));
 		wOutput.write(Thread.currentThread().getName()+"; "+utilization+"; "+fedPerc+"; "+laxPerc+"\n");
+		wOutput.close();
 		
 		System.out.println("[BENCH Main] DONE");
 	}

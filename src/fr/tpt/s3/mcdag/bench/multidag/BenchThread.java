@@ -38,14 +38,24 @@ public class BenchThread implements Runnable {
 	private String inputFile;
 	private String outputFile;
 	private boolean debug;
+	private int nbCores;
 	
+	public int getNbCores() {
+		return nbCores;
+	}
+
+	public void setNbCores(int nbCores) {
+		this.nbCores = nbCores;
+	}
+
 	private boolean schedFede;
 	private boolean schedLax;
 	
-	public BenchThread (String input, String output, boolean debug) {
+	public BenchThread (String input, String output, int cores, boolean debug) {
 		setInputFile(input);
 		dags = new HashSet<DAG>();
 		setOutputFile(output);
+		setNbCores(cores);
 		setDebug(debug);
 		setSchedFede(true);
 		setSchedLax(true);
@@ -84,11 +94,9 @@ public class BenchThread implements Runnable {
 		}
 	}
 	
-	
 	@Override
 	public void run() {
 		mcp.readXML();
-		int nbCores = 4;
 		
 		// Test federated approach
 		// Make a copy of the system instance
