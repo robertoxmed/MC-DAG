@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Roberto Medina
+ * Copyright (c) 2017, 2018 Roberto Medina
  * Written by Roberto Medina (rmedina@telecom-paristech.fr)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,9 +32,6 @@ public class DAG {
 	private Set<Actor> nodesHI;
 	private Set<Actor> loOuts;
 	private Set<Actor> Outs;
-	private Set<Actor> sinks;
-	private Set<Actor> sinksHI;
-	private Set<Actor> sourcesHI;
 	private int critPath;
 	private int deadline;
 	private int levels;
@@ -43,35 +40,6 @@ public class DAG {
 		nodes = new HashSet<Actor>();
 		nodesHI = new HashSet<Actor>();
 		setLoOuts(new HashSet<Actor>());
-		sinks = new HashSet<Actor>();
-		sinksHI = new HashSet<Actor>();
-		sourcesHI = new HashSet<Actor>();
-	}
-	
-	/**
-	 * Method to set all flags once the DAG has been instantiated
-	 * and initialized
-	 */
-	public void sanityChecks () {
-		this.setHINodes();
-		this.calcLOouts();
-		Iterator<Actor> in = this.getNodes().iterator();
-		
-		while (in.hasNext()){
-			Actor n = in.next();
-			
-			n.checkifSink();
-			n.checkifSinkinHI();
-			n.checkifSource();
-			n.checkifSourceHI();
-			
-			if (n.isSink())
-				getSinks().add(n);
-			if (n.isSinkHI())
-				getSinksHI().add(n);
-			if (n.isSourceHI())
-				getSourcesHI().add(n);
-		}
 	}
 	
 	/**
@@ -98,7 +66,7 @@ public class DAG {
 		Iterator<Actor> in = this.getNodes().iterator();
 		while (in.hasNext()) {
 			Actor n = in.next();
-			if (n.getCI(1) != 0)
+			if (n.getWcet(1) != 0)
 				this.getNodes_HI().add(n);
 		}
 	}
@@ -111,7 +79,7 @@ public class DAG {
 		while (in.hasNext()) {
 			Actor n = in.next();
 			if (n.getSndEdges().size() == 0 &&
-					n.getCI(1) == 0) {
+					n.getWcet(1) == 0) {
 				this.getLoOuts().add(n);
 			}
 		}
@@ -135,7 +103,7 @@ public class DAG {
 		double ret = 0.0;
 		
 		for (Actor a : getNodes())
-			ret += a.getCI(0);
+			ret += a.getWcet(0);
 		
 		return ret / getDeadline();
 	}
@@ -148,8 +116,8 @@ public class DAG {
 		double ret = 0.0;
 		
 		for (Actor a : getNodes()) {
-			if (a.getCI(1) != 0)
-				ret += a.getCI(1);
+			if (a.getWcet(1) != 0)
+				ret += a.getWcet(1);
 		}
 		return ret / getDeadline();
 	}
@@ -164,7 +132,7 @@ public class DAG {
 		for (int i = 0; i < getLevels(); i++) {
 			double uL = 0.0;
 			for (Actor a : getNodes()) {
-				uL += a.getCI(i);
+				uL += a.getWcet(i);
 			}
 			uL = uL / getDeadline();
 			
@@ -184,7 +152,7 @@ public class DAG {
 		double ret = 0;
 		
 		for (Actor a : getNodes())
-			ret += a.getCI(i);
+			ret += a.getWcet(i);
 		
 		ret = ret / getDeadline();
 		
@@ -276,15 +244,7 @@ public class DAG {
 	public void setDeadline(int deadline) {
 		this.deadline = deadline;
 	}
-
-	public Set<Actor> getSinks() {
-		return sinks;
-	}
-
-	public void setSinks(Set<Actor> sinks) {
-		this.sinks = sinks;
-	}
-
+	
 	public int getId() {
 		return id;
 	}
@@ -299,22 +259,6 @@ public class DAG {
 
 	public void setOuts(Set<Actor> outs) {
 		Outs = outs;
-	}
-
-	public Set<Actor> getSinksHI() {
-		return sinksHI;
-	}
-
-	public void setSinksHI(Set<Actor> sinksHI) {
-		this.sinksHI = sinksHI;
-	}
-
-	public Set<Actor> getSourcesHI() {
-		return sourcesHI;
-	}
-
-	public void setSourcesHI(Set<Actor> sourcesHI) {
-		this.sourcesHI = sourcesHI;
 	}
 
 	public int getLevels() {

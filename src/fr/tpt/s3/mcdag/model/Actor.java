@@ -28,67 +28,21 @@ public abstract class Actor {
 	private int id;
 	private String name;
 	
-	private int[] cIs;
+	private int[] wcets;
 	
 	private int cpFromNode[];
 	
 	private Set<Edge> rcvEdges;
 	private Set<Edge> sndEdges;
-	
-	private boolean sink;
-	private boolean source;
-	private boolean sinkHI;
-	private boolean sourceHI;
+
 	
 	public Actor (int id, String name, int nbLevels) {
 		this.setId(id);
 		this.setName(name);
-		cIs = new int[nbLevels];
-		this.setSink(false);
-		this.setSource(false);
-		this.setSinkHI(false);
-		this.setSourceHI(false);
+		wcets = new int[nbLevels];
 		rcvEdges = new HashSet<Edge>();
 		sndEdges = new HashSet<Edge>();
 		cpFromNode = new int[nbLevels];
-	}
-	
-	/**
-	 * 	Utility methods
-	 */
-	public void checkifSource() {
-		if (rcvEdges.size() == 0)
-			this.setSource(true);
-	}
-	
-	public void checkifSink() {
-		if (sndEdges.size() == 0)
-			this.setSink(true);
-	}
-	
-	public void checkifSourceHI() {
-		if (rcvEdges.size() == 0 && this.getcIs()[1] != 0)
-			this.setSourceHI(true);
-	}
-	
-	public void checkifSinkinHI() {
-		
-		if(this.getcIs()[1] == 0) {
-			this.setSinkHI(false);
-			return;
-		}
-		
-		this.setSinkHI(true);
-		
-		Iterator<Edge> it_e = this.getSndEdges().iterator();
-		while (it_e.hasNext()){
-			Edge e = it_e.next();
-			Actor dst = e.getDest();
-			if (dst.getcIs()[1] != 0) {
-				this.setSinkHI(false);
-				break;
-			}
-		}
 	}
 	
 	/**
@@ -96,8 +50,8 @@ public abstract class Actor {
 	 * @param j
 	 * @return
 	 */
-	public int getCI (int j) {
-		return this.cIs[j];
+	public int getWcet (int level) {
+		return this.wcets[level];
 	}
 	
 	
@@ -122,11 +76,11 @@ public abstract class Actor {
 		
 		if (this.getRcvEdges().size() == 0) {
 			if (mode == 0) {
-				getCpFromNode()[mode] = this.getcIs()[0];
-				return this.getcIs()[0];
+				getCpFromNode()[mode] = this.getWcets()[0];
+				return this.getWcets()[0];
 			} else {
-				getCpFromNode()[mode] = this.getcIs()[1];
-				return this.getcIs()[1];
+				getCpFromNode()[mode] = this.getWcets()[1];
+				return this.getWcets()[1];
 			}
 		} else {
 			int max = 0;
@@ -146,10 +100,10 @@ public abstract class Actor {
 				}
 			}
 			if (mode == ActorSched.LO) {
-				max += this.getcIs()[0];
+				max += this.getWcets()[0];
 				getCpFromNode()[mode] = max;
 			} else {
-				max += this.getcIs()[1];
+				max += this.getWcets()[1];
 				getCpFromNode()[mode] = max;
 			}
 			
@@ -166,8 +120,8 @@ public abstract class Actor {
 	public int CPfromNode (int level) {
 		
 		if (this.getRcvEdges().size() == 0) {
-			this.getCpFromNode()[level] = this.getCI(level);
-			return this.getCI(level);
+			this.getCpFromNode()[level] = this.getWcet(level);
+			return this.getWcet(level);
 		} else {
 			int max = 0;
 			int tmp = 0;
@@ -181,7 +135,7 @@ public abstract class Actor {
 					max = tmp;
 			}
 			
-			max += this.getCI(level);
+			max += this.getWcet(level);
 			this.getCpFromNode()[level] = max;
 
 			return max;
@@ -198,7 +152,7 @@ public abstract class Actor {
 		
 		while (ie.hasNext()){
 			Edge e = ie.next();
-			if (e.getSrc().getcIs()[1] == 0) {
+			if (e.getSrc().getWcets()[1] == 0) {
 				result.add(e.getSrc());
 				result.addAll(e.getSrc().getLOPred());
 			}
@@ -212,11 +166,11 @@ public abstract class Actor {
 	 * @return
 	 */
 	public boolean isSourceinL (int l) {
-		if (this.getCI(l) == 0)
+		if (this.getWcet(l) == 0)
 			return false;
 		
 		for (Edge e : this.getRcvEdges()) {
-			if (e.getSrc().getCI(l) != 0)
+			if (e.getSrc().getWcet(l) != 0)
 				return false;
 		}
 		return true;
@@ -228,10 +182,10 @@ public abstract class Actor {
 	 * @return
 	 */
 	public boolean isSinkinL (int l) {
-		if (this.getCI(l) == 0)
+		if (this.getWcet(l) == 0)
 			return false;
 		for (Edge e : this.getSndEdges()) {
-			if (e.getDest().getCI(l) != 0)
+			if (e.getDest().getWcet(l) != 0)
 				return false;
 		}
 		return true;
@@ -257,12 +211,12 @@ public abstract class Actor {
 		this.name = name;
 	}
 	
-	public int[] getcIs() {
-		return cIs;
+	public int[] getWcets() {
+		return wcets;
 	}
 	
-	public void setcIs(int[] cIs) {
-		this.cIs = cIs;
+	public void setWcets(int[] cIs) {
+		this.wcets = cIs;
 	}
 	
 	public Set<Edge> getRcvEdges() {
@@ -279,38 +233,6 @@ public abstract class Actor {
 	
 	public void setSndEdges(Set<Edge> sndEdges) {
 		this.sndEdges = sndEdges;
-	}
-	
-	public boolean isSink() {
-		return sink;
-	}
-	
-	public void setSink(boolean sink) {
-		this.sink = sink;
-	}
-	
-	public boolean isSource() {
-		return source;
-	}
-	
-	public void setSource(boolean source) {
-		this.source = source;
-	}
-	
-	public boolean isSinkHI() {
-		return sinkHI;
-	}
-	
-	public void setSinkHI(boolean sinkHI) {
-		this.sinkHI = sinkHI;
-	}
-	
-	public boolean isSourceHI() {
-		return sourceHI;
-	}
-	
-	public void setSourceHI(boolean sourceHI) {
-		this.sourceHI = sourceHI;
 	}
 
 	public int[] getCpFromNode() {

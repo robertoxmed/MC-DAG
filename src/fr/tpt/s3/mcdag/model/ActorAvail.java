@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Roberto Medina
+ * Copyright (c) 2017, 2018 Roberto Medina
  * Written by Roberto Medina (rmedina@telecom-paristech.fr)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@ public class ActorAvail extends ActorSched {
 	
 	public ActorAvail (int id, String name, int[] wcet) {
 		super(id, name, wcet.length);
-		this.setcIs(wcet);
+		this.setWcets(wcet);
 	}
 	
 	/*

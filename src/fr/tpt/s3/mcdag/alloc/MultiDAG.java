@@ -129,8 +129,8 @@ public class MultiDAG{
 			ret = a.getGraphDead();
 		} else {
 			for (Edge e : a.getRcvEdges()) {
-				if (e.getSrc().getCI(1) != 0) {
-					int test = ((ActorSched) e.getSrc()).getLFTs()[1] - e.getSrc().getCI(1);
+				if (e.getSrc().getWcet(1) != 0) {
+					int test = ((ActorSched) e.getSrc()).getLFTs()[1] - e.getSrc().getWcet(1);
 					
 					if (test < ret)
 						ret = test;
@@ -147,7 +147,7 @@ public class MultiDAG{
 			ret = a.getGraphDead();
 		} else {
 			for (Edge e : a.getSndEdges()) {
-				int test = ((ActorSched) e.getDest()).getLFTs()[0] - e.getDest().getCI(0);
+				int test = ((ActorSched) e.getDest()).getLFTs()[0] - e.getDest().getWcet(0);
 				if (test < ret)
 					ret = test;
 			}
@@ -179,7 +179,7 @@ public class MultiDAG{
 		boolean ret = true;
 		
 		for (Edge e : a.getRcvEdges()) {
-			if (e.getSrc().getCI(1) != 0) {
+			if (e.getSrc().getWcet(1) != 0) {
 				if (!((ActorSched) e.getSrc()).getVisitedL()[1])
 					return false;
 			}
@@ -204,14 +204,14 @@ public class MultiDAG{
 		
 		// Add source HI tasks
 		for (Actor a : d.getNodes()) {
-			if (a.getCI(1) != 0) { // It's a HI task
+			if (a.getWcet(1) != 0) { // It's a HI task
 				if (a.getRcvEdges().size() == 0) {
 					toVisitHI.add((ActorSched) a);
 				} else { // This should never happen atm
 					boolean add = true;
 					
 					for (Edge e : a.getRcvEdges()) {
-						if (e.getSrc().getCI(1) != 0) {
+						if (e.getSrc().getWcet(1) != 0) {
 							add = false;
 							break;
 						}
@@ -242,7 +242,7 @@ public class MultiDAG{
 			calcActorLFTHI(a, d.getDeadline());
 			a.getVisitedL()[1] = true;
 			for (Edge e : a.getSndEdges()) {
-				if (e.getDest().getCI(1) != 0 && predVisitedHI((ActorSched) e.getDest())) {
+				if (e.getDest().getWcet(1) != 0 && predVisitedHI((ActorSched) e.getDest())) {
 					toVisitHI.add((ActorSched) e.getDest());
 				}
 			}
@@ -273,7 +273,7 @@ public class MultiDAG{
 			
 				// 	Check all successors of the predecessor
 				for (Edge e2 : pred.getSndEdges()) {
-					if (e2.getDest().getCI(1) != 0 && !sched.contains(e2.getDest())) {
+					if (e2.getDest().getWcet(1) != 0 && !sched.contains(e2.getDest())) {
 						add = false;
 						break;
 					}
@@ -330,15 +330,15 @@ public class MultiDAG{
 					}
 					it = sched.listIterator();
 					// Re-init remaining execution time to be allocated
-					if (a.getCI(1) != 0)
-						remainTHI.put(a.getName(), a.getCI(1));
-					remainTLO.put(a.getName(), a.getCI(0));
+					if (a.getWcet(1) != 0)
+						remainTHI.put(a.getName(), a.getWcet(1));
+					remainTLO.put(a.getName(), a.getWcet(0));
 					
 					if (mode == ActorSched.HI) {
-						if (a.getCI(1) != 0) {
+						if (a.getWcet(1) != 0) {
 							boolean add = true;
 							for (Edge e : a.getSndEdges()) {
-								if (e.getDest().getCI(1) != 1)
+								if (e.getDest().getWcet(1) != 1)
 									add = false;
 							}
 							if (add)
@@ -359,9 +359,9 @@ public class MultiDAG{
 	private void initRemainT () {
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
-				if (a.getCI(1) != 0)
-					remainTHI.put(a.getName(), a.getCI(1));
-				remainTLO.put(a.getName(), a.getCI(0));
+				if (a.getWcet(1) != 0)
+					remainTHI.put(a.getName(), a.getWcet(1));
+				remainTLO.put(a.getName(), a.getWcet(0));
 			}
 		}
 	}
@@ -401,8 +401,8 @@ public class MultiDAG{
 				a.getLaxities()[1] = a.getLFTs()[1] - relatSlot - remainTHI.get(a.getName());
 			} else  {// Laxity in LO mode
 				// Promote HI tasks that need to be scheduled at this slot
-				if (a.getCI(1) != 0) {
-					if ((a.getCI(0) - remainTLO.get(a.getName())) - scheduledUntilT(a, slot) < 0) {
+				if (a.getWcet(1) != 0) {
+					if ((a.getWcet(0) - remainTLO.get(a.getName())) - scheduledUntilT(a, slot) < 0) {
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
 						a.getLaxities()[0]  = 0;
 					} else {
@@ -456,9 +456,9 @@ public class MultiDAG{
 			ActorSched a = lit.next();
 			
 			if (mode == Actor.HI)
-				sumCi += a.getCI(1);
+				sumCi += a.getWcet(1);
 			else
-				sumCi += a.getCI(0);
+				sumCi += a.getWcet(0);
 			
 		}
 		
@@ -479,11 +479,11 @@ public class MultiDAG{
 		// Add all exit HI nodes to the ready list.
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
-				if (a.getCI(1) != 0) {
+				if (a.getWcet(1) != 0) {
 					boolean add = true;
 					
 					for (Edge e : a.getSndEdges()) {
-						if (e.getDest().getCI(1) != 0) {
+						if (e.getDest().getWcet(1) != 0) {
 							add = false;
 							break;
 						}
@@ -667,7 +667,7 @@ public class MultiDAG{
 			for (Actor a : d.getNodes()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] printLFT(): DAG "+d.getId()+"; Actor "+a.getName()
 									+"; LFT LO "+((ActorSched) a).getLFTs()[0]);
-				if (a.getCI(1) != 0) System.out.print("; LFT HI "+((ActorSched) a).getLFTs()[1]);
+				if (a.getWcet(1) != 0) System.out.print("; LFT HI "+((ActorSched) a).getLFTs()[1]);
 				System.out.println(".");
 			}
 		}

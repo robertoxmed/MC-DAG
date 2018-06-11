@@ -141,7 +141,7 @@ public class MCParser {
 						
 						if (!isbOutPrism()) {
 							a = new ActorSched(nb_actors++, e.getAttribute("name"),getNbLevels());
-							a.setcIs(wcets);
+							a.setWcets(wcets);
 						} else {
 							a = new ActorAvail(nb_actors++, e.getAttribute("name"), wcets);
 							((ActorSched) a).setfProb(Double.parseDouble(e.getElementsByTagName("fprob").item(0).getTextContent()));
@@ -392,7 +392,7 @@ public class MCParser {
 			
 			// Create all necessary booleans
 			for (Actor a : dag.getNodes()) {
-				if (a.getCI(1) == 0) // It is a LO task
+				if (a.getWcet(1) == 0) // It is a LO task
 					out.write("\t"+a.getName()+"bool: bool init false;\n");
 			}
 			
@@ -583,7 +583,7 @@ public class MCParser {
 					for (int i = 0; i < nbLevels; i++) {
 						Element ci = doc.createElement("wcet");
 						ci.setAttribute("number", Integer.toString(i));
-						ci.appendChild(doc.createTextNode(String.valueOf(a.getCI(i))));
+						ci.appendChild(doc.createTextNode(String.valueOf(a.getWcet(i))));
 						actor.appendChild(ci);
 					}
 					Element fprob = doc.createElement("fprob");
@@ -691,9 +691,9 @@ public class MCParser {
 					out.write("\"D"+d.getId()+"N"+a.getName()+"\" [label=\"D"+d.getId()+"N"+a.getName()+"\\n");
 					for (int i = ug.getNbLevels() - 1; i >= 0; i--) {
 						if (i != 0)
-							out.write(a.getCI(i)+"/");
+							out.write(a.getWcet(i)+"/");
 						else
-							out.write(a.getCI(i)+"\"]\n");
+							out.write(a.getWcet(i)+"\"]\n");
 						
 					}
 				}

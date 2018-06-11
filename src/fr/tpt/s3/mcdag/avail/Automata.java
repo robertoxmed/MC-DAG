@@ -77,7 +77,7 @@ public class Automata {
 
 		Actor n = d.getNodebyName(task);
 		State s;
-		if (n.getCI(1) !=  0) {
+		if (n.getWcet(1) !=  0) {
 			s = new State(nbStates++, task, ActorSched.HI);
 			if (((ActorAvail) n).isfMechanism()) { // Test if it's a fault tolerant mechanism
 				s.setfMechanism(true);
@@ -152,7 +152,7 @@ public class Automata {
 		// then HI tasks, then LO tasks
 		if (s2 != null && s2.getCompTime() == c_t) {
 			
-			if (n.getCI(1) != 0) {	
+			if (n.getWcet(1) != 0) {	
 				int cur_ct = c_t;
 				while (is.hasNext() && cur_ct == c_t) {
 					s2 = is.next();
@@ -160,7 +160,7 @@ public class Automata {
 					if (s2.getMode() == ActorSched.HI)
 						idx++;
 				}
-			} else if (n.getCI(1) == 0) {
+			} else if (n.getWcet(1) == 0) {
 				int cur_ct = c_t;
 				while (is.hasNext() && cur_ct == c_t) {
 					s2 = is.next();
@@ -177,7 +177,7 @@ public class Automata {
 			l.add(idx+1, s0);
 		}
 		// If it is an exit LO node
-		if (n.getCI(1) == 0 && n.getSndEdges().size() == 0) {
+		if (n.getWcet(1) == 0 && n.getSndEdges().size() == 0) {
 			State s0 = new State(nbStates++, n.getName(), ActorSched.LO);
 			s0.setCompTime(c_t);
 			s0.setExit(true);

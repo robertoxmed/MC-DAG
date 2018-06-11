@@ -110,7 +110,7 @@ public class NLevels {
 		for (int i = 0; i < getLevels(); i++) {
 			for (DAG d : getMcDags()) {
 				for (Actor a : d.getNodes()) {
-					remainingTime[i][d.getId()][a.getId()] = a.getCI(i);
+					remainingTime[i][d.getId()][a.getId()] = a.getWcet(i);
 				}	
 			}
 		}
@@ -158,7 +158,7 @@ public class NLevels {
 			int test = Integer.MAX_VALUE;
 			
 			for (Edge e : a.getRcvEdges()) {
-				test = ((ActorSched) e.getSrc()).getLFTs()[l] - e.getSrc().getCI(l);
+				test = ((ActorSched) e.getSrc()).getLFTs()[l] - e.getSrc().getWcet(l);
 				if (test < ret)
 					ret = test;
 			}
@@ -180,7 +180,7 @@ public class NLevels {
 			int test = Integer.MAX_VALUE;
 			
 			for (Edge e : a.getSndEdges()) {
-				test = ((ActorSched) e.getDest()).getLFTs()[l] - e.getDest().getCI(l);
+				test = ((ActorSched) e.getDest()).getLFTs()[l] - e.getDest().getWcet(l);
 				if (test < ret)
 					ret = test;
 			}
@@ -197,7 +197,7 @@ public class NLevels {
 	 */
 	private boolean succVisitedinL (ActorSched a, int l) {
 		for (Edge e : a.getSndEdges()) {
-			if (e.getDest().getCI(l) == 0 && ((ActorSched) e.getDest()).getVisitedL()[l] == false) {
+			if (e.getDest().getWcet(l) == 0 && ((ActorSched) e.getDest()).getVisitedL()[l] == false) {
 				return false;
 			}
 		}
@@ -213,7 +213,7 @@ public class NLevels {
 	 */
 	private boolean predVisitedinL (ActorSched a, int l) {
 		for (Edge e : a.getRcvEdges()) {
-			if (e.getSrc().getCI(l) != 0 && ((ActorSched) e.getSrc()).getVisitedL()[l] == false) {
+			if (e.getSrc().getWcet(l) != 0 && ((ActorSched) e.getSrc()).getVisitedL()[l] == false) {
 				return false;
 			}
 		}
@@ -244,7 +244,7 @@ public class NLevels {
 				((ActorSched) a).getVisitedL()[i] = true;
 
 				for (Edge e : a.getSndEdges()) {
-					if (e.getDest().getCI(i) != 0 && !((ActorSched) e.getDest()).getVisitedL()[i]
+					if (e.getDest().getWcet(i) != 0 && !((ActorSched) e.getDest()).getVisitedL()[i]
 							&& predVisitedinL((ActorSched) e.getDest(), i)
 							&& !toVisit.contains((ActorSched) e.getDest())) {
 						toVisit.add((ActorSched) e.getDest());
@@ -344,7 +344,7 @@ public class NLevels {
 	private void resetDelays() {
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
-				if (a.getCI(1) != 0)
+				if (a.getWcet(1) != 0)
 					((ActorSched) a).setDelayed(false);
 			}
 		}
@@ -366,7 +366,7 @@ public class NLevels {
 
 				// It's not the highest criticality level -> perform checks
 				if (level != getLevels() - 1) {
-					int deltaI = a.getCI(level + 1) - a.getCI(level);
+					int deltaI = a.getWcet(level + 1) - a.getWcet(level);
 					//Check if in the higher table the Ci(L+1) - Ci(L) has been allocated
 					if (scheduledUntilTinLreverse(a, slot, level + 1) - deltaI < 0) {
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
@@ -384,9 +384,9 @@ public class NLevels {
 			// Laxity in LO mode
 			} else {
 				// If it's a HI task
-				if (a.getCI(level + 1) > 0) {
+				if (a.getWcet(level + 1) > 0) {
 					// Promotion needed for the task
-					if ((a.getCI(level) - remainingTime[level][dId][a.getId()]) - scheduledUntilTinL(a, slot, level + 1) < 0) {
+					if ((a.getWcet(level) - remainingTime[level][dId][a.getId()]) - scheduledUntilTinL(a, slot, level + 1) < 0) {
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
 						a.setLaxityinL(0, level);
 					} else {
@@ -531,7 +531,7 @@ public class NLevels {
 				
 				// Check if all successors of the predecessor have been allocated
 				for (Edge e2 : pred.getSndEdges()) {
-					if (e2.getDest().getCI(level) != 0 && !sched.contains(e2.getDest()))
+					if (e2.getDest().getWcet(level) != 0 && !sched.contains(e2.getDest()))
 						add = false;
 				}
 				
@@ -595,7 +595,7 @@ public class NLevels {
 					}
 					it = sched.listIterator();
 					// Re-init execution time
-					remainingTime[level][((ActorSched)a).getGraphID()][a.getId()] = a.getCI(level);
+					remainingTime[level][((ActorSched)a).getGraphID()][a.getId()] = a.getWcet(level);
 					
 					if (level >= 1 && a.isSinkinL(level)) {
 						ready.add((ActorSched)a);
@@ -842,7 +842,7 @@ public class NLevels {
 			for (Actor a : d.getNodes()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"]\t Actor "+a.getName()+", ");
 				for (int i = 0; i < getLevels(); i++)
-					System.out.print(a.getCI(i)+" ");
+					System.out.print(a.getWcet(i)+" ");
 				System.out.println("");
 				
 				for (Edge e : a.getSndEdges())

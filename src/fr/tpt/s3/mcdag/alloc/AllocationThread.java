@@ -63,10 +63,9 @@ public class AllocationThread implements Runnable{
 		// Only one DAG has to be scheduled in the multi-core architecture
 		if (dags.size() == 1) {
 			DAG dag = dags.iterator().next();
-			ls = new SingleDAG();
+			ls = new SingleDAG(dag, mcp.getNbCores());
 			ls.setMxcDag(dag);
 			ls.setDeadline(dag.getDeadline());
-			ls.setNbCores(mcp.getNbCores());
 			ls.setDebug(debug);
 			
 			try {

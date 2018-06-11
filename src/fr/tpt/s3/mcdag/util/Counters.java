@@ -94,7 +94,7 @@ public class Counters {
 		// Init remaining times
 		for (ActorSched a : keys) {
 			for (int i = 0; i < levels; i++)
-				remaining[i].put(a, a.getCI(i));
+				remaining[i].put(a, a.getWcet(i));
 		}
 		
 		// Iterate through actors to check the number of preemptions
@@ -121,12 +121,12 @@ public class Counters {
 								}
 							}
 							// The task wasn't running and it isn't the first it is executed was a preemption at this point
-							if (!wasRunning && val != a.getCI(l))
+							if (!wasRunning && val != a.getWcet(l))
 								preempts++;
 							
 							val--;							
 							if (val == 0 && nbActivations != 0) {
-								remaining[l].put(a, a.getCI(l));
+								remaining[l].put(a, a.getWcet(l));
 								nbActivations--;
 							} else {
 								remaining[l].put(a, val);

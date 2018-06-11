@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright (c) 2018 Roberto Medina
+ * Written by Roberto Medina (rmedina@telecom-paristech.fr)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
 package fr.tpt.s3.mcdag.generator;
 
 import java.util.HashSet;
@@ -28,7 +44,7 @@ public class MCSystemGenerator {
 	private RandomNumberGenerator rng;
 	private boolean debug;
 	
-	private int possibleDeadlines[] = {100, 200, 250, 500}; 
+	private int possibleDeadlines[] = {100, 120, 150, 180, 200, 220, 250, 300, 400, 500}; 
 	
 	public MCSystemGenerator (double maxU, int nbTasks,
 			double eProb, int levels, int paraDegree, int nbDAGs,
@@ -53,7 +69,7 @@ public class MCSystemGenerator {
 		
 		System.out.print("[DEBUG "+Thread.currentThread().getName()+"] "+func+": Node "+a.getId());
 		for (int i = nbLevels - 1; i >= 0; i--)
-			System.out.print(" C("+i+") = "+a.getCI(i)+";");
+			System.out.print(" C("+i+") = "+a.getWcet(i)+";");
 		System.out.println(" Rank "+ ((ActorSched) a).getRank());
 		for (Edge e : a.getRcvEdges())
 			System.out.println("\t Rcv Edge "+e.getSrc().getId()+" -> "+a.getId());
@@ -199,14 +215,14 @@ public class MCSystemGenerator {
 					
 					// Transform uSet to budget
 					if ((tasks[i] - tasksToGen) < tasks[i])
-						n.getcIs()[i] = (int) Math.ceil((rDead * uSet[tasks[i] - tasksToGen]));
+						n.getWcets()[i] = (int) Math.ceil((rDead * uSet[tasks[i] - tasksToGen]));
 					else
-						n.getcIs()[i] = budgets[i];
+						n.getWcets()[i] = budgets[i];
 		
-					if (budgets[i] - n.getCI(i) > 0) {
-						budgets[i] -= n.getCI(i);
+					if (budgets[i] - n.getWcet(i) > 0) {
+						budgets[i] -= n.getWcet(i);
 					} else {
-						n.getcIs()[i] = budgets[i];
+						n.getWcets()[i] = budgets[i];
 						budgets[i] = 0;
 					}
 					
@@ -223,7 +239,7 @@ public class MCSystemGenerator {
 							 */
 							if (rng.randomUnifDouble(0, 100) <= edgeProb
 								&& n.getRank() > src.getRank()
-								&& src.getCpFromNode()[i] + n.getCI(i) <= rDead) {
+								&& src.getCpFromNode()[i] + n.getWcet(i) <= rDead) {
 								@SuppressWarnings("unused")
 								Edge e = new Edge(src,n);
 								
@@ -236,7 +252,7 @@ public class MCSystemGenerator {
 					}
 					// Set the Ci for inferior levels
 					if (i >= 1)
-						n.getcIs()[i - 1] = n.getCI(i);
+						n.getWcets()[i - 1] = n.getWcet(i);
 					nodes.add(n);
 					tasksToGen--;
 					n.CPfromNode(i);
@@ -261,8 +277,8 @@ public class MCSystemGenerator {
 					while (it_n.hasNext()) {
 						ActorSched n = (ActorSched) it_n.next();
 						
-						n.getcIs()[i - 1] = rng.randomUnifInt(1, n.getCI(i));
-						actualBudget -= n.getCI(i - 1);
+						n.getWcets()[i - 1] = rng.randomUnifInt(1, n.getWcet(i));
+						actualBudget -= n.getWcet(i - 1);
 						if (actualBudget < 0)
 							actualBudget = 0;
 					}
@@ -279,7 +295,7 @@ public class MCSystemGenerator {
 				while (it_n.hasNext()) {
 					Actor a = it_n.next();
 					a.CPfromNode(i - 1);
-					actualBudget += a.getCI(i - 1);
+					actualBudget += a.getWcet(i - 1);
 				}
 				// Update remaining budgets
 				budgets[i - 1] -= actualBudget;				
@@ -306,7 +322,7 @@ public class MCSystemGenerator {
 	 */
 	private boolean allNodesAreMin(Set<Actor> nodes, int level) {
 		for (Actor a : nodes) {
-			if (a.getCI(level) != 1)
+			if (a.getWcet(level) != 1)
 				return false;
 		}
 		return true;

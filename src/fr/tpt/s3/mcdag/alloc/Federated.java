@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright (c) 2018 Roberto Medina
+ * Written by Roberto Medina (rmedina@telecom-paristech.fr)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
 package fr.tpt.s3.mcdag.alloc;
 
 import java.util.ArrayList;
@@ -66,7 +82,7 @@ public class Federated {
 			remainingTime[i] = 0;
 		
 		for (Actor a : d.getNodes())
-			remainingTime[a.getId()] = a.getCI(level);
+			remainingTime[a.getId()] = a.getWcet(level);
 	}
 	
 	private void calcHLFETs (DAG d, int level, List<ActorSched> prioOrder) {
@@ -75,14 +91,14 @@ public class Federated {
 		
 		// Look for sinks first
 		for (Actor a : d.getNodes()) {
-			if (a.getCI(level) != 0) {
-				if (a.getSndEdges().size() == 0 && a.getCI(level) != 0) {
+			if (a.getWcet(level) != 0) {
+				if (a.getSndEdges().size() == 0 && a.getWcet(level) != 0) {
 					toVisit.add((ActorSched)a);
 				} else {
 					boolean add = true;
 					
 					for (Edge e : a.getSndEdges()) {
-						if (e.getDest().getCI(level) != 0)
+						if (e.getDest().getWcet(level) != 0)
 							add = false;
 					}
 					if (add) {
@@ -101,12 +117,12 @@ public class Federated {
 				
 			for (Edge e : a.getSndEdges()) {
 				ActorSched dest = (ActorSched) e.getDest();
-				if (dest.getCI(level) != 0 &&
+				if (dest.getWcet(level) != 0 &&
 						dest.getHlfet()[level] > max) {
 					max = dest.getHlfet()[level];
 				}
 			}
-			a.getHlfet()[level] = max + a.getCI(level);
+			a.getHlfet()[level] = max + a.getWcet(level);
 			a.getVisitedL()[level] = true;
 
 			for (Edge e : a.getRcvEdges()) {
@@ -115,13 +131,13 @@ public class Federated {
 				
 				for (Edge e2 : test.getSndEdges()) {
 					ActorSched dest = (ActorSched) e2.getDest();
-					if (!dest.getVisitedL()[level] && dest.getCI(level) != 0) {
+					if (!dest.getVisitedL()[level] && dest.getWcet(level) != 0) {
 						allSuccVisited = false;
 						break;
 					}
 				}
 				
-				if (allSuccVisited && test.getCI(level) != 0 && !toVisit.contains((ActorSched)test))
+				if (allSuccVisited && test.getWcet(level) != 0 && !toVisit.contains((ActorSched)test))
 					toVisit.add((ActorSched)test);
 			}
 			toVisit.remove(0);
@@ -129,7 +145,7 @@ public class Federated {
 		
 		// Create the list with the priority ordering
 		for (Actor a : d.getNodes()) {
-			if (a.getCI(level) != 0)
+			if (a.getWcet(level) != 0)
 				prioOrder.add((ActorSched) a);
 		}
 		prioOrder.sort(new Comparator<ActorSched>() {
@@ -197,7 +213,7 @@ public class Federated {
 		
 		for (Actor a : d.getNodes()) {
 			if (a.getRcvEdges().size() == 0 &&
-					a.getCI(1) != 0)
+					a.getWcet(1) != 0)
 				ready.add((ActorSched)a);
 		}
 		
@@ -322,7 +338,7 @@ public class Federated {
 					}  else  { // Check if other HI tasks were running
 						for (ActorSched check : ready) {
 							if (check.isRunning() && !toSched.contains(check) 
-									&& check.getCI(1) != 0 && coreBudget > 0) {
+									&& check.getWcet(1) != 0 && coreBudget > 0) {
 								coreBudget--;
 								toSched.add(check);
 							}
@@ -347,7 +363,7 @@ public class Federated {
 						toSched.add(a);
 					} else { // Check if other LO tasks were already running
 						for (ActorSched check : ready) {
-							if (check.isRunning() && check.getCI(1) == 0 &&
+							if (check.isRunning() && check.getWcet(1) == 0 &&
 									!toSched.contains(check) && coreBudget > 0) {
 								coreBudget--;
 								toSched.add(check);
@@ -444,7 +460,7 @@ public class Federated {
 			ListIterator<ActorSched> lit = loPrioOrder.listIterator();
 			while (lit.hasNext()) {
 				ActorSched a = lit.next();
-				if (a.getCI(1) > 0)
+				if (a.getWcet(1) > 0)
 					lit.remove();
 			}
 			loPrioOrder.sort(loComp);
@@ -467,7 +483,7 @@ public class Federated {
 	
 	private void printDAG (DAG d) {
 		for (Actor a : d.getNodes())
-			System.out.println("Node "+a.getName()+" Ci(HI) "+((ActorSched)a).getCI(1)+" Ci(LO) "+((ActorSched)a).getCI(0));
+			System.out.println("Node "+a.getName()+" Ci(HI) "+((ActorSched)a).getWcet(1)+" Ci(LO) "+((ActorSched)a).getWcet(0));
 
 	}
 

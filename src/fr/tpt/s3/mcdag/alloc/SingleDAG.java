@@ -44,11 +44,9 @@ public class SingleDAG{
 	// Weights to calculate HLFET levels
 	private int weights_LO[];
 	private int weights_HI[];
-	private int weights_B[];
 	
 	// Scheduling tables, i: slot, j: task
 	private String sched[][][];
-	private String S_B[][];
 	private String S_HLFET[][];
 	private String S_HLFET_HI[][];
 	
@@ -63,14 +61,12 @@ public class SingleDAG{
 	 * @param cores Number of cores
 	 * @param d Dag
 	 */
-	public SingleDAG(int dln, int cores, DAG d){
-		this.setDeadline(dln);
+	public SingleDAG(DAG d, int cores){
+		this.setDeadline(d.getDeadline());
 		this.setNbCores(cores);
 		this.setMxcDag(d);
 	}
-	
-	public SingleDAG() {}
-	
+		
 	/**
 	 * Initializes scheduling tables
 	 */
@@ -107,24 +103,6 @@ public class SingleDAG{
 		}
 	}
 	
-	/**
-	 * Calc weights for HLFET for Baruah
-	 */
-	public void calcWeightsB() {
-		
-		weights_B = new int[mcDag.getNodes().size()];
-		
-		Iterator<Actor> it_n = mcDag.getNodes().iterator();
-		while(it_n.hasNext()){
-			ActorSched n = (ActorSched) it_n.next();
-			if (n.getcIs()[1] !=  0) {
-				weights_B[n.getId()] = calcHLFETLevel(n, 0) + 200; // Add constant
-				n.setWeightB(n.getWeightLO() + mcDag.getCritPath() * 2);
-			} else {
-				weights_B[n.getId()] = calcHLFETLevel(n, 0);
-			}
-		}
-	}
 	
 	/**
 	 * Calculates HLFET levels for each Node depending on the mode.
@@ -138,12 +116,12 @@ public class SingleDAG{
 		int max = 0;
 		
 		// Final case the node is a sink
-		if (n.isSink() && mode == ActorSched.LO){
-			n.setWeightLO(n.getcIs()[0]);
-			return n.getcIs()[0];
-		} else if (n.isSinkHI() && mode == ActorSched.HI) {
-			n.setWeightHI(n.getcIs()[1]);
-			return n.getcIs()[1];
+		if (n.getSndEdges().size() == 0 && mode == ActorSched.LO){
+			n.getHlfet()[0] = n.getWcets()[0];
+			return n.getWcets()[0];
+		} else if (n.isSinkinL(1) && mode == ActorSched.HI) {
+			n.getHlfet()[1] = n.getWcets()[1];
+			return n.getWcets()[1];
 		}
 		
 		// General case
@@ -164,11 +142,11 @@ public class SingleDAG{
 		}
 		
 		if (mode == ActorSched.LO) { // LO mode
-			n.setWeightLO(max + n.getcIs()[0]);
-			return max + n.getcIs()[0];
+			n.getHlfet()[0] = max + n.getWcets()[0];
+			return max + n.getWcets()[0];
 		} else {
-			n.setWeightHI(max + n.getcIs()[1]);
-			return max + n.getcIs()[1];
+			n.getHlfet()[1] =max + n.getWcets()[1];
+			return max + n.getWcets()[1];
 		}
 	}
 	
@@ -194,9 +172,9 @@ public class SingleDAG{
 		// Add HI nodes to the list
 		while(it_n.hasNext()){
 			ActorSched n = (ActorSched) it_n.next();
-			if (n.getcIs()[1] != 0) {
-				t_hi[n.getId()] = n.getcIs()[1];
-				if (n.isSinkHI()) { // At the beginning only exit nodes are added
+			if (n.getWcets()[1] != 0) {
+				t_hi[n.getId()] = n.getWcets()[1];
+				if (n.isSinkinL(1)) { // At the beginning only exit nodes are added
 					ready_hi.add(n);
 				}
 			}
@@ -206,8 +184,8 @@ public class SingleDAG{
 		Collections.sort(ready_hi, new Comparator<ActorSched>() {
 			@Override
 			public int compare(ActorSched n1, ActorSched n2) {
-				if (n2.getWeightHI()- n1.getWeightHI() != 0)
-					return n1.getWeightHI()- n2.getWeightHI();
+				if (n2.getHlfet()[1]- n1.getHlfet()[1] != 0)
+					return n1.getHlfet()[1] - n2.getHlfet()[1];
 				else
 					return n1.getId() - n2.getId();
 			}
@@ -255,9 +233,9 @@ public class SingleDAG{
 					Collections.sort(ready_hi, new Comparator<ActorSched>() {
 						@Override
 						public int compare(ActorSched n1, ActorSched n2) {
-							if (n2.getWeightHI()- n1.getWeightHI() < 0 ||
-									n2.getWeightHI()- n1.getWeightHI() > 0)
-								return n1.getWeightHI()- n2.getWeightHI();
+							if (n2.getHlfet()[1]- n1.getHlfet()[1] < 0 ||
+									n2.getHlfet()[1]- n1.getHlfet()[1] > 0)
+								return n1.getHlfet()[1]- n2.getHlfet()[1];
 							else
 								return n1.getId() - n2.getId();
 						}
@@ -292,8 +270,8 @@ public class SingleDAG{
 		// Add LO nodes to the list
 		while(it_n.hasNext()){
 			ActorSched n = (ActorSched) it_n.next();
-			t_lo[n.getId()] = n.getcIs()[0];
-			if (n.isSource()) // At the beginning only source nodes are added
+			t_lo[n.getId()] = n.getWcets()[0];
+			if (n.getRcvEdges().size() == 0) // At the beginning only source nodes are added
 				ready_lo.add(n);
 		}
 
@@ -301,8 +279,8 @@ public class SingleDAG{
 		Collections.sort(ready_lo, new Comparator<ActorSched>() {
 			@Override
 			public int compare(ActorSched n1, ActorSched n2) {
-				if (n2.getWeightLO() - n1.getWeightLO() !=0)
-					return n2.getWeightLO() - n1.getWeightLO();
+				if (n2.getHlfet()[0] - n1.getHlfet()[0] !=0)
+					return n2.getHlfet()[0] - n1.getHlfet()[0];
 				else
 					return n2.getId() - n1.getId();
 			}
@@ -352,8 +330,8 @@ public class SingleDAG{
 					Collections.sort(ready_lo, new Comparator<ActorSched>() {
 						@Override
 						public int compare(ActorSched n1, ActorSched n2) {
-							if (n2.getWeightLO() - n1.getWeightLO() !=0)
-								return n2.getWeightLO() - n1.getWeightLO();
+							if (n2.getHlfet()[0] - n1.getHlfet()[0] !=0)
+								return n2.getHlfet()[0] - n1.getHlfet()[0];
 							else
 								return n2.getId() - n1.getId();
 						}
@@ -368,107 +346,6 @@ public class SingleDAG{
 		}
 	}
 	
-	/**
-	 * Allocation of the LO mode for the graph.
-	 * Needs to be called after Alloc_HI.
-	 * @throws SchedulingException
-	 */
-	public void Alloc_B() throws SchedulingException{
-		/* =============================================
-		 *  Initialization of variables used by the method
-		 ================================================*/
-		S_B = new String[deadline][nbCores];
-		// Initialize with 0s
-		for (int c = 0; c < nbCores; c++) {
-			for(int t = 0; t < deadline; t++) {
-				S_B[t][c] = "-";
-			}
-		}
-			
-		int[] t_lo = new int[mcDag.getNodes().size()];
-		
-		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
-		// Ready list of tasks that have their dependencies met
-		LinkedList<ActorSched> ready_lo = new LinkedList<ActorSched>();
-		// List of recently finished tasks -> to activate new ones
-		LinkedList<ActorSched> finished_lo = new LinkedList<ActorSched>();
-		boolean task_finished = false;
-		
-		// Add LO nodes to the list
-		while(it_n.hasNext()){
-			ActorSched n = (ActorSched) it_n.next();
-			t_lo[n.getId()] = n.getcIs()[0];
-			if (n.isSource()) // At the beginning only source nodes are added
-				ready_lo.add(n);
-		}
-
-		// Sort lists
-		Collections.sort(ready_lo, new Comparator<ActorSched>() {
-			@Override
-			public int compare(ActorSched n1, ActorSched n2) {
-				if (n1.getWeightB() - n2.getWeightB() !=0)
-					return n1.getWeightB() - n2.getWeightB();
-				else
-					return n1.getId() - n2.getId();
-			}
-		});
-		
-		/* =============================================
-		 *  Actual allocation
-		 * =============================================*/
-		
-		// Iterate through slots
-		ListIterator<ActorSched> li_it = ready_lo.listIterator();
-		for(int t = 0; t < deadline; t++){
-			// For each slot check if it's an WC activation time
-			if (! checkFreeSlot(t_lo, mcDag.getNodes().size(), (deadline - t) * nbCores)){
-				SchedulingException se = new SchedulingException("Alloc B : Not enough slot lefts");
-				throw se;
-			}			
-			
-			for(int c = 0; c < nbCores; c++) {
-				if (li_it.hasNext()){
-					ActorSched n = li_it.next(); // Get head of the list
-					
-					S_B[t][c] = n.getName(); // Give the slot to the task
-
-					// Decrement slots left for the task
-					t_lo[n.getId()] = t_lo[n.getId()] - 1;
-
-					if (t_lo[n.getId()] == 0){ // Task has ended its execution
-						li_it.remove();
-						task_finished = true;
-						finished_lo.add(n);
-					}
-				}
-			}
-			
-			if (task_finished) {
-				ListIterator<ActorSched> li_f = finished_lo.listIterator();
-				while (li_f.hasNext()) {
-					ActorSched n = li_f.next();
-					// Check for new activations
-					checkActivation(ready_lo, li_it, n, t_lo, 0);
-
-					// Heavier tasks can be activated -> needs a new sort
-					Collections.sort(ready_lo, new Comparator<ActorSched>() {
-						@Override
-						public int compare(ActorSched n1, ActorSched n2) {
-							if (n1.getWeightB() - n2.getWeightB() !=0)
-								return n1.getWeightB() - n2.getWeightB();
-							else
-								return n1.getId() - n2.getId();
-						}
-					});
-				}
-				task_finished = false;
-				finished_lo.clear();
-			}
-			li_it = ready_lo.listIterator(); // Restart the iterator for the next slot
-			if (ready_lo.isEmpty())
-				return;
-		}
-	}
 	
 	/**
 	 * Checks if a new HI task needs to be promoted. If it's the case then
@@ -484,13 +361,13 @@ public class SingleDAG{
 		Iterator<Actor> it_n = mcDag.getNodes().iterator();
 		while (it_n.hasNext()){
 			ActorSched n = (ActorSched) it_n.next();
-			if (start_hi[n.getId()] == t && t_lo[n.getId()] != 0 && n.getcIs()[1] != 0){
-				n.setWeightLO(Integer.MAX_VALUE);
+			if (start_hi[n.getId()] == t && t_lo[n.getId()] != 0 && n.getWcets()[1] != 0){
+				n.getHlfet()[0] = Integer.MAX_VALUE;
 				Collections.sort(ready_lo, new Comparator<ActorSched>() {
 					@Override
 					public int compare(ActorSched n1, ActorSched n2) {
-						if (n2.getWeightLO() - n1.getWeightLO() !=0)
-							return n2.getWeightLO() - n1.getWeightLO();
+						if (n2.getHlfet()[0] - n1.getHlfet()[0] !=0)
+							return n2.getHlfet()[0] - n1.getHlfet()[0];
 						else
 							return n2.getId() - n1.getId();
 					}
@@ -518,7 +395,7 @@ public class SingleDAG{
 			boolean ready = true;
 			boolean add = true;
 			
-			if (mode == 1 && suc.getcIs()[1] == 0) { // Don't activate LO tasks in HI mode
+			if (mode == 1 && suc.getWcets()[1] == 0) { // Don't activate LO tasks in HI mode
 				ready = false;
 				break;
 			}
@@ -564,7 +441,7 @@ public class SingleDAG{
 			boolean ready = true;
 			boolean add = true;
 			
-			if (pred.getcIs()[1] == 0) { // Don't activate LO tasks in HI mode
+			if (pred.getWcets()[1] == 0) { // Don't activate LO tasks in HI mode
 				ready = false;
 				break;
 			}
@@ -615,20 +492,7 @@ public class SingleDAG{
 		
 		return ret;
 	}
-	
-	public boolean CheckBaruah() throws SchedulingException{
-		// Check if schedulable by Baruah
-		boolean ret = true;
-		
-		this.calcWeights(ActorSched.HI);
-		this.calcWeightsB();
-		
-		this.AllocHI();
-		
-		this.Alloc_B();
-		
-		return ret;
-	}
+
 	
 	/**
 	 * Check if there is enough time slots for remaining tasks
@@ -677,8 +541,8 @@ public class SingleDAG{
 		// Add LO nodes to the list
 		while(it_n.hasNext()){
 			ActorSched n = (ActorSched) it_n.next();
-			t_lo[n.getId()] = n.getcIs()[0];
-			if (n.isSource()) // At the beginning only source nodes are added
+			t_lo[n.getId()] = n.getWcets()[0];
+			if (n.getRcvEdges().size() == 0) // At the beginning only source nodes are added
 				ready_lo.add(n);
 		}
 
@@ -686,8 +550,8 @@ public class SingleDAG{
 		Collections.sort(ready_lo, new Comparator<ActorSched>() {
 			@Override
 			public int compare(ActorSched n1, ActorSched n2) {
-				if (n2.getWeightLO() - n1.getWeightLO() != 0)
-					return n2.getWeightLO()- n1.getWeightLO();
+				if (n2.getHlfet()[0] - n1.getHlfet()[0] != 0)
+					return n2.getHlfet()[0]- n1.getHlfet()[0];
 				else
 					return n2.getId() - n1.getId();
 			}
@@ -734,8 +598,8 @@ public class SingleDAG{
 					Collections.sort(ready_lo, new Comparator<ActorSched>() {
 						@Override
 						public int compare(ActorSched n1, ActorSched n2) {
-							if (n2.getWeightLO() - n1.getWeightLO() != 0)
-								return n2.getWeightLO()- n1.getWeightLO();
+							if (n2.getHlfet()[0] - n1.getHlfet()[0] != 0)
+								return n2.getHlfet()[0]- n1.getHlfet()[0];
 							else
 								return n2.getId() - n1.getId();
 						}
@@ -775,9 +639,9 @@ public class SingleDAG{
 		// Add HI nodes to the list
 		while(it_n.hasNext()){
 			ActorSched n = (ActorSched) it_n.next();
-			if (n.getcIs()[1] != 0) {
-				t_hi[n.getId()] = n.getcIs()[1];
-				if (n.isSource()) // At the beginning only source nodes are added
+			if (n.getWcets()[1] != 0) {
+				t_hi[n.getId()] = n.getWcets()[1];
+				if (n.getRcvEdges().size() == 0) // At the beginning only source nodes are added
 					ready_hi.add(n);
 			}
 		}
@@ -786,8 +650,8 @@ public class SingleDAG{
 		Collections.sort(ready_hi, new Comparator<ActorSched>() {
 			@Override
 			public int compare(ActorSched n1, ActorSched n2) {
-				if (n2.getWeightHI()- n1.getWeightHI() != 0)
-					return n2.getWeightHI()- n1.getWeightHI();
+				if (n2.getHlfet()[1]- n1.getHlfet()[1] != 0)
+					return n2.getHlfet()[1]- n1.getHlfet()[1];
 				else
 					return n2.getId() - n1.getId();
 			}
@@ -831,8 +695,8 @@ public class SingleDAG{
 					Collections.sort(ready_hi, new Comparator<ActorSched>() {
 						@Override
 						public int compare(ActorSched n1, ActorSched n2) {
-							if (n2.getWeightHI()- n1.getWeightHI() != 0)
-								return n2.getWeightHI()- n1.getWeightHI();
+							if (n2.getHlfet()[1]- n1.getHlfet()[1] != 0)
+								return n2.getHlfet()[1]- n1.getHlfet()[1];
 							else
 								return n2.getId() - n1.getId();
 						}
@@ -860,8 +724,8 @@ public class SingleDAG{
 	public void printW(int mode) {
 		for (int i = 0; i < getMxcDag().getNodes().size(); i++) {
 			if (mode == ActorSched.HI ) {
-				if (getMxcDag().getNodebyID(i).getcIs()[1] != 0)
-					System.out.println("[DEBUG] Weight HI "+getMxcDag().getNodebyID(i).getName()+" = "+((ActorSched) getMxcDag().getNodebyID(i)).getWeightHI());
+				if (getMxcDag().getNodebyID(i).getWcets()[1] != 0)
+					System.out.println("[DEBUG] Weight HI "+getMxcDag().getNodebyID(i).getName()+" = "+((ActorSched) getMxcDag().getNodebyID(i)).getHlfet()[1]);
 			} else {
 				System.out.println("[DEBUG] Weight LO "+getMxcDag().getNodebyID(i).getName()+" = "+weights_LO[i]);
 			}
