@@ -32,7 +32,7 @@ import fr.tpt.s3.mcdag.model.Edge;
  * @author Roberto Medina
  *
  */
-public class SingleDAG{
+public class SingleDAG extends SchedulerFactory {
 	
 	// DAG to be scheduled
 	private DAG mcDag;
