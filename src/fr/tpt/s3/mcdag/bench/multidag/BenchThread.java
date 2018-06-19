@@ -104,7 +104,7 @@ public class BenchThread implements Runnable {
 		Federated fed = new Federated(copyDags, nbCores, debug);
 		
 		try {
-			fed.buildTables();
+			fed.buildAllTables();
 		} catch (SchedulingException se) {
 			setSchedFede(false);
 			if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] FEDERATED non schedulable with "+nbCores+" cores.");
@@ -116,7 +116,7 @@ public class BenchThread implements Runnable {
 		
 		try {
 			resetVisited(dags);
-			mdag.allocAll();
+			mdag.buildAllTables();
 			// nlvl.buildAllTables();
 		} catch (SchedulingException se) {
 			setSchedLax(false);

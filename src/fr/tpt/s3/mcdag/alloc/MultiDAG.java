@@ -30,7 +30,7 @@ import fr.tpt.s3.mcdag.model.DAG;
 import fr.tpt.s3.mcdag.model.Edge;
 import fr.tpt.s3.mcdag.util.MathMCDAG;
 
-public class MultiDAG{
+public class MultiDAG extends SchedulerFactory{
 	
 	// Set of DAGs to be scheduled
 	private Set<DAG> mcDags;
@@ -90,7 +90,7 @@ public class MultiDAG{
 	/**
 	 * Allocates the scheduling tables
 	 */
-	private void initTables () {
+	protected void initTables () {
 		int[] input = new int[getMcDags().size()];
 		int i = 0;
 	
@@ -639,7 +639,7 @@ public class MultiDAG{
 	 * @param debug
 	 * @throws SchedulingException
 	 */
-	public void allocAll () throws SchedulingException {
+	public void buildAllTables () throws SchedulingException {
 		initTables();
 		initRemainT();
 

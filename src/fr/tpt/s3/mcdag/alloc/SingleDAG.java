@@ -70,7 +70,7 @@ public class SingleDAG extends SchedulerFactory {
 	/**
 	 * Initializes scheduling tables
 	 */
-	private void initTables () {
+	protected void initTables () {
 		sched = new String[2][getDeadline()][getNbCores()];
 		
 		for (int i = 0; i < 2; i++) {
@@ -475,8 +475,7 @@ public class SingleDAG extends SchedulerFactory {
 	 * Does the whole allocaiton
 	 * @throws SchedulingException 
 	 */
-	public boolean AllocAll() throws SchedulingException{
-		boolean ret = true;
+	public void buildAllTables() throws SchedulingException{
 		
 		initTables();
 		
@@ -489,8 +488,6 @@ public class SingleDAG extends SchedulerFactory {
 		if (isDebug()) printW(ActorSched.LO);
 		this.AllocLO();
 		if (isDebug()) printS_LO();
-		
-		return ret;
 	}
 
 	

@@ -34,7 +34,7 @@ import fr.tpt.s3.mcdag.model.Edge;
  * @author roberto
  *
  */
-public class Federated {
+public class Federated extends SchedulerFactory{
 	
 	// Set of DAGs to be scheduled 
 	private Set<DAG> mcDags;
@@ -405,7 +405,11 @@ public class Federated {
 		}
 	}
 	
-	public void buildTables () throws SchedulingException {
+	@Override
+	protected void initTables () {}
+	
+	@Override
+	public void buildAllTables () throws SchedulingException {
 		
 		int coresQuota = getNbCores();
 		double uLightDAGs = 0.0;

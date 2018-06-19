@@ -36,7 +36,7 @@ import fr.tpt.s3.mcdag.util.MathMCDAG;
  * @author roberto
  *
  */
-public class NLevels {
+public class NLevels extends SchedulerFactory {
 	
 	// Set of DAGs to be scheduled
 	private Set<DAG> mcDags;
@@ -119,7 +119,7 @@ public class NLevels {
 	/**
 	 * Inits the scheduling tables and calculates the hyper-period
 	 */
-	private void initTables () {
+	protected void initTables () {
 		int[] input = new int[getMcDags().size()];
 		int i = 0;
 		

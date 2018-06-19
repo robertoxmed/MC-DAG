@@ -64,12 +64,10 @@ public class AllocationThread implements Runnable{
 		if (dags.size() == 1) {
 			DAG dag = dags.iterator().next();
 			ls = new SingleDAG(dag, mcp.getNbCores());
-			ls.setMxcDag(dag);
-			ls.setDeadline(dag.getDeadline());
 			ls.setDebug(debug);
 			
 			try {
-				ls.AllocAll();
+				ls.buildAllTables();
 			} catch (SchedulingException e1) {
 				System.out.println("[ERROR] UniDAG: unable to schedule the example: "+this.getInputFile());
 				System.out.println(e1.getMessage());
