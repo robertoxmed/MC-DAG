@@ -405,10 +405,8 @@ public class Federated extends SchedulerFactory{
 		}
 	}
 	
-	@Override
 	protected void initTables () {}
 	
-	@Override
 	public void buildAllTables () throws SchedulingException {
 		
 		int coresQuota = getNbCores();

@@ -317,7 +317,7 @@ public class MultiDAG extends SchedulerFactory{
 	 */
 	private void checkDAGActivation (int slot, List<ActorSched> sched, List<ActorSched> lMode, short mode) {
 		for (DAG d : getMcDags()) {
-			// If the slot is a mulitple of the deadline there is a new activation
+			// If the slot is a multiple of the deadline there is a new activation
 			if (slot % d.getDeadline() == 0) {
 				ListIterator<ActorSched> it = sched.listIterator();
 				
@@ -330,23 +330,17 @@ public class MultiDAG extends SchedulerFactory{
 					}
 					it = sched.listIterator();
 					// Re-init remaining execution time to be allocated
-					if (a.getWcet(1) != 0)
-						remainTHI.put(a.getName(), a.getWcet(1));
-					remainTLO.put(a.getName(), a.getWcet(0));
-					
 					if (mode == ActorSched.HI) {
-						if (a.getWcet(1) != 0) {
-							boolean add = true;
-							for (Edge e : a.getSndEdges()) {
-								if (e.getDest().getWcet(1) != 1)
-									add = false;
-							}
-							if (add)
-								lMode.add((ActorSched) a);
-						}
+						if (a.getWcet(1) != 0)
+							remainTHI.put(a.getName(), a.getWcet(1));
 					} else {
-						if (a.getRcvEdges().size() == 0)
-							lMode.add((ActorSched) a);
+						remainTLO.put(a.getName(), a.getWcet(0));
+					}
+					
+					if (mode == ActorSched.HI && a.isSinkinL(1)) {
+						lMode.add((ActorSched) a);
+					} else if (mode == ActorSched.LO && a.isSourceinL(0)){
+						lMode.add((ActorSched) a);
 					}
 				}			
 			}
@@ -446,28 +440,6 @@ public class MultiDAG extends SchedulerFactory{
 		return true;
 	}
 	
-	private boolean enoughSlots (int slot, List<ActorSched> ready, short mode) {
-		
-		ListIterator<ActorSched> lit = ready.listIterator();
-		int sumCi = 0;
-		int left = (gethPeriod() - slot) * getNbCores();
-		
-		while (lit.hasNext()) {
-			ActorSched a = lit.next();
-			
-			if (mode == Actor.HI)
-				sumCi += a.getWcet(1);
-			else
-				sumCi += a.getWcet(0);
-			
-		}
-		
-		if (sumCi > left)
-			return false;
-		
-		return true;
-	}
-	
 	/**
 	 * Allocates the DAGs in the HI mode and registers virtual deadlines
 	 * @throws SchedulingException
@@ -513,11 +485,6 @@ public class MultiDAG extends SchedulerFactory{
 				SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] allocHI() MultiDAG: Not enough slots left.");
 				throw se;
 			}
-			
-//			if (!enoughSlots(gethPeriod() - s, lHI, ActorSched.HI)) {
-//				SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] allocHI() MultiDAG: Not enough slots left.");
-//				throw se;
-//			}
 			
 			for (int c = getNbCores() - 1; c >= 0; c--) {
 				// Find a ready task in the HI list
@@ -590,11 +557,6 @@ public class MultiDAG extends SchedulerFactory{
 			
 			// Verify that there are enough slots to continue the scheduling
 			if (!isPossible(s, lLO, ActorSched.LO)) {
-				SchedulingException se = new SchedulingException("[WARNING "+Thread.currentThread().getName()+"] allocLO() MultiDAG: Not enough slot left");
-				throw se;
-			}
-			
-			if (!enoughSlots(s, lLO, ActorSched.LO)) {
 				SchedulingException se = new SchedulingException("[WARNING "+Thread.currentThread().getName()+"] allocLO() MultiDAG: Not enough slot left");
 				throw se;
 			}

@@ -40,6 +40,7 @@ public class AllocationThread implements Runnable{
 	
 	private SingleDAG ls;
 	private NLevels nlvl;
+	private MultiDAG multidag;
 	private Automata auto;
 	private boolean debug;
 	
@@ -91,13 +92,15 @@ public class AllocationThread implements Runnable{
 				System.out.println("["+Thread.currentThread().getName()+"] PRISM file written.");
 			}
 			
-		} else { // The model is has multiple DAGs			
+		} else { // The model is has multiple DAGs
+			multidag = new MultiDAG(dags, mcp.getNbCores(), debug);
 			setNlvl(new NLevels(dags, mcp.getNbCores(), mcp.getNbLevels(), debug));
 			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] N levels: "+dags.size()+" DAGs are going to be scheduled in "+mcp.getNbCores()+" cores.");
 			// nlvl.printDAGs();
 		
 			try {
 				nlvl.buildAllTables();
+				multidag.buildAllTables();
 			} catch (SchedulingException e) {
 				e.printStackTrace();
 			}
