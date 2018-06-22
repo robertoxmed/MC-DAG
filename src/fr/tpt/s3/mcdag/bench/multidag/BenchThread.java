@@ -25,6 +25,7 @@ import java.util.Set;
 
 import fr.tpt.s3.mcdag.alloc.Federated;
 import fr.tpt.s3.mcdag.alloc.MultiDAG;
+import fr.tpt.s3.mcdag.alloc.NLevels;
 import fr.tpt.s3.mcdag.alloc.SchedulingException;
 import fr.tpt.s3.mcdag.model.Actor;
 import fr.tpt.s3.mcdag.model.ActorSched;
@@ -117,7 +118,7 @@ public class BenchThread implements Runnable {
 		try {
 			resetVisited(dags);
 			mdag.buildAllTables();
-			// nlvl.buildAllTables();
+			//nlvl.buildAllTables();
 		} catch (SchedulingException se) {
 			setSchedLax(false);
 			if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] LAXITY non schedulable with "+nbCores+" cores.");

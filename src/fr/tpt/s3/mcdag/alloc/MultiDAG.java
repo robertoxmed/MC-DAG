@@ -40,8 +40,6 @@ public class MultiDAG extends SchedulerFactory{
 	private int hPeriod;
 	
 	// List of DAG nodes to order them
-	private List<ActorSched> lLO;
-	private List<ActorSched> lHI;
 	private Comparator<ActorSched> lHIComp;
 	private Comparator<ActorSched> lLOComp;
 	
@@ -315,7 +313,7 @@ public class MultiDAG extends SchedulerFactory{
 	 * Checks for the activation of a new DAG during the hyper-period
 	 * @param slot
 	 */
-	private void checkDAGActivation (int slot, List<ActorSched> sched, List<ActorSched> lMode, short mode) {
+	private void checkDAGActivation (List<ActorSched> sched, List<ActorSched> ready, int slot, short mode) {
 		for (DAG d : getMcDags()) {
 			// If the slot is a multiple of the deadline there is a new activation
 			if (slot % d.getDeadline() == 0) {
@@ -338,9 +336,9 @@ public class MultiDAG extends SchedulerFactory{
 					}
 					
 					if (mode == ActorSched.HI && a.isSinkinL(1)) {
-						lMode.add((ActorSched) a);
+						ready.add((ActorSched) a);
 					} else if (mode == ActorSched.LO && a.isSourceinL(0)){
-						lMode.add((ActorSched) a);
+						ready.add((ActorSched) a);
 					}
 				}			
 			}
@@ -392,18 +390,18 @@ public class MultiDAG extends SchedulerFactory{
 			int relatSlot = slot % a.getGraphDead();
 					
 			if (mode == ActorSched.HI) { // Laxity in HI mode
-				a.getLaxities()[1] = a.getLFTs()[1] - relatSlot - remainTHI.get(a.getName());
+				a.setLaxityinL(a.getLFTs()[1] - relatSlot - remainTHI.get(a.getName()), 1);
 			} else  {// Laxity in LO mode
 				// Promote HI tasks that need to be scheduled at this slot
-				if (a.getWcet(1) != 0) {
+				if (a.getWcet(1) > 0) {
 					if ((a.getWcet(0) - remainTLO.get(a.getName())) - scheduledUntilT(a, slot) < 0) {
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
-						a.getLaxities()[0]  = 0;
+						a.setLaxityinL(0, 0);
 					} else {
-						a.getLaxities()[0] = a.getLFTs()[0] - relatSlot - remainTLO.get(a.getName());
+						a.setLaxityinL(a.getLFTs()[0] - relatSlot - remainTLO.get(a.getName()), 0);
 					}
 				} else {
-					a.getLaxities()[0] = a.getLFTs()[0] - relatSlot - remainTLO.get(a.getName());
+					a.setLaxityinL(a.getLFTs()[0] - relatSlot - remainTLO.get(a.getName()), 0);
 				}
 			}
 		}
@@ -414,24 +412,17 @@ public class MultiDAG extends SchedulerFactory{
 	 * @param slot
 	 * @return
 	 */
-	private boolean isPossible (int slot, List<ActorSched> lMode, short mode) {
+	private boolean isPossible (List<ActorSched> list, int slot, int level) {
 		int m = 0;
-		ListIterator<ActorSched> it = lMode.listIterator();
+		ListIterator<ActorSched> lit = list.listIterator();
 		
-		while (it.hasNext()) {
-			ActorSched a = it.next();
+		while (lit.hasNext()) {
+			ActorSched a = lit.next();
 			
-			if (mode == ActorSched.HI) {
-				if (a.getLaxities()[1] == 0)
-					m++;
-				else if (a.getLaxities()[1] < 0)
-					return false;					
-			} else {
-				if (a.getLaxities()[0] == 0)
-					m++;
-				else if (a.getLaxities()[0] < 0)
-					return false;
-			}
+			if (a.getLaxities()[level] == 0)
+				m++;
+			else if (a.getLaxities()[level] < 0)
+				return false;
 			
 			if (m > nbCores)
 				return false;
@@ -445,43 +436,35 @@ public class MultiDAG extends SchedulerFactory{
 	 * @throws SchedulingException
 	 */
 	public void allocHI () throws SchedulingException {
-		List<ActorSched> completed = new LinkedList<>();
-		lHI = new ArrayList<ActorSched>();
+		List<ActorSched> scheduled = new LinkedList<>();
+		List<ActorSched> ready = new LinkedList<>();
 		
 		// Add all exit HI nodes to the ready list.
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
-				if (a.getWcet(1) != 0) {
-					boolean add = true;
-					
-					for (Edge e : a.getSndEdges()) {
-						if (e.getDest().getWcet(1) != 0) {
-							add = false;
-							break;
-						}
-					}
-					if (add) lHI.add((ActorSched) a);
-				}
+				if (a.isSinkinL(1))
+					ready.add((ActorSched) a);
+
 			}
 		}
 
-		calcLaxity(lHI, 0, ActorSched.HI);
-		lHI.sort(lHIComp);
+		calcLaxity(ready, 0, ActorSched.HI);
+		ready.sort(lHIComp);
 		 
 		// Allocate all slots of the HI scheduling table
-		ListIterator<ActorSched> lit = lHI.listIterator();
+		ListIterator<ActorSched> lit = ready.listIterator();
 		boolean taskFinished = false;
 		
 		for (int s = hPeriod - 1; s >= 0; s--) {
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] allocHI(): @t = "+s+", tasks activated: ");
-				for (ActorSched a : lHI)
+				for (ActorSched a : ready)
 					System.out.print("L("+a.getName()+") = "+a.getLaxities()[1]+"; ");
 				System.out.println("");
 			}
 			
 			// Check if it's worth to continue the allocation
-			if (!isPossible(s, lHI, ActorSched.HI)) {
+			if (!isPossible(ready, s, 1)) {
 				SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] allocHI() MultiDAG: Not enough slots left.");
 				throw se;
 			}
@@ -497,7 +480,7 @@ public class MultiDAG extends SchedulerFactory{
 					
 					// The task has been fully scheduled
 					if (val == 0) {
-						completed.add(a);
+						scheduled.add(a);
 						taskFinished = true;
 						lit.remove();
 					}
@@ -506,19 +489,19 @@ public class MultiDAG extends SchedulerFactory{
 			}
 			
 			if (taskFinished)
-				checkActorActivationHI(completed, lHI);
+				checkActorActivationHI(scheduled, ready);
 
 			if (s != 0) {
 				// Check if DAGs need to be activated at the next slot
-				checkDAGActivation(s, completed, lHI, ActorSched.HI); 
+				checkDAGActivation(scheduled, ready, s, ActorSched.HI); 
 				// Update laxities for nodes in the ready list
-				calcLaxity(lHI, gethPeriod() - s, ActorSched.HI);
+				calcLaxity(ready, gethPeriod() - s, ActorSched.HI);
 			}
-			lHI.sort(lHIComp);
+			ready.sort(lHIComp);
 			taskFinished = false;
-			lit = lHI.listIterator();
+			lit = ready.listIterator();
 		}
-		if (lHI.size() != 0) {
+		if (ready.size() != 0) {
 			SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] allocHI() MultiDAG: Not enough slots left.");
 			throw se;
 		}
@@ -529,34 +512,34 @@ public class MultiDAG extends SchedulerFactory{
 	 * @throws SchedulingException
 	 */
 	public void allocLO () throws SchedulingException{
-		List<ActorSched> completed = new LinkedList<>();
-		lLO = new ArrayList<ActorSched>();
+		List<ActorSched> ready = new LinkedList<>();
+		List<ActorSched> scheduled = new LinkedList<>();
 		
 		// Add all HI nodes to the list.
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
-				if (a.getRcvEdges().size() == 0)
-					lLO.add((ActorSched)a);
+				if (a.isSourceinL(0))
+					ready.add((ActorSched)a);
 			}
 		}
 		
-		calcLaxity(lLO, 0, ActorSched.LO);
-		lLO.sort(lLOComp);
+		calcLaxity(ready, 0, ActorSched.LO);
+		ready.sort(lLOComp);
 		
 		// Allocate all slots of the LO scheduling table
-		ListIterator<ActorSched> lit = lLO.listIterator();
+		ListIterator<ActorSched> lit = ready.listIterator();
 		boolean taskFinished = false;
 		
 		for (int s = 0; s < hPeriod; s++) {
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] allocLO(): @t = "+s+", tasks activated: ");
-				for (ActorSched a : lLO)
+				for (ActorSched a : ready)
 					System.out.print("L("+a.getName()+") = "+a.getLaxities()[0]+"; ");
 				System.out.println("");
 			}
 			
 			// Verify that there are enough slots to continue the scheduling
-			if (!isPossible(s, lLO, ActorSched.LO)) {
+			if (!isPossible(ready, s, 0)) {
 				SchedulingException se = new SchedulingException("[WARNING "+Thread.currentThread().getName()+"] allocLO() MultiDAG: Not enough slot left");
 				throw se;
 			}
@@ -571,26 +554,26 @@ public class MultiDAG extends SchedulerFactory{
 					val--;
 					
 					if (val == 0) {
-						lit.remove();
-						completed.add(a);
+						scheduled.add(a);
 						taskFinished = true;
+						lit.remove();
 					}
 					remainTLO.put(a.getName(), val);
 				}
 			}
 						
 			if (taskFinished)
-				checkActorActivationLO(completed, lLO);
+				checkActorActivationLO(scheduled, ready);
 			
 			if (s != hPeriod - 1) {
-				checkDAGActivation(s + 1, completed, lLO, ActorSched.LO);
-				calcLaxity(lLO, s + 1, ActorSched.LO);
+				checkDAGActivation(scheduled, ready, s + 1, ActorSched.LO);
+				calcLaxity(ready, s + 1, ActorSched.LO);
 			}
-			lLO.sort(lLOComp);
+			ready.sort(lLOComp);
 			taskFinished = false;
-			lit = lLO.listIterator();
+			lit = ready.listIterator();
 		}
-		if (lHI.size() != 0) {
+		if (ready.size() != 0) {
 			SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] allocHI() MultiDAG: Not enough slots left.");
 			throw se;
 		}
@@ -678,22 +661,6 @@ public class MultiDAG extends SchedulerFactory{
 
 	public void setNbCores(int nbCores) {
 		this.nbCores = nbCores;
-	}
-
-	public List<ActorSched> getlLO() {
-		return lLO;
-	}
-
-	public void setlLO(List<ActorSched> lLO) {
-		this.lLO = lLO;
-	}
-
-	public List<ActorSched> getlHI() {
-		return lHI;
-	}
-
-	public void setlHI(List<ActorSched> lHI) {
-		this.lHI = lHI;
 	}
 
 	public Set<DAG> getMcDags() {

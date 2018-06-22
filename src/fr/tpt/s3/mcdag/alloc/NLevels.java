@@ -364,23 +364,23 @@ public class NLevels extends SchedulerFactory {
 			// The laxity has to be calculated for a HI mode
 			if (level >= 1) {
 
-				// It's not the highest criticality level -> perform checks
-				if (level != getLevels() - 1) {
-					int deltaI = a.getWcet(level + 1) - a.getWcet(level);
-					//Check if in the higher table the Ci(L+1) - Ci(L) has been allocated
-					if (scheduledUntilTinLreverse(a, slot, level + 1) - deltaI < 0) {
-						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
-						a.setLaxityinL(Integer.MAX_VALUE, level);
-					} else if (scheduledUntilTinLreverse(a, slot, level) != 0 &&
-							scheduledUntilTinLreverse(a, slot, level) - scheduledUntilTinLreverse(a, slot, level + 1) + deltaI == 0) {
-						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
-						a.setLaxityinL(Integer.MAX_VALUE, level);
-					} else {
-						a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
-					}
-				} else {
+//				// It's not the highest criticality level -> perform checks
+//				if (level != getLevels() - 1) {
+//					int deltaI = a.getWcet(level + 1) - a.getWcet(level);
+//					//Check if in the higher table the Ci(L+1) - Ci(L) has been allocated
+//					if (scheduledUntilTinLreverse(a, slot, level + 1) - deltaI < 0) {
+//						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
+//						a.setLaxityinL(Integer.MAX_VALUE, level);
+//					} else if (scheduledUntilTinLreverse(a, slot, level) != 0 &&
+//							scheduledUntilTinLreverse(a, slot, level) - scheduledUntilTinLreverse(a, slot, level + 1) + deltaI == 0) {
+//						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
+//						a.setLaxityinL(Integer.MAX_VALUE, level);
+//					} else {
+//						a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
+//					}
+//				} else {
 					a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
-				}
+//				}
 			// Laxity in LO mode
 			} else {
 				// If it's a HI task
@@ -531,8 +531,10 @@ public class NLevels extends SchedulerFactory {
 				
 				// Check if all successors of the predecessor have been allocated
 				for (Edge e2 : pred.getSndEdges()) {
-					if (e2.getDest().getWcet(level) != 0 && !sched.contains(e2.getDest()))
+					if (e2.getDest().getWcet(level) != 0 && !sched.contains(e2.getDest())) {
 						add = false;
+						break;
+					}
 				}
 				
 				if (add && !ready.contains(pred) && remainingTime[level][pred.getGraphID()][pred.getId()] != 0) {
@@ -560,8 +562,10 @@ public class NLevels extends SchedulerFactory {
 				
 				// Check if all successors of the predecessor have been allocated
 				for (Edge e2 : succ.getRcvEdges()) {
-					if (!sched.contains(e2.getSrc()))
+					if (!sched.contains(e2.getSrc())) {
 						add = false;
+						break;
+					}
 				}
 				
 				if (add && !ready.contains(succ) && remainingTime[0][succ.getGraphID()][succ.getId()] != 0) {
@@ -591,7 +595,6 @@ public class NLevels extends SchedulerFactory {
 						ActorSched a2 = it.next();
 						if (a.getName().contentEquals(a2.getName()))
 							it.remove();
-						
 					}
 					it = sched.listIterator();
 					// Re-init execution time
@@ -659,8 +662,8 @@ public class NLevels extends SchedulerFactory {
 				// Find a top ready task
 				if (lit.hasNext()) {
 					ActorSched a = lit.next();
-					if (a.isDelayed())
-						break;
+//					if (a.isDelayed())
+//						break;
 					int val = remainingTime[l][a.getGraphID()][a.getId()];
 					
 					sched[l][s][c] = a.getName();
@@ -676,7 +679,7 @@ public class NLevels extends SchedulerFactory {
 				}
 			}
 			
-			resetDelays();
+			// resetDelays();
 			
 			// It a task has been fully allocated check for new activations
 			if (taskFinished)
@@ -699,6 +702,10 @@ public class NLevels extends SchedulerFactory {
 			});
 			taskFinished = false;
 			lit = ready.listIterator();
+		}
+		if (ready.size() != 0) {
+			SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] buildLOTable(0): Ready list not empty.");
+			throw se;
 		}
 	}
 	
@@ -730,7 +737,7 @@ public class NLevels extends SchedulerFactory {
 		
 		for (int s = 0; s < gethPeriod(); s++) {
 			if (isDebug()) {
-				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildHITable(0): @t = "+s+", tasks activated: ");
+				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildLOTable(0): @t = "+s+", tasks activated: ");
 				for (ActorSched a : ready)
 					System.out.print("L("+a.getName()+") = "+a.getLaxities()[0]+"; ");
 				System.out.println("");
@@ -738,7 +745,7 @@ public class NLevels extends SchedulerFactory {
 			
 			// Verify that is still worth trying to compute the sched table
 			if (!isPossible(ready, s, 0)) {
-				SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] buildHITable(0): Not enough slots left.");
+				SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] buildLOTable(0): Not enough slots left.");
 				throw se;
 			}
 			
@@ -752,9 +759,9 @@ public class NLevels extends SchedulerFactory {
 					val--;
 					
 					if (val == 0) {
-						lit.remove();
 						scheduled.add(a);
 						taskFinished = true;
+						lit.remove();
 					}
 					
 					remainingTime[0][a.getGraphID()][a.getId()] = val;
@@ -773,7 +780,10 @@ public class NLevels extends SchedulerFactory {
 			taskFinished = false;
 			lit = ready.listIterator();
 		}
-
+		if (ready.size() != 0) {
+			SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] buildLOTable(0): Ready list not empty.");
+			throw se;
+		}
 	}
 	
 	/**

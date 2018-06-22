@@ -32,7 +32,9 @@ import fr.tpt.s3.mcdag.parser.MCParser;
 public class AllocationThread implements Runnable{
 	
 	private Set<DAG> dags;
+	private Set<DAG> dags2;
 	private MCParser mcp;
+	private MCParser mcp2;
 	private String inputFile;
 	private boolean outSchedFile;
 	private boolean outPRISMFile;
@@ -46,8 +48,11 @@ public class AllocationThread implements Runnable{
 	
 	public AllocationThread(String iFile, boolean oSF, boolean oPF, boolean debug) {
 		dags = new HashSet<DAG>();
+		dags2 = new HashSet<DAG>();
 		mcp = new MCParser(iFile, null, dags, oPF);
 		setOutPRISMFile(oPF);
+		mcp2 = new MCParser(iFile, null, dags2, oPF);
+
 		if (isOutPRISMFile()) mcp.setOutPrismFile(iFile.substring(0, iFile.lastIndexOf('.')).concat(".pm"));
 		setOutSchedFile(oSF);
 		if (isOutSchedFile()) mcp.setOutSchedFile(iFile.substring(0, iFile.lastIndexOf('.')).concat("-sched.xml"));
@@ -57,6 +62,7 @@ public class AllocationThread implements Runnable{
 	@Override
 	public void run() {
 		mcp.readXML();
+		mcp2.readXML();
 		
 		if (!isOutSchedFile())
 			System.err.println("[WARNING] No output file has been specified for the scheduling tables.");
@@ -94,16 +100,22 @@ public class AllocationThread implements Runnable{
 			
 		} else { // The model is has multiple DAGs
 			multidag = new MultiDAG(dags, mcp.getNbCores(), debug);
-			setNlvl(new NLevels(dags, mcp.getNbCores(), mcp.getNbLevels(), debug));
+			setNlvl(new NLevels(dags2, mcp2.getNbCores(), mcp2.getNbLevels(), debug));
 			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] N levels: "+dags.size()+" DAGs are going to be scheduled in "+mcp.getNbCores()+" cores.");
 			// nlvl.printDAGs();
-		
+			
 			try {
 				nlvl.buildAllTables();
+			} catch (SchedulingException e) {
+				e.printStackTrace();
+			}
+			
+			try {
 				multidag.buildAllTables();
 			} catch (SchedulingException e) {
 				e.printStackTrace();
 			}
+
 			mcp.setSched(nlvl.getSched());
 		}
 		
