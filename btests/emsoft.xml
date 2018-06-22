@@ -3,48 +3,48 @@
 	<!-- Image processing workflow -->
 	<mcdag name="Montage" deadline="20">
 		<actor name="M_PP1">
-			<clo>4</clo>
-			<chi>4</chi>
+			<wcet number="0">4</wcet>
+			<wcet number="1">4</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="M_PP2">
-			<clo>4</clo>
-			<chi>4</chi>
+			<wcet number="0">4</wcet>
+			<wcet number="1">4</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="M_Diff1">
-			<clo>2</clo>
-			<chi>3</chi>
+			<wcet number="0">2</wcet>
+			<wcet number="1">3</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="M_Diff2">
-			<clo>2</clo>
-			<chi>3</chi>
+			<wcet number="0">2</wcet>
+			<wcet number="1">3</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="M_Conct">
-			<clo>3</clo>
-			<chi>4</chi>
+			<wcet number="0">3</wcet>
+			<wcet number="1">4</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="M_Back1">
-			<clo>2</clo>
-			<chi>0</chi>
+			<wcet number="0">2</wcet>
+			<wcet number="1">0</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="M_Back2">
-			<clo>2</clo>
-			<chi>0</chi>
+			<wcet number="0">2</wcet>
+			<wcet number="1">0</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="M_Add">
-			<clo>2</clo>
-			<chi>0</chi>
+			<wcet number="0">2</wcet>
+			<wcet number="1">0</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="M_Shrk">
-			<clo>2</clo>
-			<chi>0</chi>
+			<wcet number="0">2</wcet>
+			<wcet number="1">0</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<ports>
@@ -64,43 +64,43 @@
 	<!-- Flight control system -->
 	<mcdag name="FCS" deadline="10">
 		<actor name="F_GPS">
-			<clo>2</clo>
-			<chi>3</chi>
+			<wcet number="0">2</wcet>
+			<wcet number="1">3</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="F_Recv">
-			<clo>2</clo>
-			<chi>3</chi>
+			<wcet number="0">2</wcet>
+			<wcet number="1">3</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="F_FCtrl">
-			<clo>3</clo>
-			<chi>4</chi>
+			<wcet number="0">3</wcet>
+			<wcet number="1">4</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="F_ACtrl">
-			<clo>2</clo>
-			<chi>3</chi>
+			<wcet number="0">2</wcet>
+			<wcet number="1">3</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="F_Log">
-			<clo>2</clo>
-			<chi>3</chi>
+			<wcet number="0">2</wcet>
+			<wcet number="1">3</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="F_FPlan">
-			<clo>2</clo>
-			<chi>0</chi>
+			<wcet number="0">2</wcet>
+			<wcet number="1">0</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="F_Trans">
-			<clo>3</clo>
-			<chi>0</chi>
+			<wcet number="0">3</wcet>
+			<wcet number="1">0</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<actor name="F_Trans2">
-			<clo>2</clo>
-			<chi>0</chi>
+			<wcet number="0">2</wcet>
+			<wcet number="1">0</wcet>
 			<fprob>0.0</fprob>
 		</actor>
 		<ports>
@@ -116,5 +116,6 @@
 		</ports>
 	</mcdag>
 	<cores number="3"/>
+	<levels number="2"/>
 </mcsystem>
 
