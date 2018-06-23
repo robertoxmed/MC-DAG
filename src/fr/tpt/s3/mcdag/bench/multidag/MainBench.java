@@ -161,6 +161,6 @@ public class MainBench {
 		wOutput.write(Thread.currentThread().getName()+"; "+utilization+"; "+fedPerc+"; "+laxPerc+"\n");
 		wOutput.close();
 		
-		System.out.println("[BENCH Main] DONE");
+		System.out.println("[BENCH Main] Done scheduling U = "+utilization+".");
 	}
 }

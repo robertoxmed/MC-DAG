@@ -346,6 +346,27 @@ public class MCSystemGenerator {
 			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] Generating DAG #"+(i+1)+" of "+getNbDAGs());
 			GenerateGraph(uSet[i]);
 		}
+		
+		removeNilNodes();
+	}
+	
+	private void removeNilNodes () {
+		for (DAG d : gennedDAGs) {
+			Iterator<Actor> ita = d.getNodes().iterator();
+			while (ita.hasNext()) {
+				Actor a = ita.next();
+				if (a.getWcet(0) == 0 && a.getWcet(1) == 0) {
+					for (Edge e : a.getRcvEdges())
+						e.getSrc().getSndEdges().remove(e);
+					for (Edge e : a.getSndEdges())
+						e.getDest().getRcvEdges().remove(e);
+						
+					a.getRcvEdges().clear();
+					a.getSndEdges().clear();
+					ita.remove();
+				}
+			}
+		}
 	}
 	
 	
