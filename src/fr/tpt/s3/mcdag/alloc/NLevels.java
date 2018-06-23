@@ -531,7 +531,7 @@ public class NLevels extends SchedulerFactory {
 				
 				// Check if all successors of the predecessor have been allocated
 				for (Edge e2 : pred.getSndEdges()) {
-					if (e2.getDest().getWcet(level) != 0 && !sched.contains(e2.getDest())) {
+					if (e2.getDest().getWcet(level) > 0 && !sched.contains(e2.getDest())) {
 						add = false;
 						break;
 					}
@@ -763,7 +763,6 @@ public class NLevels extends SchedulerFactory {
 						taskFinished = true;
 						lit.remove();
 					}
-					
 					remainingTime[0][a.getGraphID()][a.getId()] = val;
 				}
 			}

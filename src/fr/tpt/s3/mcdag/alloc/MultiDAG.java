@@ -18,7 +18,6 @@ package fr.tpt.s3.mcdag.alloc;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -46,9 +45,9 @@ public class MultiDAG extends SchedulerFactory{
 	// Scheduling tables
 	private String sched[][][];
 
-	// Remaining time for all nodes
-	private Hashtable<String, Integer> remainTLO;
-	private Hashtable<String, Integer> remainTHI;
+	// Remaining time to be allocated for each node
+	// Level, DAG id, Actor id
+	private int remainingTime[][][];
 	
 	private boolean debug;
 	
@@ -60,8 +59,14 @@ public class MultiDAG extends SchedulerFactory{
 	public MultiDAG (Set<DAG> sd, int cores, boolean debug) {
 		setMcDags(sd);
 		setNbCores(cores);
-		remainTLO = new Hashtable<>();
-		remainTHI = new Hashtable<>();
+		
+		remainingTime = new int[2][getMcDags().size()][];
+		
+		// Init remaining time
+		for (DAG d : getMcDags()) {
+			remainingTime[0][d.getId()] = new int[d.getNodes().size()];
+			remainingTime[1][d.getId()] = new int[d.getNodes().size()];
+		}
 		
 		lHIComp = new Comparator<ActorSched>() {
 			@Override
@@ -271,13 +276,13 @@ public class MultiDAG extends SchedulerFactory{
 			
 				// 	Check all successors of the predecessor
 				for (Edge e2 : pred.getSndEdges()) {
-					if (e2.getDest().getWcet(1) != 0 && !sched.contains(e2.getDest())) {
+					if (e2.getDest().getWcet(1) > 0 && !sched.contains(e2.getDest())) {
 						add = false;
 						break;
 					}
 				}
 			
-				if (add && !ready.contains(pred) && remainTHI.get(pred.getName()) != 0)
+				if (add && !ready.contains(pred) && remainingTime[1][pred.getGraphID()][pred.getId()] != 0)
 					ready.add(pred);					
 			}
 		}
@@ -303,7 +308,7 @@ public class MultiDAG extends SchedulerFactory{
 					}
 				}
 			
-				if (add && !ready.contains(succ) && remainTLO.get(succ.getName()) != 0)
+				if (add && !ready.contains(succ) && remainingTime[0][succ.getGraphID()][succ.getId()] != 0)
 					ready.add(succ);
 			}
 		}
@@ -328,12 +333,8 @@ public class MultiDAG extends SchedulerFactory{
 					}
 					it = sched.listIterator();
 					// Re-init remaining execution time to be allocated
-					if (mode == ActorSched.HI) {
-						if (a.getWcet(1) != 0)
-							remainTHI.put(a.getName(), a.getWcet(1));
-					} else {
-						remainTLO.put(a.getName(), a.getWcet(0));
-					}
+					
+					remainingTime[(int)mode][((ActorSched)a).getGraphID()][a.getId()] = a.getWcet(mode);
 					
 					if (mode == ActorSched.HI && a.isSinkinL(1)) {
 						ready.add((ActorSched) a);
@@ -352,8 +353,11 @@ public class MultiDAG extends SchedulerFactory{
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
 				if (a.getWcet(1) != 0)
-					remainTHI.put(a.getName(), a.getWcet(1));
-				remainTLO.put(a.getName(), a.getWcet(0));
+					remainingTime[1][((ActorSched)a).getGraphID()][a.getId()] = a.getWcet(1);
+				else
+					remainingTime[1][((ActorSched)a).getGraphID()][a.getId()] = 0;
+				
+				remainingTime[0][((ActorSched)a).getGraphID()][a.getId()] = a.getWcet(0);
 			}
 		}
 	}
@@ -388,20 +392,21 @@ public class MultiDAG extends SchedulerFactory{
 	private void calcLaxity (List<ActorSched> list, int slot, short mode) {
 		for (ActorSched a : list) {
 			int relatSlot = slot % a.getGraphDead();
+			int dId = a.getGraphID();
 					
 			if (mode == ActorSched.HI) { // Laxity in HI mode
-				a.setLaxityinL(a.getLFTs()[1] - relatSlot - remainTHI.get(a.getName()), 1);
+				a.setLaxityinL(a.getLFTs()[1] - relatSlot - remainingTime[1][dId][a.getId()], 1);
 			} else  {// Laxity in LO mode
 				// Promote HI tasks that need to be scheduled at this slot
 				if (a.getWcet(1) > 0) {
-					if ((a.getWcet(0) - remainTLO.get(a.getName())) - scheduledUntilT(a, slot) < 0) {
+					if ((a.getWcet(0) - remainingTime[0][dId][a.getId()] - scheduledUntilT(a, slot)) < 0) {
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
 						a.setLaxityinL(0, 0);
 					} else {
-						a.setLaxityinL(a.getLFTs()[0] - relatSlot - remainTLO.get(a.getName()), 0);
+						a.setLaxityinL(a.getLFTs()[0] - relatSlot - remainingTime[0][dId][a.getId()], 0);
 					}
 				} else {
-					a.setLaxityinL(a.getLFTs()[0] - relatSlot - remainTLO.get(a.getName()), 0);
+					a.setLaxityinL(a.getLFTs()[0] - relatSlot - remainingTime[0][dId][a.getId()], 0);
 				}
 			}
 		}
@@ -444,7 +449,6 @@ public class MultiDAG extends SchedulerFactory{
 			for (Actor a : d.getNodes()) {
 				if (a.isSinkinL(1))
 					ready.add((ActorSched) a);
-
 			}
 		}
 
@@ -473,7 +477,7 @@ public class MultiDAG extends SchedulerFactory{
 				// Find a ready task in the HI list
 				if (lit.hasNext()) {
 					ActorSched a = lit.next();
-					int val = remainTHI.get(a.getName());
+					int val = remainingTime[1][a.getGraphID()][a.getId()];
 					
 					sched[1][s][c] = a.getName();
 					val--;
@@ -484,7 +488,7 @@ public class MultiDAG extends SchedulerFactory{
 						taskFinished = true;
 						lit.remove();
 					}
-					remainTHI.put(a.getName(), val);
+					remainingTime[1][a.getGraphID()][a.getId()] = val;
 				}
 			}
 			
@@ -511,7 +515,7 @@ public class MultiDAG extends SchedulerFactory{
 	 * Allocates the DAGs in LO mode
 	 * @throws SchedulingException
 	 */
-	public void allocLO () throws SchedulingException{
+	public void allocLO () throws SchedulingException {
 		List<ActorSched> ready = new LinkedList<>();
 		List<ActorSched> scheduled = new LinkedList<>();
 		
@@ -548,7 +552,7 @@ public class MultiDAG extends SchedulerFactory{
 				// Find a ready task in the LO list
 				if (lit.hasNext()) {
 					ActorSched a = lit.next();
-					int val = remainTLO.get(a.getName());
+					int val = remainingTime[0][a.getGraphID()][a.getId()];
 					
 					sched[0][s][c] = a.getName();
 					val--;
@@ -558,7 +562,7 @@ public class MultiDAG extends SchedulerFactory{
 						taskFinished = true;
 						lit.remove();
 					}
-					remainTLO.put(a.getName(), val);
+					remainingTime[0][a.getGraphID()][a.getId()] = val;
 				}
 			}
 						
@@ -574,7 +578,7 @@ public class MultiDAG extends SchedulerFactory{
 			lit = ready.listIterator();
 		}
 		if (ready.size() != 0) {
-			SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] allocHI() MultiDAG: Not enough slots left.");
+			SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] allocLO() Ready list not empty");
 			throw se;
 		}
 	}
@@ -593,11 +597,9 @@ public class MultiDAG extends SchedulerFactory{
 		if (isDebug()) printLFT();
 		
 		allocHI();
-		//AlignScheduler.align(getSched(), 1, hPeriod, nbCores);
 		if (isDebug()) printSHI();
 		
 		allocLO();
-		//AlignScheduler.align(getSched(), 0, hPeriod, nbCores);
 		if (isDebug()) printSLO();
 	}
 
