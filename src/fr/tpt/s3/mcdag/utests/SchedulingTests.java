@@ -19,7 +19,7 @@ package fr.tpt.s3.mcdag.utests;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.jupiter.api.Test;
+//import org.junit.jupiter.api.Test;
 
 import fr.tpt.s3.mcdag.parser.MCParser;
 
@@ -40,7 +40,7 @@ public class SchedulingTests {
 	/**
 	 * Tests scheduling for a single DAG in a monocore architecture
 	 */
-	@Test
+	//@Test
 	public void TestSched1 () {
 		
 	}
@@ -48,7 +48,7 @@ public class SchedulingTests {
 	/**
 	 * Tests scheduling for multiple DAG, should obtain a schedulable example
 	 */
-	@Test
+	//@Test
 	public void TestSched2 () {
 		
 	}

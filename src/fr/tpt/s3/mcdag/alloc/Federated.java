@@ -18,6 +18,7 @@ package fr.tpt.s3.mcdag.alloc;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -85,7 +86,7 @@ public class Federated extends SchedulerFactory{
 			remainingTime[a.getId()] = a.getWcet(level);
 	}
 	
-	private void calcHLFETs (DAG d, int level, List<ActorSched> prioOrder) {
+	private void calcHLFETs (DAG d, final int level, List<ActorSched> prioOrder) {
 		
 		ArrayList<ActorSched> toVisit = new ArrayList<ActorSched>();
 		
@@ -148,7 +149,7 @@ public class Federated extends SchedulerFactory{
 			if (a.getWcet(level) != 0)
 				prioOrder.add((ActorSched) a);
 		}
-		prioOrder.sort(new Comparator<ActorSched>() {
+		Collections.sort(prioOrder, new Comparator<ActorSched>() {
 			@Override
 			public int compare(ActorSched o1, ActorSched o2) {
 				if (o1.getHlfet()[level] - o2.getHlfet()[level] != 0)
@@ -217,7 +218,7 @@ public class Federated extends SchedulerFactory{
 				ready.add((ActorSched)a);
 		}
 		
-		ready.sort(hiComp);
+		Collections.sort(ready, hiComp);
 		
 		ListIterator<ActorSched> pit = prioOrder.listIterator();
 
@@ -281,7 +282,7 @@ public class Federated extends SchedulerFactory{
 			// Check if we have new activations
 			if (taskFinished) {
 				checkNewActivations(scheduled, ready, remainingTime);
-				ready.sort(hiComp);
+				Collections.sort(ready, hiComp);
 				taskFinished = false;
 			}
 			pit = prioOrder.listIterator();
@@ -303,7 +304,7 @@ public class Federated extends SchedulerFactory{
 				ready.add((ActorSched)a);
 		}
 		
-		ready.sort(loComp);
+		Collections.sort(ready, loComp);
 		ListIterator<ActorSched> hpit = hiPrioOrder.listIterator();
 		ListIterator<ActorSched> lpit = loPrioOrder.listIterator();
 
@@ -397,7 +398,7 @@ public class Federated extends SchedulerFactory{
 			// Check if we have new activations
 			if (taskFinished) {
 				checkNewActivations(scheduled, ready, remainingTime);
-				ready.sort(loComp);
+				Collections.sort(ready, loComp);
 				taskFinished = false;
 			}
 			hpit = hiPrioOrder.listIterator();
@@ -465,7 +466,7 @@ public class Federated extends SchedulerFactory{
 				if (a.getWcet(1) > 0)
 					lit.remove();
 			}
-			loPrioOrder.sort(loComp);
+			Collections.sort(loPrioOrder, loComp);
 			
 			
 			if (isDebug()) printHLFETLevels(d);

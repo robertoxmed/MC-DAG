@@ -18,6 +18,7 @@ package fr.tpt.s3.mcdag.alloc;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Collections;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
@@ -406,7 +407,7 @@ public class NLevels extends SchedulerFactory {
 	 * @param ready
 	 */
 	@SuppressWarnings("unused")
-	private void checkForEqualities (List<ActorSched> ready, int level) {
+	private void checkForEqualities (List<ActorSched> ready, final int level) {
 		
 		// There are enough elements in the ready list to test
 		// for equalities
@@ -452,7 +453,7 @@ public class NLevels extends SchedulerFactory {
 			// Sort equality list
 			if (list) {
 				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] checkForEqualities(): Equalities of laxities");
-				eqList.sort(new Comparator<ActorSched>() {
+				Collections.sort(eqList, new Comparator<ActorSched>() {
 					@Override
 					public int compare (ActorSched o1, ActorSched o2) {
 						if (o1.getLFTs()[level] - o2.getLFTs()[level] != 0)
@@ -617,7 +618,7 @@ public class NLevels extends SchedulerFactory {
 	 * @param l
 	 * @throws SchedulingException
 	 */
-	private void buildHITable (int l) throws SchedulingException {
+	private void buildHITable (final int l) throws SchedulingException {
 		List<ActorSched> ready = new LinkedList<>();
 		List<ActorSched> scheduled = new LinkedList<>();
 		
@@ -630,7 +631,7 @@ public class NLevels extends SchedulerFactory {
 		}
 		
 		calcLaxity(ready, 0, l);
-		ready.sort(new Comparator<ActorSched>() {
+		Collections.sort(ready, new Comparator<ActorSched>() {
 			@Override
 			public int compare(ActorSched o1, ActorSched o2) {
 				if (o1.getLaxities()[l] - o2.getLaxities()[l] != 0)
@@ -691,7 +692,7 @@ public class NLevels extends SchedulerFactory {
 				// Update laxities for nodes
 				calcLaxity(ready, gethPeriod() - s, l);
 			}
-			ready.sort(new Comparator<ActorSched>() {
+			Collections.sort(ready, new Comparator<ActorSched>() {
 				@Override
 				public int compare(ActorSched o1, ActorSched o2) {
 					if (o1.getLaxities()[l] - o2.getLaxities()[l] != 0)
@@ -728,7 +729,7 @@ public class NLevels extends SchedulerFactory {
 		}
 		
 		calcLaxity(ready, 0, 0);
-		ready.sort(loComp);
+		Collections.sort(ready, loComp);
 		//checkForEqualities(ready, 0);
 		
 		// Allocate slot by slot the scheduling table
@@ -774,7 +775,7 @@ public class NLevels extends SchedulerFactory {
 				checkDAGActivation(scheduled, ready, s + 1, 0);
 				calcLaxity(ready, s + 1, 0);
 			}
-			ready.sort(loComp);
+			Collections.sort(ready, loComp);
 			//checkForEqualities(ready, 0);
 			taskFinished = false;
 			lit = ready.listIterator();

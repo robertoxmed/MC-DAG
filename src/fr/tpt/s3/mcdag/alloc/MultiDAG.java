@@ -18,6 +18,7 @@ package fr.tpt.s3.mcdag.alloc;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -453,7 +454,7 @@ public class MultiDAG extends SchedulerFactory{
 		}
 
 		calcLaxity(ready, 0, ActorSched.HI);
-		ready.sort(lHIComp);
+		Collections.sort(ready, lHIComp);
 		 
 		// Allocate all slots of the HI scheduling table
 		ListIterator<ActorSched> lit = ready.listIterator();
@@ -501,7 +502,7 @@ public class MultiDAG extends SchedulerFactory{
 				// Update laxities for nodes in the ready list
 				calcLaxity(ready, gethPeriod() - s, ActorSched.HI);
 			}
-			ready.sort(lHIComp);
+			Collections.sort(ready, lHIComp);
 			taskFinished = false;
 			lit = ready.listIterator();
 		}
@@ -528,7 +529,7 @@ public class MultiDAG extends SchedulerFactory{
 		}
 		
 		calcLaxity(ready, 0, ActorSched.LO);
-		ready.sort(lLOComp);
+		Collections.sort(ready, lLOComp);
 		
 		// Allocate all slots of the LO scheduling table
 		ListIterator<ActorSched> lit = ready.listIterator();
@@ -573,7 +574,7 @@ public class MultiDAG extends SchedulerFactory{
 				checkDAGActivation(scheduled, ready, s + 1, ActorSched.LO);
 				calcLaxity(ready, s + 1, ActorSched.LO);
 			}
-			ready.sort(lLOComp);
+			Collections.sort(ready, lLOComp);
 			taskFinished = false;
 			lit = ready.listIterator();
 		}
