@@ -364,23 +364,23 @@ public class NLevels extends SchedulerFactory {
 			// The laxity has to be calculated for a HI mode
 			if (level >= 1) {
 
-//				// It's not the highest criticality level -> perform checks
-//				if (level != getLevels() - 1) {
-//					int deltaI = a.getWcet(level + 1) - a.getWcet(level);
-//					//Check if in the higher table the Ci(L+1) - Ci(L) has been allocated
-//					if (scheduledUntilTinLreverse(a, slot, level + 1) - deltaI < 0) {
-//						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
-//						a.setLaxityinL(Integer.MAX_VALUE, level);
-//					} else if (scheduledUntilTinLreverse(a, slot, level) != 0 &&
-//							scheduledUntilTinLreverse(a, slot, level) - scheduledUntilTinLreverse(a, slot, level + 1) + deltaI == 0) {
-//						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
-//						a.setLaxityinL(Integer.MAX_VALUE, level);
-//					} else {
-//						a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
-//					}
-//				} else {
+				// It's not the highest criticality level -> perform checks
+				if (level != getLevels() - 1) {
+					int deltaI = a.getWcet(level + 1) - a.getWcet(level);
+					//Check if in the higher table the Ci(L+1) - Ci(L) has been allocated
+					if (scheduledUntilTinLreverse(a, slot, level + 1) - deltaI < 0) {
+						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
+						a.setLaxityinL(Integer.MAX_VALUE, level);
+					} else if (scheduledUntilTinLreverse(a, slot, level) != 0 &&
+							scheduledUntilTinLreverse(a, slot, level) - scheduledUntilTinLreverse(a, slot, level + 1) + deltaI == 0) {
+						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
+						a.setLaxityinL(Integer.MAX_VALUE, level);
+					} else {
+						a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
+					}
+				} else {
 					a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
-//				}
+				}
 			// Laxity in LO mode
 			} else {
 				// If it's a HI task
