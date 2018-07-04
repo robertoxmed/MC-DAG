@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import numpy
+import os
 import optparse
 import sys
 import shutil
@@ -19,43 +20,43 @@ def create_setup():
         os.makedirs("genned")
     
     for p in edge_percentage:
-        if not os.path.exists("e"+str(p)):
-            os.makedirs("e"+str(p))
+        if not os.path.exists("genned/e"+str(p)):
+            os.makedirs("genned/e"+str(p))
             
         for d in number_dags:
-            if not os.path.exists(str(d)):
-                os.makedirs(str(d))
+            if not os.path.exists("genned/e"+str(p)+"/"+str(d)):
+                os.makedirs("genned/e"+str(p)+"/"+str(d))
                 
             for t in number_tasks:
-                if not os.path.exists(str(t)):
-                    os.makedirs(str(t))
+                if not os.path.exists("genned/e"+str(p)+"/"+str(d)+"/"+str(t)):
+                    os.makedirs("genned/e"+str(p)+"/"+str(d)+"/"+str(t))
     
     # Create the directory tree for benchmarking
     if not os.path.exists("results"):
         os.makedirs("results")
     
     for p in edge_percentage:
-        if not os.path.exists("e"+str(p)):
-            os.makedirs("e"+str(p))
+        if not os.path.exists("results/e"+str(p)):
+            os.makedirs("results/e"+str(p))
             
         for d in number_dags:
-            if not os.path.exists(str(d)):
-                os.makedirs(str(d))
+            if not os.path.exists("results/e"+str(p)+"/"+str(d)):
+                os.makedirs("results/e"+str(p)+"/"+str(d))
                 
             for t in number_tasks:
-                if not os.path.exists(str(t)):
-                    os.makedirs(str(t))
-                if not os.path.exists(str(t)+"/detail"):
-                    os.makedirs(str(t)+"/detail")
+                if not os.path.exists("results/e"+str(p)+"/"+str(d)+"/"+str(t)):
+                    os.makedirs("results/e"+str(p)+"/"+str(d)+"/"+str(t))
+                if not os.path.exists("results/e"+str(p)+"/"+str(d)+"/"+str(t)+"/detail"):
+                    os.makedirs("results/e"+str(p)+"/"+str(d)+"/"+str(t)+"/detail")
                     
-    print("Finished setup!\n")
+    print("bench> Finished setup!")
     
 def clean_generated():
     for p in edge_percentage:            
         for d in number_dags:
             for t in number_tasks:
                 # Create the folder string
-                folder = str("e"+str(p)+"/"+str(d)+"/"+str(t))
+                folder = str("genned/e"+str(p)+"/"+str(d)+"/"+str(t))
                 for file in os.listdir(folder):
                     file_path = os.path.join(folder, file)
                     try:
@@ -114,7 +115,7 @@ def main():
     parser.add_option("-h", "--help", action = "store_true", dest = "help",
                       default = False, help = "Show this message and exit")
     
-    parser.add_option("-s", "--setup", action = "store_false", dest = "setup",
+    parser.add_option("-s", "--setup", action = "store_true", dest = "setup",
                       default = False, help = "Setup folder for generation/benchmarks")
     
     parser.add_option("-g", "--generate", action = "store_true", dest = "generate",
