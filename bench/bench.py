@@ -5,6 +5,9 @@ import optparse
 import sys
 import shutil
 import textwrap
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # Global setup for generation and benchmarks
 number_tasks = [10, 20, 50]
@@ -80,8 +83,11 @@ def generate():
                            -p 2 -j "+str(number_jobs)
                      
                     ret = os.system(cmd)
+                    if ret != 0:
+                        print("ERROR unexpected behavior for the generation. Exiting...")
+                        return -1
 
-def schedule():
+def benchmark():
     
     for p in edge_percentage:            
         for d in number_dags:
@@ -122,7 +128,7 @@ def main():
                       default = False, help = "Launch generation")
     
     parser.add_option('-b', "--benchmark", action = "store_true", dest = "benchmark",
-                      default = False, help = "Launch scheduling")
+                      default = False, help = "Launch benchmarking")
     
     parser.add_option("-c", "--clean", action = "store_false", dest = "cleanup",
                       default = False, help = "Cleanup generated files")
@@ -141,10 +147,40 @@ def main():
         clean_generated()
         return 0
     
+    if options.generate:
+        generate()
+        
+    if options.benchmark:
+        benchmark()
+        send_email()
+    
     return 0
 
 def print_help(parser):
     parser.print_help()
+    
+def send_email():
+    i = 0
+    with open("config.txt") as f:
+        for line in f:
+            if i == 0:
+                FROM = line.rstrip('\n')
+            elif i == 1:
+                password = line.rstrip('\n')
+            elif i == 2:
+                TO = line.rstrip('\n')
+            i += 1
+    SUBJECT = "experiments donezo"
+    TEXT = "Yei"
+    message = """From: %s\nTo: %s\nSubject: %s\n\n%s
+    """ % (FROM, ", ".join(TO), SUBJECT, TEXT)
+    
+    server = smtplib.SMTP('smtp.gmail.com:587')
+    server.ehlo()
+    server.starttls()
+    server.login(FROM, password)
+    server.sendmail(FROM, TO, message)
+    server.close()
     
 if __name__ == "__main__":
     sys.exit(main())
