@@ -21,7 +21,7 @@ package fr.tpt.s3.mcdag.alloc;
  * @author roberto
  *
  */
-public abstract class SchedulerFactory {
+public abstract class AbstractMixedCriticalityScheduler {
 	
 	protected abstract void initTables();
 	

@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -29,22 +30,28 @@ import fr.tpt.s3.mcdag.model.Actor;
 import fr.tpt.s3.mcdag.model.ActorSched;
 import fr.tpt.s3.mcdag.model.DAG;
 import fr.tpt.s3.mcdag.model.Edge;
+import fr.tpt.s3.mcdag.util.Counters;
+import fr.tpt.s3.mcdag.util.MathMCDAG;
 
 /**
  * Class implementing Federated MC-DAG scheduling
  * @author roberto
  *
  */
-public class Federated extends SchedulerFactory{
+public class Federated extends AbstractMixedCriticalityScheduler{
 	
 	// Set of DAGs to be scheduled 
 	private Set<DAG> mcDags;
 	
 	// Architecture
 	private int nbCores;
+	private int hPeriod;
 	
 	private Comparator<ActorSched> loComp;
 	private Comparator<ActorSched> hiComp;
+	
+	private int activations;
+	private Hashtable<ActorSched, Integer> preempts;
 	
 	private boolean debug;
 	
@@ -75,6 +82,16 @@ public class Federated extends SchedulerFactory{
 					return o1.getId() - o2.getId();
 			}
 		});
+		
+		int[] input = new int[getMcDags().size()];
+		int i = 0;
+		
+		for (DAG d : getMcDags()) {
+			input[i] = d.getDeadline();
+			i++;
+		}
+		
+		sethPeriod(MathMCDAG.lcm(input));
 	}
 	
 	private void initRemainingTimes (DAG d, int remainingTime[], int level) {
@@ -82,8 +99,13 @@ public class Federated extends SchedulerFactory{
 		for (int i = 0; i < remainingTime.length; i++)
 			remainingTime[i] = 0;
 		
-		for (Actor a : d.getNodes())
+		for (Actor a : d.getNodes()) {
 			remainingTime[a.getId()] = a.getWcet(level);
+			if (a.getWcet(1) != 0)
+				activations += (int)(hPeriod / d.getDeadline()) * 2;
+			else
+				activations += (int)(hPeriod / d.getDeadline());
+		}
 	}
 	
 	private void calcHLFETs (DAG d, final int level, List<ActorSched> prioOrder) {
@@ -308,7 +330,7 @@ public class Federated extends SchedulerFactory{
 		ListIterator<ActorSched> hpit = hiPrioOrder.listIterator();
 		ListIterator<ActorSched> lpit = loPrioOrder.listIterator();
 
-		// Iterate through the number of cores
+		// Iterate through the number of slots
 		for (int s = 0; s < d.getDeadline(); s++) {
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildLOTable(): @t = "+s+", tasks activated: ");
@@ -419,7 +441,7 @@ public class Federated extends SchedulerFactory{
 		// Separate heavy and light DAGs
 		// Check if we have enough cores in the architecture
 		for (DAG d : getMcDags()) {
-			if (d.getUmax() <= 1) {
+			if (d.getUmax() < 1) {
 				lightDAGs.add(d);
 			} else {
 				coresQuota -= d.getUmax();
@@ -467,13 +489,20 @@ public class Federated extends SchedulerFactory{
 					lit.remove();
 			}
 			Collections.sort(loPrioOrder, loComp);
-			
+			Collections.sort(hiPrioOrder, hiComp);
 			
 			if (isDebug()) printHLFETLevels(d);
 			
 			buildHITable(d, sched, hiPrioOrder);
 			buildLOTable(d, sched, loPrioOrder, hiPrioOrder);
+			
+			for (Actor a : d.getNodes()) {
+				ActorSched task = (ActorSched) a;
+				preempts.put(task, 0);
+			}
+			Counters.countPreemptions(sched, preempts, 2, gethPeriod(), coresQuota);
 		}
+		if (debug) printPreempts();
 	}
 	
 	/*
@@ -487,7 +516,17 @@ public class Federated extends SchedulerFactory{
 	private void printDAG (DAG d) {
 		for (Actor a : d.getNodes())
 			System.out.println("Node "+a.getName()+" Ci(HI) "+((ActorSched)a).getWcet(1)+" Ci(LO) "+((ActorSched)a).getWcet(0));
+	}
+	
+	private void printPreempts () {
+		int total = 0;
+		System.out.println("[DEBUG "+Thread.currentThread().getName()+"] Printing preemption data...");
 
+		for (ActorSched a : preempts.keySet()) {
+			System.out.println("[DEBUG "+Thread.currentThread().getName()+"]\t Task "+a.getName()+" peempted "+preempts.get(a)+" times.");
+			total += preempts.get(a);
+		}
+		System.out.println("[DEBUG "+Thread.currentThread().getName()+"] Total number of preemptions = "+total+" for "+activations+" activations");
 	}
 
 	/*
@@ -533,4 +572,27 @@ public class Federated extends SchedulerFactory{
 		this.debug = debug;
 	}
 
+	public Hashtable<ActorSched, Integer> getPreempts() {
+		return preempts;
+	}
+
+	public void setPreempts(Hashtable<ActorSched, Integer> preempts) {
+		this.preempts = preempts;
+	}
+
+	public int gethPeriod() {
+		return hPeriod;
+	}
+
+	public void sethPeriod(int hPeriod) {
+		this.hPeriod = hPeriod;
+	}
+
+	public int getActivations() {
+		return activations;
+	}
+
+	public void setActivations(int activations) {
+		this.activations = activations;
+	}
 }

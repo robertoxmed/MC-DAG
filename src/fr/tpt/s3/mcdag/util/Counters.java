@@ -82,7 +82,9 @@ public class Counters {
 	 * @param hPeriod
 	 * @param nbCores
 	 */
-	public static void countPreemptions (String sched[][][], Hashtable<ActorSched, Integer> refs, int levels, int hPeriod, int nbCores) {
+	public static void countPreemptions (String sched[][][],
+										 Hashtable<ActorSched, Integer> refs,
+										 int levels, int hPeriod, int nbCores) {
 		
 		Set<ActorSched> keys = refs.keySet();
 		@SuppressWarnings("unchecked")
@@ -103,7 +105,14 @@ public class Counters {
 			// Iterate through all the levels
 			for (int l = 0; l < levels; l++) {
 				// Check the number of activations a task has
-				int nbActivations = (int)(a.getGraphDead() / hPeriod);
+				int nbActivations = (int)(hPeriod / a.getGraphDead());
+				for (int c = 0; c < nbCores; c++) {
+					if (sched[l][0][c].contentEquals(a.getName())) {
+						int val = remaining[l].get(a);
+						val--;
+						remaining[l].put(a, val);
+					}
+				}
 				
 				for (int s = 1; s < hPeriod; s++) {
 					int val = remaining[l].get(a);

@@ -30,7 +30,7 @@ import fr.tpt.s3.mcdag.model.DAG;
 import fr.tpt.s3.mcdag.model.Edge;
 import fr.tpt.s3.mcdag.util.MathMCDAG;
 
-public class MultiDAG extends SchedulerFactory{
+public class MultiDAG extends AbstractMixedCriticalityScheduler{
 	
 	// Set of DAGs to be scheduled
 	private Set<DAG> mcDags;

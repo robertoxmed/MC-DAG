@@ -128,6 +128,10 @@ public class MainBench {
 		
 		int fedTotal = 0;
 		int laxTotal = 0;
+		int fedPreempts = 0;
+		int laxPreempts = 0;
+		int fedActiv = 0;
+		int laxActiv = 0;
 		// Read lines in file and do average
 		int i = 0;
 		File f = new File(outFile);
@@ -145,6 +149,8 @@ public class MainBench {
 							fedTotal += Integer.parseInt(val);
 						} else if (j == 3) {
 							laxTotal += Integer.parseInt(val);
+						} else if (j == 4) {
+							
 						}
 						j++;
 					}

@@ -21,10 +21,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Set;
 
 import fr.tpt.s3.mcdag.alloc.Federated;
-import fr.tpt.s3.mcdag.alloc.MultiDAG;
 import fr.tpt.s3.mcdag.alloc.NLevels;
 import fr.tpt.s3.mcdag.alloc.SchedulingException;
 import fr.tpt.s3.mcdag.model.Actor;
@@ -40,6 +40,8 @@ public class BenchThread implements Runnable {
 	private String outputFile;
 	private boolean debug;
 	private int nbCores;
+	private Federated fedScheduler;
+	private NLevels nlvlScheduler;
 	
 	public int getNbCores() {
 		return nbCores;
@@ -73,11 +75,27 @@ public class BenchThread implements Runnable {
 		output = new BufferedWriter(new FileWriter(getOutputFile(), true));
 		
 		int outBFSched = 0;
-		if (isSchedFede())
-			outBFSched = 1;
 		int outBLSched = 0;
-		if (isSchedLax())
+		int outPreemptsFed = 0;
+		int outPreemptsLax = 0;
+		int outActFed = 0;
+		int outActLax = 0;
+		
+		if (isSchedFede()) {
+			outBFSched = 1;
+			Hashtable<ActorSched, Integer> pFed = fedScheduler.getPreempts();
+			for (ActorSched task : pFed.keySet())
+				outPreemptsFed += pFed.get(task);
+			outActFed = fedScheduler.getActivations();
+		}
+		
+		if (isSchedLax()) {
 			outBLSched = 1;
+			Hashtable<ActorSched, Integer> pLax = nlvlScheduler.getPreempts();
+			for (ActorSched task : pLax.keySet())
+				outPreemptsLax += pLax.get(task);
+			outActLax = nlvlScheduler.getActivations();
+		}
 		
 		for (DAG d : dags)
 			uDAGs += d.getUmax();
@@ -102,23 +120,23 @@ public class BenchThread implements Runnable {
 		// Test federated approach
 		// Make a copy of the system instance
 		Set<DAG> copyDags = new HashSet<DAG>(dags);
-		Federated fed = new Federated(copyDags, nbCores, debug);
+		fedScheduler = new Federated(copyDags, nbCores, debug);
 		
 		try {
-			fed.buildAllTables();
+			fedScheduler.buildAllTables();
 		} catch (SchedulingException se) {
 			setSchedFede(false);
 			if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] FEDERATED non schedulable with "+nbCores+" cores.");
 		}
 	
 		// Test laxity
-		MultiDAG mdag = new MultiDAG(dags, nbCores, debug);
-		// NLevels nlvl = new NLevels(dags, nbCores, 2, debug);
+		// MultiDAG mdag = new MultiDAG(dags, nbCores, debug);
+		nlvlScheduler = new NLevels(dags, nbCores, 2, debug);
 		
 		try {
 			resetVisited(dags);
-			mdag.buildAllTables();
-			//nlvl.buildAllTables();
+			//mdag.buildAllTables();
+			nlvlScheduler.buildAllTables();
 		} catch (SchedulingException se) {
 			setSchedLax(false);
 			if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] LAXITY non schedulable with "+nbCores+" cores.");

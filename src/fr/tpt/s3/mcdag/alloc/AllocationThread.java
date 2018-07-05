@@ -42,7 +42,7 @@ public class AllocationThread implements Runnable{
 	
 	private SingleDAG ls;
 	private NLevels nlvl;
-	private MultiDAG multidag;
+	// private MultiDAG multidag;
 	private Automata auto;
 	private boolean debug;
 	
@@ -99,10 +99,10 @@ public class AllocationThread implements Runnable{
 			}
 			
 		} else { // The model is has multiple DAGs
-			multidag = new MultiDAG(dags, mcp.getNbCores(), debug);
+			//multidag = new MultiDAG(dags, mcp.getNbCores(), debug);
 			setNlvl(new NLevels(dags2, mcp2.getNbCores(), mcp2.getNbLevels(), debug));
 			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] N levels: "+dags.size()+" DAGs are going to be scheduled in "+mcp.getNbCores()+" cores.");
-			// nlvl.printDAGs();
+			//nlvl.printDAGs();
 			
 			try {
 				nlvl.buildAllTables();
@@ -110,11 +110,11 @@ public class AllocationThread implements Runnable{
 				e.printStackTrace();
 			}
 			
-			try {
-				multidag.buildAllTables();
-			} catch (SchedulingException e) {
-				e.printStackTrace();
-			}
+//			try {
+//				multidag.buildAllTables();
+//			} catch (SchedulingException e) {
+//				e.printStackTrace();
+//			}
 
 			mcp.setSched(nlvl.getSched());
 		}

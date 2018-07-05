@@ -37,7 +37,7 @@ import fr.tpt.s3.mcdag.util.MathMCDAG;
  * @author roberto
  *
  */
-public class NLevels extends SchedulerFactory {
+public class NLevels extends AbstractMixedCriticalityScheduler {
 	
 	// Set of DAGs to be scheduled
 	private Set<DAG> mcDags;
@@ -143,6 +143,18 @@ public class NLevels extends SchedulerFactory {
 		}
 		
 		if (debug) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] initTables(): Sched tables initialized!");
+		
+		// Calc number of activations
+		for (DAG d : getMcDags()) {
+			for (Actor a : d.getNodes()) {
+				// Check if task runs in HI mode
+				int nbActivations = (int) (hPeriod / d.getDeadline());
+				if (a.getWcet(1) != 0)
+					activations = activations + nbActivations * d.getLevels();
+				else
+					activations = activations + nbActivations;
+			}
+		}
 	}
 	
 	/**
@@ -342,6 +354,7 @@ public class NLevels extends SchedulerFactory {
 	/**
 	 * Resets temporary delays of HI tasks
 	 */
+	@SuppressWarnings("unused")
 	private void resetDelays() {
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
@@ -540,7 +553,6 @@ public class NLevels extends SchedulerFactory {
 				
 				if (add && !ready.contains(pred) && remainingTime[level][pred.getGraphID()][pred.getId()] != 0) {
 					ready.add(pred);
-					activations++;
 				}
 			}
 		}
@@ -571,7 +583,6 @@ public class NLevels extends SchedulerFactory {
 				
 				if (add && !ready.contains(succ) && remainingTime[0][succ.getGraphID()][succ.getId()] != 0) {
 					ready.add(succ);
-					activations++;
 				}
 			}
 		}
@@ -603,10 +614,8 @@ public class NLevels extends SchedulerFactory {
 					
 					if (level >= 1 && a.isSinkinL(level)) {
 						ready.add((ActorSched)a);
-						activations++;
 					} else if (level == 0 && a.isSourceinL(level)) {
 						ready.add((ActorSched)a);
-						activations++;
 					}
 				}
 			}
@@ -723,7 +732,6 @@ public class NLevels extends SchedulerFactory {
 			for (Actor a : d.getNodes()) {
 				if (a.isSourceinL(0)) {
 					ready.add((ActorSched) a);
-					activations++;
 				}
 			}
 		}
@@ -813,13 +821,14 @@ public class NLevels extends SchedulerFactory {
 		// Count preemptions
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
-				ctxSwitch.put((ActorSched) a, 0);
 				preempts.put((ActorSched)a, 0);
 			}
 		}
 		
-		Counters.countContextSwitch(sched, ctxSwitch, getLevels(), hPeriod, nbCores);
+		// Counters.countContextSwitch(sched, ctxSwitch, getLevels(), hPeriod, nbCores);
 		Counters.countPreemptions(sched, preempts, getLevels(), hPeriod, nbCores);
+		
+		if (isDebug()) printPreempts();
 	}
 	
 	/*
@@ -879,6 +888,17 @@ public class NLevels extends SchedulerFactory {
 			}
 		}
 		System.out.print("\n");
+	}
+	
+	public void printPreempts () {
+		int total = 0;
+		System.out.println("[DEBUG "+Thread.currentThread().getName()+"] Printing preemption data...");
+
+		for (ActorSched a : preempts.keySet()) {
+			System.out.println("[DEBUG "+Thread.currentThread().getName()+"]\t Task "+a.getName()+" peempted "+preempts.get(a)+" times.");
+			total += preempts.get(a);
+		}
+		System.out.println("[DEBUG "+Thread.currentThread().getName()+"] Total number of preemptions = "+total+" for "+getActivations()+" activations");
 	}
 	
 	/*
