@@ -17,6 +17,9 @@
 package fr.tpt.s3.mcdag.util;
 
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import fr.tpt.s3.mcdag.model.ActorSched;
@@ -74,6 +77,23 @@ public class Counters {
 		}
 	}
 	
+	
+	private static ActorSched lookForInList (List<ActorSched> listActors, String name) {
+		for (ActorSched a: listActors) {
+			if (a.getName().contentEquals(name))
+				return a;
+		}
+		return null;
+	}
+	
+	private static ActorSched lookForInKeys (Set<ActorSched> keys, String name) {
+		for (ActorSched a: keys) {
+			if (a.getName().contentEquals(name))
+				return a;
+		}
+		return null;
+	}
+	
 	/**
 	 * Method to count the number of preemptions for each task
 	 * @param sched
@@ -87,64 +107,52 @@ public class Counters {
 										 int levels, int hPeriod, int nbCores) {
 		
 		Set<ActorSched> keys = refs.keySet();
-		@SuppressWarnings("unchecked")
-		Hashtable<ActorSched, Integer>[] remaining = new Hashtable[levels];
-		
-		for (int i = 0; i < levels; i++)
-			remaining[i] = new Hashtable<ActorSched, Integer>();
-		
-		// Init remaining times
-		for (ActorSched a : keys) {
-			for (int i = 0; i < levels; i++)
-				remaining[i].put(a, a.getWcet(i));
-		}
-		
-		// Iterate through actors to check the number of preemptions
-		for (ActorSched a : keys) {
-			int preempts = refs.get(a);
-			// Iterate through all the levels
-			for (int l = 0; l < levels; l++) {
-				// Check the number of activations a task has
-				int nbActivations = (int)(hPeriod / a.getGraphDead());
-				for (int c = 0; c < nbCores; c++) {
-					if (sched[l][0][c].contentEquals(a.getName())) {
-						int val = remaining[l].get(a);
-						val--;
-						remaining[l].put(a, val);
-					}
-				}
+		List<ActorSched> runningPreviously = new LinkedList<>();
 				
-				for (int s = 1; s < hPeriod; s++) {
-					int val = remaining[l].get(a);
+		for (int i = 0; i < levels; i++) {
+			for (int j = 0; j < hPeriod; j++) {
+				// Check if elements that were running in the previous slot are still running
+				Iterator<ActorSched> lit = runningPreviously.listIterator();
+				while (lit.hasNext()) {
+					boolean stillRunning = false;
+					ActorSched a = lit.next();
 					
-					for (int c = 0; c < nbCores; c++) {
-						// The task is running
-						if (sched[l][s][c].contentEquals(a.getName())) {
-							boolean wasRunning = false;
-							
-							// Check if the task was running in the previous slot
-							for (int c2 = 0; c2 < nbCores; c2++) {
-								if (sched[l][s - 1][c2].contentEquals(a.getName())) {
-									wasRunning = true;
-									break;
-								}
-							}
-							// The task wasn't running and it isn't the first it is executed was a preemption at this point
-							if (!wasRunning && val != a.getWcet(l))
-								preempts++;
-							
-							val--;							
-							if (val == 0 && nbActivations != 0) {
-								remaining[l].put(a, a.getWcet(l));
-								nbActivations--;
-							} else {
-								remaining[l].put(a, val);
-							}
+					for (int k = 0; k < nbCores; k++) {
+						if (sched[i][j][k].contentEquals(a.getName())) {
+							stillRunning = true;
+							break;
 						}
 					}
+					
+					if (!stillRunning)
+						lit.remove();	
+				}
+								
+				// Add new tasks that are scheduled + increment their preemption count
+				for (int k = 0; k < nbCores; k++) {
+					if (!sched[i][j][k].contentEquals("-") &&
+							lookForInList(runningPreviously, sched[i][j][k]) == null) {
+						ActorSched toAdd = lookForInKeys(keys, sched[i][j][k]);
+						int val = refs.get(toAdd);
+						val++;
+						refs.put(toAdd, val);
+						runningPreviously.add(toAdd);
+					}
+						
 				}
 			}
-			refs.put(a, preempts);
+		}
+		
+		// Decrement the preemption count by the nb of activations
+		for (ActorSched a : keys) {
+			int nbActivations = 0;
+			if (a.getWcet(1) != 0)
+				nbActivations = (int)(hPeriod / a.getGraphDead()) * levels;
+			else
+				nbActivations = (int)(hPeriod / a.getGraphDead());
+			int val = refs.get(a);
+			val -= nbActivations;
+			refs.put(a, val);
 		}
 	}
 	
@@ -161,64 +169,52 @@ public class Counters {
 										 int levels, int hPeriod, int deadline, int nbCores) {
 		
 		Set<ActorSched> keys = refs.keySet();
-		@SuppressWarnings("unchecked")
-		Hashtable<ActorSched, Integer>[] remaining = new Hashtable[levels];
-		
-		for (int i = 0; i < levels; i++)
-			remaining[i] = new Hashtable<ActorSched, Integer>();
-		
-		// Init remaining times
-		for (ActorSched a : keys) {
-			for (int i = 0; i < levels; i++)
-				remaining[i].put(a, a.getWcet(i));
-		}
-		
-		// Iterate through actors to check the number of preemptions
-		for (ActorSched a : keys) {
-			int preempts = refs.get(a);
-			// Iterate through all the levels
-			for (int l = 0; l < levels; l++) {
-				// Check the number of activations a task has
-				int nbActivations = (int)(hPeriod / a.getGraphDead());
-				for (int c = 0; c < nbCores; c++) {
-					if (sched[l][0][c].contentEquals(a.getName())) {
-						int val = remaining[l].get(a);
-						val--;
-						remaining[l].put(a, val);
-					}
-				}
+		List<ActorSched> runningPreviously = new LinkedList<>();
 				
-				for (int s = 1; s < deadline; s++) {
-					int val = remaining[l].get(a);
+		for (int i = 0; i < levels; i++) {
+			for (int j = 0; j < deadline; j++) {
+				// Check if elements that were running in the previous slot are still running
+				Iterator<ActorSched> lit = runningPreviously.listIterator();
+				while (lit.hasNext()) {
+					boolean stillRunning = false;
+					ActorSched a = lit.next();
 					
-					for (int c = 0; c < nbCores; c++) {
-						// The task is running
-						if (sched[l][s][c].contentEquals(a.getName())) {
-							boolean wasRunning = false;
-							
-							// Check if the task was running in the previous slot
-							for (int c2 = 0; c2 < nbCores; c2++) {
-								if (sched[l][s - 1][c2].contentEquals(a.getName())) {
-									wasRunning = true;
-									break;
-								}
-							}
-							// The task wasn't running and it isn't the first it is executed was a preemption at this point
-							if (!wasRunning && val != a.getWcet(l))
-								preempts++;
-							
-							val--;							
-							if (val == 0 && nbActivations != 0) {
-								remaining[l].put(a, a.getWcet(l));
-								nbActivations--;
-							} else {
-								remaining[l].put(a, val);
-							}
+					for (int k = 0; k < nbCores; k++) {
+						if (sched[i][j][k].contentEquals(a.getName())) {
+							stillRunning = true;
+							break;
 						}
 					}
+					
+					if (!stillRunning)
+						lit.remove();	
+				}
+								
+				// Add new tasks that are scheduled + increment their preemption count
+				for (int k = 0; k < nbCores; k++) {
+					if (!sched[i][j][k].contentEquals("-") &&
+							lookForInList(runningPreviously, sched[i][j][k]) == null) {
+						ActorSched toAdd = lookForInKeys(keys, sched[i][j][k]);
+						int val = refs.get(toAdd);
+						val++;
+						refs.put(toAdd, val);
+						runningPreviously.add(toAdd);
+					}
+						
 				}
 			}
-			refs.put(a, preempts);
+		}
+		
+		// Decrement the preemption count by the nb of activations
+		for (ActorSched a : keys) {
+			int nbActivations = 0;
+			if (a.getWcet(1) != 0)
+				nbActivations = (int)(hPeriod / a.getGraphDead()) * levels;
+			else
+				nbActivations = (int)(hPeriod / a.getGraphDead());
+			int val = refs.get(a);
+			val -= nbActivations;
+			refs.put(a, val);
 		}
 	}
 }

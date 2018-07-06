@@ -474,7 +474,7 @@ public class Federated extends AbstractMixedCriticalityScheduler{
 			for (int i = 0; i < 2; i++) {
 				for (int j = 0; j < d.getDeadline(); j++) {
 					for (int k = 0; k < d.getMinCores(); k++) {
-						sched[i][j][k] = " - ";
+						sched[i][j][k] = "-";
 					}
 				}
 			}
