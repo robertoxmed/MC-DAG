@@ -92,6 +92,8 @@ public class Federated extends AbstractMixedCriticalityScheduler{
 		}
 		
 		sethPeriod(MathMCDAG.lcm(input));
+		
+		preempts = new Hashtable<ActorSched, Integer>();
 	}
 	
 	private void initRemainingTimes (DAG d, int remainingTime[], int level) {
@@ -436,8 +438,7 @@ public class Federated extends AbstractMixedCriticalityScheduler{
 		double uLightDAGs = 0.0;
 		Set<DAG> heavyDAGs = new HashSet<DAG>();
 		Set<DAG> lightDAGs = new HashSet<DAG>();
-		
-		
+			
 		// Separate heavy and light DAGs
 		// Check if we have enough cores in the architecture
 		for (DAG d : getMcDags()) {
@@ -500,7 +501,7 @@ public class Federated extends AbstractMixedCriticalityScheduler{
 				ActorSched task = (ActorSched) a;
 				preempts.put(task, 0);
 			}
-			Counters.countPreemptions(sched, preempts, 2, gethPeriod(), coresQuota);
+			Counters.countPreemptions(sched, preempts, 2, gethPeriod(), d.getDeadline(), d.getMinCores());
 		}
 		if (debug) printPreempts();
 	}

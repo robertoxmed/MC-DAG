@@ -100,7 +100,8 @@ public class BenchThread implements Runnable {
 		for (DAG d : dags)
 			uDAGs += d.getUmax();
 		
-		output.write(Thread.currentThread().getName()+"; "+getInputFile()+"; "+outBFSched+"; "+outBLSched+"; "+uDAGs+"\n");
+		output.write(Thread.currentThread().getName()+"; "+getInputFile()+"; "+outBFSched+"; "+outPreemptsFed+"; "+outActFed+"; "
+		+outBLSched+"; "+outPreemptsLax+"; "+outActLax+"; "+uDAGs+"\n");
 		output.close();
 	}
 	

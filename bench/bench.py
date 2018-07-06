@@ -14,7 +14,7 @@ number_tasks = [10, 20, 50]
 number_dags = [2, 4]
 number_cores = [4, 8]
 edge_percentage = [20, 40]
-number_jobs = 8
+number_jobs = 5
 number_files = "10"
 
 def create_setup():
@@ -94,14 +94,14 @@ def benchmark():
             for t in number_tasks:
                 # Create the result file
                 f = open("results/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", "w+")
-                f.write("Main; Fed (%); Lax (%); PFed; PLax\n")
+                f.write("Main; U; Fed (%); PFed; AFed; Lax (%); PLax; ALax\n")
                 f.close()
                 # Vary utilization
                 for u in numpy.arange(1, 4.1, 0.1):
-                    cmd = "java -jar bin/benchmark.jar -i genned/e"+str(p)+"/"+str(d)+"/"+str(t)+"/test-"+str(round(u,2))+"*.xml\
+                    cmd = "java -jar bin/benchmark.jar  -i genned/e"+str(p)+"/"+str(d)+"/"+str(t)+"/test-"+str(round(u,2))+"*.xml\
                            -o results/e"+str(p)+"/"+str(d)+"/"+str(t)+"/detail/out-"+str(round(u,2))+".csv \
                            -ot results/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv\
-                           -u "+str(round(u,2))+" -j "+str(number_jobs)
+                           -u "+str(round(u,2))+" -c 4 -j "+str(number_jobs)
                     ret = os.system(cmd)
                     if ret != 0:
                         print("ERROR unexpected behavior for the benchmarking. Exiting...")
@@ -152,7 +152,7 @@ def main():
         
     if options.benchmark:
         benchmark()
-        send_email()
+        #send_email()
     
     return 0
 
@@ -170,10 +170,10 @@ def send_email():
             elif i == 2:
                 TO = line.rstrip('\n')
             i += 1
-    SUBJECT = "experiments donezo"
-    TEXT = "Yei"
-    message = """From: %s\nTo: %s\nSubject: %s\n\n%s
-    """ % (FROM, ", ".join(TO), SUBJECT, TEXT)
+    SUBJECT = "Affirmative Dave, I read you"
+    TEXT = "I'm sorry Dave, I'm affraid I can't do that"
+    message = """From: HAL 9000\nTo: %s\nSubject: %s\n\n%s
+    """ % (TO, SUBJECT, TEXT)
     
     server = smtplib.SMTP('smtp.gmail.com:587')
     server.ehlo()

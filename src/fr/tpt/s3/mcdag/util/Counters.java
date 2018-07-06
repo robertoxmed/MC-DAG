@@ -147,4 +147,78 @@ public class Counters {
 			refs.put(a, preempts);
 		}
 	}
+	
+	/**
+	 * Method to count the number of preemptions for each task
+	 * @param sched
+	 * @param refs
+	 * @param levels
+	 * @param hPeriod
+	 * @param nbCores
+	 */
+	public static void countPreemptions (String sched[][][],
+										 Hashtable<ActorSched, Integer> refs,
+										 int levels, int hPeriod, int deadline, int nbCores) {
+		
+		Set<ActorSched> keys = refs.keySet();
+		@SuppressWarnings("unchecked")
+		Hashtable<ActorSched, Integer>[] remaining = new Hashtable[levels];
+		
+		for (int i = 0; i < levels; i++)
+			remaining[i] = new Hashtable<ActorSched, Integer>();
+		
+		// Init remaining times
+		for (ActorSched a : keys) {
+			for (int i = 0; i < levels; i++)
+				remaining[i].put(a, a.getWcet(i));
+		}
+		
+		// Iterate through actors to check the number of preemptions
+		for (ActorSched a : keys) {
+			int preempts = refs.get(a);
+			// Iterate through all the levels
+			for (int l = 0; l < levels; l++) {
+				// Check the number of activations a task has
+				int nbActivations = (int)(hPeriod / a.getGraphDead());
+				for (int c = 0; c < nbCores; c++) {
+					if (sched[l][0][c].contentEquals(a.getName())) {
+						int val = remaining[l].get(a);
+						val--;
+						remaining[l].put(a, val);
+					}
+				}
+				
+				for (int s = 1; s < deadline; s++) {
+					int val = remaining[l].get(a);
+					
+					for (int c = 0; c < nbCores; c++) {
+						// The task is running
+						if (sched[l][s][c].contentEquals(a.getName())) {
+							boolean wasRunning = false;
+							
+							// Check if the task was running in the previous slot
+							for (int c2 = 0; c2 < nbCores; c2++) {
+								if (sched[l][s - 1][c2].contentEquals(a.getName())) {
+									wasRunning = true;
+									break;
+								}
+							}
+							// The task wasn't running and it isn't the first it is executed was a preemption at this point
+							if (!wasRunning && val != a.getWcet(l))
+								preempts++;
+							
+							val--;							
+							if (val == 0 && nbActivations != 0) {
+								remaining[l].put(a, a.getWcet(l));
+								nbActivations--;
+							} else {
+								remaining[l].put(a, val);
+							}
+						}
+					}
+				}
+			}
+			refs.put(a, preempts);
+		}
+	}
 }
