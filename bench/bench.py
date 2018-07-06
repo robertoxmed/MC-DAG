@@ -6,8 +6,10 @@ import sys
 import shutil
 import textwrap
 import smtplib
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 
 # Global setup for generation and benchmarks
 number_tasks = [10, 20, 50]
@@ -152,7 +154,7 @@ def main():
         
     if options.benchmark:
         benchmark()
-        #send_email()
+        send_email()
     
     return 0
 
@@ -172,14 +174,32 @@ def send_email():
             i += 1
     SUBJECT = "Affirmative Dave, I read you"
     TEXT = "I'm sorry Dave, I'm affraid I can't do that"
-    message = """From: HAL 9000\nTo: %s\nSubject: %s\n\n%s
-    """ % (TO, SUBJECT, TEXT)
+
+    msg = MIMEMultipart()
+    msg['From'] = "HAL 9000"
+    msg['To'] = TO
+    msg['Subject'] = SUBJECT
+    
+    msg.attach(MIMEText(TEXT, 'plain'))
+    
+    ATTACHMENTS = []
+    
+    for p in edge_percentage:            
+        for d in number_dags:
+            for t in number_tasks:
+                attachment = open("results/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", "rb")
+                part = MIMEBase('application', 'octet-stream')
+                part.set_payload((attachment).read())
+                encoders.encode_base64(part)
+                part.add_header('Content-Disposition', "attachment; filename= results/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv")
+                msg.attach(part)
     
     server = smtplib.SMTP('smtp.gmail.com:587')
     server.ehlo()
     server.starttls()
     server.login(FROM, password)
-    server.sendmail(FROM, TO, message)
+    text = msg.as_string()
+    server.sendmail(FROM, TO, text)
     server.close()
     
 if __name__ == "__main__":

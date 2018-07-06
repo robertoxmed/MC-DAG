@@ -112,7 +112,7 @@ public class MainBench {
 		int i_files2 = 0;
 		String outFile = outputFilePath.substring(0, outputFilePath.lastIndexOf('.')).concat("-schedulability.csv");
 		PrintWriter writer = new PrintWriter(outFile, "UTF-8");
-		writer.println("Thread; File; FSched (?); LSched (?); Utilization");
+		writer.println("Thread; File; FSched (%); FPreempts; FAct; LSched (%); LPreempts; LAct; Utilization");
 		writer.close();
 		
 		ExecutorService executor2 = Executors.newFixedThreadPool(nbJobs);
