@@ -23,7 +23,7 @@ import java.io.Writer;
 import java.util.HashSet;
 import java.util.Set;
 
-import fr.tpt.s3.mcdag.alloc.NLevels;
+import fr.tpt.s3.mcdag.alloc.LeastLaxityFirstMCSched;
 import fr.tpt.s3.mcdag.alloc.SchedulingException;
 import fr.tpt.s3.mcdag.model.ActorSched;
 import fr.tpt.s3.mcdag.model.DAG;
@@ -98,7 +98,7 @@ public class BenchThread implements Runnable{
 	 * @param nlvlno
 	 * @throws IOException
 	 */
-	private synchronized void writeResults(NLevels nlvl, NLevels nlvlno) throws IOException{
+	private synchronized void writeResults(LeastLaxityFirstMCSched nlvl, LeastLaxityFirstMCSched nlvlno) throws IOException{
 		Writer output;
 		int ctxtSwitchP = 0;
 		int ctxtSwitchNP = 0;
@@ -127,8 +127,8 @@ public class BenchThread implements Runnable{
 		mcp.readXML();
 		
 		int minCores = minCores();
-		NLevels nlvlPreempt = new NLevels(dags, minCores, mcp.getNbLevels(), debug);
-		NLevels nlvlNoPreempt = new NLevels(dags, minCores, mcp.getNbLevels(), debug);
+		LeastLaxityFirstMCSched nlvlPreempt = new LeastLaxityFirstMCSched(dags, minCores, mcp.getNbLevels(), debug);
+		LeastLaxityFirstMCSched nlvlNoPreempt = new LeastLaxityFirstMCSched(dags, minCores, mcp.getNbLevels(), debug);
 		
 		if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] Minimum number of cores = "+minCores);
 		

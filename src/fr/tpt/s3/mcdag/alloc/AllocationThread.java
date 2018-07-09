@@ -41,7 +41,7 @@ public class AllocationThread implements Runnable{
 	private boolean levels;
 	
 	private SingleDAG ls;
-	private NLevels nlvl;
+	private LeastLaxityFirstMCSched nlvl;
 	// private MultiDAG multidag;
 	private Automata auto;
 	private boolean debug;
@@ -100,7 +100,7 @@ public class AllocationThread implements Runnable{
 			
 		} else { // The model is has multiple DAGs
 			//multidag = new MultiDAG(dags, mcp.getNbCores(), debug);
-			setNlvl(new NLevels(dags2, mcp2.getNbCores(), mcp2.getNbLevels(), debug));
+			setNlvl(new LeastLaxityFirstMCSched(dags2, mcp2.getNbCores(), mcp2.getNbLevels(), debug));
 			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] N levels: "+dags.size()+" DAGs are going to be scheduled in "+mcp.getNbCores()+" cores.");
 			//nlvl.printDAGs();
 			
@@ -205,11 +205,11 @@ public class AllocationThread implements Runnable{
 		this.levels = levels;
 	}
 
-	public NLevels getNlvl() {
+	public LeastLaxityFirstMCSched getNlvl() {
 		return nlvl;
 	}
 
-	public void setNlvl(NLevels nlvl) {
+	public void setNlvl(LeastLaxityFirstMCSched nlvl) {
 		this.nlvl = nlvl;
 	}
 }

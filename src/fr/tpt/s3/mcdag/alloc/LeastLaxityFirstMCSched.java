@@ -37,7 +37,7 @@ import fr.tpt.s3.mcdag.util.MathMCDAG;
  * @author roberto
  *
  */
-public class NLevels extends AbstractMixedCriticalityScheduler {
+public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	
 	// Set of DAGs to be scheduled
 	private Set<DAG> mcDags;
@@ -75,14 +75,14 @@ public class NLevels extends AbstractMixedCriticalityScheduler {
 	 * @param levels
 	 * @param debug
 	 */
-	public NLevels (Set<DAG> dags, int cores, int levels, boolean debug) {
+	public LeastLaxityFirstMCSched (Set<DAG> dags, int cores, int levels, boolean debug) {
 		setMcDags(dags);
 		setNbCores(cores);
 		setLevels(levels);
 		setDebug(debug);
 		remainingTime = new int[getLevels()][getMcDags().size()][];
 		
-		// Init remaining scheduling time tables
+		// Init remaining time for each DAG
 		for (DAG d : getMcDags()) {
 			for (int i = 0; i < getLevels(); i++) {
 				remainingTime[i][d.getId()] = new int[d.getNodes().size()];

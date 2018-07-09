@@ -25,7 +25,7 @@ import java.util.Hashtable;
 import java.util.Set;
 
 import fr.tpt.s3.mcdag.alloc.Federated;
-import fr.tpt.s3.mcdag.alloc.NLevels;
+import fr.tpt.s3.mcdag.alloc.LeastLaxityFirstMCSched;
 import fr.tpt.s3.mcdag.alloc.SchedulingException;
 import fr.tpt.s3.mcdag.model.Actor;
 import fr.tpt.s3.mcdag.model.ActorSched;
@@ -41,7 +41,7 @@ public class BenchThread implements Runnable {
 	private boolean debug;
 	private int nbCores;
 	private Federated fedScheduler;
-	private NLevels nlvlScheduler;
+	private LeastLaxityFirstMCSched nlvlScheduler;
 	
 	public int getNbCores() {
 		return nbCores;
@@ -132,7 +132,7 @@ public class BenchThread implements Runnable {
 	
 		// Test laxity
 		// MultiDAG mdag = new MultiDAG(dags, nbCores, debug);
-		nlvlScheduler = new NLevels(dags, nbCores, 2, debug);
+		nlvlScheduler = new LeastLaxityFirstMCSched(dags, nbCores, 2, debug);
 		
 		try {
 			resetVisited(dags);
