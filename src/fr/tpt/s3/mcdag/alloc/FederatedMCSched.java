@@ -38,7 +38,7 @@ import fr.tpt.s3.mcdag.util.MathMCDAG;
  * @author roberto
  *
  */
-public class Federated extends AbstractMixedCriticalityScheduler{
+public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 	
 	// Set of DAGs to be scheduled 
 	private Set<DAG> mcDags;
@@ -60,7 +60,7 @@ public class Federated extends AbstractMixedCriticalityScheduler{
 	 * @param system
 	 * @param architecture
 	 */
-	public Federated (Set<DAG> system, int architecture, boolean debug) {
+	public FederatedMCSched (Set<DAG> system, int architecture, boolean debug) {
 		setMcDags(system);
 		setNbCores(architecture);
 		setDebug(debug);

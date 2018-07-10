@@ -28,8 +28,8 @@ public class ActorSched extends Actor {
 	private int graphDead;
 	
 	// Used for N levels scheduling
-	private int LFTs[];
-	private int laxity[];
+	private int deadlines[];
+	private int weights[];
 	private boolean visitedL[];
 	private int graphID;
 	private boolean delayed;
@@ -48,14 +48,14 @@ public class ActorSched extends Actor {
 		super(id, name, nbLevels);
 		
 		hlfet = new int[nbLevels];
-		LFTs = new int[nbLevels];
-		laxity = new int[nbLevels];
+		deadlines = new int[nbLevels];
+		weights = new int[nbLevels];
 		visitedL = new boolean[nbLevels];
 		
 		for (int i = 0; i < nbLevels; i++) {
 			hlfet[i] = 0;
-			LFTs[i] = Integer.MAX_VALUE;
-			laxity[i] = Integer.MAX_VALUE;
+			deadlines[i] = Integer.MAX_VALUE;
+			weights[i] = Integer.MAX_VALUE;
 			visitedL[i] = false;
 		}
 		running = false;
@@ -88,29 +88,28 @@ public class ActorSched extends Actor {
 		this.graphDead = graphDead;
 	}
 
-	public int[] getLFTs() {
-		return LFTs;
+	public int[] getDeadlines() {
+		return deadlines;
 	}
 
 	public void setLFTs(int lFTs[]) {
-		LFTs = lFTs;
+		deadlines = lFTs;
 	}
 
 	public void setLFTinL (int val, int l) {
-		this.getLFTs()[l] = val;
+		this.getDeadlines()[l] = val;
 	}
 
 	public int[] getLaxities() {
-		return laxity;
+		return weights;
 	}
 
-
 	public void setLaxities(int urgencies[]) {
-		this.laxity = urgencies;
+		this.weights = urgencies;
 	}
 	
 	public void setLaxityinL (int val, int level) {
-		this.laxity[level] = val;
+		this.weights[level] = val;
 	}
 	
 

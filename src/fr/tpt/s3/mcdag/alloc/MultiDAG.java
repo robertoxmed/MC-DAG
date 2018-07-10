@@ -134,7 +134,7 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 		} else {
 			for (Edge e : a.getRcvEdges()) {
 				if (e.getSrc().getWcet(1) != 0) {
-					int test = ((ActorSched) e.getSrc()).getLFTs()[1] - e.getSrc().getWcet(1);
+					int test = ((ActorSched) e.getSrc()).getDeadlines()[1] - e.getSrc().getWcet(1);
 					
 					if (test < ret)
 						ret = test;
@@ -151,7 +151,7 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 			ret = a.getGraphDead();
 		} else {
 			for (Edge e : a.getSndEdges()) {
-				int test = ((ActorSched) e.getDest()).getLFTs()[0] - e.getDest().getWcet(0);
+				int test = ((ActorSched) e.getDest()).getDeadlines()[0] - e.getDest().getWcet(0);
 				if (test < ret)
 					ret = test;
 			}
@@ -396,7 +396,7 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 			int dId = a.getGraphID();
 					
 			if (mode == ActorSched.HI) { // Laxity in HI mode
-				a.setLaxityinL(a.getLFTs()[1] - relatSlot - remainingTime[1][dId][a.getId()], 1);
+				a.setLaxityinL(a.getDeadlines()[1] - relatSlot - remainingTime[1][dId][a.getId()], 1);
 			} else  {// Laxity in LO mode
 				// Promote HI tasks that need to be scheduled at this slot
 				if (a.getWcet(1) > 0) {
@@ -404,10 +404,10 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
 						a.setLaxityinL(0, 0);
 					} else {
-						a.setLaxityinL(a.getLFTs()[0] - relatSlot - remainingTime[0][dId][a.getId()], 0);
+						a.setLaxityinL(a.getDeadlines()[0] - relatSlot - remainingTime[0][dId][a.getId()], 0);
 					}
 				} else {
-					a.setLaxityinL(a.getLFTs()[0] - relatSlot - remainingTime[0][dId][a.getId()], 0);
+					a.setLaxityinL(a.getDeadlines()[0] - relatSlot - remainingTime[0][dId][a.getId()], 0);
 				}
 			}
 		}
@@ -614,8 +614,8 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 		for (DAG d : getMcDags()) {
 			for (Actor a : d.getNodes()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] printLFT(): DAG "+d.getId()+"; Actor "+a.getName()
-									+"; LFT LO "+((ActorSched) a).getLFTs()[0]);
-				if (a.getWcet(1) != 0) System.out.print("; LFT HI "+((ActorSched) a).getLFTs()[1]);
+									+"; LFT LO "+((ActorSched) a).getDeadlines()[0]);
+				if (a.getWcet(1) != 0) System.out.print("; LFT HI "+((ActorSched) a).getDeadlines()[1]);
 				System.out.println(".");
 			}
 		}

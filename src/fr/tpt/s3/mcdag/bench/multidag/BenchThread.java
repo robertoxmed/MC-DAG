@@ -24,7 +24,7 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
 
-import fr.tpt.s3.mcdag.alloc.Federated;
+import fr.tpt.s3.mcdag.alloc.FederatedMCSched;
 import fr.tpt.s3.mcdag.alloc.LeastLaxityFirstMCSched;
 import fr.tpt.s3.mcdag.alloc.SchedulingException;
 import fr.tpt.s3.mcdag.model.Actor;
@@ -40,7 +40,7 @@ public class BenchThread implements Runnable {
 	private String outputFile;
 	private boolean debug;
 	private int nbCores;
-	private Federated fedScheduler;
+	private FederatedMCSched fedScheduler;
 	private LeastLaxityFirstMCSched nlvlScheduler;
 	
 	public int getNbCores() {
@@ -121,7 +121,7 @@ public class BenchThread implements Runnable {
 		// Test federated approach
 		// Make a copy of the system instance
 		Set<DAG> copyDags = new HashSet<DAG>(dags);
-		fedScheduler = new Federated(copyDags, nbCores, debug);
+		fedScheduler = new FederatedMCSched(copyDags, nbCores, debug);
 		
 		try {
 			fedScheduler.buildAllTables();

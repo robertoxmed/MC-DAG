@@ -16,7 +16,6 @@
  *******************************************************************************/
 package fr.tpt.s3.mcdag.alloc;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Collections;
 import java.util.Hashtable;
@@ -157,139 +156,6 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 		}
 	}
 	
-	/**
-	 * Calculates the LFT of an actor in mode l which is a HI mode
-	 * @param a
-	 * @param l
-	 */
-	private void calcActorLFTrev (ActorSched a, int l, int dead) {
-		int ret = Integer.MAX_VALUE;
-		
-		if (a.isSourceinL(l)) {
-			ret = dead;
-		} else {
-			int test = Integer.MAX_VALUE;
-			
-			for (Edge e : a.getRcvEdges()) {
-				test = ((ActorSched) e.getSrc()).getLFTs()[l] - e.getSrc().getWcet(l);
-				if (test < ret)
-					ret = test;
-			}
-		}
-		a.setLFTinL(ret, l);
-	}
-	
-	/**
-	 * Calculates the LFT of an actor in the LO(west) mode
-	 * @param a
-	 * @param l
-	 */
-	private void calcActorLFT (ActorSched a, int l, int dead) {
-		int ret = Integer.MAX_VALUE;
-		
-		if (a.isSinkinL(l)) {
-			ret = dead;
-		} else {
-			int test = Integer.MAX_VALUE;
-			
-			for (Edge e : a.getSndEdges()) {
-				test = ((ActorSched) e.getDest()).getLFTs()[l] - e.getDest().getWcet(l);
-				if (test < ret)
-					ret = test;
-			}
-		}
-		a.setLFTinL(ret, l);
-	}
-	
-	/**
-	 * Internal function that tests if all successor of LO nodes in L mode have
-	 * been visited.
-	 * @param a
-	 * @param l
-	 * @return
-	 */
-	private boolean succVisitedinL (ActorSched a, int l) {
-		for (Edge e : a.getSndEdges()) {
-			if (e.getDest().getWcet(l) == 0 && ((ActorSched) e.getDest()).getVisitedL()[l] == false) {
-				return false;
-			}
-		}
-		return true;
-	}
-	
-	/**
-	 * Internal function that tests if all predecessors of HI nodes in L mode have
-	 * been visited.
-	 * @param a
-	 * @param l
-	 * @return
-	 */
-	private boolean predVisitedinL (ActorSched a, int l) {
-		for (Edge e : a.getRcvEdges()) {
-			if (e.getSrc().getWcet(l) != 0 && ((ActorSched) e.getSrc()).getVisitedL()[l] == false) {
-				return false;
-			}
-		}
-		return true;
-	}
-	
-	/**
-	 * Calculate LFTs on a DAG d
-	 * @param d
-	 */
-	private void calcLFTs (DAG d) {
-		
-		// Calculate LFTs in HI modes
-		for (int i = 1; i < levels; i++) {
-			ArrayList<ActorSched> toVisit = new ArrayList<>();
-			
-			// Calculate sources in i mode
-			for (Actor a : d.getNodes()) {
-				if (a.isSourceinL(i))
-					toVisit.add((ActorSched) a);
-			}
-			
-			// Visit all nodes iteratively
-			while (!toVisit.isEmpty()) {
-				ActorSched a = toVisit.get(0);
-				
-				calcActorLFTrev(a, i, d.getDeadline());
-				((ActorSched) a).getVisitedL()[i] = true;
-
-				for (Edge e : a.getSndEdges()) {
-					if (e.getDest().getWcet(i) != 0 && !((ActorSched) e.getDest()).getVisitedL()[i]
-							&& predVisitedinL((ActorSched) e.getDest(), i)
-							&& !toVisit.contains((ActorSched) e.getDest())) {
-						toVisit.add((ActorSched) e.getDest());
-					}
-				}
-				toVisit.remove(0);
-			}
-		}
-		
-		// Calculate LFT in LO mode
-		ArrayList<ActorSched> toVisit = new ArrayList<>();
-		
-		for (Actor a : d.getNodes()) {
-			if (a.isSinkinL(0))
-				toVisit.add((ActorSched) a);
-		}
-		
-		while (!toVisit.isEmpty()) {
-			ActorSched a = toVisit.get(0);
-		
-			calcActorLFT(a, 0, d.getDeadline());
-			for (Edge e : a.getRcvEdges()) {
-				// SrcTask hasn't been visited and all its successors were visited
-				if (!((ActorSched) e.getSrc()).getVisitedL()[0]
-						&& succVisitedinL((ActorSched) e.getSrc(), 0)
-						&& !toVisit.contains((ActorSched) e.getSrc())) {
-					toVisit.add((ActorSched) e.getSrc());
-				}
-			}
-			toVisit.remove(0);
-		}
-	}
 	
 	/**
 	 * Checks how many slots have been allocated for a in l mode until
@@ -390,10 +256,10 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
 						a.setLaxityinL(Integer.MAX_VALUE, level);
 					} else {
-						a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
+						a.setLaxityinL(a.getDeadlines()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 					}
 				} else {
-					a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
+					a.setLaxityinL(a.getDeadlines()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 				}
 			// Laxity in LO mode
 			} else {
@@ -404,10 +270,10 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
 						a.setLaxityinL(0, level);
 					} else {
-						a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
+						a.setLaxityinL(a.getDeadlines()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 					}
 				} else {
-					a.setLaxityinL(a.getLFTs()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
+					a.setLaxityinL(a.getDeadlines()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 				}
 			}
 		}
@@ -469,8 +335,8 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 				Collections.sort(eqList, new Comparator<ActorSched>() {
 					@Override
 					public int compare (ActorSched o1, ActorSched o2) {
-						if (o1.getLFTs()[level] - o2.getLFTs()[level] != 0)
-							return o1.getLFTs()[level] - o2.getLFTs()[level];
+						if (o1.getDeadlines()[level] - o2.getDeadlines()[level] != 0)
+							return o1.getDeadlines()[level] - o2.getDeadlines()[level];
 						else
 							return o1.getId() - o2.getId();
 					}
@@ -803,7 +669,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 		
 		// Calculate LFTs and urgencies in all DAGs
 		for (DAG d : getMcDags()) {
-			calcLFTs(d);
+			calcDeadlines(d, getLevels());
 			if (isDebug()) printLFTs(d);
 		}
 		
@@ -845,8 +711,8 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 		for (Actor a : d.getNodes()) {
 			System.out.print("[DEBUG "+Thread.currentThread().getName()+"]\t Actor "+a.getName()+", ");
 			for (int i = 0; i < getLevels(); i++) {
-				if (((ActorSched)a).getLFTs()[i] != Integer.MAX_VALUE)
-					System.out.print(((ActorSched)a).getLFTs()[i]);
+				if (((ActorSched)a).getDeadlines()[i] != Integer.MAX_VALUE)
+					System.out.print(((ActorSched)a).getDeadlines()[i]);
 				System.out.print(" ");
 			}
 			System.out.println("");
