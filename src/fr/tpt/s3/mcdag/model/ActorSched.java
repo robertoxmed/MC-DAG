@@ -92,23 +92,23 @@ public class ActorSched extends Actor {
 		return deadlines;
 	}
 
-	public void setLFTs(int lFTs[]) {
+	public void setDeadlines(int lFTs[]) {
 		deadlines = lFTs;
 	}
 
-	public void setLFTinL (int val, int l) {
+	public void setDeadlineInL (int val, int l) {
 		this.getDeadlines()[l] = val;
 	}
 
-	public int[] getLaxities() {
+	public int[] getWeights() {
 		return weights;
 	}
 
-	public void setLaxities(int urgencies[]) {
+	public void setWeights(int urgencies[]) {
 		this.weights = urgencies;
 	}
 	
-	public void setLaxityinL (int val, int level) {
+	public void setWeightInL (int val, int level) {
 		this.weights[level] = val;
 	}
 	

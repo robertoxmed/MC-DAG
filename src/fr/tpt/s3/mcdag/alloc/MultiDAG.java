@@ -72,8 +72,8 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 		lHIComp = new Comparator<ActorSched>() {
 			@Override
 			public int compare(ActorSched o1, ActorSched o2) {
-				if (o1.getLaxities()[1] - o2.getLaxities()[1] != 0)
-					return o1.getLaxities()[1] - o2.getLaxities()[1];
+				if (o1.getWeights()[1] - o2.getWeights()[1] != 0)
+					return o1.getWeights()[1] - o2.getWeights()[1];
 				else
 					return o2.getId() - o1.getId();
 			}			
@@ -82,8 +82,8 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 		lLOComp = new Comparator<ActorSched>() {
 			@Override
 			public int compare(ActorSched o1, ActorSched o2) {
-				if (o1.getLaxities()[0] - o2.getLaxities()[0] != 0)
-					return o1.getLaxities()[0] - o2.getLaxities()[0];
+				if (o1.getWeights()[0] - o2.getWeights()[0] != 0)
+					return o1.getWeights()[0] - o2.getWeights()[0];
 				else
 					return o1.getId() - o2.getId();
 			}		
@@ -141,7 +141,7 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 				}
 			}
 		}
-		a.setLFTinL(ret, 1);
+		a.setDeadlineInL(ret, 1);
 	}
 	
 	private void calcActorLFTLO (ActorSched a, int deadline) {
@@ -156,7 +156,7 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 					ret = test;
 			}
 		}
-		a.setLFTinL(ret, 0);
+		a.setDeadlineInL(ret, 0);
 	}
 	
 	/**
@@ -396,18 +396,18 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 			int dId = a.getGraphID();
 					
 			if (mode == ActorSched.HI) { // Laxity in HI mode
-				a.setLaxityinL(a.getDeadlines()[1] - relatSlot - remainingTime[1][dId][a.getId()], 1);
+				a.setWeightInL(a.getDeadlines()[1] - relatSlot - remainingTime[1][dId][a.getId()], 1);
 			} else  {// Laxity in LO mode
 				// Promote HI tasks that need to be scheduled at this slot
 				if (a.getWcet(1) > 0) {
 					if ((a.getWcet(0) - remainingTime[0][dId][a.getId()] - scheduledUntilT(a, slot)) < 0) {
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
-						a.setLaxityinL(0, 0);
+						a.setWeightInL(0, 0);
 					} else {
-						a.setLaxityinL(a.getDeadlines()[0] - relatSlot - remainingTime[0][dId][a.getId()], 0);
+						a.setWeightInL(a.getDeadlines()[0] - relatSlot - remainingTime[0][dId][a.getId()], 0);
 					}
 				} else {
-					a.setLaxityinL(a.getDeadlines()[0] - relatSlot - remainingTime[0][dId][a.getId()], 0);
+					a.setWeightInL(a.getDeadlines()[0] - relatSlot - remainingTime[0][dId][a.getId()], 0);
 				}
 			}
 		}
@@ -425,9 +425,9 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 		while (lit.hasNext()) {
 			ActorSched a = lit.next();
 			
-			if (a.getLaxities()[level] == 0)
+			if (a.getWeights()[level] == 0)
 				m++;
-			else if (a.getLaxities()[level] < 0)
+			else if (a.getWeights()[level] < 0)
 				return false;
 			
 			if (m > nbCores)
@@ -464,7 +464,7 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] allocHI(): @t = "+s+", tasks activated: ");
 				for (ActorSched a : ready)
-					System.out.print("L("+a.getName()+") = "+a.getLaxities()[1]+"; ");
+					System.out.print("L("+a.getName()+") = "+a.getWeights()[1]+"; ");
 				System.out.println("");
 			}
 			
@@ -539,7 +539,7 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] allocLO(): @t = "+s+", tasks activated: ");
 				for (ActorSched a : ready)
-					System.out.print("L("+a.getName()+") = "+a.getLaxities()[0]+"; ");
+					System.out.print("L("+a.getName()+") = "+a.getWeights()[0]+"; ");
 				System.out.println("");
 			}
 			

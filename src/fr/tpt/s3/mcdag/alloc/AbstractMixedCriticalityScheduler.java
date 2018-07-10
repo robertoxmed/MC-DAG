@@ -82,7 +82,7 @@ public abstract class AbstractMixedCriticalityScheduler {
 					ret = test;
 			}
 		}
-		a.setLFTinL(ret, level);
+		a.setDeadlineInL(ret, level);
 	}
 	
 	/**
@@ -106,7 +106,7 @@ public abstract class AbstractMixedCriticalityScheduler {
 					ret = test;
 			}
 		}
-		a.setLFTinL(ret, level);
+		a.setDeadlineInL(ret, level);
 	}
 	
 	/**

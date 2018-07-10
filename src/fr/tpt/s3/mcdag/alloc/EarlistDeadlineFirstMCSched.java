@@ -80,8 +80,8 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 		setLoComp(new Comparator<ActorSched>() {
 			@Override
 			public int compare(ActorSched arg0, ActorSched arg1) {
-				if (arg0.getDeadlines()[0] - arg1.getDeadlines()[0] != 0)
-					return arg0.getDeadlines()[0] - arg1.getDeadlines()[0];
+				if (arg0.getWeights()[0] - arg1.getWeights()[0] != 0)
+					return arg0.getWeights()[0] - arg1.getWeights()[0];
 				else
 					return arg0.getId() - arg1.getId();
 			}
@@ -274,6 +274,50 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 		}
 	}
 	
+	/**
+	 * Function that calculates the priorities
+	 * @param ready
+	 * @param slot
+	 * @param level
+	 */
+	private void calcPriorities (List<ActorSched> ready, int slot, int level) {
+		for (ActorSched a : ready) {
+			int dagId = a.getGraphID();
+			if (level >= 1) {
+				// It's not the highest criticality level
+				if (level != getLevels() - 1) {
+					// Checks for delays in hi tasks
+					int deltaI = a.getWcet(level + 1) - a.getWcet(level);
+					if (scheduledUntilTinLreverse(a, slot, level + 1) - deltaI < 0) {
+						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
+						a.setWeightInL(Integer.MAX_VALUE, level);
+					} else if (scheduledUntilTinLreverse(a, slot, level) != 0 &&
+							scheduledUntilTinLreverse(a, slot, level) - scheduledUntilTinLreverse(a, slot, level + 1) + deltaI == 0) {
+						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
+						a.setWeightInL(Integer.MAX_VALUE, level);
+					} else {
+						a.setWeightInL(a.getDeadlines()[level], level);
+					}
+				} else {
+					a.setWeightInL(a.getDeadlines()[level], level);
+				}
+			} else {
+				// If it's a HI task verify that mode transition is respected
+				if (a.getWcet(level + 1) > 0) {
+					// Promotion needed for the task
+					if ((a.getWcet(level) - remainingTime[level][dagId][a.getId()]) - scheduledUntilTinL(a, slot, level + 1) < 0) {
+						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
+						a.setWeightInL(0, level);
+					} else {
+						a.setWeightInL(a.getDeadlines()[level], level);
+					}
+				} else {
+					a.setWeightInL(a.getDeadlines()[level], level);
+				}	
+			}
+		}
+	}
+	
 	
 	/**
 	 * Builds the table in HI modes
@@ -292,11 +336,12 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 			}
 		}
 		
+		calcPriorities(ready, 0, level);
 		Collections.sort(ready, new Comparator<ActorSched>() {
 			@Override
 			public int compare(ActorSched o1, ActorSched o2) {
-				if (o1.getDeadlines()[level] - o2.getDeadlines()[level] != 0)
-					return o1.getDeadlines()[level] - o2.getDeadlines()[level];
+				if (o1.getWeights()[level] - o2.getWeights()[level] != 0)
+					return o1.getWeights()[level] - o2.getWeights()[level];
 				else
 					return o1.getId() - o2.getId();
 			}
@@ -310,7 +355,7 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildHITable("+level+"): @t = "+s+", tasks activated: ");
 				for (ActorSched a : ready)
-					System.out.print("L("+a.getName()+") = "+a.getLaxities()[level]+"; ");
+					System.out.print("L("+a.getName()+") = "+a.getWeights()[level]+"; ");
 				System.out.println("");
 			}
 			
@@ -323,6 +368,7 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 					
 					int val = remainingTime[level][a.getGraphID()][a.getId()];
 					sched[level][s][c] = a.getName();
+					val--;
 					
 					// Task has been fully scheduled
 					if (val == 0) {
@@ -338,14 +384,17 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 			if (taskFinished)
 				checkActivationHI(scheduled, ready, level);
 			
-			if (s != 0)
+			if (s != 0) {
 				checkDAGActivation(scheduled, ready, s, level);
+				calcPriorities(ready, gethPeriod() - s, level);
+			}
+			
 			
 			Collections.sort(ready, new Comparator<ActorSched>() {
 				@Override
 				public int compare(ActorSched o1, ActorSched o2) {
-					if (o1.getDeadlines()[level] - o2.getDeadlines()[level] != 0)
-						return o1.getDeadlines()[level] - o2.getDeadlines()[level];
+					if (o1.getWeights()[level] - o2.getWeights()[level] != 0)
+						return o1.getWeights()[level] - o2.getWeights()[level];
 					else
 						return o1.getId() - o2.getId();
 				}
@@ -360,7 +409,7 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 		}
 	}
 	
-	private void builLOTable() throws SchedulingException {
+	private void buildLOTable() throws SchedulingException {
 		List<ActorSched> ready = new LinkedList<>();
 		List<ActorSched> scheduled = new LinkedList<>();
 		
@@ -372,6 +421,9 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 			}
 		}
 		
+		calcPriorities(ready, 0, 0);
+		Collections.sort(ready, loComp);
+		
 		// Allocate slot by slot
 		ListIterator<ActorSched> lit = ready.listIterator();
 		boolean taskFinished = false;
@@ -380,7 +432,7 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildLOTable(0): @t = "+s+", tasks activated: ");
 				for (ActorSched a : ready)
-					System.out.print("L("+a.getName()+") = "+a.getLaxities()[0]+"; ");
+					System.out.print("L("+a.getName()+") = "+a.getWeights()[0]+"; ");
 				System.out.println("");
 			}
 			
@@ -407,8 +459,11 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 			if (taskFinished)
 				checkActivationLO(scheduled, ready);
 			
-			if (s != hPeriod - 1)
+			if (s != hPeriod - 1) {
 				checkDAGActivation(scheduled, ready, s + 1, 0);
+				calcPriorities(ready, s + 1, 0);
+
+			}
 			
 			Collections.sort(ready, loComp);
 			taskFinished = false;
@@ -434,9 +489,11 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 		// Build HI tables first
 		for (int i = getLevels() - 1; i >= 1; i--)
 			buildHITable(i);
-
 		
 		// Build LO table
+		buildLOTable();
+		
+		if (isDebug()) printTables();
 	}
 	
 	/*

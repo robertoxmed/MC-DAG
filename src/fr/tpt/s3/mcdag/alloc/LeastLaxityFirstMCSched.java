@@ -91,8 +91,8 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 		setLoComp(new Comparator<ActorSched>() {
 			@Override
 			public int compare (ActorSched o1, ActorSched o2) {
-				if (o1.getLaxities()[0] - o2.getLaxities()[0] != 0)
-					return o1.getLaxities()[0] - o2.getLaxities()[0];
+				if (o1.getWeights()[0] - o2.getWeights()[0] != 0)
+					return o1.getWeights()[0] - o2.getWeights()[0];
 				else
 					return o1.getId() - o2.getId();
 			}
@@ -250,16 +250,16 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 					//Check if in the higher table the Ci(L+1) - Ci(L) has been allocated
 					if (scheduledUntilTinLreverse(a, slot, level + 1) - deltaI < 0) {
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
-						a.setLaxityinL(Integer.MAX_VALUE, level);
+						a.setWeightInL(Integer.MAX_VALUE, level);
 					} else if (scheduledUntilTinLreverse(a, slot, level) != 0 &&
 							scheduledUntilTinLreverse(a, slot, level) - scheduledUntilTinLreverse(a, slot, level + 1) + deltaI == 0) {
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
-						a.setLaxityinL(Integer.MAX_VALUE, level);
+						a.setWeightInL(Integer.MAX_VALUE, level);
 					} else {
-						a.setLaxityinL(a.getDeadlines()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
+						a.setWeightInL(a.getDeadlines()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 					}
 				} else {
-					a.setLaxityinL(a.getDeadlines()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
+					a.setWeightInL(a.getDeadlines()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 				}
 			// Laxity in LO mode
 			} else {
@@ -268,12 +268,12 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 					// Promotion needed for the task
 					if ((a.getWcet(level) - remainingTime[level][dId][a.getId()]) - scheduledUntilTinL(a, slot, level + 1) < 0) {
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+a.getName()+" at slot @t = "+slot);
-						a.setLaxityinL(0, level);
+						a.setWeightInL(0, level);
 					} else {
-						a.setLaxityinL(a.getDeadlines()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
+						a.setWeightInL(a.getDeadlines()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 					}
 				} else {
-					a.setLaxityinL(a.getDeadlines()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
+					a.setWeightInL(a.getDeadlines()[level] - relatSlot - remainingTime[level][dId][a.getId()], level);
 				}
 			}
 		}
@@ -292,10 +292,10 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 		// for equalities
 		if (ready.size() > getNbCores()) {
 			int nbTasksEqualityinReady = 1;
-			int eqLax = ready.get(getNbCores() - 1).getLaxities()[level];
+			int eqLax = ready.get(getNbCores() - 1).getWeights()[level];
 			int index = getNbCores() - 2;
 			int count = 0;	// nb of tasks with same laxity already in the ready queue
-			boolean eq = (ready.get(getNbCores() - 2).getLaxities()[level] == eqLax) ? true : false;
+			boolean eq = (ready.get(getNbCores() - 2).getWeights()[level] == eqLax) ? true : false;
 			List<ActorSched> eqList = new LinkedList<ActorSched>();
 
 			// Check nodes before the last schedulable element
@@ -304,14 +304,14 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 				eqList.add(ready.get(index));
 				index--;
 				if (index > 0)
-					eq = (ready.get(index).getLaxities()[level] == eqLax) ? true : false;
+					eq = (ready.get(index).getWeights()[level] == eqLax) ? true : false;
 				else
 					eq = false;
 			}
 			
 			count = nbTasksEqualityinReady;
 			
-			eq = (ready.get(getNbCores()).getLaxities()[level] == eqLax) ? true : false;
+			eq = (ready.get(getNbCores()).getWeights()[level] == eqLax) ? true : false;
 			index = getNbCores() - 1;
 			// Check nodes after the last element
 		
@@ -319,7 +319,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 				eqList.add(ready.get(index));
 				index++;
 				if (index < ready.size())
-					eq = (ready.get(index).getLaxities()[level] == eqLax) ? true : false;
+					eq = (ready.get(index).getWeights()[level] == eqLax) ? true : false;
 				else
 					eq = false;
 			}
@@ -345,7 +345,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 				if (isDebug()) {
 					System.out.print("[DEBUG "+Thread.currentThread().getName()+"] checkForEqualities(): tasks in equality: ");
 					for (ActorSched a : eqList)
-						System.out.print(a.getName()+" Laxity "+a.getLaxities()[level]+"; ");
+						System.out.print(a.getName()+" Laxity "+a.getWeights()[level]+"; ");
 					System.out.println("");
 				}
 				
@@ -383,9 +383,9 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 		while (lit.hasNext()) {
 			ActorSched a = lit.next();
 			
-			if (a.getLaxities()[level] == 0)
+			if (a.getWeights()[level] == 0)
 				m++;
-			else if (a.getLaxities()[level] < 0)
+			else if (a.getWeights()[level] < 0)
 				return false;
 			
 			if (m > nbCores)
@@ -509,8 +509,8 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 		Collections.sort(ready, new Comparator<ActorSched>() {
 			@Override
 			public int compare(ActorSched o1, ActorSched o2) {
-				if (o1.getLaxities()[l] - o2.getLaxities()[l] != 0)
-					return o1.getLaxities()[l] - o2.getLaxities()[l];
+				if (o1.getWeights()[l] - o2.getWeights()[l] != 0)
+					return o1.getWeights()[l] - o2.getWeights()[l];
 				else
 					return o2.getId() - o1.getId();
 			}
@@ -524,7 +524,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildHITable("+l+"): @t = "+s+", tasks activated: ");
 				for (ActorSched a : ready)
-					System.out.print("L("+a.getName()+") = "+a.getLaxities()[l]+"; ");
+					System.out.print("L("+a.getName()+") = "+a.getWeights()[l]+"; ");
 				System.out.println("");
 			}
 			
@@ -561,17 +561,19 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 			if (taskFinished)
 				checkActivationHI(scheduled, ready, l);
 			
+			// Check for new DAG activations
 			if (s != 0) {
-				// Check for new DAG activations
 				checkDAGActivation(scheduled, ready, s, l);
 				// Update laxities for nodes
 				calcLaxity(ready, gethPeriod() - s, l);
 			}
+
+			
 			Collections.sort(ready, new Comparator<ActorSched>() {
 				@Override
 				public int compare(ActorSched o1, ActorSched o2) {
-					if (o1.getLaxities()[l] - o2.getLaxities()[l] != 0)
-						return o1.getLaxities()[l] - o2.getLaxities()[l];
+					if (o1.getWeights()[l] - o2.getWeights()[l] != 0)
+						return o1.getWeights()[l] - o2.getWeights()[l];
 					else
 						return o2.getId() - o1.getId();
 				}
@@ -614,7 +616,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildLOTable(0): @t = "+s+", tasks activated: ");
 				for (ActorSched a : ready)
-					System.out.print("L("+a.getName()+") = "+a.getLaxities()[0]+"; ");
+					System.out.print("L("+a.getName()+") = "+a.getWeights()[0]+"; ");
 				System.out.println("");
 			}
 			
