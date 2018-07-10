@@ -204,17 +204,5 @@ public class Counters {
 				}
 			}
 		}
-		
-		// Decrement the preemption count by the nb of activations
-		for (ActorSched a : keys) {
-			int nbActivations = 0;
-			if (a.getWcet(1) != 0)
-				nbActivations = (int)(hPeriod / a.getGraphDead()) * levels;
-			else
-				nbActivations = (int)(hPeriod / a.getGraphDead());
-			int val = refs.get(a);
-			val -= nbActivations;
-			refs.put(a, val);
-		}
 	}
 }

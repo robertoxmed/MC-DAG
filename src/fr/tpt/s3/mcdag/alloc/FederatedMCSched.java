@@ -499,7 +499,8 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 			
 			for (Actor a : d.getNodes()) {
 				ActorSched task = (ActorSched) a;
-				preempts.put(task, 0);
+				int nbActivations = (int) gethPeriod()/d.getDeadline();
+				preempts.put(task, -nbActivations);
 			}
 			Counters.countPreemptions(sched, preempts, 2, gethPeriod(), d.getDeadline(), d.getMinCores());
 		}

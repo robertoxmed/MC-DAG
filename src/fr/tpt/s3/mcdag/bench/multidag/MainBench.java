@@ -178,11 +178,15 @@ public class MainBench {
 		double fedPerc = (double) fedTotal / nbFiles;
 		double laxPerc = (double) laxTotal / nbFiles;
 		double edfPerc = (double) edfTotal / nbFiles;
+		
+		double fedPercPreempts = (double) fedPreempts / fedActiv;
+		double laxPercPreempts = (double) laxPreempts / laxActiv;
+		double edfPercPreempts = (double) edfPreempts / edfActiv;
 
 		Writer wOutput = new BufferedWriter(new FileWriter(outputFilePath2, true));
-		wOutput.write(Thread.currentThread().getName()+"; "+utilization+"; "+fedPerc+"; "+fedPreempts+"; "+fedActiv+"; "
-					  +laxPerc+"; "+laxPreempts+"; "+laxActiv+"; "
-					  +edfPerc+"; "+edfPreempts+"; "+edfActiv+"\n");
+		wOutput.write(Thread.currentThread().getName()+"; "+utilization+"; "+fedPerc+"; "+fedPreempts+"; "+fedActiv+"; "+fedPercPreempts+"; "
+					  +laxPerc+"; "+laxPreempts+"; "+laxActiv+"; "+laxPercPreempts+"; "
+					  +edfPerc+"; "+edfPreempts+"; "+edfActiv+"; "+edfPercPreempts+"\n");
 		wOutput.close();
 		
 		System.out.println("[BENCH Main] Done scheduling U = "+utilization+".");
