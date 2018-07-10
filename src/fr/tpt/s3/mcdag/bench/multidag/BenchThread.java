@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
 
+import fr.tpt.s3.mcdag.alloc.EarlistDeadlineFirstMCSched;
 import fr.tpt.s3.mcdag.alloc.FederatedMCSched;
 import fr.tpt.s3.mcdag.alloc.LeastLaxityFirstMCSched;
 import fr.tpt.s3.mcdag.alloc.SchedulingException;
@@ -42,6 +43,7 @@ public class BenchThread implements Runnable {
 	private int nbCores;
 	private FederatedMCSched fedScheduler;
 	private LeastLaxityFirstMCSched nlvlScheduler;
+	private EarlistDeadlineFirstMCSched edfScheduler;
 	
 	public int getNbCores() {
 		return nbCores;
@@ -53,6 +55,7 @@ public class BenchThread implements Runnable {
 
 	private boolean schedFede;
 	private boolean schedLax;
+	private boolean schedEdf;
 	
 	public BenchThread (String input, String output, int cores, boolean debug) {
 		setInputFile(input);
@@ -62,6 +65,7 @@ public class BenchThread implements Runnable {
 		setDebug(debug);
 		setSchedFede(true);
 		setSchedLax(true);
+		setSchedEdf(true);
 		mcp = new MCParser(inputFile, null, dags, false);
 	}
 	
@@ -76,10 +80,13 @@ public class BenchThread implements Runnable {
 		
 		int outBFSched = 0;
 		int outBLSched = 0;
+		int outBEDFSched = 0;
 		int outPreemptsFed = 0;
 		int outPreemptsLax = 0;
+		int outPreemptsEdf = 0;
 		int outActFed = 0;
 		int outActLax = 0;
+		int outActEdf = 0;
 		
 		if (isSchedFede()) {
 			outBFSched = 1;
@@ -97,11 +104,20 @@ public class BenchThread implements Runnable {
 			outActLax = nlvlScheduler.getActivations();
 		}
 		
+		if (isSchedEdf()) {
+			outBEDFSched = 1;
+			Hashtable<ActorSched, Integer> pEdf = edfScheduler.getPreempts();
+			for (ActorSched task : pEdf.keySet())
+				outPreemptsEdf += pEdf.get(task);
+			outActEdf = edfScheduler.getActivations();
+		}
+		
 		for (DAG d : dags)
 			uDAGs += d.getUmax();
 		
 		output.write(Thread.currentThread().getName()+"; "+getInputFile()+"; "+outBFSched+"; "+outPreemptsFed+"; "+outActFed+"; "
-		+outBLSched+"; "+outPreemptsLax+"; "+outActLax+"; "+uDAGs+"\n");
+		+outBLSched+"; "+outPreemptsLax+"; "+outActLax+"; "
+		+outBEDFSched+"; "+outPreemptsEdf+"; "+outActEdf+"; "+uDAGs+"\n");
 		output.close();
 	}
 	
@@ -120,14 +136,27 @@ public class BenchThread implements Runnable {
 		
 		// Test federated approach
 		// Make a copy of the system instance
-		Set<DAG> copyDags = new HashSet<DAG>(dags);
-		fedScheduler = new FederatedMCSched(copyDags, nbCores, debug);
+		Set<DAG> fedDAGs = new HashSet<DAG>(dags);
+		fedScheduler = new FederatedMCSched(fedDAGs, nbCores, debug);
 		
 		try {
 			fedScheduler.buildAllTables();
 		} catch (SchedulingException se) {
 			setSchedFede(false);
 			if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] FEDERATED non schedulable with "+nbCores+" cores.");
+		}
+		
+		// Test edf
+		// Make another copy of the system instance
+		Set<DAG> edfDAGs = new HashSet<DAG>(dags);
+		edfScheduler = new EarlistDeadlineFirstMCSched(edfDAGs, nbCores, 2, debug);
+		
+		try {
+			resetVisited(dags);
+			edfScheduler.buildAllTables();
+		} catch (SchedulingException se) {
+			setSchedEdf(false);
+			if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] EDF non schedulable with "+nbCores+" cores.");
 		}
 	
 		// Test laxity
@@ -210,5 +239,13 @@ public class BenchThread implements Runnable {
 
 	public void setSchedLax(boolean schedLax) {
 		this.schedLax = schedLax;
+	}
+
+	public boolean isSchedEdf() {
+		return schedEdf;
+	}
+
+	public void setSchedEdf(boolean schedEdf) {
+		this.schedEdf = schedEdf;
 	}
 }

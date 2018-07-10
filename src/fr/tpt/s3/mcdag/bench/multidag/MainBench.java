@@ -128,10 +128,13 @@ public class MainBench {
 		
 		int fedTotal = 0;
 		int laxTotal = 0;
+		int edfTotal = 0;
 		int fedPreempts = 0;
 		int laxPreempts = 0;
+		int edfPreempts = 0;
 		int fedActiv = 0;
 		int laxActiv = 0;
+		int edfActiv = 0;
 		// Read lines in file and do average
 		int i = 0;
 		File f = new File(outFile);
@@ -157,6 +160,12 @@ public class MainBench {
 							laxPreempts += Integer.parseInt(val);
 						} else if (j == 7) {
 							laxActiv += Integer.parseInt(val);
+						} else if (j == 8) {
+							edfTotal += Integer.parseInt(val);
+						} else if (j == 9) {
+							edfPreempts += Integer.parseInt(val);
+						} else if (j == 10) {
+							edfActiv += Integer.parseInt(val);
 						}
 						j++;
 					}
@@ -168,11 +177,12 @@ public class MainBench {
 		// Write percentage
 		double fedPerc = (double) fedTotal / nbFiles;
 		double laxPerc = (double) laxTotal / nbFiles;
-	
+		double edfPerc = (double) edfTotal / nbFiles;
 
 		Writer wOutput = new BufferedWriter(new FileWriter(outputFilePath2, true));
 		wOutput.write(Thread.currentThread().getName()+"; "+utilization+"; "+fedPerc+"; "+fedPreempts+"; "+fedActiv+"; "
-					  +laxPerc+"; "+laxPreempts+"; "+laxActiv+"\n");
+					  +laxPerc+"; "+laxPreempts+"; "+laxActiv+"; "
+					  +edfPerc+"; "+edfPreempts+"; "+edfActiv+"\n");
 		wOutput.close();
 		
 		System.out.println("[BENCH Main] Done scheduling U = "+utilization+".");

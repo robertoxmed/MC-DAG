@@ -18,6 +18,7 @@ package fr.tpt.s3.mcdag.alloc;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -54,6 +55,10 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 	// Comparator to order Actors
 	private Comparator<ActorSched> loComp;
 	
+	// To count preemptions
+	private int activations;
+	private Hashtable<ActorSched, Integer> preempts;
+	
 	// Debugging boolean
 	private boolean debug;
 	
@@ -87,6 +92,8 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 			}
 		});
 		
+		setActivations(0);
+		setPreempts(new Hashtable<ActorSched, Integer>());
 	}
 	
 	/**
@@ -127,6 +134,18 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 		}
 		
 		if (debug) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] initTables(): Sched tables initialized!");
+		
+		// Calc number of activations
+		for (DAG d : getMcDags()) {
+			for (Actor a : d.getNodes()) {
+				// Check if task runs in HI mode
+				int nbActivations = (int) (hPeriod / d.getDeadline());
+				if (a.getWcet(1) != 0)
+					activations = activations + nbActivations * d.getLevels();
+				else
+					activations = activations + nbActivations;
+			}
+		}
 	}
 	
 
@@ -494,6 +513,13 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 		buildLOTable();
 		
 		if (isDebug()) printTables();
+		
+		// Count preemptions
+		for (DAG d : getMcDags()) {
+			for (Actor a : d.getNodes()) {
+				preempts.put((ActorSched) a, 0);
+			}
+		}
 	}
 	
 	/*
@@ -613,6 +639,22 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 
 	public void setLoComp(Comparator<ActorSched> loComp) {
 		this.loComp = loComp;
+	}
+
+	public int getActivations() {
+		return activations;
+	}
+
+	public void setActivations(int activations) {
+		this.activations = activations;
+	}
+
+	public Hashtable<ActorSched, Integer> getPreempts() {
+		return preempts;
+	}
+
+	public void setPreempts(Hashtable<ActorSched, Integer> preempts) {
+		this.preempts = preempts;
 	}
 
 }
