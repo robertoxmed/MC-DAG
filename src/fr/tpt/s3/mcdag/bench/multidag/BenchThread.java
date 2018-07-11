@@ -88,24 +88,27 @@ public class BenchThread implements Runnable {
 		int outActLax = 0;
 		int outActEdf = 0;
 		
-		if (isSchedFede()) {
+		if (isSchedFede())
 			outBFSched = 1;
+		
+		if (isSchedLax())
+			outBLSched = 1;
+		
+		if (isSchedEdf())
+			outBEDFSched = 1;
+
+		
+		if (isSchedEdf() && isSchedFede() && isSchedLax()) {
 			Hashtable<ActorSched, Integer> pFed = fedScheduler.getPreempts();
 			for (ActorSched task : pFed.keySet())
 				outPreemptsFed += pFed.get(task);
 			outActFed = fedScheduler.getActivations();
-		}
-		
-		if (isSchedLax()) {
-			outBLSched = 1;
+			
 			Hashtable<ActorSched, Integer> pLax = nlvlScheduler.getPreempts();
 			for (ActorSched task : pLax.keySet())
 				outPreemptsLax += pLax.get(task);
 			outActLax = nlvlScheduler.getActivations();
-		}
-		
-		if (isSchedEdf()) {
-			outBEDFSched = 1;
+			
 			Hashtable<ActorSched, Integer> pEdf = edfScheduler.getPreempts();
 			for (ActorSched task : pEdf.keySet())
 				outPreemptsEdf += pEdf.get(task);

@@ -28,6 +28,7 @@ import fr.tpt.s3.mcdag.model.Actor;
 import fr.tpt.s3.mcdag.model.ActorSched;
 import fr.tpt.s3.mcdag.model.DAG;
 import fr.tpt.s3.mcdag.model.Edge;
+import fr.tpt.s3.mcdag.util.Counters;
 import fr.tpt.s3.mcdag.util.MathMCDAG;
 
 /**
@@ -520,6 +521,8 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 				preempts.put((ActorSched) a, 0);
 			}
 		}
+		
+		Counters.countPreemptions(sched, preempts, 2, gethPeriod(), getNbCores());
 	}
 	
 	/*

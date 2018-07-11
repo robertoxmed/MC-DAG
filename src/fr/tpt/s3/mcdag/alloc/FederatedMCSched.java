@@ -432,6 +432,69 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 	
 	protected void initTables () {}
 	
+	private void checkLightTaskActivation (Set<ActorSched> lightTasks,
+										   List<ActorSched> ready,
+										   Hashtable<ActorSched, Integer> remainingTime,
+										   int slot, int level) {
+		for (ActorSched a : lightTasks) {
+			if (slot % a.getDeadlines()[level] == 0) {
+				ready.add(a);
+				remainingTime.put(a, a.getWcet(level));
+			}
+		}
+		
+	}
+	
+	private void buildLight (Set<ActorSched> lightTasks, String sched[][][], final int level, int hPeriod, int cores)
+	throws SchedulingException {
+		List<ActorSched> ready = new LinkedList<>();
+		Hashtable<ActorSched, Integer> remainingTime = new Hashtable<ActorSched, Integer>();
+		
+		// Init remainingTimes
+		for (ActorSched a : lightTasks) {
+			remainingTime.put(a, a.getWcet(level));
+			ready.add(a);
+		}
+		Collections.sort(ready, new Comparator<ActorSched>() {
+			@Override
+			public int compare(ActorSched o1, ActorSched o2) {
+				if (o1.getDeadlines()[level] - o2.getDeadlines()[level] != 0)
+					return o1.getDeadlines()[level] - o2.getDeadlines()[level];
+				else
+					return o1.getId() - o2.getId();
+			}
+		});
+		
+		ListIterator<ActorSched> lit = ready.listIterator();
+		for (int s = 0; s < hPeriod; s++) {
+			for (int c = 0; c < cores; c++) {
+				if (lit.hasNext()) {
+					ActorSched a = lit.next();
+					int val = remainingTime.get(a);
+					
+					sched[level][s][c] = a.getName();
+					val--;
+					
+					remainingTime.put(a, val);
+				}
+			}
+			
+			if (s != hPeriod - 1)
+				checkLightTaskActivation(lightTasks, ready, remainingTime, s + 1, level);
+			
+			Collections.sort(ready, new Comparator<ActorSched>() {
+				@Override
+				public int compare(ActorSched o1, ActorSched o2) {
+					if (o1.getDeadlines()[level] - o2.getDeadlines()[level] != 0)
+						return o1.getDeadlines()[level] - o2.getDeadlines()[level];
+					else
+						return o1.getId() - o2.getId();
+				}
+			});
+			lit = ready.listIterator();
+		}
+	}
+	
 	public void buildAllTables () throws SchedulingException {
 		
 		int coresQuota = getNbCores();
@@ -499,11 +562,43 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 			
 			for (Actor a : d.getNodes()) {
 				ActorSched task = (ActorSched) a;
-				int nbActivations = (int) gethPeriod()/d.getDeadline();
-				preempts.put(task, -nbActivations);
+				preempts.put(task, 0);
 			}
 			Counters.countPreemptions(sched, preempts, 2, gethPeriod(), d.getDeadline(), d.getMinCores());
 		}
+
+		// Build tables for light DAGs
+		int coresLight = (int) Math.ceil(uLightDAGs);
+		String sched[][][] = new String[2][gethPeriod()][coresLight];
+		Set<ActorSched> lightTasks = new HashSet<ActorSched>();
+
+		// Transform DAGs to independent tasks and add them to set
+		for (DAG d : lightDAGs) {
+			ActorSched indTask = new ActorSched(d.getId(), "it_d"+d.getId(), 2);
+			int cilo = 0, cihi = 0;
+			
+			for (Actor a : d.getNodes()) {
+				if (a.getWcet(1) != 0)
+					cihi += a.getWcet(1);
+				cilo += a.getWcet(0);
+			}
+			int wcets[] = {cilo, cihi};
+			indTask.setWcets(wcets);
+			 
+			indTask.setDeadlineInL(d.getDeadline(), 0);
+			indTask.setDeadlineInL(d.getDeadline(), 1);
+			lightTasks.add(indTask);
+			preempts.put(indTask, 0);
+		}
+		
+		// Calculate the hyperperiod of the light DAGs ?????
+		
+		// Build table in LO & HI
+		buildLight(lightTasks, sched, 0, gethPeriod(), coresLight);
+		buildLight(lightTasks, sched, 1, gethPeriod(), coresLight);
+		Counters.countPreemptions(sched, preempts, 2, gethPeriod(), gethPeriod(), coresLight);
+
+		
 		if (debug) printPreempts();
 	}
 	
