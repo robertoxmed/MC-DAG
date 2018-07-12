@@ -163,12 +163,10 @@ public class BenchThread implements Runnable {
 		}
 	
 		// Test laxity
-		// MultiDAG mdag = new MultiDAG(dags, nbCores, debug);
 		nlvlScheduler = new LeastLaxityFirstMCSched(dags, nbCores, 2, debug);
 		
 		try {
 			resetVisited(dags);
-			//mdag.buildAllTables();
 			nlvlScheduler.buildAllTables();
 		} catch (SchedulingException se) {
 			setSchedLax(false);

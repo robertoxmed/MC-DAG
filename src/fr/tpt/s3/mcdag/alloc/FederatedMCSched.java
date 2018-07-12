@@ -589,6 +589,7 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 			indTask.setDeadlineInL(d.getDeadline(), 1);
 			lightTasks.add(indTask);
 			preempts.put(indTask, 0);
+			activations += (int) hPeriod / indTask.getDeadlines()[0];
 		}
 		
 		// Calculate the hyperperiod of the light DAGs ?????

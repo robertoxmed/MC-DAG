@@ -581,7 +581,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 			taskFinished = false;
 			lit = ready.listIterator();
 		}
-		if (ready.size() != 0) {
+		if (!ready.isEmpty()) {
 			SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] buildLOTable(0): Ready list not empty.");
 			throw se;
 		}
@@ -656,7 +656,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 			taskFinished = false;
 			lit = ready.listIterator();
 		}
-		if (ready.size() != 0) {
+		if (!ready.isEmpty()) {
 			SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] buildLOTable(0): Ready list not empty.");
 			throw se;
 		}

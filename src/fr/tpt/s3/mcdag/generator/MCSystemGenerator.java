@@ -307,6 +307,7 @@ public class MCSystemGenerator {
 		
 		d.setNodes(nodes);
 		d.setDeadline(rDead);
+		d.setLevels(nbLevels);
 		d.setId(getGennedDAGs().size());
 		getGennedDAGs().add(d);
 		
@@ -329,6 +330,18 @@ public class MCSystemGenerator {
 		return true;
 	}
 	
+	private boolean thresholdUtilization () {
+		double uSys = 0;
+		
+		for (DAG d : getGennedDAGs()) {
+			uSys += d.getUmax();
+		}		
+		if (userMaxU * 0.99 <= uSys && uSys <= userMaxU * 1.01)
+			return true;
+		
+		return false;
+	}
+	
 	/**
 	 * Method that generates all DAGs in the system
 	 * the utilization for the system is uniformly distributed between
@@ -336,26 +349,49 @@ public class MCSystemGenerator {
 	 * @return
 	 */
 	protected void genAllDags () {
+		boolean done = false;
 		
-		// Apply Uunifast on the utilization for the DAGs
-		double[] uSet =  new double[getNbDAGs()];
-		uunifast(uSet, getUserMaxU());
+		while (!done) {
+			// 	Apply Uunifast on the utilization for the DAGs
+			double[] uSet =  new double[getNbDAGs()];
+			uunifast(uSet, getUserMaxU());
 		
-		// Call genDAG with the utilization found
-		for (int i = 0; i < getNbDAGs(); i++) {
-			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] Generating DAG #"+(i+1)+" of "+getNbDAGs());
-			GenerateGraph(uSet[i]);
+			// Call genDAG with the utilization found
+			for (int i = 0; i < getNbDAGs(); i++) {
+				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] Generating DAG #"+(i+1)+" of "+getNbDAGs());
+				GenerateGraph(uSet[i]);
+			}
+			removeNilNodes();
+
+			done = thresholdUtilization();
+			
+			if (!done)
+				getGennedDAGs().clear();
 		}
 		
-		removeNilNodes();
 	}
+	
+	/**
+	 * Tests if the wcet are null for a node
+	 * @param a
+	 * @return
+	 */
+	private boolean nilValuesInAllModes (Actor a) {
+		
+		for (int i = 0; i < nbLevels; i++) {
+			if (a.getWcet(i) != 0)
+				return false;
+		}
+		return true;
+	}
+	
 	
 	private void removeNilNodes () {
 		for (DAG d : gennedDAGs) {
 			Iterator<Actor> ita = d.getNodes().iterator();
 			while (ita.hasNext()) {
 				Actor a = ita.next();
-				if (a.getWcet(0) == 0 && a.getWcet(1) == 0) {
+				if (nilValuesInAllModes(a)) {
 					for (Edge e : a.getRcvEdges())
 						e.getSrc().getSndEdges().remove(e);
 					for (Edge e : a.getSndEdges())
@@ -368,7 +404,6 @@ public class MCSystemGenerator {
 			}
 		}
 	}
-	
 	
 	/*
 	 * Getters and setters 
