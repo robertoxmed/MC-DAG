@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mcsystem>
+	<mcdag name="Ada" deadline="24">
+		<actor name="A">
+			<wcet number="0">1</wcet>
+			<wcet number="1">2</wcet>
+			<wcet number="2">3</wcet>
+		</actor>
+		<actor name="B">
+			<wcet number="0">7</wcet>
+			<wcet number="1">0</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<actor name="C">
+			<wcet number="0">3</wcet>
+			<wcet number="1">4</wcet>
+			<wcet number="2">6</wcet>
+		</actor>
+		<actor name="D">
+			<wcet number="0">5</wcet>
+			<wcet number="1">6</wcet>
+			<wcet number="2">8</wcet>
+		</actor>
+		<actor name="E">
+			<wcet number="0">1</wcet>
+			<wcet number="1">0</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<actor name="F">
+			<wcet number="0">3</wcet>
+			<wcet number="1">6</wcet>
+			<wcet number="2">8</wcet>
+		</actor>
+		<actor name="G">
+			<wcet number="0">3</wcet>
+			<wcet number="1">6</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<actor name="H">
+			<wcet number="0">2</wcet>
+			<wcet number="1">0</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<actor name="I">
+			<wcet number="0">2</wcet>
+			<wcet number="1">4</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<actor name="J">
+			<wcet number="0">1</wcet>
+			<wcet number="1">2</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<actor name="K">
+			<wcet number="0">1</wcet>
+			<wcet number="1">0</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<ports>
+			<port name="p1" srcActor="A" dstActor="B"/>
+			<port name="p3" srcActor="A" dstActor="C"/>
+			<port name="p4" srcActor="A" dstActor="D"/>
+			<port name="p5" srcActor="A" dstActor="G"/>
+			<port name="p6" srcActor="B" dstActor="E"/>
+			<port name="p7" srcActor="C" dstActor="E"/>
+			<port name="p8" srcActor="C" dstActor="F"/>
+			<port name="p9" srcActor="D" dstActor="F"/>
+			<port name="p10" srcActor="E" dstActor="H"/>
+			<port name="p11" srcActor="F" dstActor="I"/>
+			<port name="p12" srcActor="F" dstActor="J"/>
+			<port name="p13" srcActor="G" dstActor="J"/>
+			<port name="p14" srcActor="G" dstActor="K"/>
+			<port name="p15" srcActor="H" dstActor="K"/>
+			<port name="p16" srcActor="I" dstActor="K"/>
+		</ports>
+	</mcdag>
+
+	<mcdag name="Fcs" deadline="12">
+		<actor name="a">
+			<wcet number="0">2</wcet>
+			<wcet number="1">3</wcet>
+			<wcet number="2">4</wcet>
+		</actor>
+		<actor name="b">
+			<wcet number="0">2</wcet>
+			<wcet number="1">3</wcet>
+			<wcet number="2">4</wcet>
+		</actor>
+		<actor name="c">
+			<wcet number="0">3</wcet>
+			<wcet number="1">4</wcet>
+			<wcet number="2">7</wcet>
+		</actor>
+		<actor name="d">
+			<wcet number="0">2</wcet>
+			<wcet number="1">3</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<actor name="e">
+			<wcet number="0">2</wcet>
+			<wcet number="1">3</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<actor name="f">
+			<wcet number="0">2</wcet>
+			<wcet number="1">0</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<actor name="g">
+			<wcet number="0">3</wcet>
+			<wcet number="1">0</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<actor name="h">
+			<wcet number="0">2</wcet>
+			<wcet number="1">0</wcet>
+			<wcet number="2">0</wcet>
+		</actor>
+		<ports>
+			<port name="f1" srcActor="a" dstActor="c"/>
+			<port name="f2" srcActor="b" dstActor="c"/>
+			<port name="f3" srcActor="c" dstActor="d"/>
+			<port name="f4" srcActor="c" dstActor="e"/>
+			<port name="f5" srcActor="c" dstActor="f"/>
+			<port name="f6" srcActor="e" dstActor="g"/>
+			<port name="f7" srcActor="e" dstActor="h"/>
+			<port name="f8" srcActor="f" dstActor="g"/>
+			<port name="f9" srcActor="f" dstActor="h"/>
+		</ports>
+	</mcdag>
+	<cores number="3"/>
+	<levels number="3"/>
+</mcsystem>
