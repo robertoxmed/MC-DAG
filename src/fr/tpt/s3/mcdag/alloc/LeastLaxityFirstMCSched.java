@@ -538,8 +538,8 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 				// Find a top ready task
 				if (lit.hasNext()) {
 					ActorSched a = lit.next();
-//					if (a.isDelayed())
-//						break;
+					if (a.getWeights()[l] == Integer.MAX_VALUE)
+						break;
 					int val = remainingTime[l][a.getGraphID()][a.getId()];
 					
 					sched[l][s][c] = a.getName();
