@@ -204,9 +204,8 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 			end = ((int)(realSlot / a.getGraphDead()) + 1)  * a.getGraphDead() - 1;
 		}
 		
-		//System.out.println("\t\t\t [schedut] task "+a.getName()+" end "+end+" slot "+realSlot);
 		
-		for (int i = end; i > realSlot; i--) {
+		for (int i = end; i >= realSlot; i--) {
 			for (int c = 0; c < nbCores; c++) {
 				if (sched[l][i][c] !=  null) {
 					if (sched[l][i][c].contentEquals(a.getName()))
@@ -214,6 +213,10 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 				}
 			}
 		}
+		
+		System.out.println("\t\t\t [schedut] task "+a.getName()+" end "+end+" slot "+realSlot+" sum = "+ret);
+
+		
 		return ret;
 	}
 	
@@ -245,14 +248,10 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 			if (level >= 1) {
 
 				// It's not the highest criticality level -> perform checks
-				if (level != getLevels() - 1) {
+				if (level != getLevels() - 1 && a.getWcet(level + 1) != 0) {
 					int deltaI = a.getWcet(level + 1) - a.getWcet(level);
 					//Check if in the higher table the Ci(L+1) - Ci(L) has been allocated
-					if (scheduledUntilTinLreverse(a, slot, level + 1) - deltaI < 0) {
-						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
-						a.setWeightInL(Integer.MAX_VALUE, level);
-					} else if (scheduledUntilTinLreverse(a, slot, level) != 0 &&
-							scheduledUntilTinLreverse(a, slot, level) - scheduledUntilTinLreverse(a, slot, level + 1) + deltaI == 0) {
+					if (scheduledUntilTinLreverse(a, slot + 1, level + 1) <= deltaI) {
 						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+a.getName()+" needs to be delayed at slot @t = "+slot);
 						a.setWeightInL(Integer.MAX_VALUE, level);
 					} else {

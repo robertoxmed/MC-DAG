@@ -110,11 +110,11 @@ public class AllocationThread implements Runnable{
 				e.printStackTrace();
 			}
 			
-			try {
-				edf.buildAllTables();
-			} catch (SchedulingException e) {
-				e.printStackTrace();
-			}
+//			try {
+//				edf.buildAllTables();
+//			} catch (SchedulingException e) {
+//				e.printStackTrace();
+//			}
 
 			mcp.setSched(nlvl.getSched());
 		}
