@@ -16,7 +16,7 @@
  *******************************************************************************/
 package fr.tpt.s3.mcdag.model;
 
-public class ActorSched extends Actor {
+public class VertexScheduling extends Vertex {
 	
 	// Used for singleDAG scheduling
 	private int[] hlfet;
@@ -44,7 +44,7 @@ public class ActorSched extends Actor {
 	 * @param id
 	 * @param name
 	 */
-	public ActorSched (int id, String name, int nbLevels) {
+	public VertexScheduling (int id, String name, int nbLevels) {
 		super(id, name, nbLevels);
 		
 		hlfet = new int[nbLevels];
@@ -121,7 +121,7 @@ public class ActorSched extends Actor {
 		this.visitedL = visitedL;
 	}
 
-	public int getGraphID() {
+	public int getGraphId() {
 		return graphID;
 	}
 

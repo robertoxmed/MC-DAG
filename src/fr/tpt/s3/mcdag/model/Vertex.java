@@ -20,7 +20,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-public abstract class Actor {
+public abstract class Vertex {
 	
 	public static final short LO = 0;
 	public static final short HI = 1;
@@ -36,7 +36,7 @@ public abstract class Actor {
 	private Set<Edge> sndEdges;
 
 	
-	public Actor (int id, String name, int nbLevels) {
+	public Vertex (int id, String name, int nbLevels) {
 		this.setId(id);
 		this.setName(name);
 		wcets = new int[nbLevels];
@@ -89,17 +89,17 @@ public abstract class Actor {
 			
 			while (it_e.hasNext()){
 				Edge e = it_e.next();
-				if (mode == ActorSched.LO) {
-					tmp = e.getSrc().CPfromNode(ActorSched.LO);
+				if (mode == VertexScheduling.LO) {
+					tmp = e.getSrc().CPfromNode(VertexScheduling.LO);
 					if (max < tmp)
 						max = tmp;
 				} else {
-					tmp = e.getSrc().CPfromNode(ActorSched.HI);
+					tmp = e.getSrc().CPfromNode(VertexScheduling.HI);
 					if (max < tmp)
 						max = tmp;
 				}
 			}
-			if (mode == ActorSched.LO) {
+			if (mode == VertexScheduling.LO) {
 				max += this.getWcets()[0];
 				getCpFromNode()[mode] = max;
 			} else {
@@ -146,8 +146,8 @@ public abstract class Actor {
 	 * Returns all LOpredecessors of a node
 	 * @return
 	 */
-	public Set<Actor> getLOPred() {
-		HashSet<Actor> result = new HashSet<Actor>();
+	public Set<Vertex> getLOPred() {
+		HashSet<Vertex> result = new HashSet<Vertex>();
 		Iterator<Edge> ie = this.getRcvEdges().iterator();
 		
 		while (ie.hasNext()){

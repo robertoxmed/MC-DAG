@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package fr.tpt.s3.mcdag.alloc;
+package fr.tpt.s3.mcdag.scheduling;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -24,9 +24,9 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
-import fr.tpt.s3.mcdag.model.Actor;
-import fr.tpt.s3.mcdag.model.ActorSched;
-import fr.tpt.s3.mcdag.model.DAG;
+import fr.tpt.s3.mcdag.model.Vertex;
+import fr.tpt.s3.mcdag.model.VertexScheduling;
+import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.model.Edge;
 import fr.tpt.s3.mcdag.util.Counters;
 import fr.tpt.s3.mcdag.util.MathMCDAG;
@@ -39,7 +39,7 @@ import fr.tpt.s3.mcdag.util.MathMCDAG;
 public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalityScheduler {
 	
 	// Set of MC-DAGs to be scheduled
-	private Set<DAG> mcDags;
+	private Set<McDAG> mcDags;
 	
 	// Architecture + hyper-period + nb of levels
 	private int nbCores;
@@ -54,11 +54,11 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 	private int remainingTime[][][];
 	
 	// Comparator to order Actors
-	private Comparator<ActorSched> loComp;
+	private Comparator<VertexScheduling> loComp;
 	
 	// To count preemptions
 	private int activations;
-	private Hashtable<ActorSched, Integer> preempts;
+	private Hashtable<VertexScheduling, Integer> preempts;
 	
 	// Debugging boolean
 	private boolean debug;
@@ -70,7 +70,7 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 	 * @param levels
 	 * @param debug
 	 */
-	public EarlistDeadlineFirstMCSched (Set<DAG> dags, int cores, int levels, boolean debug) {
+	public EarlistDeadlineFirstMCSched (Set<McDAG> dags, int cores, int levels, boolean debug) {
 		setMcDags(dags);
 		setNbCores(cores);
 		setLevels(levels);
@@ -78,14 +78,14 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 		remainingTime = new int[getLevels()][getMcDags().size()][];
 		
 		// Init remaining time for each DAG
-		for (DAG d : getMcDags()) {
+		for (McDAG d : getMcDags()) {
 			for (int i = 0; i < getLevels(); i++)
-				remainingTime[i][d.getId()] = new int[d.getNodes().size()];
+				remainingTime[i][d.getId()] = new int[d.getVertices().size()];
 		}
 		
-		setLoComp(new Comparator<ActorSched>() {
+		setLoComp(new Comparator<VertexScheduling>() {
 			@Override
-			public int compare(ActorSched arg0, ActorSched arg1) {
+			public int compare(VertexScheduling arg0, VertexScheduling arg1) {
 				if (arg0.getWeights()[0] - arg1.getWeights()[0] != 0)
 					return arg0.getWeights()[0] - arg1.getWeights()[0];
 				else
@@ -94,7 +94,7 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 		});
 		
 		setActivations(0);
-		setPreempts(new Hashtable<ActorSched, Integer>());
+		setPreempts(new Hashtable<VertexScheduling, Integer>());
 	}
 	
 	/**
@@ -102,8 +102,8 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 	 */
 	private void initRemainingTimes () {
 		for (int i = 0; i < getLevels(); i++) {
-			for (DAG d : getMcDags()) {
-				for (Actor a : d.getNodes())
+			for (McDAG d : getMcDags()) {
+				for (Vertex a : d.getVertices())
 					remainingTime[i][d.getId()][a.getId()] = a.getWcet(i);
 			}
 		}
@@ -117,7 +117,7 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 		int[] input = new int[getMcDags().size()];
 		int i = 0;
 		
-		for (DAG d : getMcDags()) {
+		for (McDAG d : getMcDags()) {
 			input[i] = d.getDeadline();
 			i++;
 		}
@@ -137,8 +137,8 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 		if (debug) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] initTables(): Sched tables initialized!");
 		
 		// Calc number of activations
-		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
+		for (McDAG d : getMcDags()) {
+			for (Vertex a : d.getVertices()) {
 				// Check if task runs in HI mode
 				int nbActivations = (int) (hPeriod / d.getDeadline());
 				if (a.getWcet(1) != 0)
@@ -150,7 +150,7 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 	}
 	
 
-	private int scheduledUntilTinL (ActorSched a, int t, int l) {
+	private int scheduledUntilTinL (VertexScheduling a, int t, int l) {
 		int ret = 0;
 		int start = (int)(t / a.getGraphDead()) * a.getGraphDead();
 		
@@ -174,7 +174,7 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 	 * @param l
 	 * @return
 	 */
-	private int scheduledUntilTinLreverse (ActorSched a, int t, int l) {
+	private int scheduledUntilTinLreverse (VertexScheduling a, int t, int l) {
 		int ret = 0;
 		int end = 0;
 		
@@ -208,12 +208,12 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 	 * @param ready
 	 * @param level
 	 */
-	private void checkActivationHI (List<ActorSched> sched, List<ActorSched> ready, int level) {
+	private void checkActivationHI (List<VertexScheduling> sched, List<VertexScheduling> ready, int level) {
 
-		for (ActorSched a : sched) {
+		for (VertexScheduling a : sched) {
 			// Check predecessors of task that was just allocated
 			for (Edge e : a.getRcvEdges()) {
-				ActorSched pred = (ActorSched) e.getSrc();
+				VertexScheduling pred = (VertexScheduling) e.getSrc();
 				boolean add = true;
 				
 				// Check if all successors of the predecessor have been allocated
@@ -224,7 +224,7 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 					}
 				}
 				
-				if (add && !ready.contains(pred) && remainingTime[level][pred.getGraphID()][pred.getId()] != 0) {
+				if (add && !ready.contains(pred) && remainingTime[level][pred.getGraphId()][pred.getId()] != 0) {
 					ready.add(pred);
 				}
 			}
@@ -237,12 +237,12 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 	 * @param ready
 	 * @param level
 	 */
-	private void checkActivationLO (List<ActorSched> sched, List<ActorSched> ready) {
+	private void checkActivationLO (List<VertexScheduling> sched, List<VertexScheduling> ready) {
 
-		for (ActorSched a : sched) {
+		for (VertexScheduling a : sched) {
 			// Check predecessors of task that was just allocated
 			for (Edge e : a.getSndEdges()) {
-				ActorSched succ = (ActorSched) e.getDest();
+				VertexScheduling succ = (VertexScheduling) e.getDest();
 				boolean add = true;
 				
 				// Check if all successors of the predecessor have been allocated
@@ -253,7 +253,7 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 					}
 				}
 				
-				if (add && !ready.contains(succ) && remainingTime[0][succ.getGraphID()][succ.getId()] != 0) {
+				if (add && !ready.contains(succ) && remainingTime[0][succ.getGraphId()][succ.getId()] != 0) {
 					ready.add(succ);
 				}
 			}
@@ -267,27 +267,27 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 	 * @param slot
 	 * @param level
 	 */
-	private void checkDAGActivation (List<ActorSched> sched, List<ActorSched> ready, int slot, int level) {
-		for (DAG d : getMcDags()) {
+	private void checkDAGActivation (List<VertexScheduling> sched, List<VertexScheduling> ready, int slot, int level) {
+		for (McDAG d : getMcDags()) {
 			// If the slot is a multiple of the deadline is a new activation
 			if (slot % d.getDeadline() == 0) {
-				ListIterator<ActorSched> it = sched.listIterator();
+				ListIterator<VertexScheduling> it = sched.listIterator();
 				
 				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] checkDAGActivation(): DAG (id. "+d.getId()+") activation at slot "+slot);
-				for (Actor a : d.getNodes()) {
+				for (Vertex a : d.getVertices()) {
 					while (it.hasNext()) { // Remove nodes from the sched list
-						ActorSched a2 = it.next();
+						VertexScheduling a2 = it.next();
 						if (a.getName().contentEquals(a2.getName()))
 							it.remove();
 					}
 					it = sched.listIterator();
 					// Re-init execution time
-					remainingTime[level][((ActorSched)a).getGraphID()][a.getId()] = a.getWcet(level);
+					remainingTime[level][((VertexScheduling)a).getGraphId()][a.getId()] = a.getWcet(level);
 					
 					if (level >= 1 && a.isSinkinL(level)) {
-						ready.add((ActorSched)a);
+						ready.add((VertexScheduling)a);
 					} else if (level == 0 && a.isSourceinL(level)) {
-						ready.add((ActorSched)a);
+						ready.add((VertexScheduling)a);
 					}
 				}
 			}
@@ -300,9 +300,9 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 	 * @param slot
 	 * @param level
 	 */
-	private void calcPriorities (List<ActorSched> ready, int slot, int level) {
-		for (ActorSched a : ready) {
-			int dagId = a.getGraphID();
+	private void calcPriorities (List<VertexScheduling> ready, int slot, int level) {
+		for (VertexScheduling a : ready) {
+			int dagId = a.getGraphId();
 			if (level >= 1) {
 				// It's not the highest criticality level
 				if (level != getLevels() - 1) {
@@ -345,21 +345,21 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 	 * @throws SchedulingException
 	 */
 	private void buildHITable (final int level) throws SchedulingException {
-		List<ActorSched> ready = new LinkedList<ActorSched>();
-		List<ActorSched> scheduled = new LinkedList<ActorSched>();
+		List<VertexScheduling> ready = new LinkedList<VertexScheduling>();
+		List<VertexScheduling> scheduled = new LinkedList<VertexScheduling>();
 		
 		// Add all sink nodes
-		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
+		for (McDAG d : getMcDags()) {
+			for (Vertex a : d.getVertices()) {
 				if (a.isSinkinL(level))
-					ready.add((ActorSched) a);
+					ready.add((VertexScheduling) a);
 			}
 		}
 		
 		calcPriorities(ready, 0, level);
-		Collections.sort(ready, new Comparator<ActorSched>() {
+		Collections.sort(ready, new Comparator<VertexScheduling>() {
 			@Override
-			public int compare(ActorSched o1, ActorSched o2) {
+			public int compare(VertexScheduling o1, VertexScheduling o2) {
 				if (o1.getWeights()[level] - o2.getWeights()[level] != 0)
 					return o1.getWeights()[level] - o2.getWeights()[level];
 				else
@@ -368,13 +368,13 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 		});
 		
 		// Allocate slot by slot
-		ListIterator<ActorSched> lit = ready.listIterator();
+		ListIterator<VertexScheduling> lit = ready.listIterator();
 		boolean taskFinished = false;
 		
 		for (int s = hPeriod - 1; s >= 0; s--) {
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildHITable("+level+"): @t = "+s+", tasks activated: ");
-				for (ActorSched a : ready)
+				for (VertexScheduling a : ready)
 					System.out.print("L("+a.getName()+") = "+a.getWeights()[level]+"; ");
 				System.out.println("");
 			}
@@ -384,9 +384,9 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 			for (int c = getNbCores() - 1; c >= 0; c--) {
 				// Find a ready task
 				if (lit.hasNext()) {
-					ActorSched a = lit.next();
+					VertexScheduling a = lit.next();
 					
-					int val = remainingTime[level][a.getGraphID()][a.getId()];
+					int val = remainingTime[level][a.getGraphId()][a.getId()];
 					sched[level][s][c] = a.getName();
 					val--;
 					
@@ -396,7 +396,7 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 						taskFinished = true;
 						lit.remove();
 					}
-					remainingTime[level][a.getGraphID()][a.getId()] = val;
+					remainingTime[level][a.getGraphId()][a.getId()] = val;
 				}
 			}
 			
@@ -410,9 +410,9 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 			}
 			
 			
-			Collections.sort(ready, new Comparator<ActorSched>() {
+			Collections.sort(ready, new Comparator<VertexScheduling>() {
 				@Override
-				public int compare(ActorSched o1, ActorSched o2) {
+				public int compare(VertexScheduling o1, VertexScheduling o2) {
 					if (o1.getWeights()[level] - o2.getWeights()[level] != 0)
 						return o1.getWeights()[level] - o2.getWeights()[level];
 					else
@@ -430,14 +430,14 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 	}
 	
 	private void buildLOTable() throws SchedulingException {
-		List<ActorSched> ready = new LinkedList<>();
-		List<ActorSched> scheduled = new LinkedList<>();
+		List<VertexScheduling> ready = new LinkedList<>();
+		List<VertexScheduling> scheduled = new LinkedList<>();
 		
 		// Add all source nodes
-		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
+		for (McDAG d : getMcDags()) {
+			for (Vertex a : d.getVertices()) {
 				if (a.isSourceinL(0))
-					ready.add((ActorSched) a);
+					ready.add((VertexScheduling) a);
 			}
 		}
 		
@@ -445,13 +445,13 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 		Collections.sort(ready, loComp);
 		
 		// Allocate slot by slot
-		ListIterator<ActorSched> lit = ready.listIterator();
+		ListIterator<VertexScheduling> lit = ready.listIterator();
 		boolean taskFinished = false;
 		
 		for (int s = 0; s < gethPeriod(); s++) {
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildLOTable(0): @t = "+s+", tasks activated: ");
-				for (ActorSched a : ready)
+				for (VertexScheduling a : ready)
 					System.out.print("L("+a.getName()+") = "+a.getWeights()[0]+"; ");
 				System.out.println("");
 			}
@@ -461,8 +461,8 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 			for (int c = 0; c < getNbCores(); c++) {
 				// Get the next elt on the LO list
 				if (lit.hasNext()) {
-					ActorSched a = lit.next();
-					int val = remainingTime[0][a.getGraphID()][a.getId()];
+					VertexScheduling a = lit.next();
+					int val = remainingTime[0][a.getGraphId()][a.getId()];
 					
 					sched[0][s][c] = a.getName();
 					val--;
@@ -472,7 +472,7 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 						taskFinished = true;
 						lit.remove();
 					}
-					remainingTime[0][a.getGraphID()][a.getId()] = val;
+					remainingTime[0][a.getGraphId()][a.getId()] = val;
 				}
 			}
 			
@@ -501,7 +501,7 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 		initRemainingTimes();
 		
 		// Calculate deadlines for all DAGs
-		for (DAG d : getMcDags()) {
+		for (McDAG d : getMcDags()) {
 			calcDeadlines(d, getLevels());
 			if (isDebug()) printDeadlines(d);
 		}
@@ -516,9 +516,9 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 		if (isDebug()) printTables();
 		
 		// Count preemptions
-		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
-				preempts.put((ActorSched) a, 0);
+		for (McDAG d : getMcDags()) {
+			for (Vertex a : d.getVertices()) {
+				preempts.put((VertexScheduling) a, 0);
 			}
 		}
 		
@@ -529,14 +529,14 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 	 * DEBUG FUNCTIONS
 	 */
 	
-	private void printDeadlines (DAG d) {
+	private void printDeadlines (McDAG d) {
 		System.out.println("[DEBUG "+Thread.currentThread().getName()+"] DAG "+d.getId()+" printing LFTs");
 		
-		for (Actor a : d.getNodes()) {
+		for (Vertex a : d.getVertices()) {
 			System.out.print("[DEBUG "+Thread.currentThread().getName()+"]\t Actor "+a.getName()+", ");
 			for (int i = 0; i < getLevels(); i++) {
-				if (((ActorSched)a).getDeadlines()[i] != Integer.MAX_VALUE)
-					System.out.print(((ActorSched)a).getDeadlines()[i]);
+				if (((VertexScheduling)a).getDeadlines()[i] != Integer.MAX_VALUE)
+					System.out.print(((VertexScheduling)a).getDeadlines()[i]);
 				System.out.print(" ");
 			}
 			System.out.println("");
@@ -567,12 +567,12 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 	 * Getters & setters
 	 */
 
-	public Set<DAG> getMcDags() {
+	public Set<McDAG> getMcDags() {
 		return mcDags;
 	}
 
 
-	public void setMcDags(Set<DAG> mcDags) {
+	public void setMcDags(Set<McDAG> mcDags) {
 		this.mcDags = mcDags;
 	}
 
@@ -636,11 +636,11 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 		this.debug = debug;
 	}
 
-	public Comparator<ActorSched> getLoComp() {
+	public Comparator<VertexScheduling> getLoComp() {
 		return loComp;
 	}
 
-	public void setLoComp(Comparator<ActorSched> loComp) {
+	public void setLoComp(Comparator<VertexScheduling> loComp) {
 		this.loComp = loComp;
 	}
 
@@ -652,11 +652,11 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 		this.activations = activations;
 	}
 
-	public Hashtable<ActorSched, Integer> getPreempts() {
+	public Hashtable<VertexScheduling, Integer> getPreempts() {
 		return preempts;
 	}
 
-	public void setPreempts(Hashtable<ActorSched, Integer> preempts) {
+	public void setPreempts(Hashtable<VertexScheduling, Integer> preempts) {
 		this.preempts = preempts;
 	}
 

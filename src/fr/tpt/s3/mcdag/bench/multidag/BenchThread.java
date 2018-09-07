@@ -24,18 +24,18 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
 
-import fr.tpt.s3.mcdag.alloc.EarlistDeadlineFirstMCSched;
-import fr.tpt.s3.mcdag.alloc.FederatedMCSched;
-import fr.tpt.s3.mcdag.alloc.LeastLaxityFirstMCSched;
-import fr.tpt.s3.mcdag.alloc.SchedulingException;
-import fr.tpt.s3.mcdag.model.Actor;
-import fr.tpt.s3.mcdag.model.ActorSched;
-import fr.tpt.s3.mcdag.model.DAG;
+import fr.tpt.s3.mcdag.model.Vertex;
+import fr.tpt.s3.mcdag.model.VertexScheduling;
+import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.parser.MCParser;
+import fr.tpt.s3.mcdag.scheduling.EarlistDeadlineFirstMCSched;
+import fr.tpt.s3.mcdag.scheduling.FederatedMCSched;
+import fr.tpt.s3.mcdag.scheduling.LeastLaxityFirstMCSched;
+import fr.tpt.s3.mcdag.scheduling.SchedulingException;
 
 public class BenchThread implements Runnable {
 	
-	private Set<DAG> dags;
+	private Set<McDAG> dags;
 	private MCParser mcp;
 	private String inputFile;
 	private String outputFile;
@@ -59,7 +59,7 @@ public class BenchThread implements Runnable {
 	
 	public BenchThread (String input, String output, int cores, boolean debug) {
 		setInputFile(input);
-		dags = new HashSet<DAG>();
+		dags = new HashSet<McDAG>();
 		setOutputFile(output);
 		setNbCores(cores);
 		setDebug(debug);
@@ -99,23 +99,23 @@ public class BenchThread implements Runnable {
 
 		
 		if (isSchedEdf() && isSchedFede() && isSchedLax()) {
-			Hashtable<ActorSched, Integer> pFed = fedScheduler.getPreempts();
-			for (ActorSched task : pFed.keySet())
+			Hashtable<VertexScheduling, Integer> pFed = fedScheduler.getPreempts();
+			for (VertexScheduling task : pFed.keySet())
 				outPreemptsFed += pFed.get(task);
 			outActFed = fedScheduler.getActivations();
 			
-			Hashtable<ActorSched, Integer> pLax = nlvlScheduler.getPreempts();
-			for (ActorSched task : pLax.keySet())
+			Hashtable<VertexScheduling, Integer> pLax = nlvlScheduler.getPreempts();
+			for (VertexScheduling task : pLax.keySet())
 				outPreemptsLax += pLax.get(task);
 			outActLax = nlvlScheduler.getActivations();
 			
-			Hashtable<ActorSched, Integer> pEdf = edfScheduler.getPreempts();
-			for (ActorSched task : pEdf.keySet())
+			Hashtable<VertexScheduling, Integer> pEdf = edfScheduler.getPreempts();
+			for (VertexScheduling task : pEdf.keySet())
 				outPreemptsEdf += pEdf.get(task);
 			outActEdf = edfScheduler.getActivations();
 		}
 		
-		for (DAG d : dags)
+		for (McDAG d : dags)
 			uDAGs += d.getUmax();
 		
 		output.write(Thread.currentThread().getName()+"; "+getInputFile()+"; "+outBFSched+"; "+outPreemptsFed+"; "+outActFed+"; "
@@ -124,11 +124,11 @@ public class BenchThread implements Runnable {
 		output.close();
 	}
 	
-	private void resetVisited (Set<DAG> sd) {
-		for (DAG d : sd) {
-			for (Actor a : d.getNodes()) {
-				((ActorSched) a).getVisitedL()[0] = false;
-				((ActorSched) a).getVisitedL()[1] = false;
+	private void resetVisited (Set<McDAG> sd) {
+		for (McDAG d : sd) {
+			for (Vertex a : d.getVertices()) {
+				((VertexScheduling) a).getVisitedL()[0] = false;
+				((VertexScheduling) a).getVisitedL()[1] = false;
 			}
 		}
 	}
@@ -139,7 +139,7 @@ public class BenchThread implements Runnable {
 		
 		// Test federated approach
 		// Make a copy of the system instance
-		Set<DAG> fedDAGs = new HashSet<DAG>(dags);
+		Set<McDAG> fedDAGs = new HashSet<McDAG>(dags);
 		fedScheduler = new FederatedMCSched(fedDAGs, nbCores, debug);
 		
 		try {
@@ -151,7 +151,7 @@ public class BenchThread implements Runnable {
 		
 		// Test edf
 		// Make another copy of the system instance
-		Set<DAG> edfDAGs = new HashSet<DAG>(dags);
+		Set<McDAG> edfDAGs = new HashSet<McDAG>(dags);
 		edfScheduler = new EarlistDeadlineFirstMCSched(edfDAGs, nbCores, 2, debug);
 		
 		try {
@@ -186,11 +186,11 @@ public class BenchThread implements Runnable {
 	/*
 	 * Getters & Setters
 	 */
-	public Set<DAG> getDags() {
+	public Set<McDAG> getDags() {
 		return dags;
 	}
 
-	public void setDags(Set<DAG> dags) {
+	public void setDags(Set<McDAG> dags) {
 		this.dags = dags;
 	}
 

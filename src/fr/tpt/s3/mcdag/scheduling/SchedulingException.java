@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package fr.tpt.s3.mcdag.alloc;
+package fr.tpt.s3.mcdag.scheduling;
 
 /**
  * Custom exception for the Scheduler to throw

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package fr.tpt.s3.mcdag.alloc;
+package fr.tpt.s3.mcdag.scheduling;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -26,9 +26,9 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
-import fr.tpt.s3.mcdag.model.Actor;
-import fr.tpt.s3.mcdag.model.ActorSched;
-import fr.tpt.s3.mcdag.model.DAG;
+import fr.tpt.s3.mcdag.model.Vertex;
+import fr.tpt.s3.mcdag.model.VertexScheduling;
+import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.model.Edge;
 import fr.tpt.s3.mcdag.util.Counters;
 import fr.tpt.s3.mcdag.util.MathMCDAG;
@@ -41,17 +41,17 @@ import fr.tpt.s3.mcdag.util.MathMCDAG;
 public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 	
 	// Set of DAGs to be scheduled 
-	private Set<DAG> mcDags;
+	private Set<McDAG> mcDags;
 	
 	// Architecture
 	private int nbCores;
 	private int hPeriod;
 	
-	private Comparator<ActorSched> loComp;
-	private Comparator<ActorSched> hiComp;
+	private Comparator<VertexScheduling> loComp;
+	private Comparator<VertexScheduling> hiComp;
 	
 	private int activations;
-	private Hashtable<ActorSched, Integer> preempts;
+	private Hashtable<VertexScheduling, Integer> preempts;
 	
 	private boolean debug;
 	
@@ -60,22 +60,22 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 	 * @param system
 	 * @param architecture
 	 */
-	public FederatedMCSched (Set<DAG> system, int architecture, boolean debug) {
+	public FederatedMCSched (Set<McDAG> system, int architecture, boolean debug) {
 		setMcDags(system);
 		setNbCores(architecture);
 		setDebug(debug);
-		setLoComp(new Comparator<ActorSched>() {
+		setLoComp(new Comparator<VertexScheduling>() {
 			@Override
-			public int compare (ActorSched o1, ActorSched o2) {
+			public int compare (VertexScheduling o1, VertexScheduling o2) {
 				if (o1.getHlfet()[0] - o2.getHlfet()[0] != 0)
 					return o1.getHlfet()[0] - o2.getHlfet()[0];
 				else
 					return o1.getId() - o2.getId();
 			}
 		});
-		setHiComp(new Comparator<ActorSched>() {
+		setHiComp(new Comparator<VertexScheduling>() {
 			@Override
-			public int compare (ActorSched o1, ActorSched o2) {
+			public int compare (VertexScheduling o1, VertexScheduling o2) {
 				if (o1.getHlfet()[1] - o2.getHlfet()[1] != 0)
 					return o1.getHlfet()[1] - o2.getHlfet()[1];
 				else
@@ -86,22 +86,22 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 		int[] input = new int[getMcDags().size()];
 		int i = 0;
 		
-		for (DAG d : getMcDags()) {
+		for (McDAG d : getMcDags()) {
 			input[i] = d.getDeadline();
 			i++;
 		}
 		
 		sethPeriod(MathMCDAG.lcm(input));
 		
-		preempts = new Hashtable<ActorSched, Integer>();
+		preempts = new Hashtable<VertexScheduling, Integer>();
 	}
 	
-	private void initRemainingTimes (DAG d, int remainingTime[], int level) {
+	private void initRemainingTimes (McDAG d, int remainingTime[], int level) {
 		
 		for (int i = 0; i < remainingTime.length; i++)
 			remainingTime[i] = 0;
 		
-		for (Actor a : d.getNodes()) {
+		for (Vertex a : d.getVertices()) {
 			remainingTime[a.getId()] = a.getWcet(level);
 			if (a.getWcet(1) != 0)
 				activations += (int)(hPeriod / d.getDeadline()) * 2;
@@ -110,15 +110,15 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 		}
 	}
 	
-	private void calcHLFETs (DAG d, final int level, List<ActorSched> prioOrder) {
+	private void calcHLFETs (McDAG d, final int level, List<VertexScheduling> prioOrder) {
 		
-		ArrayList<ActorSched> toVisit = new ArrayList<ActorSched>();
+		ArrayList<VertexScheduling> toVisit = new ArrayList<VertexScheduling>();
 		
 		// Look for sinks first
-		for (Actor a : d.getNodes()) {
+		for (Vertex a : d.getVertices()) {
 			if (a.getWcet(level) != 0) {
 				if (a.getSndEdges().size() == 0 && a.getWcet(level) != 0) {
-					toVisit.add((ActorSched)a);
+					toVisit.add((VertexScheduling)a);
 				} else {
 					boolean add = true;
 					
@@ -127,7 +127,7 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 							add = false;
 					}
 					if (add) {
-						toVisit.add((ActorSched)a);
+						toVisit.add((VertexScheduling)a);
 					}
 				}
 			}
@@ -135,13 +135,13 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 		
 		// Iterate through nodes and compute their HLFET
 		while (toVisit.size() != 0) {
-			ActorSched a = toVisit.get(0);
+			VertexScheduling a = toVisit.get(0);
 			
 			// Look for the max on the SndEdges
 			int max = 0;
 				
 			for (Edge e : a.getSndEdges()) {
-				ActorSched dest = (ActorSched) e.getDest();
+				VertexScheduling dest = (VertexScheduling) e.getDest();
 				if (dest.getWcet(level) != 0 &&
 						dest.getHlfet()[level] > max) {
 					max = dest.getHlfet()[level];
@@ -152,30 +152,30 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 
 			for (Edge e : a.getRcvEdges()) {
 				boolean allSuccVisited = true;
-				Actor test = e.getSrc();
+				Vertex test = e.getSrc();
 				
 				for (Edge e2 : test.getSndEdges()) {
-					ActorSched dest = (ActorSched) e2.getDest();
+					VertexScheduling dest = (VertexScheduling) e2.getDest();
 					if (!dest.getVisitedL()[level] && dest.getWcet(level) != 0) {
 						allSuccVisited = false;
 						break;
 					}
 				}
 				
-				if (allSuccVisited && test.getWcet(level) != 0 && !toVisit.contains((ActorSched)test))
-					toVisit.add((ActorSched)test);
+				if (allSuccVisited && test.getWcet(level) != 0 && !toVisit.contains((VertexScheduling)test))
+					toVisit.add((VertexScheduling)test);
 			}
 			toVisit.remove(0);
 		}
 		
 		// Create the list with the priority ordering
-		for (Actor a : d.getNodes()) {
+		for (Vertex a : d.getVertices()) {
 			if (a.getWcet(level) != 0)
-				prioOrder.add((ActorSched) a);
+				prioOrder.add((VertexScheduling) a);
 		}
-		Collections.sort(prioOrder, new Comparator<ActorSched>() {
+		Collections.sort(prioOrder, new Comparator<VertexScheduling>() {
 			@Override
-			public int compare(ActorSched o1, ActorSched o2) {
+			public int compare(VertexScheduling o1, VertexScheduling o2) {
 				if (o1.getHlfet()[level] - o2.getHlfet()[level] != 0)
 					return o1.getHlfet()[level] - o2.getHlfet()[level];
 				else
@@ -184,11 +184,11 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 		});	
 	}
 	
-	private boolean enoughSlots (List<ActorSched> ready, int slot, int deadline, int cores, int remainingTime[]) {
+	private boolean enoughSlots (List<VertexScheduling> ready, int slot, int deadline, int cores, int remainingTime[]) {
 		int sumReady = 0;
 		int rSlots = ((deadline -1) - slot) * cores;
 		
-		for (ActorSched a : ready)
+		for (VertexScheduling a : ready)
 			sumReady += remainingTime[a.getId()];
 				
 		if (sumReady > rSlots)
@@ -197,14 +197,14 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 		return true;
 	}
 	
-	private void checkNewActivations (List<ActorSched> scheduled, List<ActorSched> ready, int remainingTime[]) {
+	private void checkNewActivations (List<VertexScheduling> scheduled, List<VertexScheduling> ready, int remainingTime[]) {
 		// Check from the scheduled tasks the new activations
-		ListIterator<ActorSched> lit = scheduled.listIterator();
+		ListIterator<VertexScheduling> lit = scheduled.listIterator();
 		while (lit.hasNext()) {
-			ActorSched sched = lit.next();
+			VertexScheduling sched = lit.next();
 			// Check destination nodes
 			for (Edge eDest : sched.getSndEdges()) {
-				ActorSched dest = (ActorSched) eDest.getDest();
+				VertexScheduling dest = (VertexScheduling) eDest.getDest();
 				
 				// Check all the predecessors of the destination
 				boolean add = true;
@@ -225,32 +225,32 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 		}
 	}
 	
-	private void buildHITable (DAG d, String sched[][][], List<ActorSched> prioOrder) throws SchedulingException {
+	private void buildHITable (McDAG d, String sched[][][], List<VertexScheduling> prioOrder) throws SchedulingException {
 		
-		List<ActorSched> ready = new LinkedList<ActorSched>();
-		List<ActorSched> scheduled = new LinkedList<ActorSched>();
-		int[] remainingTime = new int[d.getNodes().size()];
+		List<VertexScheduling> ready = new LinkedList<VertexScheduling>();
+		List<VertexScheduling> scheduled = new LinkedList<VertexScheduling>();
+		int[] remainingTime = new int[d.getVertices().size()];
 		boolean taskFinished = false;
 
 		
 		// Init remaining time and tables
 		initRemainingTimes(d, remainingTime, 1);
 		
-		for (Actor a : d.getNodes()) {
+		for (Vertex a : d.getVertices()) {
 			if (a.getRcvEdges().size() == 0 &&
 					a.getWcet(1) != 0)
-				ready.add((ActorSched)a);
+				ready.add((VertexScheduling)a);
 		}
 		
 		Collections.sort(ready, hiComp);
 		
-		ListIterator<ActorSched> pit = prioOrder.listIterator();
+		ListIterator<VertexScheduling> pit = prioOrder.listIterator();
 
 		// Iterate through the number of cores
 		for (int s = 0; s < d.getDeadline(); s++) {
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildHITable(): @t = "+s+", tasks activated: ");
-				for (ActorSched a : ready)
+				for (VertexScheduling a : ready)
 					System.out.print("H("+a.getName()+") = "+a.getHlfet()[1]+"; ");
 				System.out.println("");
 			}
@@ -262,11 +262,11 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 			}
 			
 			// Check the priority ordering
-			ArrayList<ActorSched> toSched = new ArrayList<>();
+			ArrayList<VertexScheduling> toSched = new ArrayList<>();
 			int coreBudget = d.getMinCores();
 			
 			while (pit.hasNext() && coreBudget > 0) {
-				ActorSched a = pit.next();
+				VertexScheduling a = pit.next();
 				
 				// 	The priority actor is in the ready queue
 				if (ready.contains(a)) {
@@ -274,7 +274,7 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 						coreBudget--;
 						toSched.add(a);
 					} else  { // Check if other tasks were running
-						for (ActorSched check : ready) {
+						for (VertexScheduling check : ready) {
 							if (check.isRunning() && !toSched.contains(check)) {
 								coreBudget--;
 								toSched.add(check);
@@ -292,7 +292,7 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 			
 			// Allocate
 			int c = 0;
-			for (ActorSched a : toSched) {
+			for (VertexScheduling a : toSched) {
 				sched[1][s][c] = a.getName();	
 				remainingTime[a.getId()] = remainingTime[a.getId()] - 1;
 
@@ -314,29 +314,29 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 		
 	}
 	
-	private void buildLOTable (DAG d, String sched[][][], List<ActorSched> loPrioOrder, List<ActorSched> hiPrioOrder) throws SchedulingException {
-		List<ActorSched> ready = new LinkedList<ActorSched>();
-		List<ActorSched> scheduled = new LinkedList<ActorSched>();
-		int[] remainingTime = new int[d.getNodes().size()];
+	private void buildLOTable (McDAG d, String sched[][][], List<VertexScheduling> loPrioOrder, List<VertexScheduling> hiPrioOrder) throws SchedulingException {
+		List<VertexScheduling> ready = new LinkedList<VertexScheduling>();
+		List<VertexScheduling> scheduled = new LinkedList<VertexScheduling>();
+		int[] remainingTime = new int[d.getVertices().size()];
 		boolean taskFinished = false;
 		
 		// Init remaining time and tables
 		initRemainingTimes(d, remainingTime, 0);
 		
-		for (Actor a : d.getNodes()) {
+		for (Vertex a : d.getVertices()) {
 			if (a.getRcvEdges().size() == 0)
-				ready.add((ActorSched)a);
+				ready.add((VertexScheduling)a);
 		}
 		
 		Collections.sort(ready, loComp);
-		ListIterator<ActorSched> hpit = hiPrioOrder.listIterator();
-		ListIterator<ActorSched> lpit = loPrioOrder.listIterator();
+		ListIterator<VertexScheduling> hpit = hiPrioOrder.listIterator();
+		ListIterator<VertexScheduling> lpit = loPrioOrder.listIterator();
 
 		// Iterate through the number of slots
 		for (int s = 0; s < d.getDeadline(); s++) {
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildLOTable(): @t = "+s+", tasks activated: ");
-				for (ActorSched a : ready)
+				for (VertexScheduling a : ready)
 					System.out.print("H("+a.getName()+") = "+a.getHlfet()[0]+"; ");
 				System.out.println("");
 			}
@@ -348,12 +348,12 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 			}
 			
 			// Construct the schedulable elements
-			ArrayList<ActorSched> toSched = new ArrayList<>();
+			ArrayList<VertexScheduling> toSched = new ArrayList<>();
 			int coreBudget = d.getMinCores();
 			
 			// Check the priority ordering of HI tasks first
 			while (hpit.hasNext() && coreBudget > 0) {
-				ActorSched a = hpit.next();
+				VertexScheduling a = hpit.next();
 				
 				// Priority task is in the ready queue
 				if (ready.contains(a)) { 
@@ -361,7 +361,7 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 						coreBudget--;
 						toSched.add(a);
 					}  else  { // Check if other HI tasks were running
-						for (ActorSched check : ready) {
+						for (VertexScheduling check : ready) {
 							if (check.isRunning() && !toSched.contains(check) 
 									&& check.getWcet(1) != 0 && coreBudget > 0) {
 								coreBudget--;
@@ -380,14 +380,14 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 			
 			// Check if we can allocate LO tasks
 			while (lpit.hasNext() && coreBudget > 0) {
-				ActorSched a = lpit.next();
+				VertexScheduling a = lpit.next();
 				
 				if (ready.contains(a)) { // LO task is ready
 					if (a.isRunning()) {
 						coreBudget--;
 						toSched.add(a);
 					} else { // Check if other LO tasks were already running
-						for (ActorSched check : ready) {
+						for (VertexScheduling check : ready) {
 							if (check.isRunning() && check.getWcet(1) == 0 &&
 									!toSched.contains(check) && coreBudget > 0) {
 								coreBudget--;
@@ -408,7 +408,7 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 			
 			// Allocate
 			int c = 0;
-			for (ActorSched a : toSched) {
+			for (VertexScheduling a : toSched) {
 				sched[0][s][c] = a.getName();
 				remainingTime[a.getId()] = remainingTime[a.getId()] - 1;
 
@@ -432,11 +432,11 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 	
 	protected void initTables () {}
 	
-	private void checkLightTaskActivation (Set<ActorSched> lightTasks,
-										   List<ActorSched> ready,
-										   Hashtable<ActorSched, Integer> remainingTime,
+	private void checkLightTaskActivation (Set<VertexScheduling> lightTasks,
+										   List<VertexScheduling> ready,
+										   Hashtable<VertexScheduling, Integer> remainingTime,
 										   int slot, int level) {
-		for (ActorSched a : lightTasks) {
+		for (VertexScheduling a : lightTasks) {
 			if (slot % a.getDeadlines()[level] == 0) {
 				ready.add(a);
 				remainingTime.put(a, a.getWcet(level));
@@ -445,19 +445,19 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 		
 	}
 	
-	private void buildLight (Set<ActorSched> lightTasks, String sched[][][], final int level, int hPeriod, int cores)
+	private void buildLight (Set<VertexScheduling> lightTasks, String sched[][][], final int level, int hPeriod, int cores)
 	throws SchedulingException {
-		List<ActorSched> ready = new LinkedList<>();
-		Hashtable<ActorSched, Integer> remainingTime = new Hashtable<ActorSched, Integer>();
+		List<VertexScheduling> ready = new LinkedList<>();
+		Hashtable<VertexScheduling, Integer> remainingTime = new Hashtable<VertexScheduling, Integer>();
 		
 		// Init remainingTimes
-		for (ActorSched a : lightTasks) {
+		for (VertexScheduling a : lightTasks) {
 			remainingTime.put(a, a.getWcet(level));
 			ready.add(a);
 		}
-		Collections.sort(ready, new Comparator<ActorSched>() {
+		Collections.sort(ready, new Comparator<VertexScheduling>() {
 			@Override
-			public int compare(ActorSched o1, ActorSched o2) {
+			public int compare(VertexScheduling o1, VertexScheduling o2) {
 				if (o1.getDeadlines()[level] - o2.getDeadlines()[level] != 0)
 					return o1.getDeadlines()[level] - o2.getDeadlines()[level];
 				else
@@ -465,11 +465,11 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 			}
 		});
 		
-		ListIterator<ActorSched> lit = ready.listIterator();
+		ListIterator<VertexScheduling> lit = ready.listIterator();
 		for (int s = 0; s < hPeriod; s++) {
 			for (int c = 0; c < cores; c++) {
 				if (lit.hasNext()) {
-					ActorSched a = lit.next();
+					VertexScheduling a = lit.next();
 					int val = remainingTime.get(a);
 					
 					sched[level][s][c] = a.getName();
@@ -482,9 +482,9 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 			if (s != hPeriod - 1)
 				checkLightTaskActivation(lightTasks, ready, remainingTime, s + 1, level);
 			
-			Collections.sort(ready, new Comparator<ActorSched>() {
+			Collections.sort(ready, new Comparator<VertexScheduling>() {
 				@Override
-				public int compare(ActorSched o1, ActorSched o2) {
+				public int compare(VertexScheduling o1, VertexScheduling o2) {
 					if (o1.getDeadlines()[level] - o2.getDeadlines()[level] != 0)
 						return o1.getDeadlines()[level] - o2.getDeadlines()[level];
 					else
@@ -499,12 +499,12 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 		
 		int coresQuota = getNbCores();
 		double uLightDAGs = 0.0;
-		Set<DAG> heavyDAGs = new HashSet<DAG>();
-		Set<DAG> lightDAGs = new HashSet<DAG>();
+		Set<McDAG> heavyDAGs = new HashSet<McDAG>();
+		Set<McDAG> lightDAGs = new HashSet<McDAG>();
 			
 		// Separate heavy and light DAGs
 		// Check if we have enough cores in the architecture
-		for (DAG d : getMcDags()) {
+		for (McDAG d : getMcDags()) {
 			if (d.getUmax() < 1) {
 				lightDAGs.add(d);
 			} else {
@@ -519,7 +519,7 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 		}
 		
 		// Check for scheduling of light DAGs
-		for (DAG d : lightDAGs)
+		for (McDAG d : lightDAGs)
 			uLightDAGs += d.getUmax();
 		
 		if (Math.ceil(uLightDAGs) > coresQuota) {
@@ -528,9 +528,9 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 		}
 		
 		// Check for scheduling of heavy DAGs
-		for (DAG d : heavyDAGs) {			
-			List<ActorSched> hiPrioOrder = new LinkedList<>();
-			List<ActorSched> loPrioOrder = new LinkedList<>();
+		for (McDAG d : heavyDAGs) {			
+			List<VertexScheduling> hiPrioOrder = new LinkedList<>();
+			List<VertexScheduling> loPrioOrder = new LinkedList<>();
 			// Init sched table
 			String sched[][][] = new String[2][d.getDeadline()][d.getMinCores()];
 			
@@ -546,9 +546,9 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 			calcHLFETs(d, 1, hiPrioOrder);
 			calcHLFETs(d, 0, loPrioOrder);
 			
-			ListIterator<ActorSched> lit = loPrioOrder.listIterator();
+			ListIterator<VertexScheduling> lit = loPrioOrder.listIterator();
 			while (lit.hasNext()) {
-				ActorSched a = lit.next();
+				VertexScheduling a = lit.next();
 				if (a.getWcet(1) > 0)
 					lit.remove();
 			}
@@ -560,8 +560,8 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 			buildHITable(d, sched, hiPrioOrder);
 			buildLOTable(d, sched, loPrioOrder, hiPrioOrder);
 			
-			for (Actor a : d.getNodes()) {
-				ActorSched task = (ActorSched) a;
+			for (Vertex a : d.getVertices()) {
+				VertexScheduling task = (VertexScheduling) a;
 				preempts.put(task, 0);
 			}
 			Counters.countPreemptions(sched, preempts, 2, gethPeriod(), d.getDeadline(), d.getMinCores());
@@ -570,14 +570,14 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 		// Build tables for light DAGs
 		int coresLight = (int) Math.ceil(uLightDAGs);
 		String sched[][][] = new String[2][gethPeriod()][coresLight];
-		Set<ActorSched> lightTasks = new HashSet<ActorSched>();
+		Set<VertexScheduling> lightTasks = new HashSet<VertexScheduling>();
 
 		// Transform DAGs to independent tasks and add them to set
-		for (DAG d : lightDAGs) {
-			ActorSched indTask = new ActorSched(d.getId(), "it_d"+d.getId(), 2);
+		for (McDAG d : lightDAGs) {
+			VertexScheduling indTask = new VertexScheduling(d.getId(), "it_d"+d.getId(), 2);
 			int cilo = 0, cihi = 0;
 			
-			for (Actor a : d.getNodes()) {
+			for (Vertex a : d.getVertices()) {
 				if (a.getWcet(1) != 0)
 					cihi += a.getWcet(1);
 				cilo += a.getWcet(0);
@@ -606,21 +606,21 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 	/*
 	 * DEBUG FUNCTIONS
 	 */
-	private void printHLFETLevels (DAG d) {
-		for (Actor a : d.getNodes())
-			System.out.println("Node "+a.getName()+" HLEFT(HI) "+((ActorSched)a).getHlfet()[1]+" HLFET(LO) "+((ActorSched)a).getHlfet()[0]);
+	private void printHLFETLevels (McDAG d) {
+		for (Vertex a : d.getVertices())
+			System.out.println("Node "+a.getName()+" HLEFT(HI) "+((VertexScheduling)a).getHlfet()[1]+" HLFET(LO) "+((VertexScheduling)a).getHlfet()[0]);
 	}
 	
-	private void printDAG (DAG d) {
-		for (Actor a : d.getNodes())
-			System.out.println("Node "+a.getName()+" Ci(HI) "+((ActorSched)a).getWcet(1)+" Ci(LO) "+((ActorSched)a).getWcet(0));
+	private void printDAG (McDAG d) {
+		for (Vertex a : d.getVertices())
+			System.out.println("Node "+a.getName()+" Ci(HI) "+((VertexScheduling)a).getWcet(1)+" Ci(LO) "+((VertexScheduling)a).getWcet(0));
 	}
 	
 	private void printPreempts () {
 		int total = 0;
 		System.out.println("[DEBUG "+Thread.currentThread().getName()+"] Printing preemption data...");
 
-		for (ActorSched a : preempts.keySet()) {
+		for (VertexScheduling a : preempts.keySet()) {
 			System.out.println("[DEBUG "+Thread.currentThread().getName()+"]\t Task "+a.getName()+" peempted "+preempts.get(a)+" times.");
 			total += preempts.get(a);
 		}
@@ -630,11 +630,11 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 	/*
 	 * Getters and setters
 	 */
-	public Set<DAG> getMcDags() {
+	public Set<McDAG> getMcDags() {
 		return mcDags;
 	}
 
-	public void setMcDags(Set<DAG> mcDags) {
+	public void setMcDags(Set<McDAG> mcDags) {
 		this.mcDags = mcDags;
 	}
 
@@ -646,19 +646,19 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 		this.nbCores = nbCores;
 	}
 
-	public Comparator<ActorSched> getLoComp() {
+	public Comparator<VertexScheduling> getLoComp() {
 		return loComp;
 	}
 
-	public void setLoComp(Comparator<ActorSched> loComp) {
+	public void setLoComp(Comparator<VertexScheduling> loComp) {
 		this.loComp = loComp;
 	}
 
-	public Comparator<ActorSched> getHiComp() {
+	public Comparator<VertexScheduling> getHiComp() {
 		return hiComp;
 	}
 
-	public void setHiComp(Comparator<ActorSched> hiComp) {
+	public void setHiComp(Comparator<VertexScheduling> hiComp) {
 		this.hiComp = hiComp;
 	}
 
@@ -670,11 +670,11 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 		this.debug = debug;
 	}
 
-	public Hashtable<ActorSched, Integer> getPreempts() {
+	public Hashtable<VertexScheduling, Integer> getPreempts() {
 		return preempts;
 	}
 
-	public void setPreempts(Hashtable<ActorSched, Integer> preempts) {
+	public void setPreempts(Hashtable<VertexScheduling, Integer> preempts) {
 		this.preempts = preempts;
 	}
 

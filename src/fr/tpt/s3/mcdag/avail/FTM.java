@@ -21,13 +21,13 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import fr.tpt.s3.mcdag.model.ActorSched;
+import fr.tpt.s3.mcdag.model.VertexScheduling;
 
 public class FTM {
 	// Nb of voters need to be odd to have a majority
 	private int nbVot;
 	private String name;
-	private ActorSched votTask;
+	private VertexScheduling votTask;
 	private List<State> states;
 	private List<Transition> transitions;
 	private List<Transition> finTrans;
@@ -195,7 +195,7 @@ public class FTM {
 		
 		// K is the depth of the buffer
 		for (int i = 0; i < (int)Math.pow(2, getK()); i++) {
-			State s = new State(i, getName(), ActorSched.HI);
+			State s = new State(i, getName(), VertexScheduling.HI);
 			getStates().add(s);
 		}
 		
@@ -320,11 +320,11 @@ public class FTM {
 		this.states = states;
 	}
 
-	public ActorSched getVotTask() {
+	public VertexScheduling getVotTask() {
 		return votTask;
 	}
 
-	public void setVotTask(ActorSched votTask) {
+	public void setVotTask(VertexScheduling votTask) {
 		this.votTask = votTask;
 	}
 	public List<Transition> getFinTrans() {

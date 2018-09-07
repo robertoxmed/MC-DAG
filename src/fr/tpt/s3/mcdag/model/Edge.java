@@ -24,15 +24,15 @@ package fr.tpt.s3.mcdag.model;
 public class Edge {
 	
 	// One edge has a src and a destination
-	private Actor src;
-	private Actor dest;
+	private Vertex src;
+	private Vertex dest;
 
 	
 	/**
 	 * Constructor for the Edge
 	 */
 	
-	public Edge(Actor s, Actor d) {
+	public Edge(Vertex s, Vertex d) {
 		this.setSrc(s);
 		this.setDest(d);
 		s.getSndEdges().add(this);
@@ -43,16 +43,16 @@ public class Edge {
 	 * Getters & Setters	
 	 * 
 	 */
-	public Actor getSrc() {
+	public Vertex getSrc() {
 		return src;
 	}
-	public void setSrc(Actor s) {
+	public void setSrc(Vertex s) {
 		this.src = s;
 	}
-	public Actor getDest() {
+	public Vertex getDest() {
 		return dest;
 	}
-	public void setDest(Actor dest) {
+	public void setDest(Vertex dest) {
 		this.dest = dest;
 	}
 }

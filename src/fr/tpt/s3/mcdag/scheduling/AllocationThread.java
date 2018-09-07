@@ -14,14 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package fr.tpt.s3.mcdag.alloc;
+package fr.tpt.s3.mcdag.scheduling;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
 import fr.tpt.s3.mcdag.avail.Automata;
-import fr.tpt.s3.mcdag.model.DAG;
+import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.parser.MCParser;
 
 /**
@@ -31,8 +31,8 @@ import fr.tpt.s3.mcdag.parser.MCParser;
  */
 public class AllocationThread implements Runnable{
 	
-	private Set<DAG> dags;
-	private Set<DAG> dags2;
+	private Set<McDAG> dags;
+	private Set<McDAG> dags2;
 	private MCParser mcp;
 	private MCParser mcp2;
 	private String inputFile;
@@ -47,8 +47,8 @@ public class AllocationThread implements Runnable{
 	private boolean debug;
 	
 	public AllocationThread(String iFile, boolean oSF, boolean oPF, boolean debug) {
-		dags = new HashSet<DAG>();
-		dags2 = new HashSet<DAG>();
+		dags = new HashSet<McDAG>();
+		dags2 = new HashSet<McDAG>();
 		mcp = new MCParser(iFile, null, dags, oPF);
 		setOutPRISMFile(oPF);
 		mcp2 = new MCParser(iFile, null, dags2, oPF);
@@ -69,7 +69,7 @@ public class AllocationThread implements Runnable{
 		
 		// Only one DAG has to be scheduled in the multi-core architecture
 		if (dags.size() == 1) {
-			DAG dag = dags.iterator().next();
+			McDAG dag = dags.iterator().next();
 			ls = new SingleDAG(dag, mcp.getNbCores());
 			ls.setDebug(debug);
 			
@@ -133,11 +133,11 @@ public class AllocationThread implements Runnable{
 	/*
 	 * Getters and setters
 	 */
-	public Set<DAG> getDags() {
+	public Set<McDAG> getDags() {
 		return dags;
 	}
 
-	public void setDags(Set<DAG> dags) {
+	public void setDags(Set<McDAG> dags) {
 		this.dags = dags;
 	}
 

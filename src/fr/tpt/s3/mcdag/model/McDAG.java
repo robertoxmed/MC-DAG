@@ -25,21 +25,21 @@ import java.util.Set;
  * @author Roberto Medina
  *
  */
-public class DAG {
+public class McDAG {
 	
 	private int id;
-	private Set<Actor> nodes;
-	private Set<Actor> nodesHI;
-	private Set<Actor> loOuts;
-	private Set<Actor> Outs;
+	private Set<Vertex> nodes;
+	private Set<Vertex> nodesHI;
+	private Set<Vertex> loOuts;
+	private Set<Vertex> Outs;
 	private int critPath;
 	private int deadline;
 	private int levels;
 	
-	public DAG() {
-		nodes = new HashSet<Actor>();
-		nodesHI = new HashSet<Actor>();
-		setLoOuts(new HashSet<Actor>());
+	public McDAG() {
+		nodes = new HashSet<Vertex>();
+		nodesHI = new HashSet<Vertex>();
+		setLoOuts(new HashSet<Vertex>());
 	}
 	
 	/**
@@ -49,7 +49,7 @@ public class DAG {
 	public int calcCriticalPath() {
 		int cp = 0;
 		
-		for(int i = 0; i < this.getNodes().size(); i++) {
+		for(int i = 0; i < this.getVertices().size(); i++) {
 			if (cp < this.getNodebyID(i).getCpFromNode()[0])
 				cp = this.getNodebyID(i).getCpFromNode()[0];
 			if (cp < this.getNodebyID(i).getCpFromNode()[1])
@@ -63,9 +63,9 @@ public class DAG {
 	 * Sets HI nodes in the corresponding set
 	 */
 	public void setHINodes() {
-		Iterator<Actor> in = this.getNodes().iterator();
+		Iterator<Vertex> in = this.getVertices().iterator();
 		while (in.hasNext()) {
-			Actor n = in.next();
+			Vertex n = in.next();
 			if (n.getWcet(1) != 0)
 				this.getNodes_HI().add(n);
 		}
@@ -75,9 +75,9 @@ public class DAG {
 	 * Searches for the LO outputs in the DAG
 	 */
 	public void calcLOouts() {
-		Iterator<Actor> in = this.getNodes().iterator();
+		Iterator<Vertex> in = this.getVertices().iterator();
 		while (in.hasNext()) {
-			Actor n = in.next();
+			Vertex n = in.next();
 			if (n.getSndEdges().size() == 0 &&
 					n.getWcet(1) == 0) {
 				this.getLoOuts().add(n);
@@ -89,7 +89,7 @@ public class DAG {
 	 * Gets the outputs of the DAG
 	 */
 	public void calcOuts() {
-		for (Actor a : getNodes()) {
+		for (Vertex a : getVertices()) {
 			if (a.getSndEdges().size() == 0)
 				Outs.add(a);
 		}
@@ -102,7 +102,7 @@ public class DAG {
 	public double getULO () {
 		double ret = 0.0;
 		
-		for (Actor a : getNodes())
+		for (Vertex a : getVertices())
 			ret += a.getWcet(0);
 		
 		return ret / getDeadline();
@@ -115,7 +115,7 @@ public class DAG {
 	public double getUHI () {
 		double ret = 0.0;
 		
-		for (Actor a : getNodes()) {
+		for (Vertex a : getVertices()) {
 			if (a.getWcet(1) != 0)
 				ret += a.getWcet(1);
 		}
@@ -131,7 +131,7 @@ public class DAG {
 		
 		for (int i = 0; i < getLevels(); i++) {
 			double uL = 0.0;
-			for (Actor a : getNodes()) {
+			for (Vertex a : getVertices()) {
 				uL += a.getWcet(i);
 			}
 			uL = uL / getDeadline();
@@ -151,7 +151,7 @@ public class DAG {
 	public double getUi (int i) {
 		double ret = 0;
 		
-		for (Actor a : getNodes())
+		for (Vertex a : getVertices())
 			ret += a.getWcet(i);
 		
 		ret = ret / getDeadline();
@@ -175,27 +175,27 @@ public class DAG {
 	 * Getters & Setters
 	 * 
 	 */
-	public Set<Actor> getNodes() {
+	public Set<Vertex> getVertices() {
 		return nodes;
 	}
-	public void setNodes(Set<Actor> Nodes) {
+	public void setNodes(Set<Vertex> Nodes) {
 		nodes = Nodes;
 	}
 	
-	public Actor getNodebyID(int id){
-		Iterator<Actor> it = nodes.iterator();
+	public Vertex getNodebyID(int id){
+		Iterator<Vertex> it = nodes.iterator();
 		while(it.hasNext()){
-			Actor n = it.next();
+			Vertex n = it.next();
 			if (n.getId() == id)
 				return n; 
 		}
 		return null;
 	}
 
-	public Actor getNodebyName(String name){
-		Iterator<Actor> it = nodes.iterator();
+	public Vertex getNodebyName(String name){
+		Iterator<Vertex> it = nodes.iterator();
 		while(it.hasNext()){
-			Actor n = it.next();
+			Vertex n = it.next();
 			if (n.getName().equalsIgnoreCase(name))
 				return n; 
 		}
@@ -203,18 +203,18 @@ public class DAG {
 	}
 
 	
-	public Set<Actor> getNodes_HI() {
+	public Set<Vertex> getNodes_HI() {
 		return nodesHI;
 	}
 
-	public void setNodes_HI(Set<Actor> nodes_HI) {
+	public void setNodes_HI(Set<Vertex> nodes_HI) {
 		nodesHI = nodes_HI;
 	}
 	
-	public Actor getNodeHIbyID(int id){
-		Iterator<Actor> it = nodesHI.iterator();
+	public Vertex getNodeHIbyID(int id){
+		Iterator<Vertex> it = nodesHI.iterator();
 		while(it.hasNext()){
-			Actor n = it.next();
+			Vertex n = it.next();
 			if (n.getId() == id)
 				return n; 
 		}
@@ -229,11 +229,11 @@ public class DAG {
 		this.critPath = critPath;
 	}
 
-	public Set<Actor> getLoOuts() {
+	public Set<Vertex> getLoOuts() {
 		return loOuts;
 	}
 
-	public void setLoOuts(Set<Actor> lO_outs) {
+	public void setLoOuts(Set<Vertex> lO_outs) {
 		loOuts = lO_outs;
 	}
 
@@ -253,11 +253,11 @@ public class DAG {
 		this.id = id;
 	}
 
-	public Set<Actor> getOuts() {
+	public Set<Vertex> getOuts() {
 		return Outs;
 	}
 
-	public void setOuts(Set<Actor> outs) {
+	public void setOuts(Set<Vertex> outs) {
 		Outs = outs;
 	}
 

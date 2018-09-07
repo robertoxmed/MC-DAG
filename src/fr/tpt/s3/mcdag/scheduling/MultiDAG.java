@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package fr.tpt.s3.mcdag.alloc;
+package fr.tpt.s3.mcdag.scheduling;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -24,24 +24,24 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
-import fr.tpt.s3.mcdag.model.Actor;
-import fr.tpt.s3.mcdag.model.ActorSched;
-import fr.tpt.s3.mcdag.model.DAG;
+import fr.tpt.s3.mcdag.model.Vertex;
+import fr.tpt.s3.mcdag.model.VertexScheduling;
+import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.model.Edge;
 import fr.tpt.s3.mcdag.util.MathMCDAG;
 
 public class MultiDAG extends AbstractMixedCriticalityScheduler{
 	
 	// Set of DAGs to be scheduled
-	private Set<DAG> mcDags;
+	private Set<McDAG> mcDags;
 	
 	// Architecture + Hyperperiod
 	private int nbCores;
 	private int hPeriod;
 	
 	// List of DAG nodes to order them
-	private Comparator<ActorSched> lHIComp;
-	private Comparator<ActorSched> lLOComp;
+	private Comparator<VertexScheduling> lHIComp;
+	private Comparator<VertexScheduling> lLOComp;
 	
 	// Scheduling tables
 	private String sched[][][];
@@ -57,21 +57,21 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 	 * @param sd
 	 * @param cores
 	 */
-	public MultiDAG (Set<DAG> sd, int cores, boolean debug) {
+	public MultiDAG (Set<McDAG> sd, int cores, boolean debug) {
 		setMcDags(sd);
 		setNbCores(cores);
 		
 		remainingTime = new int[2][getMcDags().size()][];
 		
 		// Init remaining time
-		for (DAG d : getMcDags()) {
-			remainingTime[0][d.getId()] = new int[d.getNodes().size()];
-			remainingTime[1][d.getId()] = new int[d.getNodes().size()];
+		for (McDAG d : getMcDags()) {
+			remainingTime[0][d.getId()] = new int[d.getVertices().size()];
+			remainingTime[1][d.getId()] = new int[d.getVertices().size()];
 		}
 		
-		lHIComp = new Comparator<ActorSched>() {
+		lHIComp = new Comparator<VertexScheduling>() {
 			@Override
-			public int compare(ActorSched o1, ActorSched o2) {
+			public int compare(VertexScheduling o1, VertexScheduling o2) {
 				if (o1.getWeights()[1] - o2.getWeights()[1] != 0)
 					return o1.getWeights()[1] - o2.getWeights()[1];
 				else
@@ -79,9 +79,9 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 			}			
 		};
 		
-		lLOComp = new Comparator<ActorSched>() {
+		lLOComp = new Comparator<VertexScheduling>() {
 			@Override
-			public int compare(ActorSched o1, ActorSched o2) {
+			public int compare(VertexScheduling o1, VertexScheduling o2) {
 				if (o1.getWeights()[0] - o2.getWeights()[0] != 0)
 					return o1.getWeights()[0] - o2.getWeights()[0];
 				else
@@ -99,7 +99,7 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 		int i = 0;
 	
 		// Look for the maximum deadline
-		for (DAG d : getMcDags()) {
+		for (McDAG d : getMcDags()) {
 			input[i] = d.getDeadline();
 			i++;
 		}
@@ -126,7 +126,7 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 	 * @param mode
 	 * @return
 	 */
-	private void calcActorLFTHI (ActorSched a, int deadline) {
+	private void calcActorLFTHI (VertexScheduling a, int deadline) {
 		int ret = Integer.MAX_VALUE;
 		
 		if (a.getRcvEdges().size() == 0) {
@@ -134,7 +134,7 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 		} else {
 			for (Edge e : a.getRcvEdges()) {
 				if (e.getSrc().getWcet(1) != 0) {
-					int test = ((ActorSched) e.getSrc()).getDeadlines()[1] - e.getSrc().getWcet(1);
+					int test = ((VertexScheduling) e.getSrc()).getDeadlines()[1] - e.getSrc().getWcet(1);
 					
 					if (test < ret)
 						ret = test;
@@ -144,14 +144,14 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 		a.setDeadlineInL(ret, 1);
 	}
 	
-	private void calcActorLFTLO (ActorSched a, int deadline) {
+	private void calcActorLFTLO (VertexScheduling a, int deadline) {
 		int ret = Integer.MAX_VALUE;
 		
 		if (a.getSndEdges().size() == 0) {
 			ret = a.getGraphDead();
 		} else {
 			for (Edge e : a.getSndEdges()) {
-				int test = ((ActorSched) e.getDest()).getDeadlines()[0] - e.getDest().getWcet(0);
+				int test = ((VertexScheduling) e.getDest()).getDeadlines()[0] - e.getDest().getWcet(0);
 				if (test < ret)
 					ret = test;
 			}
@@ -165,9 +165,9 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 	 * @param a
 	 * @return
 	 */
-	private boolean succVisited (ActorSched a) {
+	private boolean succVisited (VertexScheduling a) {
 		for (Edge e : a.getSndEdges()) {
-			if (!((ActorSched) e.getDest()).getVisitedL()[0])
+			if (!((VertexScheduling) e.getDest()).getVisitedL()[0])
 				return false;
 		}
 		return true;
@@ -179,12 +179,12 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 	 * @param a
 	 * @return
 	 */
-	private boolean predVisitedHI (ActorSched a) {
+	private boolean predVisitedHI (VertexScheduling a) {
 		boolean ret = true;
 		
 		for (Edge e : a.getRcvEdges()) {
 			if (e.getSrc().getWcet(1) != 0) {
-				if (!((ActorSched) e.getSrc()).getVisitedL()[1])
+				if (!((VertexScheduling) e.getSrc()).getVisitedL()[1])
 					return false;
 			}
 		}
@@ -195,22 +195,22 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 	/**
 	 * Recursively calculates LFTs of an actor
 	 */
-	private void calcLFTs (DAG d) {
+	private void calcLFTs (McDAG d) {
 		// Add a list to add the nodes that have to be visited
-		ArrayList<ActorSched> toVisit = new ArrayList<>();
-		ArrayList<ActorSched> toVisitHI = new ArrayList<>();
+		ArrayList<VertexScheduling> toVisit = new ArrayList<>();
+		ArrayList<VertexScheduling> toVisitHI = new ArrayList<>();
 		
 		// Add sink LO nodes
-		for (Actor a : d.getNodes()) {
+		for (Vertex a : d.getVertices()) {
 			if (a.getSndEdges().size() == 0)
-				toVisit.add((ActorSched) a);	
+				toVisit.add((VertexScheduling) a);	
 		}
 		
 		// Add source HI tasks
-		for (Actor a : d.getNodes()) {
+		for (Vertex a : d.getVertices()) {
 			if (a.getWcet(1) != 0) { // It's a HI task
 				if (a.getRcvEdges().size() == 0) {
-					toVisitHI.add((ActorSched) a);
+					toVisitHI.add((VertexScheduling) a);
 				} else { // This should never happen atm
 					boolean add = true;
 					
@@ -221,33 +221,33 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 						}
 					}
 					if (add)
-						toVisitHI.add((ActorSched) a);
+						toVisitHI.add((VertexScheduling) a);
 				}
 			}
 		}
 		
 		while (toVisit.size() != 0) {
-			ActorSched a = toVisit.get(0);
+			VertexScheduling a = toVisit.get(0);
 			
 			calcActorLFTLO(a, d.getDeadline());
 			a.getVisitedL()[0] = true;
 
 			for (Edge e : a.getRcvEdges()) {
-				if (!((ActorSched) e.getSrc()).getVisitedL()[0] && succVisited((ActorSched) e.getSrc())) {
-					toVisit.add((ActorSched) e.getSrc());
+				if (!((VertexScheduling) e.getSrc()).getVisitedL()[0] && succVisited((VertexScheduling) e.getSrc())) {
+					toVisit.add((VertexScheduling) e.getSrc());
 				}
 			}
 			toVisit.remove(0);
 		}
 		
 		while (toVisitHI.size() != 0) {
-			ActorSched a = toVisitHI.get(0);
+			VertexScheduling a = toVisitHI.get(0);
 			
 			calcActorLFTHI(a, d.getDeadline());
 			a.getVisitedL()[1] = true;
 			for (Edge e : a.getSndEdges()) {
-				if (e.getDest().getWcet(1) != 0 && predVisitedHI((ActorSched) e.getDest())) {
-					toVisitHI.add((ActorSched) e.getDest());
+				if (e.getDest().getWcet(1) != 0 && predVisitedHI((VertexScheduling) e.getDest())) {
+					toVisitHI.add((VertexScheduling) e.getDest());
 				}
 			}
 			toVisitHI.remove(0);
@@ -258,7 +258,7 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 	 * Calculates weights for tasks depending on the deadline
 	 */
 	private void calcWeights () {
-		for (DAG d : getMcDags()) {
+		for (McDAG d : getMcDags()) {
 			calcLFTs(d);
 		}
 	}
@@ -268,11 +268,11 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 	 * @param a
 	 * @param sched
 	 */
-	private void checkActorActivationHI (List<ActorSched> sched, List<ActorSched> ready) {
+	private void checkActorActivationHI (List<VertexScheduling> sched, List<VertexScheduling> ready) {
 		// Check all predecessor of actor a that just finished
-		for (ActorSched a : sched) {
+		for (VertexScheduling a : sched) {
 			for (Edge e : a.getRcvEdges()) {
-				ActorSched pred = (ActorSched) e.getSrc();
+				VertexScheduling pred = (VertexScheduling) e.getSrc();
 				boolean add = true;
 			
 				// 	Check all successors of the predecessor
@@ -283,7 +283,7 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 					}
 				}
 			
-				if (add && !ready.contains(pred) && remainingTime[1][pred.getGraphID()][pred.getId()] != 0)
+				if (add && !ready.contains(pred) && remainingTime[1][pred.getGraphId()][pred.getId()] != 0)
 					ready.add(pred);					
 			}
 		}
@@ -294,11 +294,11 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 	 * @param a
 	 * @param sched
 	 */
-	private void checkActorActivationLO (List<ActorSched> sched, List<ActorSched> ready) {
+	private void checkActorActivationLO (List<VertexScheduling> sched, List<VertexScheduling> ready) {
 		// Check all predecessor of actor a that just finished
-		for (ActorSched a : sched) {
+		for (VertexScheduling a : sched) {
 			for (Edge e : a.getSndEdges()) {
-				ActorSched succ = (ActorSched) e.getDest();
+				VertexScheduling succ = (VertexScheduling) e.getDest();
 				boolean add = true;
 			
 				// 	Check all successors of the predecessor
@@ -309,7 +309,7 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 					}
 				}
 			
-				if (add && !ready.contains(succ) && remainingTime[0][succ.getGraphID()][succ.getId()] != 0)
+				if (add && !ready.contains(succ) && remainingTime[0][succ.getGraphId()][succ.getId()] != 0)
 					ready.add(succ);
 			}
 		}
@@ -319,28 +319,28 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 	 * Checks for the activation of a new DAG during the hyper-period
 	 * @param slot
 	 */
-	private void checkDAGActivation (List<ActorSched> sched, List<ActorSched> ready, int slot, short mode) {
-		for (DAG d : getMcDags()) {
+	private void checkDAGActivation (List<VertexScheduling> sched, List<VertexScheduling> ready, int slot, short mode) {
+		for (McDAG d : getMcDags()) {
 			// If the slot is a multiple of the deadline there is a new activation
 			if (slot % d.getDeadline() == 0) {
-				ListIterator<ActorSched> it = sched.listIterator();
+				ListIterator<VertexScheduling> it = sched.listIterator();
 				
 				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] checkDAGActivation(): DAG (id. "+d.getId()+") activation at slot "+slot);
-				for (Actor a : d.getNodes()) {
+				for (Vertex a : d.getVertices()) {
 					while (it.hasNext()) { // Remove nodes from the sched list
-						ActorSched a2 = it.next();
+						VertexScheduling a2 = it.next();
 						if (a.getName().contentEquals(a2.getName()))
 							it.remove();
 					}
 					it = sched.listIterator();
 					// Re-init remaining execution time to be allocated
 					
-					remainingTime[(int)mode][((ActorSched)a).getGraphID()][a.getId()] = a.getWcet(mode);
+					remainingTime[(int)mode][((VertexScheduling)a).getGraphId()][a.getId()] = a.getWcet(mode);
 					
-					if (mode == ActorSched.HI && a.isSinkinL(1)) {
-						ready.add((ActorSched) a);
-					} else if (mode == ActorSched.LO && a.isSourceinL(0)){
-						ready.add((ActorSched) a);
+					if (mode == VertexScheduling.HI && a.isSinkinL(1)) {
+						ready.add((VertexScheduling) a);
+					} else if (mode == VertexScheduling.LO && a.isSourceinL(0)){
+						ready.add((VertexScheduling) a);
 					}
 				}			
 			}
@@ -351,14 +351,14 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 	 * Inits the remaining time to be allocated to each Actor
 	 */
 	private void initRemainT () {
-		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
+		for (McDAG d : getMcDags()) {
+			for (Vertex a : d.getVertices()) {
 				if (a.getWcet(1) != 0)
-					remainingTime[1][((ActorSched)a).getGraphID()][a.getId()] = a.getWcet(1);
+					remainingTime[1][((VertexScheduling)a).getGraphId()][a.getId()] = a.getWcet(1);
 				else
-					remainingTime[1][((ActorSched)a).getGraphID()][a.getId()] = 0;
+					remainingTime[1][((VertexScheduling)a).getGraphId()][a.getId()] = 0;
 				
-				remainingTime[0][((ActorSched)a).getGraphID()][a.getId()] = a.getWcet(0);
+				remainingTime[0][((VertexScheduling)a).getGraphId()][a.getId()] = a.getWcet(0);
 			}
 		}
 	}
@@ -369,7 +369,7 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 	 * @param t
 	 * @return
 	 */
-	private int scheduledUntilT (ActorSched a, int t) {
+	private int scheduledUntilT (VertexScheduling a, int t) {
 		int ret = 0;
 		int start = (int)(t / a.getGraphDead()) * a.getGraphDead();
 		
@@ -390,12 +390,12 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 	 * @param slot
 	 * @param mode
 	 */
-	private void calcLaxity (List<ActorSched> list, int slot, short mode) {
-		for (ActorSched a : list) {
+	private void calcLaxity (List<VertexScheduling> list, int slot, short mode) {
+		for (VertexScheduling a : list) {
 			int relatSlot = slot % a.getGraphDead();
-			int dId = a.getGraphID();
+			int dId = a.getGraphId();
 					
-			if (mode == ActorSched.HI) { // Laxity in HI mode
+			if (mode == VertexScheduling.HI) { // Laxity in HI mode
 				a.setWeightInL(a.getDeadlines()[1] - relatSlot - remainingTime[1][dId][a.getId()], 1);
 			} else  {// Laxity in LO mode
 				// Promote HI tasks that need to be scheduled at this slot
@@ -418,12 +418,12 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 	 * @param slot
 	 * @return
 	 */
-	private boolean isPossible (List<ActorSched> list, int slot, int level) {
+	private boolean isPossible (List<VertexScheduling> list, int slot, int level) {
 		int m = 0;
-		ListIterator<ActorSched> lit = list.listIterator();
+		ListIterator<VertexScheduling> lit = list.listIterator();
 		
 		while (lit.hasNext()) {
-			ActorSched a = lit.next();
+			VertexScheduling a = lit.next();
 			
 			if (a.getWeights()[level] == 0)
 				m++;
@@ -442,28 +442,28 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 	 * @throws SchedulingException
 	 */
 	public void allocHI () throws SchedulingException {
-		List<ActorSched> scheduled = new LinkedList<>();
-		List<ActorSched> ready = new LinkedList<>();
+		List<VertexScheduling> scheduled = new LinkedList<>();
+		List<VertexScheduling> ready = new LinkedList<>();
 		
 		// Add all exit HI nodes to the ready list.
-		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
+		for (McDAG d : getMcDags()) {
+			for (Vertex a : d.getVertices()) {
 				if (a.isSinkinL(1))
-					ready.add((ActorSched) a);
+					ready.add((VertexScheduling) a);
 			}
 		}
 
-		calcLaxity(ready, 0, ActorSched.HI);
+		calcLaxity(ready, 0, VertexScheduling.HI);
 		Collections.sort(ready, lHIComp);
 		 
 		// Allocate all slots of the HI scheduling table
-		ListIterator<ActorSched> lit = ready.listIterator();
+		ListIterator<VertexScheduling> lit = ready.listIterator();
 		boolean taskFinished = false;
 		
 		for (int s = hPeriod - 1; s >= 0; s--) {
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] allocHI(): @t = "+s+", tasks activated: ");
-				for (ActorSched a : ready)
+				for (VertexScheduling a : ready)
 					System.out.print("L("+a.getName()+") = "+a.getWeights()[1]+"; ");
 				System.out.println("");
 			}
@@ -477,8 +477,8 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 			for (int c = getNbCores() - 1; c >= 0; c--) {
 				// Find a ready task in the HI list
 				if (lit.hasNext()) {
-					ActorSched a = lit.next();
-					int val = remainingTime[1][a.getGraphID()][a.getId()];
+					VertexScheduling a = lit.next();
+					int val = remainingTime[1][a.getGraphId()][a.getId()];
 					
 					sched[1][s][c] = a.getName();
 					val--;
@@ -489,7 +489,7 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 						taskFinished = true;
 						lit.remove();
 					}
-					remainingTime[1][a.getGraphID()][a.getId()] = val;
+					remainingTime[1][a.getGraphId()][a.getId()] = val;
 				}
 			}
 			
@@ -498,9 +498,9 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 
 			if (s != 0) {
 				// Check if DAGs need to be activated at the next slot
-				checkDAGActivation(scheduled, ready, s, ActorSched.HI); 
+				checkDAGActivation(scheduled, ready, s, VertexScheduling.HI); 
 				// Update laxities for nodes in the ready list
-				calcLaxity(ready, gethPeriod() - s, ActorSched.HI);
+				calcLaxity(ready, gethPeriod() - s, VertexScheduling.HI);
 			}
 			Collections.sort(ready, lHIComp);
 			taskFinished = false;
@@ -517,28 +517,28 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 	 * @throws SchedulingException
 	 */
 	public void allocLO () throws SchedulingException {
-		List<ActorSched> ready = new LinkedList<>();
-		List<ActorSched> scheduled = new LinkedList<>();
+		List<VertexScheduling> ready = new LinkedList<>();
+		List<VertexScheduling> scheduled = new LinkedList<>();
 		
 		// Add all HI nodes to the list.
-		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
+		for (McDAG d : getMcDags()) {
+			for (Vertex a : d.getVertices()) {
 				if (a.isSourceinL(0))
-					ready.add((ActorSched)a);
+					ready.add((VertexScheduling)a);
 			}
 		}
 		
-		calcLaxity(ready, 0, ActorSched.LO);
+		calcLaxity(ready, 0, VertexScheduling.LO);
 		Collections.sort(ready, lLOComp);
 		
 		// Allocate all slots of the LO scheduling table
-		ListIterator<ActorSched> lit = ready.listIterator();
+		ListIterator<VertexScheduling> lit = ready.listIterator();
 		boolean taskFinished = false;
 		
 		for (int s = 0; s < hPeriod; s++) {
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] allocLO(): @t = "+s+", tasks activated: ");
-				for (ActorSched a : ready)
+				for (VertexScheduling a : ready)
 					System.out.print("L("+a.getName()+") = "+a.getWeights()[0]+"; ");
 				System.out.println("");
 			}
@@ -552,8 +552,8 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 			for (int c = 0; c < getNbCores(); c++) {
 				// Find a ready task in the LO list
 				if (lit.hasNext()) {
-					ActorSched a = lit.next();
-					int val = remainingTime[0][a.getGraphID()][a.getId()];
+					VertexScheduling a = lit.next();
+					int val = remainingTime[0][a.getGraphId()][a.getId()];
 					
 					sched[0][s][c] = a.getName();
 					val--;
@@ -563,7 +563,7 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 						taskFinished = true;
 						lit.remove();
 					}
-					remainingTime[0][a.getGraphID()][a.getId()] = val;
+					remainingTime[0][a.getGraphId()][a.getId()] = val;
 				}
 			}
 						
@@ -571,8 +571,8 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 				checkActorActivationLO(scheduled, ready);
 			
 			if (s != hPeriod - 1) {
-				checkDAGActivation(scheduled, ready, s + 1, ActorSched.LO);
-				calcLaxity(ready, s + 1, ActorSched.LO);
+				checkDAGActivation(scheduled, ready, s + 1, VertexScheduling.LO);
+				calcLaxity(ready, s + 1, VertexScheduling.LO);
 			}
 			Collections.sort(ready, lLOComp);
 			taskFinished = false;
@@ -611,11 +611,11 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 	 * Prints urgency values for the multi DAG scheduling
 	 */
 	public void printLFT () {
-		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
+		for (McDAG d : getMcDags()) {
+			for (Vertex a : d.getVertices()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] printLFT(): DAG "+d.getId()+"; Actor "+a.getName()
-									+"; LFT LO "+((ActorSched) a).getDeadlines()[0]);
-				if (a.getWcet(1) != 0) System.out.print("; LFT HI "+((ActorSched) a).getDeadlines()[1]);
+									+"; LFT LO "+((VertexScheduling) a).getDeadlines()[0]);
+				if (a.getWcet(1) != 0) System.out.print("; LFT HI "+((VertexScheduling) a).getDeadlines()[1]);
 				System.out.println(".");
 			}
 		}
@@ -666,11 +666,11 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 		this.nbCores = nbCores;
 	}
 
-	public Set<DAG> getMcDags() {
+	public Set<McDAG> getMcDags() {
 		return mcDags;
 	}
 
-	public void setMcDags(Set<DAG> mcDags) {
+	public void setMcDags(Set<McDAG> mcDags) {
 		this.mcDags = mcDags;
 	}
 
@@ -690,19 +690,19 @@ public class MultiDAG extends AbstractMixedCriticalityScheduler{
 		this.hPeriod = hPeriod;
 	}
 
-	public Comparator<ActorSched> getlLOComp() {
+	public Comparator<VertexScheduling> getlLOComp() {
 		return lLOComp;
 	}
 
-	public void setlLOComp(Comparator<ActorSched> lLOComp) {
+	public void setlLOComp(Comparator<VertexScheduling> lLOComp) {
 		this.lLOComp = lLOComp;
 	}
 
-	public Comparator<ActorSched> getlHIComp() {
+	public Comparator<VertexScheduling> getlHIComp() {
 		return lHIComp;
 	}
 
-	public void setlHIComp(Comparator<ActorSched> lHIComp) {
+	public void setlHIComp(Comparator<VertexScheduling> lHIComp) {
 		this.lHIComp = lHIComp;
 	}
 

@@ -23,11 +23,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import fr.tpt.s3.mcdag.alloc.SingleDAG;
-import fr.tpt.s3.mcdag.model.Actor;
-import fr.tpt.s3.mcdag.model.ActorAvail;
-import fr.tpt.s3.mcdag.model.ActorSched;
-import fr.tpt.s3.mcdag.model.DAG;
+import fr.tpt.s3.mcdag.model.Vertex;
+import fr.tpt.s3.mcdag.model.VertexAvailability;
+import fr.tpt.s3.mcdag.model.VertexScheduling;
+import fr.tpt.s3.mcdag.model.McDAG;
+import fr.tpt.s3.mcdag.scheduling.SingleDAG;
 
 public class Automata {
 
@@ -41,13 +41,13 @@ public class Automata {
 	private Set<Formula> loOutsForm;
 	
 	private SingleDAG ls;
-	private DAG d;
+	private McDAG d;
 
 	/**
 	 *  Constructor of the Automata, needs the LO, HI tables,
 	 *  the DAG with the data dependencies, deadline and number of cores
 	 */
-	public Automata (SingleDAG ls, DAG d) {
+	public Automata (SingleDAG ls, McDAG d) {
 		this.setD(d);
 		this.setLs(ls);
 		this.loSched = new LinkedList<State>();
@@ -75,38 +75,38 @@ public class Automata {
 			}
 		}
 
-		Actor n = d.getNodebyName(task);
+		Vertex n = d.getNodebyName(task);
 		State s;
 		if (n.getWcet(1) !=  0) {
-			s = new State(nbStates++, task, ActorSched.HI);
-			if (((ActorAvail) n).isfMechanism()) { // Test if it's a fault tolerant mechanism
+			s = new State(nbStates++, task, VertexScheduling.HI);
+			if (((VertexAvailability) n).isfMechanism()) { // Test if it's a fault tolerant mechanism
 				s.setfMechanism(true);
-				if (((ActorAvail) n).getfMechType() == ActorAvail.VOTER) {
+				if (((VertexAvailability) n).getfMechType() == VertexAvailability.VOTER) {
 					FTM ftm = new FTM(3, n.getName());
-					ftm.setNbVot(((ActorAvail) n).getNbReplicas());
-					ftm.setVotTask((ActorSched) d.getNodebyName(((ActorAvail) n).getVotTask()));
-					ftm.setType(ActorAvail.VOTER);
+					ftm.setNbVot(((VertexAvailability) n).getNbReplicas());
+					ftm.setVotTask((VertexScheduling) d.getNodebyName(((VertexAvailability) n).getVotTask()));
+					ftm.setType(VertexAvailability.VOTER);
 					ftm.createVoter();
 					ftms.add(ftm);
 				}
 			}
 		} else {
-			s = new State(nbStates++, task, ActorSched.LO);
+			s = new State(nbStates++, task, VertexScheduling.LO);
 			
-			if (((ActorAvail) n).isVoted())
+			if (((VertexAvailability) n).isVoted())
 				s.setVoted(true);
-			if (((ActorAvail) n).getfMechType() == ActorAvail.MKFIRM) {
+			if (((VertexAvailability) n).getfMechType() == VertexAvailability.MKFIRM) {
 				FTM ftm = null;
 				s.setfMechanism(true);
-				ftm = new FTM(((ActorAvail) n).getM(), ((ActorAvail) n).getK(), n.getName());
-				ftm.setVotTask((ActorSched) n);
-				ftm.setType(ActorAvail.MKFIRM);				
+				ftm = new FTM(((VertexAvailability) n).getM(), ((VertexAvailability) n).getK(), n.getName());
+				ftm.setVotTask((VertexScheduling) n);
+				ftm.setType(VertexAvailability.MKFIRM);				
 				ftm.createMKFirm();
 				ftms.add(ftm);
 			}
 		}
 		s.setCompTime(c_t);
-		addWithTime(loSched, (ActorAvail) n, s, c_t);
+		addWithTime(loSched, (VertexAvailability) n, s, c_t);
 	}
 	
 	// Calculate completion time of tasks and create a new state HI mode
@@ -119,12 +119,12 @@ public class Automata {
 			}
 		}
 
-		ActorSched n = (ActorSched) d.getNodebyName(task);
+		VertexScheduling n = (VertexScheduling) d.getNodebyName(task);
 		State s;
-		s = new State(nbStates++, task, ActorSched.HI);
+		s = new State(nbStates++, task, VertexScheduling.HI);
 		s.setCompTime(c_t);
 
-		addWithTime(hiSched, (ActorAvail) n, s, c_t);
+		addWithTime(hiSched, (VertexAvailability) n, s, c_t);
 	}
 	
 	/**
@@ -134,7 +134,7 @@ public class Automata {
 	 * @param s
 	 * @param c_t
 	 */
-	public void addWithTime(List<State> l, ActorAvail n, State s, int c_t) {
+	public void addWithTime(List<State> l, VertexAvailability n, State s, int c_t) {
 		int idx = 0;
 		Iterator<State> is = l.iterator();
 		State s2 = null;
@@ -157,7 +157,7 @@ public class Automata {
 				while (is.hasNext() && cur_ct == c_t) {
 					s2 = is.next();
 					cur_ct = s2.getCompTime();
-					if (s2.getMode() == ActorSched.HI)
+					if (s2.getMode() == VertexScheduling.HI)
 						idx++;
 				}
 			} else if (n.getWcet(1) == 0) {
@@ -170,15 +170,15 @@ public class Automata {
 			}
 		}
 		l.add(idx,s);
-		if (n.isfMechanism() && n.getfMechType() == ActorAvail.MKFIRM) {
-			State s0 = new State(nbStates++, n.getName(), ActorSched.LO);
+		if (n.isfMechanism() && n.getfMechType() == VertexAvailability.MKFIRM) {
+			State s0 = new State(nbStates++, n.getName(), VertexScheduling.LO);
 			s0.setCompTime(c_t);
 			s0.setSynched(true);
 			l.add(idx+1, s0);
 		}
 		// If it is an exit LO node
 		if (n.getWcet(1) == 0 && n.getSndEdges().size() == 0) {
-			State s0 = new State(nbStates++, n.getName(), ActorSched.LO);
+			State s0 = new State(nbStates++, n.getName(), VertexScheduling.LO);
 			s0.setCompTime(c_t);
 			s0.setExit(true);
 			l.add(idx+1, s0);
@@ -231,22 +231,22 @@ public class Automata {
 	 * for each output formula in the DAG
 	 */
 	public void calcOutputSets() {
-		Iterator<Actor> in = d.getLoOuts().iterator();
+		Iterator<Vertex> in = d.getLoOuts().iterator();
 		while (in.hasNext()) {
-			ActorSched n = (ActorSched) in.next();
+			VertexScheduling n = (VertexScheduling) in.next();
 			
 			// Create the Formula
 			LinkedList<AutoBoolean> bSet = new LinkedList<AutoBoolean>();
 			Formula f = new Formula(n.getName(), bSet);
 			
-			Set<Actor> nPred = n.getLOPred();
+			Set<Vertex> nPred = n.getLOPred();
 			
 			// Create the boolean set for the LO output
 			AutoBoolean a = new AutoBoolean(n.getName(), n.getName());
 			bSet.add(a);
-			Iterator<Actor> in2 = nPred.iterator();
+			Iterator<Vertex> in2 = nPred.iterator();
 			while (in2.hasNext()) {
-				ActorSched n2 = (ActorSched) in2.next();
+				VertexScheduling n2 = (VertexScheduling) in2.next();
 				AutoBoolean ab = new AutoBoolean(n2.getName(), n.getName());
 				bSet.add(ab);
 			}
@@ -304,22 +304,22 @@ public class Automata {
 			if (it2.hasNext()) {
 				s2 = it2.next();
 				Transition t;
-				if (s.getMode() == ActorSched.HI) { // If it's a HI task
+				if (s.getMode() == VertexScheduling.HI) { // If it's a HI task
 					// Find the HI task that corresponds to s
 					State S = hiSched.get(0);
 					t = new Transition(s, s2, S);
 					if(!s.isfMechanism()) // If it's not a fault tolerant mechanism
-						t.setP(((ActorSched) d.getNodebyName(s.getTask())).getfProb());
+						t.setP(((VertexScheduling) d.getNodebyName(s.getTask())).getfProb());
 				} else { // It is a LO task
 					if (s.isVoted()) {
 						t = new Transition(s,s2, s2);
-						t.setP(((ActorSched) d.getNodebyName(s.getTask())).getfProb());
+						t.setP(((VertexScheduling) d.getNodebyName(s.getTask())).getfProb());
 					} else if (s.isSynched()) {
 						t = new Transition(s, s2, s2);
 					} else {
 						t = new Transition(s, s2, s2);
 						if (s.getCompTime() != 0)
-							t.setP(((ActorSched) d.getNodebyName(s.getTask())).getfProb());
+							t.setP(((VertexScheduling) d.getNodebyName(s.getTask())).getfProb());
 					}
 				}
 				getL_transitions().add(t);
@@ -351,9 +351,9 @@ public class Automata {
 		s0.setCompTime(0);
 		loSched.add(s0);
 		
-		Iterator<Actor> in = d.getNodes().iterator();
+		Iterator<Vertex> in = d.getVertices().iterator();
 		while (in.hasNext()) {
-			ActorSched n = (ActorSched) in.next();
+			VertexScheduling n = (VertexScheduling) in.next();
 			this.calcCompTimeLO(n.getName());
 		}
 		
@@ -432,11 +432,11 @@ public class Automata {
 		this.hiTrans = h_transitions;
 	}
 
-	public DAG getD() {
+	public McDAG getD() {
 		return d;
 	}
 
-	public void setD(DAG d) {
+	public void setD(McDAG d) {
 		this.d = d;
 	}
 

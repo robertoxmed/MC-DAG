@@ -20,16 +20,16 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import fr.tpt.s3.mcdag.model.Actor;
-import fr.tpt.s3.mcdag.model.ActorSched;
-import fr.tpt.s3.mcdag.model.DAG;
+import fr.tpt.s3.mcdag.model.Vertex;
+import fr.tpt.s3.mcdag.model.VertexScheduling;
+import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.model.Edge;
 import fr.tpt.s3.mcdag.util.RandomNumberGenerator;
 
 public class MCSystemGenerator {
 
 	// Set of generated graphs
-	private Set<DAG> gennedDAGs;
+	private Set<McDAG> gennedDAGs;
 	private int nbDAGs;
 	
 	// Parameters for the generation
@@ -65,12 +65,12 @@ public class MCSystemGenerator {
 	 * Function that prints the current parameters of the node
 	 * @param a
 	 */
-	private void debugNode (Actor a, String func) {
+	private void debugNode (Vertex a, String func) {
 		
 		System.out.print("[DEBUG "+Thread.currentThread().getName()+"] "+func+": Node "+a.getId());
 		for (int i = nbLevels - 1; i >= 0; i--)
 			System.out.print(" C("+i+") = "+a.getWcet(i)+";");
-		System.out.println(" Rank "+ ((ActorSched) a).getRank());
+		System.out.println(" Rank "+ ((VertexScheduling) a).getRank());
 		for (Edge e : a.getRcvEdges())
 			System.out.println("\t Rcv Edge "+e.getSrc().getId()+" -> "+a.getId());
 		for (Edge e : a.getSndEdges())
@@ -137,10 +137,10 @@ public class MCSystemGenerator {
 	 * -> They become source edges
 	 * @param level
 	 */
-	private void resetRanks (Set<Actor> nodes, int level) {
-		for (Actor a : nodes) {
+	private void resetRanks (Set<Vertex> nodes, int level) {
+		for (Vertex a : nodes) {
 			if (a.getSndEdges().size() == 0 && a.getRcvEdges().size() == 0)
-				((ActorSched) a).setRank(0);
+				((VertexScheduling) a).setRank(0);
 		}
 	}
 	
@@ -149,8 +149,8 @@ public class MCSystemGenerator {
 	 */
 	protected void GenerateGraph(double utilization) {
 		int id = 0;
-		DAG d = new DAG();
-		Set<Actor> nodes = new HashSet<Actor>();
+		McDAG d = new McDAG();
+		Set<Vertex> nodes = new HashSet<Vertex>();
 		int rank;
 		int prevRank;
 		
@@ -211,7 +211,7 @@ public class MCSystemGenerator {
 				int nodesPerRank = rng.randomUnifInt(1, parallelismDegree);
 				
 				for (int j = 0; j < nodesPerRank || budgets[i] < 0; j++) {
-					ActorSched n = new ActorSched(id, Integer.toString(id), nbLevels);
+					VertexScheduling n = new VertexScheduling(id, Integer.toString(id), nbLevels);
 					
 					// Transform uSet to budget
 					if ((tasks[i] - tasksToGen) < tasks[i])
@@ -230,9 +230,9 @@ public class MCSystemGenerator {
 					// Not a source node
 					if (rank != 0) {
 						// Iterate through the nodes to create an edge
-						Iterator<Actor> it_n = nodes.iterator();
+						Iterator<Vertex> it_n = nodes.iterator();
 						while (it_n.hasNext()) {
-							ActorSched src = (ActorSched) it_n.next();
+							VertexScheduling src = (VertexScheduling) it_n.next();
 							
 							/* Roll a probability of having an edge between nodes
 							 * Make sure that the deadline is not reached
@@ -270,12 +270,12 @@ public class MCSystemGenerator {
 				double minU = rU[i - 1] / getRfactor();
 				int wantedBudget = (int) Math.ceil(minU * rDead);
 				int actualBudget = (int) Math.ceil(rU[i] * rDead);
-				Iterator<Actor> it_n;
+				Iterator<Vertex> it_n;
 				
 				while (wantedBudget < actualBudget && !allNodesAreMin(nodes, i)) {
 					it_n = nodes.iterator();
 					while (it_n.hasNext()) {
-						ActorSched n = (ActorSched) it_n.next();
+						VertexScheduling n = (VertexScheduling) it_n.next();
 						
 						n.getWcets()[i - 1] = rng.randomUnifInt(1, n.getWcet(i));
 						actualBudget -= n.getWcet(i - 1);
@@ -286,14 +286,14 @@ public class MCSystemGenerator {
 				
 				if (isDebug()) {
 					System.out.println("[DEBUG "+Thread.currentThread().getName()+"] GenerateGraph(): >>> Deflation of tasks in mode "+i+" finished");
-					for (Actor a : nodes) 
+					for (Vertex a : nodes) 
 						debugNode(a, "GenerateGraph()");
 				}
 				
 				it_n = nodes.iterator();
 				actualBudget = 0;
 				while (it_n.hasNext()) {
-					Actor a = it_n.next();
+					Vertex a = it_n.next();
 					a.CPfromNode(i - 1);
 					actualBudget += a.getWcet(i - 1);
 				}
@@ -322,8 +322,8 @@ public class MCSystemGenerator {
 	 * @param level
 	 * @return
 	 */
-	private boolean allNodesAreMin(Set<Actor> nodes, int level) {
-		for (Actor a : nodes) {
+	private boolean allNodesAreMin(Set<Vertex> nodes, int level) {
+		for (Vertex a : nodes) {
 			if (a.getWcet(level) != 1)
 				return false;
 		}
@@ -333,10 +333,10 @@ public class MCSystemGenerator {
 	private boolean thresholdUtilization () {
 		double uSys = 0;
 		
-		for (DAG d : getGennedDAGs()) {
+		for (McDAG d : getGennedDAGs()) {
 			uSys += d.getUmax();
 		}		
-		if (userMaxU * 0.99 <= uSys && uSys <= userMaxU * 1.01)
+		if (userMaxU * 0.99 <= uSys && uSys <= userMaxU)
 			return true;
 		
 		return false;
@@ -376,7 +376,7 @@ public class MCSystemGenerator {
 	 * @param a
 	 * @return
 	 */
-	private boolean nilValuesInAllModes (Actor a) {
+	private boolean nilValuesInAllModes (Vertex a) {
 		
 		for (int i = 0; i < nbLevels; i++) {
 			if (a.getWcet(i) != 0)
@@ -387,10 +387,10 @@ public class MCSystemGenerator {
 	
 	
 	private void removeNilNodes () {
-		for (DAG d : gennedDAGs) {
-			Iterator<Actor> ita = d.getNodes().iterator();
+		for (McDAG d : gennedDAGs) {
+			Iterator<Vertex> ita = d.getVertices().iterator();
 			while (ita.hasNext()) {
-				Actor a = ita.next();
+				Vertex a = ita.next();
 				if (nilValuesInAllModes(a)) {
 					for (Edge e : a.getRcvEdges())
 						e.getSrc().getSndEdges().remove(e);
@@ -409,11 +409,11 @@ public class MCSystemGenerator {
 	 * Getters and setters 
 	 */
 
-	public Set<DAG> getGennedDAGs() {
+	public Set<McDAG> getGennedDAGs() {
 		return gennedDAGs;
 	}
 
-	public void setGennedDAGs(Set<DAG> gennedDAGs) {
+	public void setGennedDAGs(Set<McDAG> gennedDAGs) {
 		this.gennedDAGs = gennedDAGs;
 	}
 

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package fr.tpt.s3.mcdag.alloc;
+package fr.tpt.s3.mcdag.scheduling;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -22,9 +22,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
-import fr.tpt.s3.mcdag.model.Actor;
-import fr.tpt.s3.mcdag.model.ActorSched;
-import fr.tpt.s3.mcdag.model.DAG;
+import fr.tpt.s3.mcdag.model.Vertex;
+import fr.tpt.s3.mcdag.model.VertexScheduling;
+import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.model.Edge;
 
 /**
@@ -35,7 +35,7 @@ import fr.tpt.s3.mcdag.model.Edge;
 public class SingleDAG extends AbstractMixedCriticalityScheduler {
 	
 	// DAG to be scheduled
-	private DAG mcDag;
+	private McDAG mcDag;
 	
 	// Architecture, only nb cores atm
 	private int nbCores;
@@ -61,7 +61,7 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 	 * @param cores Number of cores
 	 * @param d Dag
 	 */
-	public SingleDAG(DAG d, int cores){
+	public SingleDAG(McDAG d, int cores){
 		this.setDeadline(d.getDeadline());
 		this.setNbCores(cores);
 		this.setMxcDag(d);
@@ -88,12 +88,12 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 	 * Calc weights for HLFET for both tables
 	 */
 	public void calcWeights(int mode) {	
-		weights_LO = new int[mcDag.getNodes().size()];
-		weights_HI = new int[mcDag.getNodes().size()];
+		weights_LO = new int[mcDag.getVertices().size()];
+		weights_HI = new int[mcDag.getVertices().size()];
 		
-		Iterator<Actor> it_n = mcDag.getNodes().iterator();
+		Iterator<Vertex> it_n = mcDag.getVertices().iterator();
 		while(it_n.hasNext()){
-			ActorSched n = (ActorSched)it_n.next();
+			VertexScheduling n = (VertexScheduling)it_n.next();
 			if(mode == 0) { // LO mode
 				weights_LO[n.getId()] = calcHLFETLevel(n, mode);
 				
@@ -111,15 +111,15 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 	 * @param mode Mode of the graph
 	 * @return Level of the Node in the graph
 	 */
-	public int calcHLFETLevel(ActorSched n, int mode) {
+	public int calcHLFETLevel(VertexScheduling n, int mode) {
 		
 		int max = 0;
 		
 		// Final case the node is a sink
-		if (n.getSndEdges().size() == 0 && mode == ActorSched.LO){
+		if (n.getSndEdges().size() == 0 && mode == VertexScheduling.LO){
 			n.getHlfet()[0] = n.getWcets()[0];
 			return n.getWcets()[0];
-		} else if (n.isSinkinL(1) && mode == ActorSched.HI) {
+		} else if (n.isSinkinL(1) && mode == VertexScheduling.HI) {
 			n.getHlfet()[1] = n.getWcets()[1];
 			return n.getWcets()[1];
 		}
@@ -132,7 +132,7 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 		while (ie.hasNext()) {
 			
 			Edge e = ie.next();
-			tmp_max[i] = calcHLFETLevel((ActorSched) e.getDest(), mode); 
+			tmp_max[i] = calcHLFETLevel((VertexScheduling) e.getDest(), mode); 
 			i++;
 		}
 		
@@ -141,7 +141,7 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 				max = tmp_max[j];
 		}
 		
-		if (mode == ActorSched.LO) { // LO mode
+		if (mode == VertexScheduling.LO) { // LO mode
 			n.getHlfet()[0] = max + n.getWcets()[0];
 			return max + n.getWcets()[0];
 		} else {
@@ -157,21 +157,21 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 	 * @throws SchedulingException
 	 */
 	public void AllocHI() throws SchedulingException{
-		this.calcWeights(ActorSched.HI);
+		this.calcWeights(VertexScheduling.HI);
 			
-		Start_HI = new int[mcDag.getNodes().size()];
-		int[] t_hi = new int[mcDag.getNodes().size()];
+		Start_HI = new int[mcDag.getVertices().size()];
+		int[] t_hi = new int[mcDag.getVertices().size()];
 		
-		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
+		Iterator<Vertex> it_n = mcDag.getVertices().iterator(); 
 		// Ready list of tasks that have their dependencies met
-		LinkedList<ActorSched> ready_hi = new LinkedList<ActorSched>();
+		LinkedList<VertexScheduling> ready_hi = new LinkedList<VertexScheduling>();
 		// List of recently finished tasks -> to activate new ones
-		LinkedList<ActorSched> finished_hi = new LinkedList<ActorSched>();
+		LinkedList<VertexScheduling> finished_hi = new LinkedList<VertexScheduling>();
 		boolean task_finished = false;
 		
 		// Add HI nodes to the list
 		while(it_n.hasNext()){
-			ActorSched n = (ActorSched) it_n.next();
+			VertexScheduling n = (VertexScheduling) it_n.next();
 			if (n.getWcets()[1] != 0) {
 				t_hi[n.getId()] = n.getWcets()[1];
 				if (n.isSinkinL(1)) { // At the beginning only exit nodes are added
@@ -181,9 +181,9 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 		}
 
 		// Sort lists
-		Collections.sort(ready_hi, new Comparator<ActorSched>() {
+		Collections.sort(ready_hi, new Comparator<VertexScheduling>() {
 			@Override
-			public int compare(ActorSched n1, ActorSched n2) {
+			public int compare(VertexScheduling n1, VertexScheduling n2) {
 				if (n2.getHlfet()[1]- n1.getHlfet()[1] != 0)
 					return n1.getHlfet()[1] - n2.getHlfet()[1];
 				else
@@ -196,18 +196,18 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 		 * =============================================*/
 		
 		// Iterate through slots
-		ListIterator<ActorSched> li_it = ready_hi.listIterator();
+		ListIterator<VertexScheduling> li_it = ready_hi.listIterator();
 		for(int t = deadline - 1; t >= 0 ; t--){
 			
 			// Check if there is enough slots to finish executing tasks
-			if (! checkFreeSlot(t_hi, getMxcDag().getNodes().size(), (t+1) * nbCores)){
+			if (! checkFreeSlot(t_hi, getMxcDag().getVertices().size(), (t+1) * nbCores)){
 				SchedulingException se = new SchedulingException("Alloc HI : Not enough slot lefts");
 				throw se;
 			}
 			
 			for(int c = 0; c < nbCores; c++) {
 				if (li_it.hasNext()){
-					ActorSched n = li_it.next(); // Get head of the list
+					VertexScheduling n = li_it.next(); // Get head of the list
 					sched[1][t][c] = n.getName(); // Give the slot to the task
 					
 					// Decrement slots left for the task
@@ -225,14 +225,14 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 			// Tasks finished their execution 
 			if (task_finished) {
 				// Check for new activations
-				ListIterator<ActorSched> li_f = finished_hi.listIterator();
+				ListIterator<VertexScheduling> li_f = finished_hi.listIterator();
 				while (li_f.hasNext()) {
-					ActorSched n = li_f.next();
+					VertexScheduling n = li_f.next();
 					checkActivationHI(ready_hi, li_it, n, t_hi);
 					// Heavier tasks can be activated -> needs a new sort
-					Collections.sort(ready_hi, new Comparator<ActorSched>() {
+					Collections.sort(ready_hi, new Comparator<VertexScheduling>() {
 						@Override
-						public int compare(ActorSched n1, ActorSched n2) {
+						public int compare(VertexScheduling n1, VertexScheduling n2) {
 							if (n2.getHlfet()[1]- n1.getHlfet()[1] < 0 ||
 									n2.getHlfet()[1]- n1.getHlfet()[1] > 0)
 								return n1.getHlfet()[1]- n2.getHlfet()[1];
@@ -258,27 +258,27 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 	 */
 	public void AllocLO() throws SchedulingException{
 			
-		int[] t_lo = new int[mcDag.getNodes().size()];
+		int[] t_lo = new int[mcDag.getVertices().size()];
 		
-		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
+		Iterator<Vertex> it_n = mcDag.getVertices().iterator(); 
 		// Ready list of tasks that have their dependencies met
-		LinkedList<ActorSched> ready_lo = new LinkedList<ActorSched>();
+		LinkedList<VertexScheduling> ready_lo = new LinkedList<VertexScheduling>();
 		// List of recently finished tasks -> to activate new ones
-		LinkedList<ActorSched> finished_lo = new LinkedList<ActorSched>();
+		LinkedList<VertexScheduling> finished_lo = new LinkedList<VertexScheduling>();
 		boolean task_finished = false;
 		
 		// Add LO nodes to the list
 		while(it_n.hasNext()){
-			ActorSched n = (ActorSched) it_n.next();
+			VertexScheduling n = (VertexScheduling) it_n.next();
 			t_lo[n.getId()] = n.getWcets()[0];
 			if (n.getRcvEdges().size() == 0) // At the beginning only source nodes are added
 				ready_lo.add(n);
 		}
 
 		// Sort lists
-		Collections.sort(ready_lo, new Comparator<ActorSched>() {
+		Collections.sort(ready_lo, new Comparator<VertexScheduling>() {
 			@Override
-			public int compare(ActorSched n1, ActorSched n2) {
+			public int compare(VertexScheduling n1, VertexScheduling n2) {
 				if (n2.getHlfet()[0] - n1.getHlfet()[0] !=0)
 					return n2.getHlfet()[0] - n1.getHlfet()[0];
 				else
@@ -291,10 +291,10 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 		 * =============================================*/
 		
 		// Iterate through slots
-		ListIterator<ActorSched> li_it = ready_lo.listIterator();
+		ListIterator<VertexScheduling> li_it = ready_lo.listIterator();
 		for(int t = 0; t < deadline; t++){
 			// For each slot check if it's an WC activation time
-			if (! checkFreeSlot(t_lo, mcDag.getNodes().size(), (deadline - t) * nbCores)){
+			if (! checkFreeSlot(t_lo, mcDag.getVertices().size(), (deadline - t) * nbCores)){
 				SchedulingException se = new SchedulingException("Alloc LO : Not enough slot lefts");
 				throw se;
 			}
@@ -304,7 +304,7 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 			
 			for(int c = 0; c < nbCores; c++) {
 				if (li_it.hasNext()){
-					ActorSched n = li_it.next(); // Get head of the list
+					VertexScheduling n = li_it.next(); // Get head of the list
 					
 					sched[0][t][c] = n.getName(); // Give the slot to the task
 
@@ -320,16 +320,16 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 			}
 			
 			if (task_finished) {
-				ListIterator<ActorSched> li_f = finished_lo.listIterator();
+				ListIterator<VertexScheduling> li_f = finished_lo.listIterator();
 				while (li_f.hasNext()) {
-					ActorSched n = li_f.next();
+					VertexScheduling n = li_f.next();
 					// Check for new activations
 					checkActivation(ready_lo, li_it, n, t_lo, 0);
 
 					// Heavier tasks can be activated -> needs a new sort
-					Collections.sort(ready_lo, new Comparator<ActorSched>() {
+					Collections.sort(ready_lo, new Comparator<VertexScheduling>() {
 						@Override
-						public int compare(ActorSched n1, ActorSched n2) {
+						public int compare(VertexScheduling n1, VertexScheduling n2) {
 							if (n2.getHlfet()[0] - n1.getHlfet()[0] !=0)
 								return n2.getHlfet()[0] - n1.getHlfet()[0];
 							else
@@ -356,16 +356,16 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 	 * @param t_lo Table of execution times
 	 * @return
 	 */
-	public boolean checkStartHI(LinkedList<ActorSched> ready_lo, int t, int[] start_hi, int[] t_lo){
+	public boolean checkStartHI(LinkedList<VertexScheduling> ready_lo, int t, int[] start_hi, int[] t_lo){
 		boolean ret = false;
-		Iterator<Actor> it_n = mcDag.getNodes().iterator();
+		Iterator<Vertex> it_n = mcDag.getVertices().iterator();
 		while (it_n.hasNext()){
-			ActorSched n = (ActorSched) it_n.next();
+			VertexScheduling n = (VertexScheduling) it_n.next();
 			if (start_hi[n.getId()] == t && t_lo[n.getId()] != 0 && n.getWcets()[1] != 0){
 				n.getHlfet()[0] = Integer.MAX_VALUE;
-				Collections.sort(ready_lo, new Comparator<ActorSched>() {
+				Collections.sort(ready_lo, new Comparator<VertexScheduling>() {
 					@Override
-					public int compare(ActorSched n1, ActorSched n2) {
+					public int compare(VertexScheduling n1, VertexScheduling n2) {
 						if (n2.getHlfet()[0] - n1.getHlfet()[0] !=0)
 							return n2.getHlfet()[0] - n1.getHlfet()[0];
 						else
@@ -385,13 +385,13 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 	 * @param t_hi
 	 * @param mode
 	 */
-	public void checkActivation(LinkedList<ActorSched> l_r, ListIterator<ActorSched> li_r, ActorSched n, int[] t_hi, int mode){
+	public void checkActivation(LinkedList<VertexScheduling> l_r, ListIterator<VertexScheduling> li_r, VertexScheduling n, int[] t_hi, int mode){
 		
 		// Check all successors
 		Iterator<Edge> it_e = n.getSndEdges().iterator();
 		while (it_e.hasNext()){
 			Edge e = it_e.next();
-			ActorSched suc = (ActorSched) e.getDest();
+			VertexScheduling suc = (VertexScheduling) e.getDest();
 			boolean ready = true;
 			boolean add = true;
 			
@@ -404,7 +404,7 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 			while (it_e_rcv.hasNext()){ // For each successor we check its dependencies
 				
 				Edge e2 = it_e_rcv.next();
-				ActorSched pred = (ActorSched) e2.getSrc();
+				VertexScheduling pred = (VertexScheduling) e2.getSrc();
 				if (t_hi[pred.getId()] != 0){
 					ready = false;
 					break;
@@ -413,7 +413,7 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 			
 			if (ready) {
 				// Need to check if the task has already been added
-				ListIterator<ActorSched> li = l_r.listIterator();
+				ListIterator<VertexScheduling> li = l_r.listIterator();
 				while(li.hasNext()){
 					if(li.next().getId() == suc.getId())
 						add = false;
@@ -431,13 +431,13 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 	 * @param t_hi
 	 * @param mode
 	 */
-	public void checkActivationHI(LinkedList<ActorSched> l_r, ListIterator<ActorSched> li_r, ActorSched n, int[] t_hi){
+	public void checkActivationHI(LinkedList<VertexScheduling> l_r, ListIterator<VertexScheduling> li_r, VertexScheduling n, int[] t_hi){
 		
 		// Check all successors
 		Iterator<Edge> it_e = n.getRcvEdges().iterator();
 		while (it_e.hasNext()){
 			Edge e = it_e.next();
-			ActorSched pred = (ActorSched) e.getSrc();
+			VertexScheduling pred = (VertexScheduling) e.getSrc();
 			boolean ready = true;
 			boolean add = true;
 			
@@ -450,7 +450,7 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 			while (it_e_rcv.hasNext()){ // For each successor we check if it has been executed
 				
 				Edge e2 = it_e_rcv.next();
-				ActorSched suc = (ActorSched) e2.getDest();
+				VertexScheduling suc = (VertexScheduling) e2.getDest();
 				if (t_hi[suc.getId()] != 0){
 					ready = false;
 					break;
@@ -459,7 +459,7 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 			
 			if (ready) {
 				// Need to check if the task has already been added
-				ListIterator<ActorSched> li = l_r.listIterator();
+				ListIterator<VertexScheduling> li = l_r.listIterator();
 				while(li.hasNext()){
 					if(li.next().getId() == pred.getId())
 						add = false;
@@ -479,13 +479,13 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 		
 		initTables();
 		
-		this.calcWeights(ActorSched.HI);
-		if (isDebug()) printW(ActorSched.HI);
+		this.calcWeights(VertexScheduling.HI);
+		if (isDebug()) printW(VertexScheduling.HI);
 		this.AllocHI();
 		if (isDebug()) printS_HI();
 		
-		this.calcWeights(ActorSched.LO);
-		if (isDebug()) printW(ActorSched.LO);
+		this.calcWeights(VertexScheduling.LO);
+		if (isDebug()) printW(VertexScheduling.LO);
 		this.AllocLO();
 		if (isDebug()) printS_LO();
 	}
@@ -514,7 +514,7 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 	
 	public boolean HLFETSchedulable() {
 
-		this.calcWeights(ActorSched.LO);
+		this.calcWeights(VertexScheduling.LO);
 		/* =============================================
 		 *  Initialization of variables used by the method
 		 ================================================*/
@@ -526,27 +526,27 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 			}
 		}
 			
-		int[] t_lo = new int[mcDag.getNodes().size()];
+		int[] t_lo = new int[mcDag.getVertices().size()];
 		
-		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
+		Iterator<Vertex> it_n = mcDag.getVertices().iterator(); 
 		// Ready list of tasks that have their dependencies met
-		LinkedList<ActorSched> ready_lo = new LinkedList<ActorSched>();
+		LinkedList<VertexScheduling> ready_lo = new LinkedList<VertexScheduling>();
 		// List of recently finished tasks -> to activate new ones
-		LinkedList<ActorSched> finished_lo = new LinkedList<ActorSched>();
+		LinkedList<VertexScheduling> finished_lo = new LinkedList<VertexScheduling>();
 		boolean task_finished = false;
 		
 		// Add LO nodes to the list
 		while(it_n.hasNext()){
-			ActorSched n = (ActorSched) it_n.next();
+			VertexScheduling n = (VertexScheduling) it_n.next();
 			t_lo[n.getId()] = n.getWcets()[0];
 			if (n.getRcvEdges().size() == 0) // At the beginning only source nodes are added
 				ready_lo.add(n);
 		}
 
 		// Sort lists
-		Collections.sort(ready_lo, new Comparator<ActorSched>() {
+		Collections.sort(ready_lo, new Comparator<VertexScheduling>() {
 			@Override
-			public int compare(ActorSched n1, ActorSched n2) {
+			public int compare(VertexScheduling n1, VertexScheduling n2) {
 				if (n2.getHlfet()[0] - n1.getHlfet()[0] != 0)
 					return n2.getHlfet()[0]- n1.getHlfet()[0];
 				else
@@ -559,17 +559,17 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 		 * =============================================*/
 		
 		// Iterate through slots
-		ListIterator<ActorSched> li_it = ready_lo.listIterator();
+		ListIterator<VertexScheduling> li_it = ready_lo.listIterator();
 		for(int t = 0; t < deadline; t++){
 			// For each slot check if it's an WC activation time
-			if (! checkFreeSlot(t_lo, mcDag.getNodes().size(), (deadline - t) * nbCores)){
+			if (! checkFreeSlot(t_lo, mcDag.getVertices().size(), (deadline - t) * nbCores)){
 				return false;
 			}
 			
 			
 			for(int c = 0; c < nbCores; c++) {
 				if (li_it.hasNext()){
-					ActorSched n = li_it.next(); // Get head of the list
+					VertexScheduling n = li_it.next(); // Get head of the list
 					
 					S_HLFET[t][c] = n.getName(); // Give the slot to the task
 
@@ -585,16 +585,16 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 			}
 			
 			if (task_finished) {
-				ListIterator<ActorSched> li_f = finished_lo.listIterator();
+				ListIterator<VertexScheduling> li_f = finished_lo.listIterator();
 				while (li_f.hasNext()) {
-					ActorSched n = li_f.next();
+					VertexScheduling n = li_f.next();
 					// Check for new activations
 					checkActivation(ready_lo, li_it, n, t_lo, 0);
 
 					// Heavier tasks can be activated -> needs a new sort
-					Collections.sort(ready_lo, new Comparator<ActorSched>() {
+					Collections.sort(ready_lo, new Comparator<VertexScheduling>() {
 						@Override
-						public int compare(ActorSched n1, ActorSched n2) {
+						public int compare(VertexScheduling n1, VertexScheduling n2) {
 							if (n2.getHlfet()[0] - n1.getHlfet()[0] != 0)
 								return n2.getHlfet()[0]- n1.getHlfet()[0];
 							else
@@ -624,18 +624,18 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 			}
 		}
 			
-		int[] t_hi = new int[mcDag.getNodes().size()];
+		int[] t_hi = new int[mcDag.getVertices().size()];
 		
-		Iterator<Actor> it_n = mcDag.getNodes().iterator(); 
+		Iterator<Vertex> it_n = mcDag.getVertices().iterator(); 
 		// Ready list of tasks that have their dependencies met
-		LinkedList<ActorSched> ready_hi = new LinkedList<ActorSched>();
+		LinkedList<VertexScheduling> ready_hi = new LinkedList<VertexScheduling>();
 		// List of recently finished tasks -> to activate new ones
-		LinkedList<ActorSched> finished_hi = new LinkedList<ActorSched>();
+		LinkedList<VertexScheduling> finished_hi = new LinkedList<VertexScheduling>();
 		boolean task_finished = false;
 		
 		// Add HI nodes to the list
 		while(it_n.hasNext()){
-			ActorSched n = (ActorSched) it_n.next();
+			VertexScheduling n = (VertexScheduling) it_n.next();
 			if (n.getWcets()[1] != 0) {
 				t_hi[n.getId()] = n.getWcets()[1];
 				if (n.getRcvEdges().size() == 0) // At the beginning only source nodes are added
@@ -644,9 +644,9 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 		}
 
 		// Sort lists		
-		Collections.sort(ready_hi, new Comparator<ActorSched>() {
+		Collections.sort(ready_hi, new Comparator<VertexScheduling>() {
 			@Override
-			public int compare(ActorSched n1, ActorSched n2) {
+			public int compare(VertexScheduling n1, VertexScheduling n2) {
 				if (n2.getHlfet()[1]- n1.getHlfet()[1] != 0)
 					return n2.getHlfet()[1]- n1.getHlfet()[1];
 				else
@@ -659,17 +659,17 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 		 * =============================================*/
 		
 		// Iterate through slots
-		ListIterator<ActorSched> li_it = ready_hi.listIterator();
+		ListIterator<VertexScheduling> li_it = ready_hi.listIterator();
 		for(int t = 0 ; t < deadline ; t++){
 			
 			//Check if there is enough slots to finish executing tasks
-			if (! checkFreeSlot(t_hi, mcDag.getNodes().size(), (deadline - t) * nbCores)){
+			if (! checkFreeSlot(t_hi, mcDag.getVertices().size(), (deadline - t) * nbCores)){
 				return false;
 			}
 			
 			for(int c = 0; c < nbCores; c++) {
 				if (li_it.hasNext()){
-					ActorSched n = li_it.next(); // Get head of the list
+					VertexScheduling n = li_it.next(); // Get head of the list
 					S_HLFET_HI[t][c] = n.getName(); // Give the slot to the task
 					// Decrement slots left for the task
 					t_hi[n.getId()] = t_hi[n.getId()] - 1;
@@ -684,14 +684,14 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 			// Tasks finished their execution 
 			if (task_finished) {
 				// Check for new activations
-				ListIterator<ActorSched> li_f = finished_hi.listIterator();
+				ListIterator<VertexScheduling> li_f = finished_hi.listIterator();
 				while (li_f.hasNext()) {
-					ActorSched n = li_f.next();
+					VertexScheduling n = li_f.next();
 					checkActivation(ready_hi, li_it, n, t_hi, 1);
 					// Heavier tasks can be activated -> needs a new sort
-					Collections.sort(ready_hi, new Comparator<ActorSched>() {
+					Collections.sort(ready_hi, new Comparator<VertexScheduling>() {
 						@Override
-						public int compare(ActorSched n1, ActorSched n2) {
+						public int compare(VertexScheduling n1, VertexScheduling n2) {
 							if (n2.getHlfet()[1]- n1.getHlfet()[1] != 0)
 								return n2.getHlfet()[1]- n1.getHlfet()[1];
 							else
@@ -719,10 +719,10 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 	 * @param mode
 	 */
 	public void printW(int mode) {
-		for (int i = 0; i < getMxcDag().getNodes().size(); i++) {
-			if (mode == ActorSched.HI ) {
+		for (int i = 0; i < getMxcDag().getVertices().size(); i++) {
+			if (mode == VertexScheduling.HI ) {
 				if (getMxcDag().getNodebyID(i).getWcets()[1] != 0)
-					System.out.println("[DEBUG] Weight HI "+getMxcDag().getNodebyID(i).getName()+" = "+((ActorSched) getMxcDag().getNodebyID(i)).getHlfet()[1]);
+					System.out.println("[DEBUG] Weight HI "+getMxcDag().getNodebyID(i).getName()+" = "+((VertexScheduling) getMxcDag().getNodebyID(i)).getHlfet()[1]);
 			} else {
 				System.out.println("[DEBUG] Weight LO "+getMxcDag().getNodebyID(i).getName()+" = "+weights_LO[i]);
 			}
@@ -771,10 +771,10 @@ public class SingleDAG extends AbstractMixedCriticalityScheduler {
 	/* 
 	 * Getters & Setters
 	 */
-	public void setMxcDag(DAG d){
+	public void setMxcDag(McDAG d){
 		this.mcDag = d;
 	}
-	public DAG getMxcDag(){
+	public McDAG getMxcDag(){
 		return this.mcDag;
 	}
 	

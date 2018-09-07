@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package fr.tpt.s3.mcdag.alloc;
+package fr.tpt.s3.mcdag.scheduling;
 
 import java.util.Comparator;
 import java.util.Collections;
@@ -24,9 +24,9 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
-import fr.tpt.s3.mcdag.model.Actor;
-import fr.tpt.s3.mcdag.model.ActorSched;
-import fr.tpt.s3.mcdag.model.DAG;
+import fr.tpt.s3.mcdag.model.Vertex;
+import fr.tpt.s3.mcdag.model.VertexScheduling;
+import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.model.Edge;
 import fr.tpt.s3.mcdag.util.Counters;
 import fr.tpt.s3.mcdag.util.MathMCDAG;
@@ -39,7 +39,7 @@ import fr.tpt.s3.mcdag.util.MathMCDAG;
 public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	
 	// Set of DAGs to be scheduled
-	private Set<DAG> mcDags;
+	private Set<McDAG> mcDags;
 	
 	// Architecture + hyperperiod + nb of levels
 	private int nbCores;
@@ -59,13 +59,13 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	private boolean debug;
 	
 	// Comparators to order Actors
-	private Comparator<ActorSched> loComp;
-	private Comparator<ActorSched> eqComp;
+	private Comparator<VertexScheduling> loComp;
+	private Comparator<VertexScheduling> eqComp;
 	
 	// Counter of ctx switches & preemptions per task
 	private int activations;
-	private Hashtable<ActorSched, Integer> ctxSwitch;
-	private Hashtable<ActorSched, Integer> preempts;
+	private Hashtable<VertexScheduling, Integer> ctxSwitch;
+	private Hashtable<VertexScheduling, Integer> preempts;
 		
 	/**
 	 * Constructor
@@ -74,7 +74,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	 * @param levels
 	 * @param debug
 	 */
-	public LeastLaxityFirstMCSched (Set<DAG> dags, int cores, int levels, boolean debug) {
+	public LeastLaxityFirstMCSched (Set<McDAG> dags, int cores, int levels, boolean debug) {
 		setMcDags(dags);
 		setNbCores(cores);
 		setLevels(levels);
@@ -82,15 +82,15 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 		remainingTime = new int[getLevels()][getMcDags().size()][];
 		
 		// Init remaining time for each DAG
-		for (DAG d : getMcDags()) {
+		for (McDAG d : getMcDags()) {
 			for (int i = 0; i < getLevels(); i++) {
-				remainingTime[i][d.getId()] = new int[d.getNodes().size()];
+				remainingTime[i][d.getId()] = new int[d.getVertices().size()];
 			}
 		}
 		
-		setLoComp(new Comparator<ActorSched>() {
+		setLoComp(new Comparator<VertexScheduling>() {
 			@Override
-			public int compare (ActorSched o1, ActorSched o2) {
+			public int compare (VertexScheduling o1, VertexScheduling o2) {
 				if (o1.getWeights()[0] - o2.getWeights()[0] != 0)
 					return o1.getWeights()[0] - o2.getWeights()[0];
 				else
@@ -98,8 +98,8 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 			}
 		});
 	
-		setCtxSwitch(new Hashtable<ActorSched, Integer>());
-		setPreempts(new Hashtable<ActorSched, Integer>());
+		setCtxSwitch(new Hashtable<VertexScheduling, Integer>());
+		setPreempts(new Hashtable<VertexScheduling, Integer>());
 		setActivations(0);
 	}
 	
@@ -108,8 +108,8 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	 */
 	private void initRemainTime () {
 		for (int i = 0; i < getLevels(); i++) {
-			for (DAG d : getMcDags()) {
-				for (Actor a : d.getNodes()) {
+			for (McDAG d : getMcDags()) {
+				for (Vertex a : d.getVertices()) {
 					remainingTime[i][d.getId()][a.getId()] = a.getWcet(i);
 				}	
 			}
@@ -123,7 +123,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 		int[] input = new int[getMcDags().size()];
 		int i = 0;
 		
-		for (DAG d : getMcDags()) {
+		for (McDAG d : getMcDags()) {
 			input[i] = d.getDeadline();
 			i++;
 		}
@@ -144,8 +144,8 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 		if (debug) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] initTables(): Sched tables initialized!");
 		
 		// Calc number of activations
-		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
+		for (McDAG d : getMcDags()) {
+			for (Vertex a : d.getVertices()) {
 				// Check if task runs in HI mode
 				int nbActivations = (int) (hPeriod / d.getDeadline());
 				if (a.getWcet(1) != 0)
@@ -165,7 +165,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	 * @param l
 	 * @return
 	 */
-	private int scheduledUntilTinL (ActorSched a, int t, int l) {
+	private int scheduledUntilTinL (VertexScheduling a, int t, int l) {
 		int ret = 0;
 		int start = (int)(t / a.getGraphDead()) * a.getGraphDead();
 		
@@ -189,7 +189,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	 * @param l
 	 * @return
 	 */
-	private int scheduledUntilTinLreverse (ActorSched a, int t, int l) {
+	private int scheduledUntilTinLreverse (VertexScheduling a, int t, int l) {
 		int ret = 0;
 		int end = 0;
 		
@@ -225,10 +225,10 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	 */
 	@SuppressWarnings("unused")
 	private void resetDelays() {
-		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
+		for (McDAG d : getMcDags()) {
+			for (Vertex a : d.getVertices()) {
 				if (a.getWcet(1) != 0)
-					((ActorSched) a).setDelayed(false);
+					((VertexScheduling) a).setDelayed(false);
 			}
 		}
 	}
@@ -239,10 +239,10 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	 * @param slot
 	 * @param level
 	 */
-	private void calcLaxity(List<ActorSched> list, int slot, int level) {
-		for (ActorSched a : list) {
+	private void calcLaxity(List<VertexScheduling> list, int slot, int level) {
+		for (VertexScheduling a : list) {
 			int relatSlot = slot % a.getGraphDead();
-			int dId = a.getGraphID();
+			int dId = a.getGraphId();
 			
 			// The laxity has to be calculated for a HI mode
 			if (level >= 1) {
@@ -285,7 +285,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	 * @param ready
 	 */
 	@SuppressWarnings("unused")
-	private void checkForEqualities (List<ActorSched> ready, final int level) {
+	private void checkForEqualities (List<VertexScheduling> ready, final int level) {
 		
 		// There are enough elements in the ready list to test
 		// for equalities
@@ -295,7 +295,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 			int index = getNbCores() - 2;
 			int count = 0;	// nb of tasks with same laxity already in the ready queue
 			boolean eq = (ready.get(getNbCores() - 2).getWeights()[level] == eqLax) ? true : false;
-			List<ActorSched> eqList = new LinkedList<ActorSched>();
+			List<VertexScheduling> eqList = new LinkedList<VertexScheduling>();
 
 			// Check nodes before the last schedulable element
 			while (eq && index >= 0) {
@@ -331,9 +331,9 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 			// Sort equality list
 			if (list) {
 				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] checkForEqualities(): Equalities of laxities");
-				Collections.sort(eqList, new Comparator<ActorSched>() {
+				Collections.sort(eqList, new Comparator<VertexScheduling>() {
 					@Override
-					public int compare (ActorSched o1, ActorSched o2) {
+					public int compare (VertexScheduling o1, VertexScheduling o2) {
 						if (o1.getDeadlines()[level] - o2.getDeadlines()[level] != 0)
 							return o1.getDeadlines()[level] - o2.getDeadlines()[level];
 						else
@@ -343,7 +343,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 				
 				if (isDebug()) {
 					System.out.print("[DEBUG "+Thread.currentThread().getName()+"] checkForEqualities(): tasks in equality: ");
-					for (ActorSched a : eqList)
+					for (VertexScheduling a : eqList)
 						System.out.print(a.getName()+" Laxity "+a.getWeights()[level]+"; ");
 					System.out.println("");
 				}
@@ -353,9 +353,9 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 				index = getNbCores() - count;
 				
 				while (remain > 0) {
-					ActorSched a = ready.get(index);
+					VertexScheduling a = ready.get(index);
 					
-					for (ActorSched eqAct : eqList) {
+					for (VertexScheduling eqAct : eqList) {
 						if (a.equals(eqAct)) {
 							remain--;
 						} else {
@@ -375,12 +375,12 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	 * @param level
 	 * @return
 	 */
-	private boolean isPossible (List<ActorSched> list, int slot, int level) {
+	private boolean isPossible (List<VertexScheduling> list, int slot, int level) {
 		int m = 0;
-		ListIterator<ActorSched> lit = list.listIterator();
+		ListIterator<VertexScheduling> lit = list.listIterator();
 		
 		while (lit.hasNext()) {
-			ActorSched a = lit.next();
+			VertexScheduling a = lit.next();
 			
 			if (a.getWeights()[level] == 0)
 				m++;
@@ -400,12 +400,12 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	 * @param ready
 	 * @param level
 	 */
-	private void checkActivationHI (List<ActorSched> sched, List<ActorSched> ready, int level) {
+	private void checkActivationHI (List<VertexScheduling> sched, List<VertexScheduling> ready, int level) {
 
-		for (ActorSched a : sched) {
+		for (VertexScheduling a : sched) {
 			// Check predecessors of task that was just allocated
 			for (Edge e : a.getRcvEdges()) {
-				ActorSched pred = (ActorSched) e.getSrc();
+				VertexScheduling pred = (VertexScheduling) e.getSrc();
 				boolean add = true;
 				
 				// Check if all successors of the predecessor have been allocated
@@ -416,7 +416,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 					}
 				}
 				
-				if (add && !ready.contains(pred) && remainingTime[level][pred.getGraphID()][pred.getId()] != 0) {
+				if (add && !ready.contains(pred) && remainingTime[level][pred.getGraphId()][pred.getId()] != 0) {
 					ready.add(pred);
 				}
 			}
@@ -430,12 +430,12 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	 * @param ready
 	 * @param level
 	 */
-	private void checkActivationLO (List<ActorSched> sched, List<ActorSched> ready) {
+	private void checkActivationLO (List<VertexScheduling> sched, List<VertexScheduling> ready) {
 
-		for (ActorSched a : sched) {
+		for (VertexScheduling a : sched) {
 			// Check predecessors of task that was just allocated
 			for (Edge e : a.getSndEdges()) {
-				ActorSched succ = (ActorSched) e.getDest();
+				VertexScheduling succ = (VertexScheduling) e.getDest();
 				boolean add = true;
 				
 				// Check if all successors of the predecessor have been allocated
@@ -446,7 +446,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 					}
 				}
 				
-				if (add && !ready.contains(succ) && remainingTime[0][succ.getGraphID()][succ.getId()] != 0) {
+				if (add && !ready.contains(succ) && remainingTime[0][succ.getGraphId()][succ.getId()] != 0) {
 					ready.add(succ);
 				}
 			}
@@ -460,27 +460,27 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	 * @param slot
 	 * @param level
 	 */
-	private void checkDAGActivation (List<ActorSched> sched, List<ActorSched> ready, int slot, int level) {
-		for (DAG d : getMcDags()) {
+	private void checkDAGActivation (List<VertexScheduling> sched, List<VertexScheduling> ready, int slot, int level) {
+		for (McDAG d : getMcDags()) {
 			// If the slot is a multiple of the deadline is a new activation
 			if (slot % d.getDeadline() == 0) {
-				ListIterator<ActorSched> it = sched.listIterator();
+				ListIterator<VertexScheduling> it = sched.listIterator();
 				
 				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] checkDAGActivation(): DAG (id. "+d.getId()+") activation at slot "+slot);
-				for (Actor a : d.getNodes()) {
+				for (Vertex a : d.getVertices()) {
 					while (it.hasNext()) { // Remove nodes from the sched list
-						ActorSched a2 = it.next();
+						VertexScheduling a2 = it.next();
 						if (a.getName().contentEquals(a2.getName()))
 							it.remove();
 					}
 					it = sched.listIterator();
 					// Re-init execution time
-					remainingTime[level][((ActorSched)a).getGraphID()][a.getId()] = a.getWcet(level);
+					remainingTime[level][((VertexScheduling)a).getGraphId()][a.getId()] = a.getWcet(level);
 					
 					if (level >= 1 && a.isSinkinL(level)) {
-						ready.add((ActorSched)a);
+						ready.add((VertexScheduling)a);
 					} else if (level == 0 && a.isSourceinL(level)) {
-						ready.add((ActorSched)a);
+						ready.add((VertexScheduling)a);
 					}
 				}
 			}
@@ -493,21 +493,21 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	 * @throws SchedulingException
 	 */
 	private void buildHITable (final int l) throws SchedulingException {
-		List<ActorSched> ready = new LinkedList<>();
-		List<ActorSched> scheduled = new LinkedList<>();
+		List<VertexScheduling> ready = new LinkedList<>();
+		List<VertexScheduling> scheduled = new LinkedList<>();
 		
 		// Add all sink nodes
-		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
+		for (McDAG d : getMcDags()) {
+			for (Vertex a : d.getVertices()) {
 				if (a.isSinkinL(l))
-					ready.add((ActorSched) a);
+					ready.add((VertexScheduling) a);
 			}
 		}
 		
 		calcLaxity(ready, 0, l);
-		Collections.sort(ready, new Comparator<ActorSched>() {
+		Collections.sort(ready, new Comparator<VertexScheduling>() {
 			@Override
-			public int compare(ActorSched o1, ActorSched o2) {
+			public int compare(VertexScheduling o1, VertexScheduling o2) {
 				if (o1.getWeights()[l] - o2.getWeights()[l] != 0)
 					return o1.getWeights()[l] - o2.getWeights()[l];
 				else
@@ -516,13 +516,13 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 		});
 		
 		// Allocate slot by slot the HI scheduling tables
-		ListIterator<ActorSched> lit = ready.listIterator();
+		ListIterator<VertexScheduling> lit = ready.listIterator();
 		boolean taskFinished = false;
 		
 		for (int s = hPeriod - 1; s >= 0; s--) {
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildHITable("+l+"): @t = "+s+", tasks activated: ");
-				for (ActorSched a : ready)
+				for (VertexScheduling a : ready)
 					System.out.print("L("+a.getName()+") = "+a.getWeights()[l]+"; ");
 				System.out.println("");
 			}
@@ -536,10 +536,10 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 			for (int c = getNbCores() - 1; c >=0; c--) {
 				// Find a top ready task
 				if (lit.hasNext()) {
-					ActorSched a = lit.next();
+					VertexScheduling a = lit.next();
 					if (a.getWeights()[l] == Integer.MAX_VALUE)
 						break;
-					int val = remainingTime[l][a.getGraphID()][a.getId()];
+					int val = remainingTime[l][a.getGraphId()][a.getId()];
 					
 					sched[l][s][c] = a.getName();
 					val--;
@@ -550,7 +550,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 						taskFinished = true;
 						lit.remove();
 					}
-					remainingTime[l][a.getGraphID()][a.getId()] = val;
+					remainingTime[l][a.getGraphId()][a.getId()] = val;
 				}
 			}
 			
@@ -568,9 +568,9 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 			}
 
 			
-			Collections.sort(ready, new Comparator<ActorSched>() {
+			Collections.sort(ready, new Comparator<VertexScheduling>() {
 				@Override
-				public int compare(ActorSched o1, ActorSched o2) {
+				public int compare(VertexScheduling o1, VertexScheduling o2) {
 					if (o1.getWeights()[l] - o2.getWeights()[l] != 0)
 						return o1.getWeights()[l] - o2.getWeights()[l];
 					else
@@ -591,14 +591,14 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	 * @throws SchedulingException
 	 */
 	private void buildLOTable () throws SchedulingException {
-		List<ActorSched> ready = new LinkedList<>();
-		List<ActorSched> scheduled = new LinkedList<>();
+		List<VertexScheduling> ready = new LinkedList<>();
+		List<VertexScheduling> scheduled = new LinkedList<>();
 		
 		// Add all source nodes
-		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
+		for (McDAG d : getMcDags()) {
+			for (Vertex a : d.getVertices()) {
 				if (a.isSourceinL(0)) {
-					ready.add((ActorSched) a);
+					ready.add((VertexScheduling) a);
 				}
 			}
 		}
@@ -608,13 +608,13 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 		//checkForEqualities(ready, 0);
 		
 		// Allocate slot by slot the scheduling table
-		ListIterator<ActorSched> lit = ready.listIterator();
+		ListIterator<VertexScheduling> lit = ready.listIterator();
 		boolean taskFinished = false;
 		
 		for (int s = 0; s < gethPeriod(); s++) {
 			if (isDebug()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildLOTable(0): @t = "+s+", tasks activated: ");
-				for (ActorSched a : ready)
+				for (VertexScheduling a : ready)
 					System.out.print("L("+a.getName()+") = "+a.getWeights()[0]+"; ");
 				System.out.println("");
 			}
@@ -628,8 +628,8 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 			for (int c = 0; c < getNbCores(); c++) {
 				// Get the next element on the LO list
 				if (lit.hasNext()) {
-					ActorSched a = lit.next();
-					int val = remainingTime[0][a.getGraphID()][a.getId()];
+					VertexScheduling a = lit.next();
+					int val = remainingTime[0][a.getGraphId()][a.getId()];
 					
 					sched[0][s][c] = a.getName();
 					val--;
@@ -639,7 +639,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 						taskFinished = true;
 						lit.remove();
 					}
-					remainingTime[0][a.getGraphID()][a.getId()] = val;
+					remainingTime[0][a.getGraphId()][a.getId()] = val;
 				}
 			}
 			
@@ -669,7 +669,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 		initTables();
 		
 		// Calculate LFTs and urgencies in all DAGs
-		for (DAG d : getMcDags()) {
+		for (McDAG d : getMcDags()) {
 			calcDeadlines(d, getLevels());
 			if (isDebug()) printLFTs(d);
 		}
@@ -686,9 +686,9 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 		if (isDebug()) printTables();
 		
 		// Count preemptions
-		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
-				preempts.put((ActorSched)a, 0);
+		for (McDAG d : getMcDags()) {
+			for (Vertex a : d.getVertices()) {
+				preempts.put((VertexScheduling)a, 0);
 			}
 		}
 		
@@ -706,14 +706,14 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	 * Prints LFTs for all DAGs and all nodes in all the levels
 	 * @param d
 	 */
-	private void printLFTs (DAG d) {
+	private void printLFTs (McDAG d) {
 		System.out.println("[DEBUG "+Thread.currentThread().getName()+"] DAG "+d.getId()+" printing LFTs");
 		
-		for (Actor a : d.getNodes()) {
+		for (Vertex a : d.getVertices()) {
 			System.out.print("[DEBUG "+Thread.currentThread().getName()+"]\t Actor "+a.getName()+", ");
 			for (int i = 0; i < getLevels(); i++) {
-				if (((ActorSched)a).getDeadlines()[i] != Integer.MAX_VALUE)
-					System.out.print(((ActorSched)a).getDeadlines()[i]);
+				if (((VertexScheduling)a).getDeadlines()[i] != Integer.MAX_VALUE)
+					System.out.print(((VertexScheduling)a).getDeadlines()[i]);
 				System.out.print(" ");
 			}
 			System.out.println("");
@@ -725,8 +725,8 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	 */
 	public void printDAGs () {
 		System.out.println("[DEBUG "+Thread.currentThread().getName()+"] N levels: Number of DAGs "+getMcDags().size()+", on "+getLevels()+" levels.");
-		for (DAG d : getMcDags()) {
-			for (Actor a : d.getNodes()) {
+		for (McDAG d : getMcDags()) {
+			for (Vertex a : d.getVertices()) {
 				System.out.print("[DEBUG "+Thread.currentThread().getName()+"]\t Actor "+a.getName()+", ");
 				for (int i = 0; i < getLevels(); i++)
 					System.out.print(a.getWcet(i)+" ");
@@ -761,7 +761,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 		int total = 0;
 		System.out.println("[DEBUG "+Thread.currentThread().getName()+"] Printing preemption data...");
 
-		for (ActorSched a : preempts.keySet()) {
+		for (VertexScheduling a : preempts.keySet()) {
 			System.out.println("[DEBUG "+Thread.currentThread().getName()+"]\t Task "+a.getName()+" peempted "+preempts.get(a)+" times.");
 			total += preempts.get(a);
 		}
@@ -772,11 +772,11 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	 * Getters & Setters
 	 */
 	
-	public Set<DAG> getMcDags() {
+	public Set<McDAG> getMcDags() {
 		return mcDags;
 	}
 
-	public void setMcDags(Set<DAG> mcDags) {
+	public void setMcDags(Set<McDAG> mcDags) {
 		this.mcDags = mcDags;
 	}
 
@@ -828,27 +828,27 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 		this.remainingTime = remainingTime;
 	}
 
-	public Comparator<ActorSched> getLoComp() {
+	public Comparator<VertexScheduling> getLoComp() {
 		return loComp;
 	}
 
-	public void setLoComp(Comparator<ActorSched> loComp) {
+	public void setLoComp(Comparator<VertexScheduling> loComp) {
 		this.loComp = loComp;
 	}
 
-	public Hashtable<ActorSched, Integer> getPreempts() {
+	public Hashtable<VertexScheduling, Integer> getPreempts() {
 		return preempts;
 	}
 
-	public void setPreempts(Hashtable<ActorSched, Integer> preempts) {
+	public void setPreempts(Hashtable<VertexScheduling, Integer> preempts) {
 		this.preempts = preempts;
 	}
 
-	public Hashtable<ActorSched, Integer> getCtxSwitch() {
+	public Hashtable<VertexScheduling, Integer> getCtxSwitch() {
 		return ctxSwitch;
 	}
 
-	public void setCtxSwitch(Hashtable<ActorSched, Integer> ctxSwitch) {
+	public void setCtxSwitch(Hashtable<VertexScheduling, Integer> ctxSwitch) {
 		this.ctxSwitch = ctxSwitch;
 	}
 
@@ -860,11 +860,11 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 		this.activations = activations;
 	}
 
-	public Comparator<ActorSched> getEqComp() {
+	public Comparator<VertexScheduling> getEqComp() {
 		return eqComp;
 	}
 
-	public void setEqComp(Comparator<ActorSched> eqComp) {
+	public void setEqComp(Comparator<VertexScheduling> eqComp) {
 		this.eqComp = eqComp;
 	}
 

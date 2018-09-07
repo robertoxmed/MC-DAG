@@ -22,7 +22,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import fr.tpt.s3.mcdag.model.ActorSched;
+import fr.tpt.s3.mcdag.model.VertexScheduling;
 
 /**
  * Utility class to count the number of context switches and preemptions
@@ -40,11 +40,11 @@ public class Counters {
 	 * @param hPeriod
 	 * @param nbCores
 	 */
-	public static void countContextSwitch (String sched[][][], Hashtable<ActorSched, Integer> refs, int nbLevels, int hPeriod, int nbCores) {
+	public static void countContextSwitch (String sched[][][], Hashtable<VertexScheduling, Integer> refs, int nbLevels, int hPeriod, int nbCores) {
 		// Check for all tasks how many context switches it has
-		Set<ActorSched> keys = refs.keySet();
+		Set<VertexScheduling> keys = refs.keySet();
 		
-		for (ActorSched a : keys) {
+		for (VertexScheduling a : keys) {
 			int nbContSwitch = refs.get(a);
 			
 			// Iterate through the table to count context switches of a task
@@ -78,16 +78,16 @@ public class Counters {
 	}
 	
 	
-	private static ActorSched lookForInList (List<ActorSched> listActors, String name) {
-		for (ActorSched a: listActors) {
+	private static VertexScheduling lookForInList (List<VertexScheduling> listActors, String name) {
+		for (VertexScheduling a: listActors) {
 			if (a.getName().contentEquals(name))
 				return a;
 		}
 		return null;
 	}
 	
-	private static ActorSched lookForInKeys (Set<ActorSched> keys, String name) {
-		for (ActorSched a: keys) {
+	private static VertexScheduling lookForInKeys (Set<VertexScheduling> keys, String name) {
+		for (VertexScheduling a: keys) {
 			if (a.getName().contentEquals(name))
 				return a;
 		}
@@ -103,19 +103,19 @@ public class Counters {
 	 * @param nbCores
 	 */
 	public static void countPreemptions (String sched[][][],
-										 Hashtable<ActorSched, Integer> refs,
+										 Hashtable<VertexScheduling, Integer> refs,
 										 int levels, int hPeriod, int nbCores) {
 		
-		Set<ActorSched> keys = refs.keySet();
-		List<ActorSched> runningPreviously = new LinkedList<>();
+		Set<VertexScheduling> keys = refs.keySet();
+		List<VertexScheduling> runningPreviously = new LinkedList<>();
 				
 		for (int i = 0; i < levels; i++) {
 			for (int j = 0; j < hPeriod; j++) {
 				// Check if elements that were running in the previous slot are still running
-				Iterator<ActorSched> lit = runningPreviously.listIterator();
+				Iterator<VertexScheduling> lit = runningPreviously.listIterator();
 				while (lit.hasNext()) {
 					boolean stillRunning = false;
-					ActorSched a = lit.next();
+					VertexScheduling a = lit.next();
 					
 					for (int k = 0; k < nbCores; k++) {
 						if (sched[i][j][k].contentEquals(a.getName())) {
@@ -132,7 +132,7 @@ public class Counters {
 				for (int k = 0; k < nbCores; k++) {
 					if (!sched[i][j][k].contentEquals("-") &&
 							lookForInList(runningPreviously, sched[i][j][k]) == null) {
-						ActorSched toAdd = lookForInKeys(keys, sched[i][j][k]);
+						VertexScheduling toAdd = lookForInKeys(keys, sched[i][j][k]);
 						int val = refs.get(toAdd);
 						val++;
 						refs.put(toAdd, val);
@@ -144,7 +144,7 @@ public class Counters {
 		}
 		
 		// Decrement the preemption count by the nb of activations
-		for (ActorSched a : keys) {
+		for (VertexScheduling a : keys) {
 			int nbActivations = 0;
 			if (a.getWcet(1) != 0)
 				nbActivations = (int)(hPeriod / a.getGraphDead()) * levels;
@@ -165,19 +165,19 @@ public class Counters {
 	 * @param nbCores
 	 */
 	public static void countPreemptions (String sched[][][],
-										 Hashtable<ActorSched, Integer> refs,
+										 Hashtable<VertexScheduling, Integer> refs,
 										 int levels, int hPeriod, int deadline, int nbCores) {
 		
-		Set<ActorSched> keys = refs.keySet();
-		List<ActorSched> runningPreviously = new LinkedList<>();
+		Set<VertexScheduling> keys = refs.keySet();
+		List<VertexScheduling> runningPreviously = new LinkedList<>();
 				
 		for (int i = 0; i < levels; i++) {
 			for (int j = 0; j < deadline; j++) {
 				// Check if elements that were running in the previous slot are still running
-				Iterator<ActorSched> lit = runningPreviously.listIterator();
+				Iterator<VertexScheduling> lit = runningPreviously.listIterator();
 				while (lit.hasNext()) {
 					boolean stillRunning = false;
-					ActorSched a = lit.next();
+					VertexScheduling a = lit.next();
 					
 					for (int k = 0; k < nbCores; k++) {
 						if (sched[i][j][k].contentEquals(a.getName())) {
@@ -194,7 +194,7 @@ public class Counters {
 				for (int k = 0; k < nbCores; k++) {
 					if (!sched[i][j][k].contentEquals("-") &&
 							lookForInList(runningPreviously, sched[i][j][k]) == null) {
-						ActorSched toAdd = lookForInKeys(keys, sched[i][j][k]);
+						VertexScheduling toAdd = lookForInKeys(keys, sched[i][j][k]);
 						int val = refs.get(toAdd);
 						val++;
 						refs.put(toAdd, val);

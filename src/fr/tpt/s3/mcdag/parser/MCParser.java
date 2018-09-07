@@ -44,10 +44,10 @@ import fr.tpt.s3.mcdag.avail.Formula;
 import fr.tpt.s3.mcdag.avail.State;
 import fr.tpt.s3.mcdag.avail.Transition;
 import fr.tpt.s3.mcdag.generator.MCSystemGenerator;
-import fr.tpt.s3.mcdag.model.Actor;
-import fr.tpt.s3.mcdag.model.ActorAvail;
-import fr.tpt.s3.mcdag.model.ActorSched;
-import fr.tpt.s3.mcdag.model.DAG;
+import fr.tpt.s3.mcdag.model.Vertex;
+import fr.tpt.s3.mcdag.model.VertexAvailability;
+import fr.tpt.s3.mcdag.model.VertexScheduling;
+import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.model.Edge;
 
 public class MCParser {
@@ -60,7 +60,7 @@ public class MCParser {
 	private boolean bOutPrism;
 
 	// Only references do not have to be instantiated
-	private Set<DAG> dags;
+	private Set<McDAG> dags;
 	private Automata auto;
 	private MCSystemGenerator ug;
 	
@@ -70,7 +70,7 @@ public class MCParser {
 	private int nbCores;
 	private int nbLevels;
 	
-	public MCParser (String iFile, String oSFile,Set<DAG> dags, boolean bop) {
+	public MCParser (String iFile, String oSFile,Set<McDAG> dags, boolean bop) {
 		setInputFile(iFile);
 		setOutSchedFile(oSFile);
 		setDags(dags);
@@ -112,7 +112,7 @@ public class MCParser {
 			
 			for (int d = 0; d < eList.getLength(); d++) {
 				Element eDag = (Element) eList.item(d);
-				DAG dag	= new DAG();
+				McDAG dag	= new McDAG();
 				dag.setId(count);
 				dag.setDeadline(Integer.parseInt(eDag.getAttribute("deadline")));
 				dag.setLevels(getNbLevels());
@@ -125,7 +125,7 @@ public class MCParser {
 					Node n = nList.item(i);
 					if (n.getNodeType() == Node.ELEMENT_NODE) {
 						Element e = (Element) n;
-						Actor a;
+						Vertex a;
 						int[] wcets = new int[getNbLevels()];
 						
 						// Initialize all the WCET of a node
@@ -140,16 +140,16 @@ public class MCParser {
 						}
 						
 						if (!isbOutPrism()) {
-							a = new ActorSched(nb_actors++, e.getAttribute("name"),getNbLevels());
+							a = new VertexScheduling(nb_actors++, e.getAttribute("name"),getNbLevels());
 							a.setWcets(wcets);
 						} else {
-							a = new ActorAvail(nb_actors++, e.getAttribute("name"), wcets);
-							((ActorSched) a).setfProb(Double.parseDouble(e.getElementsByTagName("fprob").item(0).getTextContent()));
+							a = new VertexAvailability(nb_actors++, e.getAttribute("name"), wcets);
+							((VertexScheduling) a).setfProb(Double.parseDouble(e.getElementsByTagName("fprob").item(0).getTextContent()));
 						}
 							
-						((ActorSched) a).setGraphID(count);
-						((ActorSched) a).setGraphDead(dag.getDeadline());
-						dag.getNodes().add(a);
+						((VertexScheduling) a).setGraphID(count);
+						((VertexScheduling) a).setGraphDead(dag.getDeadline());
+						dag.getVertices().add(a);
 					}
 				}
 					
@@ -173,17 +173,17 @@ public class MCParser {
 									wcets[Integer.parseInt(we.getAttribute("number"))] = Integer.parseInt(we.getTextContent());
 								}
 							}
-							ActorAvail a = new ActorAvail(nb_actors++, e.getAttribute("name"), wcets);
+							VertexAvailability a = new VertexAvailability(nb_actors++, e.getAttribute("name"), wcets);
 							a.setfMechanism(true);
-							a.setfMechType(ActorAvail.VOTER);
+							a.setfMechType(VertexAvailability.VOTER);
 							a.setVotTask(e.getElementsByTagName("vtask").item(0).getTextContent());
-							((ActorAvail) dag.getNodebyName(e.getElementsByTagName("vtask").item(0).getTextContent())).setVoted(true);
+							((VertexAvailability) dag.getNodebyName(e.getElementsByTagName("vtask").item(0).getTextContent())).setVoted(true);
 							a.setNbReplicas(Integer.parseInt(e.getElementsByTagName("replicas").item(0).getTextContent()));
-							dag.getNodes().add(a);
+							dag.getVertices().add(a);
 						} else if (e.getAttribute("type").contains("mkfirm")) {
-							ActorAvail a = (ActorAvail) dag.getNodebyName(e.getAttribute("name"));
+							VertexAvailability a = (VertexAvailability) dag.getNodebyName(e.getAttribute("name"));
 							a.setfMechanism(true);
-							a.setfMechType(ActorAvail.MKFIRM);
+							a.setfMechType(VertexAvailability.MKFIRM);
 							a.setM(Integer.parseInt(e.getElementsByTagName("m").item(0).getTextContent()));
 							a.setK(Integer.parseInt(e.getElementsByTagName("k").item(0).getTextContent()));
 							a.setVoted(true);
@@ -285,8 +285,8 @@ public class MCParser {
 			out.write("R{\"total_cycles\"}=? [ C <= D ]\n\n");
 			
 			// Write properties for all LO outputs
-			for (DAG d : dags) {
-				for (Actor aout : d.getLoOuts()) {
+			for (McDAG d : dags) {
+				for (Vertex aout : d.getLoOuts()) {
 					out.write("(R{\""+aout.getName()+"_cycles\"}=? [ C <= D ])/(R{\"total_cycles\"}=? [ C <= D ])\n\n");
 				}
 			}
@@ -307,7 +307,7 @@ public class MCParser {
 	public void writePRISM () throws IOException {
 		BufferedWriter out = null;
 		try {
-			DAG dag = dags.iterator().next();
+			McDAG dag = dags.iterator().next();
 			
 			File f = new File(getOutPrismFile());
 			f.createNewFile();
@@ -322,7 +322,7 @@ public class MCParser {
 			Iterator<FTM> iftm = auto.getFtms().iterator();
 			while (iftm.hasNext() ) {
 				FTM ftm = iftm.next();
-				if (ftm.getType() == ActorAvail.VOTER) {
+				if (ftm.getType() == VertexAvailability.VOTER) {
 					out.write("module "+ftm.getName()+"\n");
 					out.write("\tv"+countFtm+": [0..20] init 0;\n");
 					Iterator<Transition> it = ftm.getTransitions().iterator();
@@ -364,7 +364,7 @@ public class MCParser {
 						out.write("endmodule\n");
 						out.write("\n");
 					}
-				} else if (ftm.getType() != ActorAvail.MKFIRM) {
+				} else if (ftm.getType() != VertexAvailability.MKFIRM) {
 					System.out.print("Uknown Voting mechanism");
 				}
 				countFtm++;
@@ -391,7 +391,7 @@ public class MCParser {
 			out.write("\ts : [0.."+auto.getNbStates()+"] init "+auto.getLo_sched().get(0).getId()+";\n");
 			
 			// Create all necessary booleans
-			for (Actor a : dag.getNodes()) {
+			for (Vertex a : dag.getVertices()) {
 				if (a.getWcet(1) == 0) // It is a LO task
 					out.write("\t"+a.getName()+"bool: bool init false;\n");
 			}
@@ -402,7 +402,7 @@ public class MCParser {
 			iftm = auto.getFtms().iterator();
 			while (iftm.hasNext()) {
 				FTM ftm = iftm.next();
-				if (ftm.getType() == ActorAvail.MKFIRM) {
+				if (ftm.getType() == VertexAvailability.MKFIRM) {
 					for (int i = 0; i < ftm.getK(); i ++) {
 						out.write("\t"+ftm.getName()+"_v"+i+": [0..1] init 1;\n");
 					}
@@ -416,7 +416,7 @@ public class MCParser {
 			Iterator<Transition> it = auto.getL_transitions().iterator();
 			while (it.hasNext()) {
 				Transition t = it.next();
-				if (t.getSrc().getMode() == ActorSched.HI) {
+				if (t.getSrc().getMode() == VertexScheduling.HI) {
 					if (! t.getSrc().isfMechanism())
 						out.write("\t["+t.getSrc().getTask()+"_lo] s = " + t.getSrc().getId()
 								+ " -> 1 - "+ t.getP() +" : (s' = " + t.getDestOk().getId() + ") +"
@@ -518,9 +518,9 @@ public class MCParser {
 					
 			// Create the rewards
 			out.write("\n");
-			Iterator<Actor> in = dag.getLoOuts().iterator();
+			Iterator<Vertex> in = dag.getLoOuts().iterator();
 			while (in.hasNext()) {
-				Actor n = in.next();
+				Vertex n = in.next();
 				out.write("rewards \""+n.getName()+"_cycles\"\n");
 				out.write("\t["+n.getName()+"_ok] true : 1;\n");
 				out.write("endrewards\n");
@@ -563,7 +563,7 @@ public class MCParser {
 			Element rootElement = doc.createElement("mcsystem");
 			doc.appendChild(rootElement);
 			
-			for (DAG d : ug.getGennedDAGs()) {
+			for (McDAG d : ug.getGennedDAGs()) {
 				// MC DAG
 				Element mcdag = doc.createElement("mcdag");
 				Attr dagName = doc.createAttribute("name");
@@ -574,7 +574,7 @@ public class MCParser {
 				mcdag.setAttributeNode(dagDead);
 				rootElement.appendChild(mcdag);
 				// Actors
-				for (Actor a : d.getNodes()) {
+				for (Vertex a : d.getVertices()) {
 					Element actor = doc.createElement("actor");
 					Attr actorNb = doc.createAttribute("name");
 					actorNb.setNodeValue("D"+d.getId()+"N"+a.getId());
@@ -595,7 +595,7 @@ public class MCParser {
 				// Ports
 				Element edges = doc.createElement("ports");
 				int counter = 0;
-				for (Actor a : d.getNodes()) {
+				for (Vertex a : d.getVertices()) {
 					if (a.getSndEdges().size() != 0)  {
 						for (Edge e : a.getSndEdges()) {
 							Element edge = doc.createElement("port");
@@ -648,12 +648,12 @@ public class MCParser {
 	 * @param lvl
 	 * @return
 	 */
-	private int minCoresNlevels (Set<DAG> setDAGs, int lvl) {
+	private int minCoresNlevels (Set<McDAG> setDAGs, int lvl) {
 		double[] sums = new double[lvl];
 		double max = 0;
 		int cores = 0;
 		
-		for (DAG d : setDAGs) {
+		for (McDAG d : setDAGs) {
 			for (int i = 0; i < lvl; i++) {
 				sums[i] += d.getUi(i);
 			}
@@ -686,8 +686,8 @@ public class MCParser {
 			out.write("digraph test{\n");
 			
 			
-			for (DAG d : ug.getGennedDAGs()) {
-				for (Actor a : d.getNodes()) {
+			for (McDAG d : ug.getGennedDAGs()) {
+				for (Vertex a : d.getVertices()) {
 					out.write("\"D"+d.getId()+"N"+a.getName()+"\" [label=\"D"+d.getId()+"N"+a.getName()+"\\n");
 					for (int i = ug.getNbLevels() - 1; i >= 0; i--) {
 						if (i != 0)
@@ -701,8 +701,8 @@ public class MCParser {
 			out.write("\n");
 			
 			// Create the edges between the nodes
-			for (DAG d : ug.getGennedDAGs()) {
-				for (Actor a : d.getNodes()) {
+			for (McDAG d : ug.getGennedDAGs()) {
+				for (Vertex a : d.getVertices()) {
 					for (Edge e : a.getSndEdges())
 						out.write("\tD"+d.getId()+"N"+e.getSrc().getName()+" -> D"+d.getId()+"N"+e.getDest().getName()+";\n");
 				}
@@ -771,11 +771,11 @@ public class MCParser {
 		this.nbCores = nbCores;
 	}
 
-	public Set<DAG> getDags() {
+	public Set<McDAG> getDags() {
 		return dags;
 	}
 
-	public void setDags(Set<DAG> dags) {
+	public void setDags(Set<McDAG> dags) {
 		this.dags = dags;
 	}
 

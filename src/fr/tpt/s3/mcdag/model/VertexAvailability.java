@@ -16,7 +16,7 @@
  *******************************************************************************/
 package fr.tpt.s3.mcdag.model;
 
-public class ActorAvail extends ActorSched {
+public class VertexAvailability extends VertexScheduling {
 
 	public static final short VOTER = 2;
 	public static final short MKFIRM = 3;
@@ -30,7 +30,7 @@ public class ActorAvail extends ActorSched {
 	private int M;
 	private int K;
 	
-	public ActorAvail (int id, String name, int[] wcet) {
+	public VertexAvailability (int id, String name, int[] wcet) {
 		super(id, name, wcet.length);
 		this.setWcets(wcet);
 	}
