@@ -24,6 +24,7 @@ import java.util.ListIterator;
 
 import fr.tpt.s3.mcdag.model.Vertex;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
+import fr.tpt.s3.mcdag.scheduling.old.AbstractMixedCriticalityScheduler;
 import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.model.Edge;
 

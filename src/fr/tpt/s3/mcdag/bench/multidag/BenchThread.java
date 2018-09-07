@@ -30,8 +30,8 @@ import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.parser.MCParser;
 import fr.tpt.s3.mcdag.scheduling.EarlistDeadlineFirstMCSched;
 import fr.tpt.s3.mcdag.scheduling.FederatedMCSched;
-import fr.tpt.s3.mcdag.scheduling.LeastLaxityFirstMCSched;
 import fr.tpt.s3.mcdag.scheduling.SchedulingException;
+import fr.tpt.s3.mcdag.scheduling.old.LeastLaxityFirstMCSched;
 
 public class BenchThread implements Runnable {
 	

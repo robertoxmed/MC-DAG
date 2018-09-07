@@ -156,6 +156,34 @@ public abstract class GenericMixedCriticalityScheduler {
 		}
 	}
 	
+	/**
+	 * Internal function that checks if all the predecessors of an actor are visited
+	 * @param a
+	 * @param level
+	 * @return
+	 */
+	protected boolean predVisitedInLevel (VertexScheduling a, int level) {
+		for (Edge e : a.getRcvEdges()) {
+			if (e.getSrc().getWcet(level) != 0 && !((VertexScheduling) e.getSrc()).getVisitedL()[level])
+				return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Internal function that checks if all the sucessors of an actor are visited
+	 * @param a
+	 * @param level
+	 * @return
+	 */
+	protected boolean succVisitedInLevel (VertexScheduling a, int level) {
+		for (Edge e : a.getSndEdges()) {
+			if (e.getDest().getWcet(level) != 0 && !((VertexScheduling) e.getDest()).getVisitedL()[level])
+				return false;
+		}
+		return true;
+	}
+	
 	
 	/**
 	 * Functions that adds new jobs when task have finished their execution
@@ -211,7 +239,6 @@ public abstract class GenericMixedCriticalityScheduler {
 						ready.add((VertexScheduling) v);
 					else if (level == 0 && v.isSourceinL(level))
 						ready.add((VertexScheduling) v);
-
 				}
 			}
 		}
@@ -331,6 +358,8 @@ public abstract class GenericMixedCriticalityScheduler {
 					preemptions.put((VertexScheduling) v, 0);
 			}
 			Counters.countPreemptions(sched, preemptions, getLevels(), hPeriod, nbCores);
+			
+			if (isDebug()) printPreempts();
 		}
 	}
 	
@@ -355,6 +384,20 @@ public abstract class GenericMixedCriticalityScheduler {
 			}
 		}
 		System.out.print("\n");
+	}
+	
+	/**
+	 * Prints preemption statistics
+	 */
+	public void printPreempts () {
+		int total = 0;
+		System.out.println("[DEBUG "+Thread.currentThread().getName()+"] Printing preemption data...");
+
+		for (VertexScheduling a : preemptions.keySet()) {
+			System.out.println("[DEBUG "+Thread.currentThread().getName()+"]\t Task "+a.getName()+" peempted "+preemptions.get(a)+" times.");
+			total += preemptions.get(a);
+		}
+		System.out.println("[DEBUG "+Thread.currentThread().getName()+"] Total number of preemptions = "+total+" for "+getActivations()+" activations");
 	}
 
 	/*

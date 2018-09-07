@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package fr.tpt.s3.mcdag.scheduling;
+package fr.tpt.s3.mcdag.scheduling.old;
 
 import java.util.Comparator;
 import java.util.Collections;
@@ -26,6 +26,7 @@ import java.util.Set;
 
 import fr.tpt.s3.mcdag.model.Vertex;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
+import fr.tpt.s3.mcdag.scheduling.SchedulingException;
 import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.model.Edge;
 import fr.tpt.s3.mcdag.util.Counters;

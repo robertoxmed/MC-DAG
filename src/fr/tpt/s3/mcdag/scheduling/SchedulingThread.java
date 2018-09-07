@@ -29,30 +29,27 @@ import fr.tpt.s3.mcdag.parser.MCParser;
  * @author roberto
  *
  */
-public class AllocationThread implements Runnable{
+public class SchedulingThread implements Runnable{
 	
 	private Set<McDAG> dags;
-	private Set<McDAG> dags2;
 	private MCParser mcp;
-	private MCParser mcp2;
 	private String inputFile;
 	private boolean outSchedFile;
 	private boolean outPRISMFile;
 	private boolean levels;
 	
 	private SingleDAG ls;
-	private LeastLaxityFirstMCSched nlvl;
-	private EarlistDeadlineFirstMCSched edf;
+	private GenericMixedCriticalityScheduler scheduler;
 	private Automata auto;
 	private boolean debug;
+	private boolean preempt;
 	
-	public AllocationThread(String iFile, boolean oSF, boolean oPF, boolean debug) {
+	public SchedulingThread(String iFile, boolean oSF, boolean oPF, boolean debug, boolean preempt) {
 		dags = new HashSet<McDAG>();
-		dags2 = new HashSet<McDAG>();
 		mcp = new MCParser(iFile, null, dags, oPF);
 		setOutPRISMFile(oPF);
-		mcp2 = new MCParser(iFile, null, dags2, oPF);
-
+		setPreempt(preempt);
+		
 		if (isOutPRISMFile()) mcp.setOutPrismFile(iFile.substring(0, iFile.lastIndexOf('.')).concat(".pm"));
 		setOutSchedFile(oSF);
 		if (isOutSchedFile()) mcp.setOutSchedFile(iFile.substring(0, iFile.lastIndexOf('.')).concat("-sched.xml"));
@@ -62,7 +59,6 @@ public class AllocationThread implements Runnable{
 	@Override
 	public void run() {
 		mcp.readXML();
-		mcp2.readXML();
 		
 		if (!isOutSchedFile())
 			System.err.println("[WARNING] No output file has been specified for the scheduling tables.");
@@ -99,24 +95,14 @@ public class AllocationThread implements Runnable{
 			}
 			
 		} else { // The model is has multiple DAGs
-			setNlvl(new LeastLaxityFirstMCSched(dags, mcp.getNbCores(), mcp.getNbLevels(), debug));
-			setEdf(new EarlistDeadlineFirstMCSched(dags2, mcp2.getNbCores(),  mcp2.getNbLevels(), debug));
-			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] N levels: "+dags.size()+" DAGs are going to be scheduled in "+mcp.getNbCores()+" cores.");
-			
+			setScheduler(new HybridMCSched(mcp.getDags(), mcp.getNbCores(), mcp.getNbLevels(), debug, isPreempt()));
 			
 			try {
-				nlvl.buildAllTables();
+				scheduler.scheduleSystem();
 			} catch (SchedulingException e) {
+				System.err.println("[ERROR] Unable to schedule the system");
 				e.printStackTrace();
-			}
-			
-//			try {
-//				edf.buildAllTables();
-//			} catch (SchedulingException e) {
-//				e.printStackTrace();
-//			}
-
-			mcp.setSched(nlvl.getSched());
+			} 
 		}
 		
 		/* =============== Write results ================ */
@@ -205,19 +191,19 @@ public class AllocationThread implements Runnable{
 		this.levels = levels;
 	}
 
-	public LeastLaxityFirstMCSched getNlvl() {
-		return nlvl;
+	public GenericMixedCriticalityScheduler getScheduler() {
+		return scheduler;
 	}
 
-	public void setNlvl(LeastLaxityFirstMCSched nlvl) {
-		this.nlvl = nlvl;
+	public void setScheduler(GenericMixedCriticalityScheduler scheduler) {
+		this.scheduler = scheduler;
 	}
 
-	public EarlistDeadlineFirstMCSched getEdf() {
-		return edf;
+	public boolean isPreempt() {
+		return preempt;
 	}
 
-	public void setEdf(EarlistDeadlineFirstMCSched edf) {
-		this.edf = edf;
+	public void setPreempt(boolean preempt) {
+		this.preempt = preempt;
 	}
 }

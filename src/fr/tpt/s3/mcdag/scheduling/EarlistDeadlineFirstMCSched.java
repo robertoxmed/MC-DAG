@@ -26,6 +26,7 @@ import java.util.Set;
 
 import fr.tpt.s3.mcdag.model.Vertex;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
+import fr.tpt.s3.mcdag.scheduling.old.AbstractMixedCriticalityScheduler;
 import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.model.Edge;
 import fr.tpt.s3.mcdag.util.Counters;

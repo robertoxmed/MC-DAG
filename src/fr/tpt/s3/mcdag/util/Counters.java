@@ -77,7 +77,6 @@ public class Counters {
 		}
 	}
 	
-	
 	private static VertexScheduling lookForInList (List<VertexScheduling> listActors, String name) {
 		for (VertexScheduling a: listActors) {
 			if (a.getName().contentEquals(name))

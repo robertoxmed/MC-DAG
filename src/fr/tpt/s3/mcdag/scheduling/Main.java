@@ -58,13 +58,13 @@ public class Main {
 		jobs.setRequired(false);
 		options.addOption(jobs);
 		
-		Option nlevels = new Option("n", "n-levels", false, "Model has N levels");
-		nlevels.setRequired(false);
-		options.addOption(nlevels);
-		
 		Option debugOpt = new Option("d", "debug", false, "Enabling debug.");
 		debugOpt.setRequired(false);
 		options.addOption(debugOpt);
+		
+		Option preemptOpt = new Option("p" , "preempt", false, "Count for preemptions.");
+		preemptOpt.setRequired(false);
+		options.addOption(preemptOpt);
 		
 		CommandLineParser parser = new DefaultParser();
 		HelpFormatter formatter = new HelpFormatter();
@@ -84,6 +84,7 @@ public class Main {
 		boolean bOutSched = cmd.hasOption("out-scheduler");
 		boolean bOutPrism = cmd.hasOption("out-prism");
 		boolean debug = cmd.hasOption("debug");
+		boolean preempt = cmd.hasOption("preempt");
 		boolean levels = cmd.hasOption("n-levels");
 		int nbFiles = inputFilePath.length;
 		
@@ -99,7 +100,7 @@ public class Main {
 		
 		/* Launch threads to solve allocation */
 		while (i_files != nbFiles) {
-			AllocationThread ft = new AllocationThread(inputFilePath[i_files], bOutSched, bOutPrism, debug);
+			SchedulingThread ft = new SchedulingThread(inputFilePath[i_files], bOutSched, bOutPrism, debug, preempt);
 			
 			ft.setLevels(levels);
 			executor.execute(ft);
