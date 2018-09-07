@@ -23,9 +23,12 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
+import fr.tpt.s3.mcdag.model.Edge;
 import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.model.Vertex;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
+import fr.tpt.s3.mcdag.util.Counters;
+import fr.tpt.s3.mcdag.util.MathMCDAG;
 
 /**
  * Generic implementation of the scheduling algorithms
@@ -35,7 +38,6 @@ import fr.tpt.s3.mcdag.model.VertexScheduling;
  */
 public abstract class GenericMixedCriticalityScheduler {
 
-	
 	// Set of MC-DAGs to schedule
 	private Set<McDAG> mcDAGs;
 	
@@ -63,9 +65,10 @@ public abstract class GenericMixedCriticalityScheduler {
 	private boolean debug;
 	
 	/*
-	 * Functions that need to be defined
+	 * SCHEDULING FUNCTIONS
 	 */
 	
+	// Functions that need to be implemented (adaptation of the scheduler)
 	/**
 	 * Function that verifies if the scheduling should continue
 	 * @return
@@ -89,16 +92,101 @@ public abstract class GenericMixedCriticalityScheduler {
 	protected abstract void sortLO (List<VertexScheduling> ready, int slot, int level);
 	
 	/*
-	 * Generic scheduling
+	 * Generic scheduling functions
 	 */
+	
+	/**
+	 * Initialize scheduling tables 
+	 */
+	protected void initTables() {
+		int[] input = new int[getMcDAGs().size()];
+		int i = 0;
+		
+		for (McDAG d : getMcDAGs()) {
+			input[i] = d.getDeadline();
+			i++;
+		}
+		
+		sethPeriod(MathMCDAG.lcm(input));
+		
+		// Init scheduling tables
+		sched = new String[getLevels()][gethPeriod()][getNbCores()];
+		
+		for (i = 0; i < getLevels(); i++) {
+			for (int j = 0; j < gethPeriod(); j++) {
+				for (int k = 0; k < getNbCores(); k++)
+					sched[i][j][k] = "-";
+			}
+		}
+		
+		if (debug) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] initTables(): Sched tables initialized!");
+		
+		// Calc number of activations
+		if (isCountPreempt()) {
+			for (McDAG d : getMcDAGs()) {
+				for (Vertex a : d.getVertices()) {
+					// Check if task runs in HI mode
+					int nbActivations = (int) (hPeriod / d.getDeadline());
+					if (a.getWcet(1) != 0)
+						activations = activations + nbActivations * d.getLevels();
+					else
+						activations = activations + nbActivations;
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Inits remaining time for tasks
+	 */
+	private void initRemainingTimes () {
+		remainingTime = new int[getLevels()][getMcDAGs().size()][];
+		
+		// Init remaining time for each DAG
+		for (McDAG d : getMcDAGs()) {
+			for (int i = 0; i < getLevels(); i++)
+				remainingTime[i][d.getId()] = new int[d.getVertices().size()];
+		}
+
+		for (int i = 0; i < getLevels(); i++) {
+			for (McDAG d : getMcDAGs()) {
+				for (Vertex a : d.getVertices())
+					remainingTime[i][d.getId()][a.getId()] = a.getWcet(i);
+			}
+		}
+	}
+	
 	
 	/**
 	 * Functions that adds new jobs when task have finished their execution
 	 * @param ready
 	 * @param level
 	 */
-	protected void checkJobActivations (List<VertexScheduling> ready, int level) {
+	protected void checkJobActivations (List<VertexScheduling> ready, List<VertexScheduling> scheduled, int level) {
+		final boolean forward = level == 0;
 		
+		for (VertexScheduling v : scheduled) {
+			if (forward) {
+				for (Edge e : forward ? v.getSndEdges() : v.getRcvEdges()) {
+					VertexScheduling connectedVertex = (VertexScheduling) (forward ? e.getDest() : e.getSrc());
+					boolean add = true;
+					
+					for (Edge e2 : forward ? connectedVertex.getRcvEdges() : connectedVertex.getSndEdges()) {
+						VertexScheduling checkedVertex = (VertexScheduling) (forward ? e2.getSrc() : e2.getDest());
+						
+						if ((forward || checkedVertex.getWcet(level) != 0) && !scheduled.contains(connectedVertex)) {
+							add = false;
+							break;
+						}
+					}
+					
+					if (add && !ready.contains(connectedVertex)
+							&& remainingTime[level][connectedVertex.getGraphId()][connectedVertex.getId()] != 0) {
+						ready.add(connectedVertex);
+					}
+				}
+			}
+		}
 	}
 	
 	/**
@@ -107,8 +195,26 @@ public abstract class GenericMixedCriticalityScheduler {
 	 * @param slot
 	 * @param level
 	 */
-	protected void checkDagActivations (List<VertexScheduling> ready, int slot, int level) {
-		
+	protected void checkDagActivations (List<VertexScheduling> ready, List<VertexScheduling> scheduled, int slot, int level) {		
+		for (McDAG d : getMcDAGs()) {
+			
+			if (slot % d.getDeadline() == 0) {
+				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] checkDAGActivation(): DAG (id. "+d.getId()+") activation at slot "+slot);
+				
+				for (Vertex v : d.getVertices()) {
+					// Remove nodes from the scheduled list
+					scheduled.remove(v);
+					
+					remainingTime[level][((VertexScheduling)v).getGraphId()][v.getId()] = v.getWcet(level);
+					
+					if (level >= 1 && v.isSinkinL(level))
+						ready.add((VertexScheduling) v);
+					else if (level == 0 && v.isSourceinL(level))
+						ready.add((VertexScheduling) v);
+
+				}
+			}
+		}
 	}
 	
 	/**
@@ -185,16 +291,16 @@ public abstract class GenericMixedCriticalityScheduler {
 			
 			// A job finished its execution -> new tasks can be activated
 			if (jobFinished)
-				checkJobActivations(ready, level);
+				checkJobActivations(ready, scheduled, level);
 			
 			if (forward) {
 				if (timeIndex != hPeriod - 1) {
-					checkDagActivations(ready, timeIndex + 1, level);
+					checkDagActivations(ready, scheduled, timeIndex + 1, level);
 					sortLO(ready, timeIndex + 1, level);
 				}
 			} else {
 				if (timeIndex !=  0) {
-					checkDagActivations(ready, timeIndex, level);
+					checkDagActivations(ready, scheduled, timeIndex, level);
 					sortHI(ready, gethPeriod() - timeIndex, level);
 				}
 			}
@@ -209,7 +315,46 @@ public abstract class GenericMixedCriticalityScheduler {
 	 * @throws SchedulingException
 	 */
 	protected void scheduleSystem () throws SchedulingException {
+		initTables();
+		initRemainingTimes();
 		
+		// Start by the highest tables first
+		for (int i = getLevels() - 1; i >= 0; i--)
+			buildTable(i);
+		
+		if (isDebug()) printTables();
+		
+		// Count preemption if the boolean is true
+		if (isCountPreempt()) {
+			for (McDAG d : getMcDAGs()) {
+				for (Vertex v : d.getVertices())
+					preemptions.put((VertexScheduling) v, 0);
+			}
+			Counters.countPreemptions(sched, preemptions, getLevels(), hPeriod, nbCores);
+		}
+	}
+	
+	/*
+	 * DEBUG FUNCTIONS
+	 */
+	
+	/**
+	 * Prints the scheduling tables
+	 */
+	public void printTables () {
+		for (int i = getLevels() - 1; i >= 0; i--) {
+			System.out.println("Scheduling table in mode "+ i+":");
+			for (int c = 0; c < getNbCores(); c++) {
+				for (int s = 0; s < gethPeriod(); s++) {
+					if (sched[i][s][c] != null)
+						System.out.print(sched[i][s][c]+" | ");
+					else
+						System.out.print("-- | ");
+				}
+				System.out.print("\n");
+			}
+		}
+		System.out.print("\n");
 	}
 
 	/*
