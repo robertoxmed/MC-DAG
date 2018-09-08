@@ -194,26 +194,29 @@ public abstract class GenericMixedCriticalityScheduler {
 		final boolean forward = level == 0;
 		
 		for (VertexScheduling v : scheduled) {
-			if (forward) {
-				for (Edge e : forward ? v.getSndEdges() : v.getRcvEdges()) {
-					VertexScheduling connectedVertex = (VertexScheduling) (forward ? e.getDest() : e.getSrc());
-					boolean add = true;
+			
+			for (Edge e : forward ? v.getSndEdges() : v.getRcvEdges()) {
+				VertexScheduling connectedVertex = (VertexScheduling) (forward ? e.getDest() : e.getSrc());
+				boolean add = true;
 					
-					for (Edge e2 : forward ? connectedVertex.getRcvEdges() : connectedVertex.getSndEdges()) {
-						VertexScheduling checkedVertex = (VertexScheduling) (forward ? e2.getSrc() : e2.getDest());
+				for (Edge e2 : forward ? connectedVertex.getRcvEdges() : connectedVertex.getSndEdges()) {
+					VertexScheduling checkedVertex = (VertexScheduling) (forward ? e2.getSrc() : e2.getDest());
 						
-						if ((forward || checkedVertex.getWcet(level) != 0) && !scheduled.contains(connectedVertex)) {
-							add = false;
-							break;
-						}
-					}
 					
-					if (add && !ready.contains(connectedVertex)
-							&& remainingTime[level][connectedVertex.getGraphId()][connectedVertex.getId()] != 0) {
-						ready.add(connectedVertex);
+					if (forward && !scheduled.contains(checkedVertex)) {
+						add = false;
+						break;
+					} else if (!forward && checkedVertex.getWcet(level) != 0 && !scheduled.contains(checkedVertex)) {
+						add = false;
+						break;
 					}
 				}
-			}
+					
+				if (add && !ready.contains(connectedVertex)
+						&& remainingTime[level][connectedVertex.getGraphId()][connectedVertex.getId()] != 0) {
+					ready.add(connectedVertex);
+				}
+			} 
 		}
 	}
 	
@@ -257,8 +260,13 @@ public abstract class GenericMixedCriticalityScheduler {
 		// Add all sink nodes
 		for (McDAG d : getMcDAGs()) {
 			for (Vertex v : d.getVertices()) {
-				if (v.isSinkinL(level))
-					ready.add((VertexScheduling) v);
+				if (forward) {
+					if (v.isSourceinL(level))
+						ready.add((VertexScheduling) v);
+				} else {
+					if (v.isSourceinLReverse(level)) 
+						ready.add((VertexScheduling) v);
+				}
 			}
 		}
 		
@@ -293,7 +301,7 @@ public abstract class GenericMixedCriticalityScheduler {
 				// Find next ready tasks that is not delayed
 				boolean notDelayed = false;
 				
-				while (!notDelayed) {
+				while (!notDelayed && lit.hasNext()) {
 					if (lit.hasNext()) {
 						VertexScheduling v = lit.next();
 					

@@ -177,6 +177,22 @@ public abstract class Vertex {
 	}
 	
 	/**
+	 * Returns true if the vertex is a source in L mode on the dual
+	 * @param l
+	 * @return
+	 */
+	public boolean isSourceinLReverse (int l) {
+		if (this.getWcet(l) == 0)
+			return false;
+		
+		for (Edge e : this.getSndEdges()) {
+			if (e.getDest().getWcet(l) != 0)
+				return false;
+		}
+		return true;
+	}
+	
+	/**
 	 * Returns true if the actor is a sink in L mode
 	 * @param l
 	 * @return

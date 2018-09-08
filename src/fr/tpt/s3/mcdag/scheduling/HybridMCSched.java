@@ -58,13 +58,13 @@ public class HybridMCSched extends GenericMixedCriticalityScheduler {
 	protected void calcDeadlineReverse (VertexScheduling a, int level, int deadline) {
 		int ret = Integer.MAX_VALUE;
 		
-		if (a.isSourceinL(level)) {
+		if (a.isSourceinLReverse(level)) {
 			ret = deadline;
 		} else {
 			int test = Integer.MAX_VALUE;
 			
-			for (Edge e : a.getRcvEdges()) {
-				test = ((VertexScheduling) e.getSrc()).getDeadlines()[level] - e.getSrc().getWcet(level);
+			for (Edge e : a.getSndEdges()) {
+				test = ((VertexScheduling) e.getDest()).getDeadlines()[level] - e.getDest().getWcet(level);
 				if (test < ret)
 					ret = test;
 			}
@@ -107,8 +107,9 @@ public class HybridMCSched extends GenericMixedCriticalityScheduler {
 			
 			// Calculate sources in i mode
 			for (Vertex v : d.getVertices()) {
-				if (v.isSourceinL(i))
+				if (v.isSourceinLReverse(i)) {
 					toVisit.add((VertexScheduling) v);
+				}
 			}
 			
 			// Visit all nodes iteratively
@@ -118,11 +119,11 @@ public class HybridMCSched extends GenericMixedCriticalityScheduler {
 				calcDeadlineReverse(a, i, d.getDeadline());
 				a.getVisitedL()[i] = true;
 				
-				for (Edge e: a.getSndEdges()) {
-					if (e.getDest().getWcet(i) != 0 && !((VertexScheduling) e.getDest()).getVisitedL()[i]
-							&& predVisitedInLevel((VertexScheduling) e.getDest(), i)
-							&& !toVisit.contains((VertexScheduling) e.getDest())) {
-						toVisit.add((VertexScheduling) e.getDest());
+				for (Edge e: a.getRcvEdges()) {
+					if (e.getSrc().getWcet(i) != 0 && !((VertexScheduling) e.getSrc()).getVisitedL()[i]
+							&& succVisitedInLevel((VertexScheduling) e.getSrc(), i)
+							&& !toVisit.contains((VertexScheduling) e.getSrc())) {
+						toVisit.add((VertexScheduling) e.getSrc());
 					}
 				}
 				toVisit.remove(0);
@@ -249,10 +250,10 @@ public class HybridMCSched extends GenericMixedCriticalityScheduler {
 			relatSlot = slot;
 		
 		sumSlotsLeft = (gethPeriod() - relatSlot) * getNbCores();
-		if (sumSlotsLeft < sumRemainTimes) {
+		/*if (sumSlotsLeft < sumRemainTimes) {
 			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): Not enough slots left");
 			return false;
-		}
+		}*/
 		
 		return true;
 	}
@@ -276,6 +277,9 @@ public class HybridMCSched extends GenericMixedCriticalityScheduler {
 					v.setWeightInL(v.getDeadlines()[level], level);
 					v.setDelayed(false);
 				}
+			} else {
+				v.setWeightInL(v.getDeadlines()[level], level);
+				v.setDelayed(false);
 			}
 		}
 		
