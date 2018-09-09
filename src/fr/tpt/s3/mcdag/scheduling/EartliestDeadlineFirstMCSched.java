@@ -26,13 +26,13 @@ import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
 
 /**
- * Least-laxity first adaptation for the MC meta-heuristic
+ * Adaptation of the EDF scheduler
  * @author Roberto Medina
  *
  */
-public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
+public class EartliestDeadlineFirstMCSched extends GlobalGenericMCScheduler {
 	
-	public LeastLaxityFirstMCSched (Set<McDAG> DAGs, int cores, int levels, boolean preemption, boolean debug) {
+	public EartliestDeadlineFirstMCSched(Set<McDAG> DAGs, int cores, int levels, boolean preemption, boolean debug) {
 		setMcDAGs(DAGs);
 		setNbCores(cores);
 		setLevels(levels);
@@ -47,32 +47,23 @@ public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 		if (isCountPreempt())
 			setPreemptions(new Hashtable<VertexScheduling, Integer>());
 	}
-	
-	/**
-	 * Function that verifies if the scheduling tables can still be obtained 
-	 */
+
 	@Override
 	protected boolean verifyConstraints(List<VertexScheduling> ready, int slot, int level) {
 		int sumRemainTimes = 0;
 		int sumSlotsLeft = 0;
-		int sumZeroLax = 0;
 		
 		for (VertexScheduling v : ready) {
-			// Task has negative laxity -> non schedulable system
-			if (v.getWeights()[level] < 0) {
-				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): negative laxity on task "+v.getName());
-				return false;
-			} else if (v.getWeights()[level] == 0) {
-				sumZeroLax += 1;
-			}
+			// Task is activated and its deadline has passed -> non schedulable system
+			int relatSlot = slot % v.getGraphDead();
+			if (level >= 1)
+				relatSlot =  (gethPeriod() - slot - 1) % v.getGraphDead();
 			
+			if (relatSlot > v.getGraphDead()) {
+				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): deadline not respected for "+v.getName());
+				return false;
+			}
 			sumRemainTimes += getRemainingTime()[level][v.getGraphId()][v.getId()];
-		}
-		
-		// More than m zero laxity tasks
-		if (sumZeroLax > getNbCores()) {
-			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): more than m zero laxity tasks");
-			return false;
 		}
 		
 		// Get the sum of remaining slots
@@ -93,63 +84,63 @@ public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 
 	@Override
 	protected void sortHI(List<VertexScheduling> ready, int slot, int level) {
+		// Check if tasks need to be delayed first
 		for (VertexScheduling v : ready) {
-			int relatSlot = slot % v.getGraphDead();
-			int dId = v.getGraphId();
-			
-			// It's not the highest criticality level -> perform checks
-			if (level != getLevels() - 1 && v.getWcet(level + 1) != 0) {
-				int deltaI = v.getWcet(level + 1) - v.getWcet(level);
-				//Check if in the higher table the Ci(L+1) - Ci(L) has been allocated
-				if (scheduledUntilTinLreverse(v, slot + 1, level + 1) <= deltaI) {
-					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+v.getName()+" needs to be delayed at slot @t = "+slot);
+			if (level != getLevels() - 1) {
+				int delta = v.getWcet(level + 1) - v.getWcet(level);
+				
+				if (scheduledUntilTinLreverse(v, slot, level + 1) <= delta) {
+					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] sortHI(): Task "+v.getName()+" needs to be delayed at slot @t = "+slot);
 					v.setWeightInL(Integer.MAX_VALUE, level);
+					v.setDelayed(true);
 				} else {
-					v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
+					v.setWeightInL(v.getDeadlines()[level], level);
+					v.setDelayed(false);
 				}
 			} else {
-				v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
+				v.setWeightInL(v.getDeadlines()[level], level);
+				v.setDelayed(false);
 			}
 		}
-		// Sort the ready list
+		
+		// Order the list accordingly
 		Collections.sort(ready, new Comparator<VertexScheduling>() {
 			@Override
 			public int compare(VertexScheduling o1, VertexScheduling o2) {
 				if (o1.getWeights()[level] - o2.getWeights()[level] != 0)
 					return o1.getWeights()[level] - o2.getWeights()[level];
 				else
-					return o2.getId() - o1.getId();
+					return o1.getId() - o2.getId();
 			}
 		});
 	}
 
 	@Override
 	protected void sortLO(List<VertexScheduling> ready, int slot, int level) {
+		// If it's a HI task verify that mode transition is respected
 		for (VertexScheduling v : ready) {
-			int relatSlot = slot % v.getGraphDead();
-			int dId = v.getGraphId();
+			int dagId = v.getGraphId();
 			
-			// If it's a HI task
 			if (v.getWcet(level + 1) > 0) {
 				// Promotion needed for the task
-				if ((v.getWcet(level) - getRemainingTime()[level][dId][v.getId()]) - scheduledUntilTinL(v, slot, level + 1) < 0) {
+				if ((v.getWcet(level) - getRemainingTime()[level][dagId][v.getId()]) - scheduledUntilTinL(v, slot, level + 1) < 0) {
 					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+v.getName()+" at slot @t = "+slot);
 					v.setWeightInL(0, level);
 				} else {
-					v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
+					v.setWeightInL(v.getDeadlines()[level], level);
 				}
 			} else {
-				v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
+				v.setWeightInL(v.getDeadlines()[level], level);
 			}
 		}
-		// Sort the list
+		// Sort the ready list
 		Collections.sort(ready, new Comparator<VertexScheduling>() {
 			@Override
-			public int compare (VertexScheduling o1, VertexScheduling o2) {
-				if (o1.getWeights()[0] - o2.getWeights()[0] != 0)
-					return o1.getWeights()[0] - o2.getWeights()[0];
+			public int compare(VertexScheduling arg0, VertexScheduling arg1) {
+				if (arg0.getWeights()[0] - arg1.getWeights()[0] != 0)
+					return arg0.getWeights()[0] - arg1.getWeights()[0];
 				else
-					return o1.getId() - o2.getId();
+					return arg0.getId() - arg1.getId();
 			}
 		});
 	}

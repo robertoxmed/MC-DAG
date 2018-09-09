@@ -37,7 +37,7 @@ import fr.tpt.s3.mcdag.util.MathMCDAG;
  * @author roberto
  *
  */
-public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalityScheduler {
+public class EDFOld extends AbstractMixedCriticalityScheduler {
 	
 	// Set of MC-DAGs to be scheduled
 	private Set<McDAG> mcDags;
@@ -71,7 +71,7 @@ public class EarlistDeadlineFirstMCSched extends AbstractMixedCriticalitySchedul
 	 * @param levels
 	 * @param debug
 	 */
-	public EarlistDeadlineFirstMCSched (Set<McDAG> dags, int cores, int levels, boolean debug) {
+	public EDFOld (Set<McDAG> dags, int cores, int levels, boolean debug) {
 		setMcDags(dags);
 		setNbCores(cores);
 		setLevels(levels);

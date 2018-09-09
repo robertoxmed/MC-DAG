@@ -30,7 +30,7 @@ import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.parser.MCParser;
 import fr.tpt.s3.mcdag.scheduling.FederatedMCSched;
 import fr.tpt.s3.mcdag.scheduling.SchedulingException;
-import fr.tpt.s3.mcdag.scheduling.old.EarlistDeadlineFirstMCSched;
+import fr.tpt.s3.mcdag.scheduling.old.EDFOld;
 import fr.tpt.s3.mcdag.scheduling.old.LLFOld;
 
 public class BenchThread implements Runnable {
@@ -43,7 +43,7 @@ public class BenchThread implements Runnable {
 	private int nbCores;
 	private FederatedMCSched fedScheduler;
 	private LLFOld nlvlScheduler;
-	private EarlistDeadlineFirstMCSched edfScheduler;
+	private EDFOld edfScheduler;
 	
 	public int getNbCores() {
 		return nbCores;
@@ -152,7 +152,7 @@ public class BenchThread implements Runnable {
 		// Test edf
 		// Make another copy of the system instance
 		Set<McDAG> edfDAGs = new HashSet<McDAG>(dags);
-		edfScheduler = new EarlistDeadlineFirstMCSched(edfDAGs, nbCores, 2, debug);
+		edfScheduler = new EDFOld(edfDAGs, nbCores, 2, debug);
 		
 		try {
 			resetVisited(dags);

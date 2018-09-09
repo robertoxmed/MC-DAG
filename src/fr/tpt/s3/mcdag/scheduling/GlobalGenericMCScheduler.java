@@ -16,6 +16,7 @@
  *******************************************************************************/
 package fr.tpt.s3.mcdag.scheduling;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Hashtable;
 import java.util.LinkedList;
@@ -94,6 +95,172 @@ public abstract class GlobalGenericMCScheduler {
 	/*
 	 * Generic scheduling functions
 	 */
+	
+	/**
+	 * Calculates deadline of an actor by considering the dual of the graph
+	 * @param a
+	 * @param level
+	 * @param deadline
+	 */
+	protected void calcDeadlineReverse (VertexScheduling a, int level, int deadline) {
+		int ret = Integer.MAX_VALUE;
+		
+		if (a.isSourceinL(level)) {
+			ret = deadline;
+		} else {
+			int test = Integer.MAX_VALUE;
+			
+			for (Edge e : a.getRcvEdges()) {
+				test = ((VertexScheduling) e.getSrc()).getDeadlines()[level] - e.getSrc().getWcet(level);
+				if (test < ret)
+					ret = test;
+			}
+		}
+		a.setDeadlineInL(ret, level);
+	}
+	
+	/**
+	 * Calculates the deadline of an actor, successors should be have their value assigned
+	 * first
+	 * @param a
+	 * @param level
+	 * @param deadline
+	 */
+	protected void calcDeadline (VertexScheduling a, int level, int deadline) {
+		int ret = Integer.MAX_VALUE;
+		
+		if (a.isSinkinL(level)) {
+			ret = deadline;
+		} else {
+			int test = Integer.MAX_VALUE;
+			
+			for (Edge e : a.getSndEdges()) {
+				test = ((VertexScheduling) e.getDest()).getDeadlines()[level] - e.getDest().getWcet(level);
+				if (test < ret)
+					ret = test;
+			}
+		}
+		a.setDeadlineInL(ret, level);
+	}
+	
+	/**
+	 * Function that calculates deadlines in all criticality modes for DAG
+	 * @param d
+	 */
+	protected void calcDedlines (McDAG d) {
+		// Start by calculating deadlines in HI modes
+		for (int i = 1; i < getLevels(); i++) {
+			ArrayList<VertexScheduling> toVisit = new ArrayList<VertexScheduling>();
+			
+			// Calculate sources in i mode
+			for (Vertex v : d.getVertices()) {
+				if (v.isSourceinL(i)) {
+					toVisit.add((VertexScheduling) v);
+				}
+			}
+			
+			// Visit all nodes iteratively
+			while (!toVisit.isEmpty()) {
+				VertexScheduling a = toVisit.get(0);
+				
+				calcDeadlineReverse(a, i, d.getDeadline());
+				a.getVisitedL()[i] = true;
+				
+				for (Edge e: a.getSndEdges()) {
+					if (e.getDest().getWcet(i) != 0 && !((VertexScheduling) e.getDest()).getVisitedL()[i]
+							&& predVisitedInLevel((VertexScheduling) e.getDest(), i)
+							&& !toVisit.contains((VertexScheduling) e.getDest())) {
+						toVisit.add((VertexScheduling) e.getDest());
+					}
+				}
+				toVisit.remove(0);
+			}
+		}
+		
+		// Calculate deadlines in LO mode
+		ArrayList<VertexScheduling> toVisit = new ArrayList<VertexScheduling>();
+		// Calculate sources in i mode
+		for (Vertex a : d.getVertices()) {
+			if (a.isSinkinL(0))
+				toVisit.add((VertexScheduling) a);
+		}
+					
+		// Visit all nodes iteratively
+		while (!toVisit.isEmpty()) {
+			VertexScheduling a = toVisit.get(0);
+						
+			calcDeadline(a, 0, d.getDeadline());
+			a.getVisitedL()[0] = true;
+						
+			for (Edge e: a.getRcvEdges()) {
+				if (!((VertexScheduling) e.getSrc()).getVisitedL()[0]
+						&& succVisitedInLevel((VertexScheduling) e.getSrc(), 0)
+						&& !toVisit.contains((VertexScheduling) e.getSrc())) {
+					toVisit.add((VertexScheduling) e.getSrc());
+				}
+			}
+			toVisit.remove(0);
+		}
+	}
+	
+	/**
+	 * Checks the amount of execution time that has been allocated to a vertex
+	 * @param a
+	 * @param t
+	 * @param l
+	 * @return
+	 */
+	protected int scheduledUntilTinL (VertexScheduling a, int t, int l) {
+		int ret = 0;
+		int start = (int)(t / a.getGraphDead()) * a.getGraphDead();
+		
+		for (int i = start; i <= t; i++) {
+			for (int c = 0; c < getNbCores(); c++) {
+				if (getSched()[l][i][c] !=  null) {
+					if (getSched()[l][i][c].contentEquals(a.getName()))
+						ret++;
+				}
+			}
+		}
+		
+		return ret;
+	}
+
+	/**
+	 * Checks how many slots have been allocated for a in l mode in reverse
+	 * from the deadline until the current slot
+	 * @param a
+	 * @param t
+	 * @param l
+	 * @return
+	 */
+	protected int scheduledUntilTinLreverse (VertexScheduling a, int t, int l) {
+		int ret = 0;
+		int end = 0;
+		
+		int realSlot = gethPeriod() - t;
+		
+		if (t == 0)
+			return 0;
+		
+		if ((int)(realSlot/a.getGraphDead()) <= 0 || realSlot % a.getGraphDead() == 0) {
+			end = a.getGraphDead() - 1;
+		} else {
+			end = ((int)(realSlot / a.getGraphDead()) + 1)  * a.getGraphDead() - 1;
+		}
+		
+		//System.out.println("\t\t\t [schedut] task "+a.getName()+" end "+end+" slot "+realSlot);
+		
+		for (int i = end; i > realSlot; i--) {
+			for (int c = 0; c < getNbCores(); c++) {
+				if (getSched()[l][i][c] !=  null) {
+					if (getSched()[l][i][c].contentEquals(a.getName()))
+						ret++;
+				}
+			}
+		}
+		return ret;
+	}
 	
 	/**
 	 * Initialize scheduling tables 
@@ -342,6 +509,11 @@ public abstract class GlobalGenericMCScheduler {
 			
 			jobFinished = false;
 			lit = ready.listIterator();	
+		}
+		// Ready list is not empty
+		if (!ready.isEmpty()) {
+			SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] buildTable("+level+"): Ready list not empty.");
+			throw se;
 		}
 	}
 	
