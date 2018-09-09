@@ -39,7 +39,7 @@ public class SchedulingThread implements Runnable{
 	private boolean levels;
 	
 	private SingleDAG ls;
-	private GenericMixedCriticalityScheduler scheduler;
+	private GlobalGenericMCScheduler scheduler;
 	private Automata auto;
 	private boolean debug;
 	private boolean preempt;
@@ -191,11 +191,11 @@ public class SchedulingThread implements Runnable{
 		this.levels = levels;
 	}
 
-	public GenericMixedCriticalityScheduler getScheduler() {
+	public GlobalGenericMCScheduler getScheduler() {
 		return scheduler;
 	}
 
-	public void setScheduler(GenericMixedCriticalityScheduler scheduler) {
+	public void setScheduler(GlobalGenericMCScheduler scheduler) {
 		this.scheduler = scheduler;
 	}
 

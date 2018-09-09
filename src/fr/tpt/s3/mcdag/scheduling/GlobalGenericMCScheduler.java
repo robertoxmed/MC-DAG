@@ -36,7 +36,7 @@ import fr.tpt.s3.mcdag.util.MathMCDAG;
  * @author roberto
  *
  */
-public abstract class GenericMixedCriticalityScheduler {
+public abstract class GlobalGenericMCScheduler {
 
 	// Set of MC-DAGs to schedule
 	private Set<McDAG> mcDAGs;
@@ -292,7 +292,7 @@ public abstract class GenericMixedCriticalityScheduler {
 			}
 			
 			if (!verifyConstraints(ready, timeIndex, level)) {
-				SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] buildHITable("+level+"): Ready list not empty.");
+				SchedulingException se = new SchedulingException("[ERROR "+Thread.currentThread().getName()+"] buildTable("+level+"): Ready list not empty.");
 				throw se;
 			}
 			
@@ -376,9 +376,27 @@ public abstract class GenericMixedCriticalityScheduler {
 	 */
 	
 	/**
+	 * Prints LFTs for all DAGs and all nodes in all the levels
+	 * @param d
+	 */
+	protected void printDeadlines (McDAG d) {
+		System.out.println("[DEBUG "+Thread.currentThread().getName()+"] DAG "+d.getId()+" printing LFTs");
+		
+		for (Vertex a : d.getVertices()) {
+			System.out.print("[DEBUG "+Thread.currentThread().getName()+"]\t Actor "+a.getName()+", ");
+			for (int i = 0; i < getLevels(); i++) {
+				if (((VertexScheduling)a).getDeadlines()[i] != Integer.MAX_VALUE)
+					System.out.print(((VertexScheduling)a).getDeadlines()[i]);
+				System.out.print(" ");
+			}
+			System.out.println("");
+		}
+	}
+	
+	/**
 	 * Prints the scheduling tables
 	 */
-	public void printTables () {
+	protected void printTables () {
 		for (int i = getLevels() - 1; i >= 0; i--) {
 			System.out.println("Scheduling table in mode "+ i+":");
 			for (int c = 0; c < getNbCores(); c++) {
@@ -397,7 +415,7 @@ public abstract class GenericMixedCriticalityScheduler {
 	/**
 	 * Prints preemption statistics
 	 */
-	public void printPreempts () {
+	protected void printPreempts () {
 		int total = 0;
 		System.out.println("[DEBUG "+Thread.currentThread().getName()+"] Printing preemption data...");
 

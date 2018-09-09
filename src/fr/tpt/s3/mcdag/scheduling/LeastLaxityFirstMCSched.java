@@ -29,21 +29,13 @@ import fr.tpt.s3.mcdag.model.Vertex;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
 
 /**
- * Hybrid MC-DAG scheduler does EDF in HI modes & LLF in LO mode
+ * Least-laxity first adaptation for the MC meta-heuristic
  * @author Roberto Medina
  *
  */
-public class HybridMCSched extends GlobalGenericMCScheduler {
+public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 	
-	/**
-	 * Constructor of the Hybrid scheduler
-	 * @param DAGs
-	 * @param cores
-	 * @param levels
-	 * @param preemption
-	 * @param debug
-	 */
-	public HybridMCSched (Set<McDAG> DAGs, int cores, int levels, boolean debug, boolean preemption) {
+	public LeastLaxityFirstMCSched (Set<McDAG> DAGs, int cores, int levels, boolean preemption, boolean debug) {
 		setMcDAGs(DAGs);
 		setNbCores(cores);
 		setLevels(levels);
@@ -268,52 +260,47 @@ public class HybridMCSched extends GlobalGenericMCScheduler {
 		return true;
 	}
 
-	/**
-	 * Function that sorts the HI criticality tasks
-	 * the priority ordering used is the deadline
-	 */
 	@Override
 	protected void sortHI(List<VertexScheduling> ready, int slot, int level) {
-		// Check if tasks need to be delayed first
 		for (VertexScheduling v : ready) {
-			if (level != getLevels() - 1) {
-				int delta = v.getWcet(level + 1) - v.getWcet(level);
-				
-				if (scheduledUntilTinLreverse(v, slot, level + 1) <= delta) {
-					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] sortHI(): Task "+v.getName()+" needs to be delayed at slot @t = "+slot);
-					v.setWeightInL(Integer.MAX_VALUE, level);
-					v.setDelayed(true);
+			int relatSlot = slot % v.getGraphDead();
+			int dId = v.getGraphId();
+			
+			// The laxity has to be calculated for a HI mode
+			if (level >= 1) {
+
+				// It's not the highest criticality level -> perform checks
+				if (level != getLevels() - 1 && v.getWcet(level + 1) != 0) {
+					int deltaI = v.getWcet(level + 1) - v.getWcet(level);
+					//Check if in the higher table the Ci(L+1) - Ci(L) has been allocated
+					if (scheduledUntilTinLreverse(v, slot + 1, level + 1) <= deltaI) {
+						if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+v.getName()+" needs to be delayed at slot @t = "+slot);
+						v.setWeightInL(Integer.MAX_VALUE, level);
+					} else {
+						v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
+					}
 				} else {
-					v.setWeightInL(v.getDeadlines()[level], level);
-					v.setDelayed(false);
+					v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
 				}
-			} else {
-				v.setWeightInL(v.getDeadlines()[level], level);
-				v.setDelayed(false);
 			}
 		}
-		
-		// Order the list accordingly
+		// Sort the ready list
 		Collections.sort(ready, new Comparator<VertexScheduling>() {
 			@Override
 			public int compare(VertexScheduling o1, VertexScheduling o2) {
 				if (o1.getWeights()[level] - o2.getWeights()[level] != 0)
 					return o1.getWeights()[level] - o2.getWeights()[level];
 				else
-					return o1.getId() - o2.getId();
+					return o2.getId() - o1.getId();
 			}
 		});
 	}
 
-	/**
-	 * Functions that sorts the ready list in the lower criticality mode
-	 * it uses LLF
-	 */
 	@Override
 	protected void sortLO(List<VertexScheduling> ready, int slot, int level) {
 		for (VertexScheduling v : ready) {
-			int dId = v.getGraphId();
 			int relatSlot = slot % v.getGraphDead();
+			int dId = v.getGraphId();
 			
 			// If it's a HI task
 			if (v.getWcet(level + 1) > 0) {
@@ -328,7 +315,7 @@ public class HybridMCSched extends GlobalGenericMCScheduler {
 				v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
 			}
 		}
-		// Order the list
+		// Sort the list
 		Collections.sort(ready, new Comparator<VertexScheduling>() {
 			@Override
 			public int compare (VertexScheduling o1, VertexScheduling o2) {
@@ -338,7 +325,6 @@ public class HybridMCSched extends GlobalGenericMCScheduler {
 					return o1.getId() - o2.getId();
 			}
 		});
-	
 	}
 
 }
