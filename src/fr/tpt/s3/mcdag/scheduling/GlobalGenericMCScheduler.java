@@ -521,7 +521,7 @@ public abstract class GlobalGenericMCScheduler {
 	 * Function that schedules the system in all the criticality modes
 	 * @throws SchedulingException
 	 */
-	protected void scheduleSystem () throws SchedulingException {
+	public void scheduleSystem () throws SchedulingException {
 		initTables();
 		initRemainingTimes();
 		

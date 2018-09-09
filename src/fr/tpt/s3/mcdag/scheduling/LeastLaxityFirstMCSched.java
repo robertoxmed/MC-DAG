@@ -32,7 +32,7 @@ import fr.tpt.s3.mcdag.model.VertexScheduling;
  */
 public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 	
-	public LeastLaxityFirstMCSched (Set<McDAG> DAGs, int cores, int levels, boolean preemption, boolean debug) {
+	public LeastLaxityFirstMCSched (Set<McDAG> DAGs, int cores, int levels, boolean debug, boolean preemption) {
 		setMcDAGs(DAGs);
 		setNbCores(cores);
 		setLevels(levels);

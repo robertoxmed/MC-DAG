@@ -28,10 +28,12 @@ import fr.tpt.s3.mcdag.model.Vertex;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
 import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.parser.MCParser;
+import fr.tpt.s3.mcdag.scheduling.EartliestDeadlineFirstMCSched;
 import fr.tpt.s3.mcdag.scheduling.FederatedMCSched;
+import fr.tpt.s3.mcdag.scheduling.GlobalGenericMCScheduler;
+import fr.tpt.s3.mcdag.scheduling.HybridMCSched;
+import fr.tpt.s3.mcdag.scheduling.LeastLaxityFirstMCSched;
 import fr.tpt.s3.mcdag.scheduling.SchedulingException;
-import fr.tpt.s3.mcdag.scheduling.old.EDFOld;
-import fr.tpt.s3.mcdag.scheduling.old.LLFOld;
 
 public class BenchThread implements Runnable {
 	
@@ -42,8 +44,9 @@ public class BenchThread implements Runnable {
 	private boolean debug;
 	private int nbCores;
 	private FederatedMCSched fedScheduler;
-	private LLFOld nlvlScheduler;
-	private EDFOld edfScheduler;
+	private GlobalGenericMCScheduler llf;
+	private GlobalGenericMCScheduler edf;
+	private GlobalGenericMCScheduler hybrid;
 	
 	public int getNbCores() {
 		return nbCores;
@@ -56,6 +59,7 @@ public class BenchThread implements Runnable {
 	private boolean schedFede;
 	private boolean schedLax;
 	private boolean schedEdf;
+	private boolean schedHybrid;
 	
 	public BenchThread (String input, String output, int cores, boolean debug) {
 		setInputFile(input);
@@ -66,6 +70,7 @@ public class BenchThread implements Runnable {
 		setSchedFede(true);
 		setSchedLax(true);
 		setSchedEdf(true);
+		setSchedHybrid(true);
 		mcp = new MCParser(inputFile, null, dags, false);
 	}
 	
@@ -81,12 +86,15 @@ public class BenchThread implements Runnable {
 		int outBFSched = 0;
 		int outBLSched = 0;
 		int outBEDFSched = 0;
+		int outBHybridSched = 0;
 		int outPreemptsFed = 0;
 		int outPreemptsLax = 0;
 		int outPreemptsEdf = 0;
+		int outPreemptsHybrid = 0;
 		int outActFed = 0;
 		int outActLax = 0;
 		int outActEdf = 0;
+		int outActHybrid = 0;
 		
 		if (isSchedFede())
 			outBFSched = 1;
@@ -96,7 +104,9 @@ public class BenchThread implements Runnable {
 		
 		if (isSchedEdf())
 			outBEDFSched = 1;
-
+		
+		if (isSchedHybrid())
+			outBHybridSched = 1;
 		
 		if (isSchedEdf() && isSchedFede() && isSchedLax()) {
 			Hashtable<VertexScheduling, Integer> pFed = fedScheduler.getPreempts();
@@ -104,15 +114,20 @@ public class BenchThread implements Runnable {
 				outPreemptsFed += pFed.get(task);
 			outActFed = fedScheduler.getActivations();
 			
-			Hashtable<VertexScheduling, Integer> pLax = nlvlScheduler.getPreempts();
+			Hashtable<VertexScheduling, Integer> pLax = llf.getPreemptions();
 			for (VertexScheduling task : pLax.keySet())
 				outPreemptsLax += pLax.get(task);
-			outActLax = nlvlScheduler.getActivations();
+			outActLax = llf.getActivations();
 			
-			Hashtable<VertexScheduling, Integer> pEdf = edfScheduler.getPreempts();
+			Hashtable<VertexScheduling, Integer> pEdf = edf.getPreemptions();
 			for (VertexScheduling task : pEdf.keySet())
 				outPreemptsEdf += pEdf.get(task);
-			outActEdf = edfScheduler.getActivations();
+			outActEdf = edf.getActivations();
+			
+			Hashtable<VertexScheduling, Integer> pHybrid = hybrid.getPreemptions();
+			for (VertexScheduling task : pHybrid.keySet())
+				outPreemptsHybrid += pHybrid.get(task);
+			outActHybrid = hybrid.getActivations();
 		}
 		
 		for (McDAG d : dags)
@@ -120,7 +135,9 @@ public class BenchThread implements Runnable {
 		
 		output.write(Thread.currentThread().getName()+"; "+getInputFile()+"; "+outBFSched+"; "+outPreemptsFed+"; "+outActFed+"; "
 		+outBLSched+"; "+outPreemptsLax+"; "+outActLax+"; "
-		+outBEDFSched+"; "+outPreemptsEdf+"; "+outActEdf+"; "+uDAGs+"\n");
+		+outBEDFSched+"; "+outPreemptsEdf+"; "+outActEdf+"; "
+		+outBHybridSched+"; "+outPreemptsHybrid+"; "+outActHybrid+"; "
+		+uDAGs+"\n");
 		output.close();
 	}
 	
@@ -152,25 +169,36 @@ public class BenchThread implements Runnable {
 		// Test edf
 		// Make another copy of the system instance
 		Set<McDAG> edfDAGs = new HashSet<McDAG>(dags);
-		edfScheduler = new EDFOld(edfDAGs, nbCores, 2, debug);
+		edf = new EartliestDeadlineFirstMCSched(edfDAGs, nbCores, 2, debug, true);
 		
 		try {
-			resetVisited(dags);
-			edfScheduler.buildAllTables();
+			resetVisited(edfDAGs);
+			edf.scheduleSystem();
 		} catch (SchedulingException se) {
 			setSchedEdf(false);
 			if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] EDF non schedulable with "+nbCores+" cores.");
 		}
 	
 		// Test laxity
-		nlvlScheduler = new LLFOld(dags, nbCores, 2, debug);
+		llf = new LeastLaxityFirstMCSched(edfDAGs, nbCores, 2, debug, true);
 		
 		try {
-			resetVisited(dags);
-			nlvlScheduler.buildAllTables();
+			resetVisited(edfDAGs);
+			llf.scheduleSystem();
 		} catch (SchedulingException se) {
 			setSchedLax(false);
 			if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] LAXITY non schedulable with "+nbCores+" cores.");
+		}
+		
+		// Test hybrid
+		hybrid = new HybridMCSched(edfDAGs, nbCores, 2, debug, true);
+		
+		try {
+			resetVisited(edfDAGs);
+			hybrid.scheduleSystem();
+		} catch (SchedulingException se) {
+			setSchedHybrid(false);
+			if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] HYBRID non schedulable with "+nbCores+" cores.");
 		}
 		
 		// Write results
@@ -248,5 +276,13 @@ public class BenchThread implements Runnable {
 
 	public void setSchedEdf(boolean schedEdf) {
 		this.schedEdf = schedEdf;
+	}
+
+	public boolean isSchedHybrid() {
+		return schedHybrid;
+	}
+
+	public void setSchedHybrid(boolean schedHybrid) {
+		this.schedHybrid = schedHybrid;
 	}
 }

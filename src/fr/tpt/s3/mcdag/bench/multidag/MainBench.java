@@ -112,7 +112,7 @@ public class MainBench {
 		int i_files2 = 0;
 		String outFile = outputFilePath.substring(0, outputFilePath.lastIndexOf('.')).concat("-schedulability.csv");
 		PrintWriter writer = new PrintWriter(outFile, "UTF-8");
-		writer.println("Thread; File; FSched (%); FPreempts; FAct; LSched (%); LPreempts; LAct; ESched (%); EPreempts; EAct; Utilization");
+		writer.println("Thread; File; FSched (%); FPreempts; FAct; LSched (%); LPreempts; LAct; ESched (%); EPreempts; EAct; HSched(%); HPreempts; HAct; Utilization");
 		writer.close();
 		
 		ExecutorService executor2 = Executors.newFixedThreadPool(nbJobs);
@@ -129,12 +129,15 @@ public class MainBench {
 		int fedTotal = 0;
 		int laxTotal = 0;
 		int edfTotal = 0;
+		int hybridTotal = 0;
 		int fedPreempts = 0;
 		int laxPreempts = 0;
 		int edfPreempts = 0;
+		int hybridPreempts = 0;
 		int fedActiv = 0;
 		int laxActiv = 0;
 		int edfActiv = 0;
+		int hybridActiv = 0;
 		// Read lines in file and do average
 		int i = 0;
 		File f = new File(outFile);
@@ -166,6 +169,12 @@ public class MainBench {
 							edfPreempts += Integer.parseInt(val);
 						} else if (j == 10) {
 							edfActiv += Integer.parseInt(val);
+						} else if (j == 11) {
+							hybridTotal += Integer.parseInt(val);
+						} else if (j == 12) {
+							hybridPreempts += Integer.parseInt(val);
+						} else if (j == 13) {
+							hybridActiv += Integer.parseInt(val);
 						}
 						j++;
 					}
@@ -178,15 +187,18 @@ public class MainBench {
 		double fedPerc = (double) fedTotal / nbFiles;
 		double laxPerc = (double) laxTotal / nbFiles;
 		double edfPerc = (double) edfTotal / nbFiles;
+		double hybridPerc = (double) hybridTotal / nbFiles;
 		
 		double fedPercPreempts = (double) fedPreempts / fedActiv;
 		double laxPercPreempts = (double) laxPreempts / laxActiv;
 		double edfPercPreempts = (double) edfPreempts / edfActiv;
+		double hybridPercPreempts = (double) hybridPreempts / hybridActiv;
 
 		Writer wOutput = new BufferedWriter(new FileWriter(outputFilePath2, true));
 		wOutput.write(Thread.currentThread().getName()+"; "+utilization+"; "+fedPerc+"; "+fedPreempts+"; "+fedActiv+"; "+fedPercPreempts+"; "
 					  +laxPerc+"; "+laxPreempts+"; "+laxActiv+"; "+laxPercPreempts+"; "
-					  +edfPerc+"; "+edfPreempts+"; "+edfActiv+"; "+edfPercPreempts+"\n");
+					  +edfPerc+"; "+edfPreempts+"; "+edfActiv+"; "+edfPercPreempts+
+					  +hybridPerc+"; "+hybridPreempts+"; "+hybridActiv+"; "+hybridPercPreempts+"\n");
 		wOutput.close();
 		
 		System.out.println("[BENCH Main] Done scheduling U = "+utilization+".");
