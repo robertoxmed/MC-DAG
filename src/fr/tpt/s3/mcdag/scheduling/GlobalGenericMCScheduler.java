@@ -264,7 +264,7 @@ public abstract class GlobalGenericMCScheduler {
 					if (v.isSourceinL(level))
 						ready.add((VertexScheduling) v);
 				} else {
-					if (v.isSourceinLReverse(level)) 
+					if (v.isSinkinL(level)) 
 						ready.add((VertexScheduling) v);
 				}
 			}

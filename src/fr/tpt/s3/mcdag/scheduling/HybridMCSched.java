@@ -68,13 +68,13 @@ public class HybridMCSched extends GlobalGenericMCScheduler {
 	protected void calcDeadlineReverse (VertexScheduling a, int level, int deadline) {
 		int ret = Integer.MAX_VALUE;
 		
-		if (a.isSourceinLReverse(level)) {
+		if (a.isSourceinL(level)) {
 			ret = deadline;
 		} else {
 			int test = Integer.MAX_VALUE;
 			
-			for (Edge e : a.getSndEdges()) {
-				test = ((VertexScheduling) e.getDest()).getDeadlines()[level] - e.getDest().getWcet(level);
+			for (Edge e : a.getRcvEdges()) {
+				test = ((VertexScheduling) e.getSrc()).getDeadlines()[level] - e.getSrc().getWcet(level);
 				if (test < ret)
 					ret = test;
 			}
@@ -117,7 +117,7 @@ public class HybridMCSched extends GlobalGenericMCScheduler {
 			
 			// Calculate sources in i mode
 			for (Vertex v : d.getVertices()) {
-				if (v.isSourceinLReverse(i)) {
+				if (v.isSourceinL(i)) {
 					toVisit.add((VertexScheduling) v);
 				}
 			}
@@ -129,11 +129,11 @@ public class HybridMCSched extends GlobalGenericMCScheduler {
 				calcDeadlineReverse(a, i, d.getDeadline());
 				a.getVisitedL()[i] = true;
 				
-				for (Edge e: a.getRcvEdges()) {
-					if (e.getSrc().getWcet(i) != 0 && !((VertexScheduling) e.getSrc()).getVisitedL()[i]
-							&& succVisitedInLevel((VertexScheduling) e.getSrc(), i)
-							&& !toVisit.contains((VertexScheduling) e.getSrc())) {
-						toVisit.add((VertexScheduling) e.getSrc());
+				for (Edge e: a.getSndEdges()) {
+					if (e.getDest().getWcet(i) != 0 && !((VertexScheduling) e.getDest()).getVisitedL()[i]
+							&& predVisitedInLevel((VertexScheduling) e.getDest(), i)
+							&& !toVisit.contains((VertexScheduling) e.getDest())) {
+						toVisit.add((VertexScheduling) e.getDest());
 					}
 				}
 				toVisit.remove(0);

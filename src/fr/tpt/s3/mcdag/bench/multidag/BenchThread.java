@@ -31,7 +31,7 @@ import fr.tpt.s3.mcdag.parser.MCParser;
 import fr.tpt.s3.mcdag.scheduling.FederatedMCSched;
 import fr.tpt.s3.mcdag.scheduling.SchedulingException;
 import fr.tpt.s3.mcdag.scheduling.old.EarlistDeadlineFirstMCSched;
-import fr.tpt.s3.mcdag.scheduling.old.LeastLaxityFirstMCSched;
+import fr.tpt.s3.mcdag.scheduling.old.LLFOld;
 
 public class BenchThread implements Runnable {
 	
@@ -42,7 +42,7 @@ public class BenchThread implements Runnable {
 	private boolean debug;
 	private int nbCores;
 	private FederatedMCSched fedScheduler;
-	private LeastLaxityFirstMCSched nlvlScheduler;
+	private LLFOld nlvlScheduler;
 	private EarlistDeadlineFirstMCSched edfScheduler;
 	
 	public int getNbCores() {
@@ -163,7 +163,7 @@ public class BenchThread implements Runnable {
 		}
 	
 		// Test laxity
-		nlvlScheduler = new LeastLaxityFirstMCSched(dags, nbCores, 2, debug);
+		nlvlScheduler = new LLFOld(dags, nbCores, 2, debug);
 		
 		try {
 			resetVisited(dags);

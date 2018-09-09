@@ -95,7 +95,9 @@ public class SchedulingThread implements Runnable{
 			}
 			
 		} else { // The model is has multiple DAGs
-			setScheduler(new HybridMCSched(mcp.getDags(), mcp.getNbCores(), mcp.getNbLevels(), debug, isPreempt()));
+			setScheduler(new LeastLaxityFirstMCSched(mcp.getDags(), mcp.getNbCores(), mcp.getNbLevels(), debug, isPreempt()));
+
+			//setScheduler(new HybridMCSched(mcp.getDags(), mcp.getNbCores(), mcp.getNbLevels(), debug, isPreempt()));
 			
 			try {
 				scheduler.scheduleSystem();

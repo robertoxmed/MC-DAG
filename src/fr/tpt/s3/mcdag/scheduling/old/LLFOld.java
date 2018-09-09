@@ -37,7 +37,7 @@ import fr.tpt.s3.mcdag.util.MathMCDAG;
  * @author roberto
  *
  */
-public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
+public class LLFOld extends AbstractMixedCriticalityScheduler {
 	
 	// Set of DAGs to be scheduled
 	private Set<McDAG> mcDags;
@@ -75,7 +75,7 @@ public class LeastLaxityFirstMCSched extends AbstractMixedCriticalityScheduler {
 	 * @param levels
 	 * @param debug
 	 */
-	public LeastLaxityFirstMCSched (Set<McDAG> dags, int cores, int levels, boolean debug) {
+	public LLFOld (Set<McDAG> dags, int cores, int levels, boolean debug) {
 		setMcDags(dags);
 		setNbCores(cores);
 		setLevels(levels);
