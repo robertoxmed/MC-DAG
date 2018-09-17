@@ -248,10 +248,8 @@ public abstract class GlobalGenericMCScheduler {
 		} else {
 			end = ((int)(realSlot / a.getGraphDead()) + 1)  * a.getGraphDead() - 1;
 		}
-		
-		//System.out.println("\t\t\t [schedut] task "+a.getName()+" end "+end+" slot "+realSlot);
-		
-		for (int i = end; i > realSlot; i--) {
+				
+		for (int i = end; i >= realSlot; i--) {
 			for (int c = 0; c < getNbCores(); c++) {
 				if (getSched()[l][i][c] !=  null) {
 					if (getSched()[l][i][c].contentEquals(a.getName()))
@@ -259,6 +257,9 @@ public abstract class GlobalGenericMCScheduler {
 				}
 			}
 		}
+		
+		System.out.println("\t\t\t [schedut] task "+a.getName()+" end "+end+" slot "+realSlot+" val = "+ret);
+
 		return ret;
 	}
 	
@@ -415,6 +416,16 @@ public abstract class GlobalGenericMCScheduler {
 	}
 	
 	/**
+	 * Utility function that resets delays of tasks' jobs
+	 */
+	private void resetDelays () {
+		for (McDAG d : getMcDAGs()) {
+			for (Vertex v : d.getVertices())
+				((VertexScheduling) v).setDelayed(false);
+		}
+	}
+	
+	/**
 	 * Function that computes the scheduling tables on the dual 
 	 * @param level
 	 * @throws SchedulingException
@@ -466,30 +477,26 @@ public abstract class GlobalGenericMCScheduler {
 			// Allocate to cores
 			for (int coreIndex = startCoreIndex; coreIndex >= 0 && coreIndex < nbCores; coreIndex = coreIndex + increment) {
 				// Find next ready tasks that is not delayed
-				boolean notDelayed = false;
-				
-				while (!notDelayed && lit.hasNext()) {
-					if (lit.hasNext()) {
-						VertexScheduling v = lit.next();
+				if (lit.hasNext()) {
+					VertexScheduling v = lit.next();
 					
-						if (!v.isDelayed()) {
-							notDelayed = true;
-							int val = remainingTime[level][v.getGraphId()][v.getId()];
+					if (!v.isDelayed()) {
+						int val = remainingTime[level][v.getGraphId()][v.getId()];
 						
-							sched[level][timeIndex][coreIndex] = v.getName();
-							val--;
+						sched[level][timeIndex][coreIndex] = v.getName();
+						val--;
 							
-							// Task has been fully scheduled
-							if (val == 0) {
-								scheduled.add(v);
-								jobFinished = true;
-								lit.remove();
-							}
-							remainingTime[level][v.getGraphId()][v.getId()] = val;
-						} 
-					}
+						// Task has been fully scheduled
+						if (val == 0) {
+							scheduled.add(v);
+							jobFinished = true;
+							lit.remove();
+						}
+						remainingTime[level][v.getGraphId()][v.getId()] = val;
+					} 
 				}
 			}
+			resetDelays();
 			
 			// A job finished its execution -> new tasks can be activated
 			if (jobFinished)

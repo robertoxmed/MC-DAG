@@ -239,7 +239,8 @@ public class MCSystemGenerator {
 							 */
 							if (rng.randomUnifDouble(0, 100) <= edgeProb
 								&& n.getRank() > src.getRank()
-								&& src.getCpFromNode()[i] + n.getWcet(i) <= rDead) {
+								// && src.getCpFromNode()[i] + n.getWcet(i) <= rDead
+								){
 								@SuppressWarnings("unused")
 								Edge e = new Edge(src,n);
 								
@@ -263,7 +264,7 @@ public class MCSystemGenerator {
 				rank++;
 			}
 			
-			prevRank = rank;
+			// prevRank = rank;
 			// Shrinking procedure only for HI tasks
 			if (i >= 1) {
 				// Shrinking depends on the reduction factor
@@ -336,7 +337,7 @@ public class MCSystemGenerator {
 		for (McDAG d : getGennedDAGs()) {
 			uSys += d.getUmax();
 		}		
-		if (userMaxU * 0.99 <= uSys && uSys <= userMaxU)
+		if (userMaxU * 0.999 <= uSys && uSys <= userMaxU)
 			return true;
 		
 		return false;

@@ -103,6 +103,7 @@ public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 				//Check if in the higher table the Ci(L+1) - Ci(L) has been allocated
 				if (scheduledUntilTinLreverse(v, slot + 1, level + 1) <= deltaI) {
 					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+v.getName()+" needs to be delayed at slot @t = "+slot);
+					v.setDelayed(true);
 					v.setWeightInL(Integer.MAX_VALUE, level);
 				} else {
 					v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
