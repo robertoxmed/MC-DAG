@@ -12,121 +12,133 @@ from email.mime.base import MIMEBase
 from email import encoders
 
 # Global setup for generation and benchmarks
+number_levels = [3, 4, 5]
 number_tasks = [10, 20, 50]
 number_dags = [2, 4]
 number_cores = [4]
 edge_percentage = [20, 40]
 number_jobs = 8
-number_files = "100"
+number_files = "1"
 
 def create_setup():
     # Create the directory tree for generation
     if not os.path.exists("genned"):
         os.makedirs("genned")
+        
+    for l in number_levels:
+        if not os.path.exists("genned/l"+str(l)):
+            os.makedirs("genned/l"+str(l))
 
-    for c in number_cores:
-        if not os.path.exists("genned/c"+str(c)):
-            os.makedirs("genned/c"+str(c))
+        for c in number_cores:
+            if not os.path.exists("genned/l"+str(l)+"/c"+str(c)):
+                os.makedirs("genned/l"+str(l)+"/c"+str(c))
 
-        for p in edge_percentage:
-            if not os.path.exists("genned/c"+str(c)+"/e"+str(p)):
-                os.makedirs("genned/c"+str(c)+"/e"+str(p))
+            for p in edge_percentage:
+                if not os.path.exists("genned/l"+str(l)+"/c"+str(c)+"/e"+str(p)):
+                    os.makedirs("genned/l"+str(l)+"/c"+str(c)+"/e"+str(p))
 
-            for d in number_dags:
-                if not os.path.exists("genned/c"+str(c)+"/e"+str(p)+"/"+str(d)):
-                    os.makedirs("genned/c"+str(c)+"/e"+str(p)+"/"+str(d))
+                for d in number_dags:
+                    if not os.path.exists("genned/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)):
+                        os.makedirs("genned/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d))
 
-                for t in number_tasks:
-                    if not os.path.exists("genned/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)):
-                        os.makedirs("genned/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t))
+                    for t in number_tasks:
+                        if not os.path.exists("genned/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)):
+                            os.makedirs("genned/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t))
 
     # Create the directory tree for benchmarking
     if not os.path.exists("results"):
         os.makedirs("results")
 
-    for c in number_cores:
-        if not os.path.exists("results/c"+str(c)):
-            os.makedirs("results/c"+str(c))
+    for l in number_levels:
+        if not os.path.exists("results/l"+str(l)):
+            os.makedirs("results/l"+str(l))
+        
+        for c in number_cores:
+            if not os.path.exists("results/l"+str(l)+"/c"+str(c)):
+                os.makedirs("results/l"+str(l)+"/c"+str(c))
 
-        for p in edge_percentage:
-            if not os.path.exists("results/c"+str(c)+"/e"+str(p)):
-                os.makedirs("results/c"+str(c)+"/e"+str(p))
+            for p in edge_percentage:
+                if not os.path.exists("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)):
+                    os.makedirs("results/l"+str(l)+"/c"+str(c)+"/e"+str(p))
 
-            for d in number_dags:
-                if not os.path.exists("results/c"+str(c)+"/e"+str(p)+"/"+str(d)):
-                    os.makedirs("results/c"+str(c)+"/e"+str(p)+"/"+str(d))
+                for d in number_dags:
+                    if not os.path.exists("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)):
+                        os.makedirs("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d))
 
-                for t in number_tasks:
-                    if not os.path.exists("results/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)):
-                        os.makedirs("results/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t))
-                    if not os.path.exists("results/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/detail"):
-                        os.makedirs("results/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/detail")
+                    for t in number_tasks:
+                        if not os.path.exists("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)):
+                            os.makedirs("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t))
+                        if not os.path.exists("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/detail"):
+                            os.makedirs("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/detail")
 
     print("MC-DAG script > Finished setup!")
 
 def clean_generated():
-    for c in number_cores:
-        for p in edge_percentage:
-            for d in number_dags:
-                for t in number_tasks:
-                    # Create the folder string
-                    folder = str("genned/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t))
-                    for file in os.listdir(folder):
-                        file_path = os.path.join(folder, file)
-                        try:
-                            if os.path.isfile(file_path):
-                                os.unlink(file_path)
-                        except Exception as e:
-                            print(e)
+    for l in number_levels:
+        for c in number_cores:
+            for p in edge_percentage:
+                for d in number_dags:
+                    for t in number_tasks:
+                        # Create the folder string
+                        folder = str("genned/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t))
+                        for file in os.listdir(folder):
+                            file_path = os.path.join(folder, file)
+                            try:
+                                if os.path.isfile(file_path):
+                                    os.unlink(file_path)
+                            except Exception as e:
+                                print(e)
 
     print("MC-DAG script > All generated files have been cleaned!\n")
 
 def generate():
+    
+    for l in number_levels:
+        for c in number_cores:
+            for p in edge_percentage:
+                for d in number_dags:
+                    for t in number_tasks:
+                        # Vary utilization
+                        low_bound = c /4
+                        step = c * 0.025
+                        upper_bound = c + step
 
-    for c in number_cores:
-        for p in edge_percentage:
-            for d in number_dags:
-                for t in number_tasks:
-                    # Vary utilization
-                    low_bound = c /4
-                    step = c * 0.025
-                    upper_bound = c + step
+                        for u in numpy.arange(low_bound, upper_bound, step):
+                            cmd = "java -jar bin/generator.jar -mu "+str(round(u,2))+"\
+                                   -nd "+str(d)+" -l "+str(l)+" -nt "+str(t)+" -nf "+number_files+" -e "+str(p)+"\
+                                   -o genned/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/test-"+str(round(u,2))+".xml\
+                                   -p 1 -j "+str(number_jobs)
 
-                    for u in numpy.arange(low_bound, upper_bound, step):
-                        cmd = "java -jar bin/generator.jar -mu "+str(round(u,2))+"\
-                               -nd "+str(d)+" -l 2 -nt "+str(t)+" -nf "+number_files+" -e "+str(p)+"\
-                               -o genned/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/test-"+str(round(u,2))+".xml\
-                               -p 2 -j "+str(number_jobs)
-
-                        ret = os.system(cmd)
-                        if ret != 0:
-                            print("MC-DAG script > ERROR unexpected behavior for the generation. Exiting...")
-                            return -1
+                            ret = os.system(cmd)
+                            if ret != 0:
+                                print("MC-DAG script > ERROR unexpected behavior for the generation. Exiting...")
+                                return -1
 
 def benchmark():
+    
+    for l in number_levels:
+        for c in number_cores:
+            for p in edge_percentage:
+                for d in number_dags:
+                    for t in number_tasks:
+                        # Create the result file
+                        f = open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", "w+")
+                        f.write("Main; U; Fed (%); PFed; AFed; AvgFed; Lax (%); PLax; ALax; AvgLax; Edf (%); PEdf; AEdf; AvgEdf\n")
+                        f.close()
+                        # Vary utilization
+                        low_bound = c /4
+                        step = c * 0.025
+                        upper_bound = c + step
 
-    for c in number_cores:
-        for p in edge_percentage:
-            for d in number_dags:
-                for t in number_tasks:
-                    # Create the result file
-                    f = open("results/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", "w+")
-                    f.write("Main; U; Fed (%); PFed; AFed; AvgFed; Lax (%); PLax; ALax; AvgLax; Edf (%); PEdf; AEdf; AvgEdf\n")
-                    f.close()
-                    # Vary utilization
-                    low_bound = c /4
-                    step = c * 0.025
-                    upper_bound = c + step
-
-                    for u in numpy.arange(low_bound, upper_bound, step):
-                        cmd = "java -jar bin/benchmark.jar  -i genned/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/test-"+str(round(u,2))+"*.xml\
-                               -o results/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/detail/out-"+str(round(u,2))+".csv \
-                               -ot results/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv\
-                               -u "+str(round(u,2))+" -c "+str(c)+" -j "+str(number_jobs)
-                        ret = os.system(cmd)
-                        if ret != 0:
-                            print("ERROR unexpected behavior for the benchmarking. Exiting...")
-                            return -1
+                        for u in numpy.arange(low_bound, upper_bound, step):
+                            cmd = "java -jar bin/benchmark.jar  -i genned/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/test-"+str(round(u,2))+"*.xml\
+                                   -o results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/detail/out-"+str(round(u,2))+".csv \
+                                   -ot results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv\
+                                   -u "+str(round(u,2))+" -c "+str(c)+" -j "+str(number_jobs)
+                            ret = os.system(cmd)
+                            if ret != 0:
+                                print("ERROR unexpected behavior for the benchmarking. Exiting...")
+                                return -1
 
 def main():
     usage_str = "%prog [options]"
@@ -201,16 +213,17 @@ def send_email():
 
     msg.attach(MIMEText(TEXT, 'plain'))
 
-    for c in number_cores:
-        for p in edge_percentage:
-            for d in number_dags:
-                for t in number_tasks:
-                    attachment = open("results/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", "rb")
-                    part = MIMEBase('application', 'octet-stream')
-                    part.set_payload((attachment).read())
-                    encoders.encode_base64(part)
-                    part.add_header('Content-Disposition', "attachment; filename= results/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv")
-                    msg.attach(part)
+    for l in number_levels:
+        for c in number_cores:
+            for p in edge_percentage:
+                for d in number_dags:
+                    for t in number_tasks:
+                        attachment = open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", "rb")
+                        part = MIMEBase('application', 'octet-stream')
+                        part.set_payload((attachment).read())
+                        encoders.encode_base64(part)
+                        part.add_header('Content-Disposition', "attachment; filename= results/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv")
+                        msg.attach(part)
 
     server = smtplib.SMTP('smtp.gmail.com:587')
     server.ehlo()
