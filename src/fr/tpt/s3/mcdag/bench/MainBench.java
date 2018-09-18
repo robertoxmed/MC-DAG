@@ -211,7 +211,7 @@ public class MainBench {
 	
 			wOutput.write(Thread.currentThread().getName()+"; "+utilization+"; "+fedPerc+"; "+fedPreempts+"; "+fedActiv+"; "+fedPercPreempts+"; "
 						  +laxPerc+"; "+laxPreempts+"; "+laxActiv+"; "+laxPercPreempts+"; "
-						  +edfPerc+"; "+edfPreempts+"; "+edfActiv+"; "+edfPercPreempts+
+						  +edfPerc+"; "+edfPreempts+"; "+edfActiv+"; "+edfPercPreempts+"; "
 						  +hybridPerc+"; "+hybridPreempts+"; "+hybridActiv+"; "+hybridPercPreempts+"\n");
 			wOutput.close();
 			
