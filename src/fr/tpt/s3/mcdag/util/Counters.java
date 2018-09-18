@@ -145,10 +145,10 @@ public class Counters {
 		// Decrement the preemption count by the nb of activations
 		for (VertexScheduling a : keys) {
 			int nbActivations = 0;
-			if (a.getWcet(1) != 0)
-				nbActivations = (int)(hPeriod / a.getGraphDead()) * levels;
-			else
-				nbActivations = (int)(hPeriod / a.getGraphDead());
+			for (int lvl = 0; lvl < levels; lvl++) {
+				if (a.getWcet(lvl) != 0)
+					nbActivations += (int)(hPeriod / a.getGraphDead());
+			}
 			int val = refs.get(a);
 			val -= nbActivations;
 			refs.put(a, val);

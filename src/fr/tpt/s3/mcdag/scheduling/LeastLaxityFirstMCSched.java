@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 import fr.tpt.s3.mcdag.model.McDAG;
+import fr.tpt.s3.mcdag.model.Vertex;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
 
 /**
@@ -65,8 +66,10 @@ public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 			} else if (v.getWeights()[level] == 0) {
 				sumZeroLax += 1;
 			}
-			
-			sumRemainTimes += getRemainingTime()[level][v.getGraphId()][v.getId()];
+		}
+		for (McDAG d : getMcDAGs()) {
+			for (Vertex v : d.getVertices())
+				sumRemainTimes += getRemainingTime()[level][((VertexScheduling)v).getGraphId()][v.getId()];
 		}
 		
 		// More than m zero laxity tasks

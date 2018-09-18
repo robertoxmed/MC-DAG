@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Roberto Medina
+ * Copyright (c) 2018 Roberto Medina
  * Written by Roberto Medina (rmedina@telecom-paristech.fr)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package fr.tpt.s3.mcdag.bench.multidag;
+package fr.tpt.s3.mcdag.bench.nlevel;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -24,50 +24,37 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
 
+import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.model.Vertex;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
-import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.parser.MCParser;
 import fr.tpt.s3.mcdag.scheduling.EartliestDeadlineFirstMCSched;
-import fr.tpt.s3.mcdag.scheduling.FederatedMCSched;
 import fr.tpt.s3.mcdag.scheduling.GlobalGenericMCScheduler;
 import fr.tpt.s3.mcdag.scheduling.HybridMCSched;
 import fr.tpt.s3.mcdag.scheduling.LeastLaxityFirstMCSched;
 import fr.tpt.s3.mcdag.scheduling.SchedulingException;
 
-public class BenchThread implements Runnable {
-	
+public class BenchThreadNLevels implements Runnable {
+
 	private Set<McDAG> dags;
 	private MCParser mcp;
 	private String inputFile;
 	private String outputFile;
 	private boolean debug;
 	private int nbCores;
-	private FederatedMCSched fedScheduler;
 	private GlobalGenericMCScheduler llf;
 	private GlobalGenericMCScheduler edf;
 	private GlobalGenericMCScheduler hybrid;
-	
-	public int getNbCores() {
-		return nbCores;
-	}
-
-	public void setNbCores(int nbCores) {
-		this.nbCores = nbCores;
-	}
-
-	private boolean schedFede;
 	private boolean schedLax;
 	private boolean schedEdf;
 	private boolean schedHybrid;
 	
-	public BenchThread (String input, String output, int cores, boolean debug) {
+	public BenchThreadNLevels(String input, String output, int cores, boolean debug) {
 		setInputFile(input);
 		dags = new HashSet<McDAG>();
 		setOutputFile(output);
 		setNbCores(cores);
 		setDebug(debug);
-		setSchedFede(true);
 		setSchedLax(true);
 		setSchedEdf(true);
 		setSchedHybrid(true);
@@ -96,9 +83,6 @@ public class BenchThread implements Runnable {
 		int outActEdf = 0;
 		int outActHybrid = 0;
 		
-		if (isSchedFede())
-			outBFSched = 1;
-		
 		if (isSchedLax())
 			outBLSched = 1;
 		
@@ -108,12 +92,7 @@ public class BenchThread implements Runnable {
 		if (isSchedHybrid())
 			outBHybridSched = 1;
 		
-		if (isSchedEdf() && isSchedFede() && isSchedLax()) {
-			Hashtable<VertexScheduling, Integer> pFed = fedScheduler.getPreempts();
-			for (VertexScheduling task : pFed.keySet())
-				outPreemptsFed += pFed.get(task);
-			outActFed = fedScheduler.getActivations();
-			
+		if (isSchedEdf() && isSchedLax()) {			
 			Hashtable<VertexScheduling, Integer> pLax = llf.getPreemptions();
 			for (VertexScheduling task : pLax.keySet())
 				outPreemptsLax += pLax.get(task);
@@ -150,29 +129,16 @@ public class BenchThread implements Runnable {
 		}
 	}
 	
+	
 	@Override
 	public void run() {
 		mcp.readXML();
-		
-		// Test federated approach
-		// Make a copy of the system instance
-		Set<McDAG> fedDAGs = new HashSet<McDAG>(dags);
-		fedScheduler = new FederatedMCSched(fedDAGs, nbCores, debug);
-		
-		try {
-			fedScheduler.buildAllTables();
-		} catch (SchedulingException se) {
-			setSchedFede(false);
-			if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] FEDERATED non schedulable with "+nbCores+" cores.");
-		}
-		
 		// Test edf
 		// Make another copy of the system instance
-		Set<McDAG> edfDAGs = new HashSet<McDAG>(dags);
-		edf = new EartliestDeadlineFirstMCSched(edfDAGs, nbCores, 2, debug, true);
+		edf = new EartliestDeadlineFirstMCSched(getDags(), nbCores, 2, debug, true);
 		
 		try {
-			resetVisited(edfDAGs);
+			resetVisited(getDags());
 			edf.scheduleSystem();
 		} catch (SchedulingException se) {
 			setSchedEdf(false);
@@ -180,10 +146,10 @@ public class BenchThread implements Runnable {
 		}
 	
 		// Test laxity
-		llf = new LeastLaxityFirstMCSched(edfDAGs, nbCores, 2, debug, true);
+		llf = new LeastLaxityFirstMCSched(getDags(), nbCores, 2, debug, true);
 		
 		try {
-			resetVisited(edfDAGs);
+			resetVisited(getDags());
 			llf.scheduleSystem();
 		} catch (SchedulingException se) {
 			setSchedLax(false);
@@ -191,10 +157,10 @@ public class BenchThread implements Runnable {
 		}
 		
 		// Test hybrid
-		hybrid = new HybridMCSched(edfDAGs, nbCores, 2, debug, true);
+		hybrid = new HybridMCSched(getDags(), nbCores, 2, debug, true);
 		
 		try {
-			resetVisited(edfDAGs);
+			resetVisited(getDags());
 			hybrid.scheduleSystem();
 		} catch (SchedulingException se) {
 			setSchedHybrid(false);
@@ -210,10 +176,7 @@ public class BenchThread implements Runnable {
 			ie.printStackTrace();
 		}
 	}
-	
-	/*
-	 * Getters & Setters
-	 */
+
 	public Set<McDAG> getDags() {
 		return dags;
 	}
@@ -238,6 +201,14 @@ public class BenchThread implements Runnable {
 		this.inputFile = inputFile;
 	}
 
+	public String getOutputFile() {
+		return outputFile;
+	}
+
+	public void setOutputFile(String outputFile) {
+		this.outputFile = outputFile;
+	}
+
 	public boolean isDebug() {
 		return debug;
 	}
@@ -246,20 +217,36 @@ public class BenchThread implements Runnable {
 		this.debug = debug;
 	}
 
-	public boolean isSchedFede() {
-		return schedFede;
+	public int getNbCores() {
+		return nbCores;
 	}
 
-	public void setSchedFede(boolean schedFede) {
-		this.schedFede = schedFede;
+	public void setNbCores(int nbCores) {
+		this.nbCores = nbCores;
 	}
 
-	public String getOutputFile() {
-		return outputFile;
+	public GlobalGenericMCScheduler getLlf() {
+		return llf;
 	}
 
-	public void setOutputFile(String outputFile) {
-		this.outputFile = outputFile;
+	public void setLlf(GlobalGenericMCScheduler llf) {
+		this.llf = llf;
+	}
+
+	public GlobalGenericMCScheduler getEdf() {
+		return edf;
+	}
+
+	public void setEdf(GlobalGenericMCScheduler edf) {
+		this.edf = edf;
+	}
+
+	public GlobalGenericMCScheduler getHybrid() {
+		return hybrid;
+	}
+
+	public void setHybrid(GlobalGenericMCScheduler hybrid) {
+		this.hybrid = hybrid;
 	}
 
 	public boolean isSchedLax() {
@@ -285,4 +272,5 @@ public class BenchThread implements Runnable {
 	public void setSchedHybrid(boolean schedHybrid) {
 		this.schedHybrid = schedHybrid;
 	}
+	
 }

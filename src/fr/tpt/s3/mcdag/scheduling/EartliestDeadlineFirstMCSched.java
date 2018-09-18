@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 import fr.tpt.s3.mcdag.model.McDAG;
+import fr.tpt.s3.mcdag.model.Vertex;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
 
 /**
@@ -63,7 +64,10 @@ public class EartliestDeadlineFirstMCSched extends GlobalGenericMCScheduler {
 				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): deadline not respected for "+v.getName());
 				return false;
 			}
-			sumRemainTimes += getRemainingTime()[level][v.getGraphId()][v.getId()];
+		}
+		for (McDAG d : getMcDAGs()) {
+			for (Vertex v : d.getVertices())
+			sumRemainTimes += getRemainingTime()[level][((VertexScheduling)v).getGraphId()][v.getId()];
 		}
 		
 		// Get the sum of remaining slots

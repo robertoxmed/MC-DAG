@@ -257,9 +257,7 @@ public abstract class GlobalGenericMCScheduler {
 				}
 			}
 		}
-		
-		System.out.println("\t\t\t [schedut] task "+a.getName()+" end "+end+" slot "+realSlot+" val = "+ret);
-
+		// System.out.println("\t\t\t [DEBUG] scheduledUntilTinLreverse(): task "+a.getName()+" end "+end+" slot "+realSlot+" val = "+ret);
 		return ret;
 	}
 	
