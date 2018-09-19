@@ -289,7 +289,8 @@ public class MainBench {
 			double laxPercPreempts = (double) laxPreempts / laxActiv;
 			double edfPercPreempts = (double) edfPreempts / edfActiv;
 			double hybridPercPreempts = (double) hybridPreempts / hybridActiv;
-	
+			
+			Writer wOutput = new BufferedWriter(new FileWriter(outputFilePathTotal, true));
 			wOutput.write(Thread.currentThread().getName()+"; "+utilization+"; "
 						  +laxPerc+"; "+laxPreempts+"; "+laxActiv+"; "+laxPercPreempts+"; "
 						  +edfPerc+"; "+edfPreempts+"; "+edfActiv+"; "+edfPercPreempts+
