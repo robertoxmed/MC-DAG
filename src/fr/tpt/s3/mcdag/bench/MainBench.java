@@ -126,10 +126,7 @@ public class MainBench {
 			PrintWriter writer = new PrintWriter(outFile, "UTF-8");
 			writer.println("Thread; File; FSched (%); FPreempts; FAct; LSched (%); LPreempts; LAct; ESched (%); EPreempts; EAct; HSched(%); HPreempts; HAct; Utilization");
 			writer.close();
-			
-			Writer wOutput = new BufferedWriter(new FileWriter(outputFilePathTotal, true));
-			wOutput.write("Main; U; Fed (%); PFed; AFed; AvgFed; Lax (%); PLax; ALax; AvgLax; Edf (%); PEdf; AEdf; AvgEdf\n");
-			
+						
 			ExecutorService executor2 = Executors.newFixedThreadPool(nbJobs);
 			while (i_files2 != nbFiles) {
 				BenchThreadDualCriticality bt2 = new BenchThreadDualCriticality(inputFilePath[i_files2], outFile, nbCores, boolDebug);
@@ -208,7 +205,8 @@ public class MainBench {
 			double laxPercPreempts = (double) laxPreempts / laxActiv;
 			double edfPercPreempts = (double) edfPreempts / edfActiv;
 			double hybridPercPreempts = (double) hybridPreempts / hybridActiv;
-	
+			
+			Writer wOutput = new BufferedWriter(new FileWriter(outputFilePathTotal, true));
 			wOutput.write(Thread.currentThread().getName()+"; "+utilization+"; "+fedPerc+"; "+fedPreempts+"; "+fedActiv+"; "+fedPercPreempts+"; "
 						  +laxPerc+"; "+laxPreempts+"; "+laxActiv+"; "+laxPercPreempts+"; "
 						  +edfPerc+"; "+edfPreempts+"; "+edfActiv+"; "+edfPercPreempts+"; "
@@ -222,8 +220,7 @@ public class MainBench {
 			writer.println("Thread; File; LSched (%); LPreempts; LAct; ESched (%); EPreempts; EAct; HSched(%); HPreempts; HAct; Utilization");
 			writer.close();
 			
-			Writer wOutput = new BufferedWriter(new FileWriter(outputFilePathTotal, true));
-			wOutput.write("Main; U; Lax (%); PLax; ALax; AvgLax; Edf (%); PEdf; AEdf; AvgEdf; Hybrid (%); PHybrid; AHybrid; AvgHybrid\n");
+
 			
 			ExecutorService executor2 = Executors.newFixedThreadPool(nbJobs);
 			while (i_files2 != nbFiles) {

@@ -6,19 +6,20 @@ import sys
 import shutil
 import textwrap
 import smtplib
+import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 
 # Global setup for generation and benchmarks
-number_levels = [3, 4, 5]
+number_levels = [2]
 number_tasks = [10, 20, 50]
 number_dags = [2, 4]
 number_cores = [4]
 edge_percentage = [20, 40]
-number_jobs = 8
-number_files = "1"
+number_jobs = 20
+number_files = "500"
 
 def create_setup():
     # Create the directory tree for generation
@@ -122,8 +123,11 @@ def benchmark():
                 for d in number_dags:
                     for t in number_tasks:
                         # Create the result file
-                        f = open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", "w+")
-                        f.write("Main; U; Fed (%); PFed; AFed; AvgFed; Lax (%); PLax; ALax; AvgLax; Edf (%); PEdf; AEdf; AvgEdf\n")
+                        f = open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", "w+")
+                        if len(number_levels) == 1:
+                            f.write("Main; U; Fed (%); PFed; AFed; AvgFed; Lax (%); PLax; ALax; AvgLax; Edf (%); PEdf; AEdf; AvgEdfHybrid(%); PHybrid; AHybird; AvgHybrid\n")
+                        else:
+                            f.write("Main; U; Lax (%); PLax; ALax; AvgLax; Edf (%); PEdf; AEdf; AvgEdf; Hybrid(%); PHybrid; AHybird; AvgHybrid\n")
                         f.close()
                         # Vary utilization
                         low_bound = c /4
@@ -134,7 +138,7 @@ def benchmark():
                             cmd = "java -jar bin/benchmark.jar  -i genned/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/test-"+str(round(u,2))+"*.xml\
                                    -o results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/detail/out-"+str(round(u,2))+".csv \
                                    -ot results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv\
-                                   -u "+str(round(u,2))+" -c "+str(c)+" -j "+str(number_jobs)
+                                   -u "+str(round(u,2))+" -c "+str(c)+" -l "+str(l)+" -j "+str(number_jobs)
                             ret = os.system(cmd)
                             if ret != 0:
                                 print("ERROR unexpected behavior for the benchmarking. Exiting...")
@@ -167,6 +171,7 @@ def main():
                       default = False, help = "Cleanup generated files")
 
     (options, args) = parser.parse_args()
+    start = time.time()
 
     if options.help:
         print_help(parser)
@@ -185,14 +190,15 @@ def main():
 
     if options.benchmark:
         benchmark()
-        send_email()
+        end = time.time()
+        send_email(start,end)
 
     return 0
 
 def print_help(parser):
     parser.print_help()
 
-def send_email():
+def send_email(t_start,t_end):
     i = 0
     with open("config.txt") as f:
         for line in f:
@@ -203,8 +209,11 @@ def send_email():
             elif i == 2:
                 TO = line.rstrip('\n')
             i += 1
+    nb_files = len(number_levels) * len(number_cores) * len(edge_percentage) * len(number_dags) * len(number_tasks)*number_files
     SUBJECT = "Results for benchmarks ready"
-    TEXT = "I'm sorry Dave, I'm affraid I can't do that"
+    TEXT = "Statistics for the benchmarks:\n\
+              - Elapsed time: "+str(t_end - t_start)+"\n\
+              - Number of files: "+str(nb_files)
 
     msg = MIMEMultipart()
     msg['From'] = "MC-DAG script"
