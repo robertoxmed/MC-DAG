@@ -123,7 +123,7 @@ def benchmark():
                 for d in number_dags:
                     for t in number_tasks:
                         # Create the result file
-                        f = open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", "w+")
+                        f = open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", "w+")
                         if len(number_levels) == 1:
                             f.write("Main; U; Fed (%); PFed; AFed; AvgFed; Lax (%); PLax; ALax; AvgLax; Edf (%); PEdf; AEdf; AvgEdfHybrid(%); PHybrid; AHybird; AvgHybrid\n")
                         else:
