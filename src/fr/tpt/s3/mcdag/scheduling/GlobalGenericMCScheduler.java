@@ -53,7 +53,8 @@ public abstract class GlobalGenericMCScheduler {
 	// Remaining time to be allocated for each node
 	// Level, DAG id, Vertex Id
 	private int remainingTime[][][];
-	
+	private int sumRemainTimes[];
+
 	// Comprator to other vertices
 	private Comparator<VertexScheduling> loComp;
 	
@@ -307,6 +308,7 @@ public abstract class GlobalGenericMCScheduler {
 	 */
 	private void initRemainingTimes () {
 		remainingTime = new int[getLevels()][getMcDAGs().size()][];
+		sumRemainTimes = new int[getLevels()];
 		
 		// Init remaining time for each DAG
 		for (McDAG d : getMcDAGs()) {
@@ -316,8 +318,10 @@ public abstract class GlobalGenericMCScheduler {
 
 		for (int i = 0; i < getLevels(); i++) {
 			for (McDAG d : getMcDAGs()) {
-				for (Vertex a : d.getVertices())
+				for (Vertex a : d.getVertices()) {
 					remainingTime[i][d.getId()][a.getId()] = a.getWcet(i);
+					sumRemainTimes[i] += a.getWcet(i);
+				}
 			}
 		}
 	}
@@ -403,6 +407,7 @@ public abstract class GlobalGenericMCScheduler {
 					scheduled.remove(v);
 					
 					remainingTime[level][((VertexScheduling)v).getGraphId()][v.getId()] = v.getWcet(level);
+					sumRemainTimes[level] += v.getWcet(level);
 					
 					if (level >= 1 && v.isSinkinL(level))
 						ready.add((VertexScheduling) v);
@@ -483,6 +488,7 @@ public abstract class GlobalGenericMCScheduler {
 						
 						sched[level][timeIndex][coreIndex] = v.getName();
 						val--;
+						sumRemainTimes[level]--;
 							
 						// Task has been fully scheduled
 						if (val == 0) {
@@ -692,6 +698,14 @@ public abstract class GlobalGenericMCScheduler {
 
 	public void setCountPreempt(boolean countPreempt) {
 		this.countPreempt = countPreempt;
+	}
+
+	public int[] getSumRemainTimes() {
+		return sumRemainTimes;
+	}
+
+	public void setSumRemainTimes(int sumRemainTimes[]) {
+		this.sumRemainTimes = sumRemainTimes;
 	}
 	
 }

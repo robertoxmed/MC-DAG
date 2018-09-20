@@ -54,7 +54,6 @@ public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 	 */
 	@Override
 	protected boolean verifyConstraints(List<VertexScheduling> ready, int slot, int level) {
-		int sumRemainTimes = 0;
 		int sumSlotsLeft = 0;
 		int sumZeroLax = 0;
 		
@@ -66,10 +65,6 @@ public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 			} else if (v.getWeights()[level] == 0) {
 				sumZeroLax += 1;
 			}
-		}
-		for (McDAG d : getMcDAGs()) {
-			for (Vertex v : d.getVertices())
-				sumRemainTimes += getRemainingTime()[level][((VertexScheduling)v).getGraphId()][v.getId()];
 		}
 		
 		// More than m zero laxity tasks
@@ -86,8 +81,8 @@ public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 			relatSlot = slot;
 		
 		sumSlotsLeft = (gethPeriod() - relatSlot) * getNbCores();
-		if (sumSlotsLeft < sumRemainTimes) {
-			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): Not enough slots left "+sumSlotsLeft+" for "+sumRemainTimes);
+		if (sumSlotsLeft < getSumRemainTimes()[level]) {
+			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): Not enough slots left "+sumSlotsLeft+" for "+getSumRemainTimes());
 			return false;
 		}
 		
