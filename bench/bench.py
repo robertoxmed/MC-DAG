@@ -13,13 +13,13 @@ from email.mime.base import MIMEBase
 from email import encoders
 
 # Global setup for generation and benchmarks
-number_levels = [2]
-number_tasks = [10, 20, 50]
+number_levels = [3, 4, 5]
+number_tasks = [20, 30, 50]
 number_dags = [2, 4]
 number_cores = [4]
 edge_percentage = [20, 40]
 number_jobs = 20
-number_files = "500"
+number_files = "200"
 
 def create_setup():
     # Create the directory tree for generation
@@ -231,7 +231,7 @@ def send_email(t_start,t_end):
                         part = MIMEBase('application', 'octet-stream')
                         part.set_payload((attachment).read())
                         encoders.encode_base64(part)
-                        part.add_header('Content-Disposition', "attachment; filename= results/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv")
+                        part.add_header('Content-Disposition', "attachment; filename=results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv")
                         msg.attach(part)
 
     server = smtplib.SMTP('smtp.gmail.com:587')

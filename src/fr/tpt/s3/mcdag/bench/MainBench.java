@@ -293,7 +293,7 @@ public class MainBench {
 			Writer wOutput = new BufferedWriter(new FileWriter(outputFilePathTotal, true));
 			wOutput.write(Thread.currentThread().getName()+"; "+utilization+"; "
 						  +laxPerc+"; "+laxPreempts+"; "+laxActiv+"; "+laxPercPreempts+"; "
-						  +edfPerc+"; "+edfPreempts+"; "+edfActiv+"; "+edfPercPreempts+
+						  +edfPerc+"; "+edfPreempts+"; "+edfActiv+"; "+edfPercPreempts+"; "
 						  +hybridPerc+"; "+hybridPreempts+"; "+hybridActiv+"; "+hybridPercPreempts+"\n");
 			wOutput.close();
 			

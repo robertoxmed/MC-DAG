@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Set;
 
 import fr.tpt.s3.mcdag.model.McDAG;
-import fr.tpt.s3.mcdag.model.Vertex;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
 
 /**
