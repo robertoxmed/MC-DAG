@@ -70,15 +70,12 @@ public class BenchThreadNLevels implements Runnable {
 		double uDAGs = 0.0;
 		output = new BufferedWriter(new FileWriter(getOutputFile(), true));
 		
-		int outBFSched = 0;
 		int outBLSched = 0;
 		int outBEDFSched = 0;
 		int outBHybridSched = 0;
-		int outPreemptsFed = 0;
 		int outPreemptsLax = 0;
 		int outPreemptsEdf = 0;
 		int outPreemptsHybrid = 0;
-		int outActFed = 0;
 		int outActLax = 0;
 		int outActEdf = 0;
 		int outActHybrid = 0;
@@ -112,7 +109,7 @@ public class BenchThreadNLevels implements Runnable {
 		for (McDAG d : dags)
 			uDAGs += d.getUmax();
 		
-		output.write(Thread.currentThread().getName()+"; "+getInputFile()+"; "+outBFSched+"; "+outPreemptsFed+"; "+outActFed+"; "
+		output.write(Thread.currentThread().getName()+"; "+getInputFile()+"; "
 		+outBLSched+"; "+outPreemptsLax+"; "+outActLax+"; "
 		+outBEDFSched+"; "+outPreemptsEdf+"; "+outActEdf+"; "
 		+outBHybridSched+"; "+outPreemptsHybrid+"; "+outActHybrid+"; "
@@ -135,7 +132,7 @@ public class BenchThreadNLevels implements Runnable {
 		mcp.readXML();
 		// Test edf
 		// Make another copy of the system instance
-		edf = new EartliestDeadlineFirstMCSched(getDags(), nbCores, 2, debug, true);
+		edf = new EartliestDeadlineFirstMCSched(getDags(), nbCores, mcp.getNbLevels(), debug, true);
 		
 		try {
 			resetVisited(getDags());
@@ -146,7 +143,7 @@ public class BenchThreadNLevels implements Runnable {
 		}
 	
 		// Test laxity
-		llf = new LeastLaxityFirstMCSched(getDags(), nbCores, 2, debug, true);
+		llf = new LeastLaxityFirstMCSched(getDags(), nbCores, mcp.getNbLevels(), debug, true);
 		
 		try {
 			resetVisited(getDags());
@@ -157,7 +154,7 @@ public class BenchThreadNLevels implements Runnable {
 		}
 		
 		// Test hybrid
-		hybrid = new HybridMCSched(getDags(), nbCores, 2, debug, true);
+		hybrid = new HybridMCSched(getDags(), nbCores, mcp.getNbLevels(), debug, true);
 		
 		try {
 			resetVisited(getDags());

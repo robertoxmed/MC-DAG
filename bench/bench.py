@@ -209,7 +209,7 @@ def send_email(t_start,t_end):
             elif i == 2:
                 TO = line.rstrip('\n')
             i += 1
-    nb_files = len(number_levels) * len(number_cores) * len(edge_percentage) * len(number_dags) * len(number_tasks)*number_files
+    nb_files = len(number_levels) * len(number_cores) * len(edge_percentage) * len(number_dags) * len(number_tasks) * int(number_files)
     SUBJECT = "Results for benchmarks ready"
     TEXT = "Statistics for the benchmarks:\n\
               - Elapsed time: "+str(t_end - t_start)+"\n\

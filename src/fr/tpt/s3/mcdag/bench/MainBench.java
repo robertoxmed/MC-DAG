@@ -36,6 +36,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import fr.tpt.s3.mcdag.bench.multidag.BenchThreadDualCriticality;
+import fr.tpt.s3.mcdag.bench.nlevel.BenchThreadNLevels;
 
 /**
  * These benchmarks compares us to the state of the art techniques
@@ -120,7 +121,9 @@ public class MainBench {
 		
 		// For dual-criticality systems we call a specific thread
 		if (nbLvls == 2) {
-	
+			
+			System.out.println(">>>>>>>>>>>>>>>>>>>>> NB levels "+nbLvls);
+			
 			int i_files2 = 0;
 			String outFile = outputFilePath.substring(0, outputFilePath.lastIndexOf('.')).concat("-schedulability.csv");
 			PrintWriter writer = new PrintWriter(outFile, "UTF-8");
@@ -224,7 +227,7 @@ public class MainBench {
 			
 			ExecutorService executor2 = Executors.newFixedThreadPool(nbJobs);
 			while (i_files2 != nbFiles) {
-				BenchThreadDualCriticality bt2 = new BenchThreadDualCriticality(inputFilePath[i_files2], outFile, nbCores, boolDebug);
+				BenchThreadNLevels bt2 = new BenchThreadNLevels(inputFilePath[i_files2], outFile, nbCores, boolDebug);
 				
 				executor2.execute(bt2);
 				i_files2++;
