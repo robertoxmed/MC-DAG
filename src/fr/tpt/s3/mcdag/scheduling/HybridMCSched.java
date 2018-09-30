@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Set;
 
 import fr.tpt.s3.mcdag.model.McDAG;
-import fr.tpt.s3.mcdag.model.Vertex;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
 
 /**
@@ -62,22 +61,25 @@ public class HybridMCSched extends GlobalGenericMCScheduler {
 	 */
 	@Override
 	protected boolean verifyConstraints(List<VertexScheduling> ready, int slot, int level) {
-		int sumRemainTimes = 0;
 		int sumSlotsLeft = 0;
 		int sumZeroLax = 0;
 		
 		for (VertexScheduling v : ready) {
-			// Task has negative laxity -> non schedulable system
-			if (v.getWeights()[level] < 0) {
-				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): negative laxity on task "+v.getName());
-				return false;
-			} else if (v.getWeights()[level] == 0) {
-				sumZeroLax += 1;
+			if (level >= 1 ) {
+				int relatSlot =  (gethPeriod() - slot - 1) % v.getGraphDead();
+				if (relatSlot > v.getWeights()[level]) {
+					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): deadline not respected for "+v.getName());
+					return false;
+				}
+			} else {
+				// 	Task has negative laxity -> non schedulable system
+				if (v.getWeights()[level] < 0) {
+					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): negative laxity on task "+v.getName());
+					return false;
+				} else if (v.getWeights()[level] == 0) {
+					sumZeroLax += 1;
+				}
 			}
-		}
-		for (McDAG d : getMcDAGs()) {
-			for (Vertex v : d.getVertices())
-				sumRemainTimes += getRemainingTime()[level][((VertexScheduling)v).getGraphId()][v.getId()];
 		}
 		
 		// More than m zero laxity tasks
@@ -94,8 +96,8 @@ public class HybridMCSched extends GlobalGenericMCScheduler {
 			relatSlot = slot;
 		
 		sumSlotsLeft = (gethPeriod() - relatSlot) * getNbCores();
-		if (sumSlotsLeft < sumRemainTimes) {
-			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): Not enough slots left "+sumSlotsLeft+" for "+sumRemainTimes);
+		if (sumSlotsLeft < getSumRemainTimes()[level]) {
+			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): Not enough slots left "+sumSlotsLeft+" for "+getSumRemainTimes()[level]);
 			return false;
 		}
 		

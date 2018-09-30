@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Set;
 
 import fr.tpt.s3.mcdag.model.McDAG;
-import fr.tpt.s3.mcdag.model.Vertex;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
 
 /**
@@ -51,7 +50,6 @@ public class EartliestDeadlineFirstMCSched extends GlobalGenericMCScheduler {
 
 	@Override
 	protected boolean verifyConstraints(List<VertexScheduling> ready, int slot, int level) {
-		int sumRemainTimes = 0;
 		int sumSlotsLeft = 0;
 		
 		for (VertexScheduling v : ready) {
@@ -60,14 +58,10 @@ public class EartliestDeadlineFirstMCSched extends GlobalGenericMCScheduler {
 			if (level >= 1)
 				relatSlot =  (gethPeriod() - slot - 1) % v.getGraphDead();
 			
-			if (relatSlot > v.getGraphDead()) {
+			if (relatSlot > v.getWeights()[level]) {
 				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): deadline not respected for "+v.getName());
 				return false;
 			}
-		}
-		for (McDAG d : getMcDAGs()) {
-			for (Vertex v : d.getVertices())
-			sumRemainTimes += getRemainingTime()[level][((VertexScheduling)v).getGraphId()][v.getId()];
 		}
 		
 		// Get the sum of remaining slots
@@ -78,8 +72,8 @@ public class EartliestDeadlineFirstMCSched extends GlobalGenericMCScheduler {
 			relatSlot = slot;
 		
 		sumSlotsLeft = (gethPeriod() - relatSlot) * getNbCores();
-		if (sumSlotsLeft < sumRemainTimes) {
-			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): Not enough slots left "+sumSlotsLeft+" for "+sumRemainTimes);
+		if (sumSlotsLeft < getSumRemainTimes()[level]) {
+			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): Not enough slots left "+sumSlotsLeft+" for "+getSumRemainTimes()[level]);
 			return false;
 		}
 		
