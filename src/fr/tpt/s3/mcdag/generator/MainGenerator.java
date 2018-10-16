@@ -110,9 +110,9 @@ public class MainGenerator {
 		int nbJobs = 1;
 		if (cmd.hasOption("jobs"))
 			nbJobs = Integer.parseInt(cmd.getOptionValue("jobs"));
-		int rfactor = 2;
+		double rfactor = 2.0;
 		if (cmd.hasOption("reduc_factor"))
-			 rfactor = Integer.parseInt(cmd.getOptionValue("reduc_factor"));
+			 rfactor = Double.parseDouble(cmd.getOptionValue("reduc_factor"));
 		/* ============================= Generator parameters ============================= */
 		
 		if (nbFiles < 0 || nbDags < 0 || nbJobs < 0) {
