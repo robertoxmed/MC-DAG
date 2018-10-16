@@ -312,7 +312,10 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 			}
 			pit = prioOrder.listIterator();
 		}
-		
+		if (!ready.isEmpty()) {
+			SchedulingException se = new SchedulingException("[ERROR"+Thread.currentThread().getName()+"] buildHITable(): ready list not empty");
+			throw se;
+		}
 	}
 	
 	private void buildLOTable (McDAG d, String sched[][][], List<VertexScheduling> loPrioOrder, List<VertexScheduling> hiPrioOrder) throws SchedulingException {
@@ -428,6 +431,10 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 			}
 			hpit = hiPrioOrder.listIterator();
 			lpit = loPrioOrder.listIterator();
+		}
+		if (!ready.isEmpty()) {
+			SchedulingException se = new SchedulingException("[ERROR"+Thread.currentThread().getName()+"] buildHITable(): ready list not empty");
+			throw se;
 		}
 	}
 	
