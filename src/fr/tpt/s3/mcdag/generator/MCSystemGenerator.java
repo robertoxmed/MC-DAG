@@ -37,7 +37,7 @@ public class MCSystemGenerator {
 	private double userMaxU;
 	private int nbLevels;
 	private int parallelismDegree;
-	private int rfactor;
+	private double rfactor;
 	private int nbTasks;
 	
 	// Utilities
@@ -48,7 +48,7 @@ public class MCSystemGenerator {
 	
 	public MCSystemGenerator (double maxU, int nbTasks,
 			double eProb, int levels, int paraDegree, int nbDAGs,
-			int rfactor, boolean debug) {
+			double rfactor, boolean debug) {
 		setUserMaxU(maxU);
 		setNbTasks(nbTasks);
 		setEdgeProb(eProb);
@@ -474,11 +474,11 @@ public class MCSystemGenerator {
 		this.nbDAGs = nbDAGs;
 	}
 
-	public int getRfactor() {
+	public double getRfactor() {
 		return rfactor;
 	}
 
-	public void setRfactor(int rfactor) {
+	public void setRfactor(double rfactor) {
 		this.rfactor = rfactor;
 	}
 

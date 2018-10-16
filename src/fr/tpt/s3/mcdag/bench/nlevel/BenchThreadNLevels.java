@@ -99,11 +99,6 @@ public class BenchThreadNLevels implements Runnable {
 			for (VertexScheduling task : pEdf.keySet())
 				outPreemptsEdf += pEdf.get(task);
 			outActEdf = edf.getActivations();
-			
-			Hashtable<VertexScheduling, Integer> pHybrid = hybrid.getPreemptions();
-			for (VertexScheduling task : pHybrid.keySet())
-				outPreemptsHybrid += pHybrid.get(task);
-			outActHybrid = hybrid.getActivations();
 		}
 		
 		for (McDAG d : dags)

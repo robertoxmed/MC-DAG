@@ -122,7 +122,7 @@ public class EartliestDeadlineFirstMCSched extends GlobalGenericMCScheduler {
 			if (v.getWcet(level + 1) > 0) {
 				// Promotion needed for the task
 				if ((v.getWcet(level) - getRemainingTime()[level][dagId][v.getId()]) - scheduledUntilTinL(v, slot, level + 1) < 0) {
-					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+v.getName()+" at slot @t = "+slot);
+					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] sortLO(): Promotion of task "+v.getName()+" at slot @t = "+slot);
 					v.setWeightInL(0, level);
 				} else {
 					v.setWeightInL(v.getDeadlines()[level], level);

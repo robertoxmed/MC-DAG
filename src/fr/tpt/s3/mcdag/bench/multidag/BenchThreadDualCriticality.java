@@ -108,12 +108,7 @@ public class BenchThreadDualCriticality implements Runnable {
 		if (isSchedHybrid())
 			outBHybridSched = 1;
 		
-		if (isSchedEdf() && isSchedFede() && isSchedLax()) {
-			Hashtable<VertexScheduling, Integer> pFed = fedScheduler.getPreempts();
-			for (VertexScheduling task : pFed.keySet())
-				outPreemptsFed += pFed.get(task);
-			outActFed = fedScheduler.getActivations();
-			
+		if (isSchedEdf() && isSchedLax()) {			
 			Hashtable<VertexScheduling, Integer> pLax = llf.getPreemptions();
 			for (VertexScheduling task : pLax.keySet())
 				outPreemptsLax += pLax.get(task);
@@ -123,11 +118,6 @@ public class BenchThreadDualCriticality implements Runnable {
 			for (VertexScheduling task : pEdf.keySet())
 				outPreemptsEdf += pEdf.get(task);
 			outActEdf = edf.getActivations();
-			
-			Hashtable<VertexScheduling, Integer> pHybrid = hybrid.getPreemptions();
-			for (VertexScheduling task : pHybrid.keySet())
-				outPreemptsHybrid += pHybrid.get(task);
-			outActHybrid = hybrid.getActivations();
 		}
 		
 		for (McDAG d : dags)
