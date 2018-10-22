@@ -26,4 +26,4 @@ This framework is also capable of performing model transformations to compute av
 This implementation supports the following papers:
 * *Directed Acyclic Graph Scheduling for Mixed-Criticality Systems - R. Medina, E. Borde and L. Pautet* - presented at [Ada Europe 2017](https://www.auto.tuwien.ac.at/~blieb/AE2017/).
 * *Availability Enhancement and Analysis for Mixed-Criticality Systems on Multi-core - R. Medina, E. Borde and L. Pautet* - presented at [DATE 2018](https://www.date-conference.com/)
-* *Scheduling Multi-Periodic Mixed-Criticality DAGs on Multi-core Architectures - R. Medina, E. Borde and L. Pautet*.
+* *Scheduling Multi-Periodic Mixed-Criticality DAGs on Multi-core Architectures - R. Medina, E. Borde and L. Pautet* - presented at [RTSS 2018](http://2018.rtss.org/).
