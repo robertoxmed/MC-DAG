@@ -257,14 +257,14 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 			}
 			
 			// There aren't enough slots to continue the allocation
-			if (!enoughSlots(ready, s, d.getDeadline(), d.getMinCores(), remainingTime)) {
+			if (!enoughSlots(ready, s, d.getDeadline(), getNbCores(), remainingTime)) {
 				SchedulingException se = new SchedulingException("[ERROR"+Thread.currentThread().getName()+"] buildHITable(): Failed to schedule at time "+s);
 				throw se;
 			}
 			
 			// Check the priority ordering
 			ArrayList<VertexScheduling> toSched = new ArrayList<>();
-			int coreBudget = d.getMinCores();
+			int coreBudget = getNbCores();
 			
 			while (pit.hasNext() && coreBudget > 0) {
 				VertexScheduling a = pit.next();
@@ -346,14 +346,14 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 			}
 			
 			// There aren't enough slots to continue the allocation
-			if (!enoughSlots(ready, s, d.getDeadline(), d.getMinCores(), remainingTime)) {
+			if (!enoughSlots(ready, s, d.getDeadline(), getNbCores(), remainingTime)) {
 				SchedulingException se = new SchedulingException("[ERROR"+Thread.currentThread().getName()+"] buildLOTable(): Failed to schedule at time "+s);
 				throw se;
 			}
 			
 			// Construct the schedulable elements
 			ArrayList<VertexScheduling> toSched = new ArrayList<>();
-			int coreBudget = d.getMinCores();
+			int coreBudget = getNbCores();
 			
 			// Check the priority ordering of HI tasks first
 			while (hpit.hasNext() && coreBudget > 0) {
@@ -540,7 +540,7 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 			List<VertexScheduling> hiPrioOrder = new LinkedList<>();
 			List<VertexScheduling> loPrioOrder = new LinkedList<>();
 			// Init sched table
-			String sched[][][] = new String[2][d.getDeadline()][d.getMinCores()];
+			String sched[][][] = new String[2][d.getDeadline()][getNbCores()];
 			
 			for (int i = 0; i < 2; i++) {
 				for (int j = 0; j < d.getDeadline(); j++) {

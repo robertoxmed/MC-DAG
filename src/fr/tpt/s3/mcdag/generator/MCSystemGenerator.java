@@ -252,8 +252,10 @@ public class MCSystemGenerator {
 						}
 					}
 					// Set the Ci for inferior levels
-					if (i >= 1)
-						n.getWcets()[i - 1] = n.getWcet(i);
+					if (i >= 1) {
+						for (int x = i - 1; x >= 0; x--)
+							n.getWcets()[x] = n.getWcet(i);
+					}
 					nodes.add(n);
 					tasksToGen--;
 					n.CPfromNode(i);
@@ -270,19 +272,22 @@ public class MCSystemGenerator {
 				// Shrinking depends on the reduction factor
 				double minU = rU[i - 1] / getRfactor();
 				int wantedBudget = (int) Math.ceil(minU * rDead);
-				int actualBudget = (int) Math.ceil(rU[i] * rDead);
-				Iterator<Vertex> it_n;
+				int actualBudget = 0;
+				
+				for (Vertex v : nodes)
+					actualBudget += ((VertexScheduling) v).getWcet(i);
 				
 				while (wantedBudget < actualBudget && !allNodesAreMin(nodes, i)) {
-					it_n = nodes.iterator();
-					while (it_n.hasNext()) {
-						VertexScheduling n = (VertexScheduling) it_n.next();
+					int idx = getRng().randomUnifInt(0, nodes.size() - 1);
+					VertexScheduling n = (VertexScheduling) randomObjectIdxSet(nodes, idx);
 						
-						n.getWcets()[i - 1] = rng.randomUnifInt(1, n.getWcet(i));
-						actualBudget -= n.getWcet(i - 1);
-						if (actualBudget < 0)
-							actualBudget = 0;
-					}
+					n.getWcets()[i - 1] = rng.randomUnifInt(1, n.getWcet(i));
+					for (int x = i - 1; x >= 0; x--)
+						n.getWcets()[x] = n.getWcets()[i - 1];
+								
+					actualBudget -= n.getWcet(i - 1);
+					if (actualBudget < 0)
+						actualBudget = 0;
 				}
 				
 				if (isDebug()) {
@@ -291,7 +296,7 @@ public class MCSystemGenerator {
 						debugNode(a, "GenerateGraph()");
 				}
 				
-				it_n = nodes.iterator();
+				Iterator<Vertex> it_n = nodes.iterator();
 				actualBudget = 0;
 				while (it_n.hasNext()) {
 					Vertex a = it_n.next();
@@ -316,6 +321,18 @@ public class MCSystemGenerator {
 			System.out.println("[DEBUG "+Thread.currentThread().getName()+"] GenerateGraph(): DAG generation completed");
 	}
 	
+	
+	// Iterate until getting a random object from set
+	private Object randomObjectIdxSet (Set<Vertex> theSet, int idx) {
+		int i = 0;
+		
+		for (Object o : theSet) {
+			if (i == idx)
+				return o;
+			i++;
+		}
+		return null;
+	}
 	
 	/**
 	 * Verifies if all the nodes in the set have the minimum execution time
