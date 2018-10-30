@@ -89,17 +89,20 @@ public class BenchThreadNLevels implements Runnable {
 		if (isSchedHybrid())
 			outBHybridSched = 1;
 		
-		if (isSchedEdf() && isSchedLax()) {			
-			Hashtable<VertexScheduling, Integer> pLax = llf.getPreemptions();
-			for (VertexScheduling task : pLax.keySet())
-				outPreemptsLax += pLax.get(task);
-			outActLax = llf.getActivations();
+		Hashtable<VertexScheduling, Integer> pLax = llf.getPreemptions();
+		for (VertexScheduling task : pLax.keySet())
+			outPreemptsLax += pLax.get(task);
+		outActLax = llf.getActivations();
 			
-			Hashtable<VertexScheduling, Integer> pEdf = edf.getPreemptions();
-			for (VertexScheduling task : pEdf.keySet())
-				outPreemptsEdf += pEdf.get(task);
-			outActEdf = edf.getActivations();
-		}
+		Hashtable<VertexScheduling, Integer> pEdf = edf.getPreemptions();
+		for (VertexScheduling task : pEdf.keySet())
+			outPreemptsEdf += pEdf.get(task);
+		outActEdf = edf.getActivations();
+		
+		Hashtable<VertexScheduling, Integer> pHyb = hybrid.getPreemptions();
+		for (VertexScheduling task : pHyb.keySet())
+			outPreemptsEdf += pHyb.get(task);
+		outPreemptsEdf = hybrid.getActivations();
 		
 		for (McDAG d : dags)
 			uDAGs += d.getUmax();

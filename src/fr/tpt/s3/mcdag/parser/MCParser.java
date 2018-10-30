@@ -588,6 +588,9 @@ public class MCParser {
 					}
 					Element fprob = doc.createElement("fprob");
 					fprob.appendChild(doc.createTextNode("0.0"));
+					Element rank = doc.createElement("rank");
+					rank.appendChild(doc.createTextNode(String.valueOf(((VertexScheduling) a).getRank())));
+					actor.appendChild(rank);
 					actor.appendChild(fprob);
 					mcdag.appendChild(actor);
 				}
@@ -688,7 +691,7 @@ public class MCParser {
 			
 			for (McDAG d : ug.getGennedDAGs()) {
 				for (Vertex a : d.getVertices()) {
-					out.write("\"D"+d.getId()+"N"+a.getName()+"\" [label=\"D"+d.getId()+"N"+a.getName()+"\\n");
+					out.write("\"D"+d.getId()+"N"+a.getName()+"\" [label=\"D"+d.getId()+"N"+a.getName()+" "+((VertexScheduling)a).getRank()+"\\n");
 					for (int i = ug.getNbLevels() - 1; i >= 0; i--) {
 						if (i != 0)
 							out.write(a.getWcet(i)+"/");
