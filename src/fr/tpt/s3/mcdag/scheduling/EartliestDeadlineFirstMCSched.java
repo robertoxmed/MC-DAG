@@ -58,7 +58,7 @@ public class EartliestDeadlineFirstMCSched extends GlobalGenericMCScheduler {
 			if (level >= 1)
 				relatSlot =  (gethPeriod() - slot - 1) % v.getGraphDead();
 			
-			if (relatSlot > v.getWeights()[level]) {
+			if (relatSlot > v.getDeadlines()[level]) {
 				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): deadline not respected for "+v.getName());
 				return false;
 			}

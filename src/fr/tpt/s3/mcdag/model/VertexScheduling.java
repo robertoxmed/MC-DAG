@@ -152,5 +152,4 @@ public class VertexScheduling extends Vertex {
 	public void setHlfet(int[] hlfet) {
 		this.hlfet = hlfet;
 	}
-
 }
