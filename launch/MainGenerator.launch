@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/MC-DAG/src/fr/tpt/s3/mcdag/generator/MainGenerator.java"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="1"/>
+</listAttribute>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="fr.tpt.s3.mcdag.generator.MainGenerator"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-e 20 -l 2 -mu 4 -nd 1 -nf 1 -p 2 -rf 2 -nt 100 -o test.xml -g -d"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="MC-DAG"/>
+</launchConfiguration>
