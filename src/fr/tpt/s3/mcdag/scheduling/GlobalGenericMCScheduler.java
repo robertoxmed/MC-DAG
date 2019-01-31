@@ -243,12 +243,8 @@ public abstract class GlobalGenericMCScheduler {
 		
 		if (t == 0)
 			return 0;
-		
-		if ((int)(realSlot/a.getGraphDead()) <= 0 || realSlot % a.getGraphDead() == 0) {
-			end = a.getGraphDead() - 1;
-		} else {
-			end = ((int)(realSlot / a.getGraphDead()) + 1)  * a.getGraphDead() - 1;
-		}
+
+		end = ((int)(realSlot / a.getGraphDead()) + 1)  * a.getGraphDead() - 1;
 				
 		for (int i = end; i >= realSlot; i--) {
 			for (int c = 0; c < getNbCores(); c++) {

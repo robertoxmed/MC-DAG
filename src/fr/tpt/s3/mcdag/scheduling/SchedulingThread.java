@@ -94,7 +94,7 @@ public class SchedulingThread implements Runnable{
 				System.out.println("["+Thread.currentThread().getName()+"] PRISM file written.");
 			}
 			
-		} else { // The model is has multiple DAGs
+		} else { // The model has multiple DAGs
 			//setScheduler(new HybridMCSched(mcp.getDags(), mcp.getNbCores(), mcp.getNbLevels(), debug, isPreempt()));
 			setScheduler(new LeastLaxityFirstMCSched(mcp.getDags(), mcp.getNbCores(), mcp.getNbLevels(), debug, isPreempt()));
 			//setScheduler(new EartliestDeadlineFirstMCSched(mcp.getDags(), mcp.getNbCores(), mcp.getNbLevels(), debug, isPreempt()));
