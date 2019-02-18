@@ -30,7 +30,7 @@ public class GeneratorThread implements Runnable{
 	public GeneratorThread (double maxU, int nbTasks, double eProb, int levels,
 			int pDegree, int nbDags, double rfactor, String outFile, boolean graphBool, boolean debug) {
 		
-		ug = new MCSystemGenerator(maxU, nbTasks, eProb, levels, pDegree,
+		ug = new MCSystemGeneratorDev(maxU, nbTasks, eProb, levels, pDegree,
 								  nbDags, rfactor, debug);
 		mcp = new MCParser(outFile, ug);
 		setDebug(debug);

@@ -99,7 +99,7 @@ public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 	}
 
 	@Override
-	protected void sortHI(List<VertexScheduling> ready, int slot, int level) {
+	protected void sortHI(List<VertexScheduling> ready, int slot, final int level) {
 		for (VertexScheduling v : ready) {
 			int relatSlot = slot % v.getGraphDead();
 			int dId = v.getGraphId();

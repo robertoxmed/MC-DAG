@@ -16,6 +16,7 @@
  *******************************************************************************/
 package fr.tpt.s3.mcdag.generator;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -29,22 +30,22 @@ import fr.tpt.s3.mcdag.util.RandomNumberGenerator;
 public class MCSystemGenerator {
 
 	// Set of generated graphs
-	private Set<McDAG> gennedDAGs;
-	private int nbDAGs;
+	protected Set<McDAG> gennedDAGs;
+	protected int nbDAGs;
 	
 	// Parameters for the generation
-	private double edgeProb;
-	private double userMaxU;
-	private int nbLevels;
-	private int parallelismDegree;
-	private double rfactor;
-	private int nbTasks;
+	protected double edgeProb;
+	protected double userMaxU;
+	protected int nbLevels;
+	protected int parallelismDegree;
+	protected double rfactor;
+	protected int nbTasks;
 	
 	// Utilities
-	private RandomNumberGenerator rng;
-	private boolean debug;
+	protected RandomNumberGenerator rng;
+	protected boolean debug;
 	
-	private int possibleDeadlines[] = {100, 120, 150, 180, 200, 220, 250, 300, 400, 500}; 
+	protected int possibleDeadlines[] = {100, 120, 150, 180, 200, 220, 250, 300, 400, 500}; 
 	
 	public MCSystemGenerator (double maxU, int nbTasks,
 			double eProb, int levels, int paraDegree, int nbDAGs,
@@ -65,7 +66,7 @@ public class MCSystemGenerator {
 	 * Function that prints the current parameters of the node
 	 * @param a
 	 */
-	private void debugNode (Vertex a, String func) {
+	protected void debugNode (Vertex a, String func) {
 		
 		System.out.print("[DEBUG "+Thread.currentThread().getName()+"] "+func+": Node "+a.getId());
 		for (int i = nbLevels - 1; i >= 0; i--)
@@ -82,7 +83,7 @@ public class MCSystemGenerator {
 	 * @param uSet
 	 * @param u
 	 */
-	private void uunifast (double uSet[], double u) {
+	protected void uunifast (double uSet[], double u) {
 		
 		double sum = u;
 		double nextSum;
@@ -137,7 +138,7 @@ public class MCSystemGenerator {
 	 * -> They become source edges
 	 * @param level
 	 */
-	private void resetRanks (Set<Vertex> nodes, int level) {
+	protected void resetRanks (Set<Vertex> nodes, int level) {
 		for (Vertex a : nodes) {
 			if (a.getSndEdges().size() == 0 && a.getRcvEdges().size() == 0)
 				((VertexScheduling) a).setRank(0);
@@ -207,7 +208,7 @@ public class MCSystemGenerator {
 			
 			if (isDebug()) printUset(uSet);
 			
-			while (budgets[i] > 0 && tasksToGen > 0) {
+			while (tasksToGen > 0) {
 				int nodesPerRank = rng.randomUnifInt(1, parallelismDegree);
 				
 				for (int j = 0; j < nodesPerRank || budgets[i] < 0; j++) {
@@ -323,7 +324,7 @@ public class MCSystemGenerator {
 	
 	
 	// Iterate until getting a random object from set
-	private Object randomObjectIdxSet (Set<Vertex> theSet, int idx) {
+	protected Object randomObjectIdxSet (Set<Vertex> theSet, int idx) {
 		int i = 0;
 		
 		for (Object o : theSet) {
@@ -340,7 +341,7 @@ public class MCSystemGenerator {
 	 * @param level
 	 * @return
 	 */
-	private boolean allNodesAreMin(Set<Vertex> nodes, int level) {
+	protected boolean allNodesAreMin(Set<Vertex> nodes, int level) {
 		for (Vertex a : nodes) {
 			if (a.getWcet(level) != 1)
 				return false;
@@ -354,7 +355,8 @@ public class MCSystemGenerator {
 		for (McDAG d : getGennedDAGs()) {
 			uSys += d.getUmax();
 		}		
-		if (userMaxU * 0.999 <= uSys && uSys <= userMaxU)
+		System.out.println(">>>>>>>>>>>>>>> U generated " + uSys);
+		if (userMaxU * 0.99 <= uSys && uSys <= userMaxU * 1.01)
 			return true;
 		
 		return false;
@@ -383,8 +385,10 @@ public class MCSystemGenerator {
 
 			done = thresholdUtilization();
 			
-			if (!done)
+			if (!done) {
+				
 				getGennedDAGs().clear();
+			}
 		}
 		
 	}
@@ -421,6 +425,31 @@ public class MCSystemGenerator {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Function to randomly generate a vector of integers that add to a given sum
+	 * Placeholder until randFixedSum is implemented in Java
+	 * @param sum
+	 * @param n
+	 * @return
+	 */
+	protected int[] randIntSum (int sum, int n) {
+		int vals[] = new int[n];
+		
+		for (int i = 0; i < n - 1; ++i)
+			vals[i] = rng.randomUnifInt(0, sum); 
+		
+		vals[n - 1] = sum;
+		
+		Arrays.sort(vals);
+		for (int i = n - 1; i > 0; --i)
+			vals[i] -= vals[i - 1];
+			
+		for (int i = 0; i < n; ++i)
+			++vals[i];
+			
+		return vals;
 	}
 	
 	/*

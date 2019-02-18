@@ -81,7 +81,7 @@ public class EartliestDeadlineFirstMCSched extends GlobalGenericMCScheduler {
 	}
 
 	@Override
-	protected void sortHI(List<VertexScheduling> ready, int slot, int level) {
+	protected void sortHI(List<VertexScheduling> ready, int slot, final int level) {
 		// Check if tasks need to be delayed first
 		for (VertexScheduling v : ready) {
 			if (level != getLevels() - 1) {
