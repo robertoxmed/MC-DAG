@@ -437,13 +437,15 @@ public class MCSystemGenerator {
 	protected int[] randIntSum (int sum, int n) {
 		int vals[] = new int[n];
 		
+		sum -= n;
+		
 		for (int i = 0; i < n - 1; ++i)
 			vals[i] = rng.randomUnifInt(0, sum); 
 		
 		vals[n - 1] = sum;
 		
 		Arrays.sort(vals);
-		for (int i = n - 1; i > 0; --i)
+		for (int i = n - 1; i > 0; i--)
 			vals[i] -= vals[i - 1];
 			
 		for (int i = 0; i < n; ++i)
