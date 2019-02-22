@@ -69,13 +69,10 @@ public class MCSystemGeneratorDev extends MCSystemGenerator{
 				int tasksToGen = tasks[i];
 				
 				// Uniform distribution for integer timing budgets
-				System.out.println("[DEBUG "+Thread.currentThread().getName()+"] GenerateGraph(): Calling rand int sum w  "+budgets[i] + " tasks to gen "+tasksToGen);
 				int[] taskBudets = randIntSum(budgets[i], tasksToGen);				
 				
 				while (tasksToGen > 0) {
 					int nodesPerRank = rng.randomUnifInt(1, parallelismDegree);
-					System.out.println("[DEBUG "+Thread.currentThread().getName()+"] GenerateGraph(): Nodes per rank "+nodesPerRank + " tasks to gen "+tasksToGen);
-
 					
 					for (int j = 0; j < nodesPerRank && tasksToGen > 0; j++) {
 						VertexScheduling n = new VertexScheduling(id, Integer.toString(id), nbLevels);
@@ -127,8 +124,6 @@ public class MCSystemGeneratorDev extends MCSystemGenerator{
 				if (i >= 1) {
 					// Shrinking depends on the reduction factor
 					int wantedBudget = (int) Math.floor(Math.floor(rDead * utilization) / getRfactor());
-					System.out.println("[DEBUG "+Thread.currentThread().getName()+"] GenerateGraph(): >>>>>>>>>>>>> Wanted budget " + wantedBudget);
-
 					int actualBudget = 0;
 					
 					for (Vertex v : nodes)
@@ -162,8 +157,6 @@ public class MCSystemGeneratorDev extends MCSystemGenerator{
 					}
 					// Update remaining budgets
 					budgets[i - 1] -= actualBudget;
-					System.out.println("[DEBUG "+Thread.currentThread().getName()+"] GenerateGraph(): budget for next mode "+budgets[i - 1]);
-
 				}
 				// Nodes that have no edges become source nodes
 				// their rank is reset

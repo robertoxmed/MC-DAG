@@ -356,7 +356,7 @@ public class MCSystemGenerator {
 			uSys += d.getUmax();
 		}		
 		System.out.println(">>>>>>>>>>>>>>> U generated " + uSys);
-		if (userMaxU * 0.99 <= uSys && uSys <= userMaxU * 1.01)
+		if (userMaxU * 0.999 <= uSys && uSys <= userMaxU)
 			return true;
 		
 		return false;
