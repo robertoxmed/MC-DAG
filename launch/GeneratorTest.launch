@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
-<listEntry value="/LS_mxc/src/fr/tpt/s3/ls_mxc/generator/MainGenerator.java"/>
+<listEntry value="/MC-DAG/src/fr/tpt/s3/mcdag/generator/MainGenerator.java"/>
 </listAttribute>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
 <listEntry value="1"/>
 </listAttribute>
-<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="fr.tpt.s3.ls_mxc.generator.MainGenerator"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-d -g -e 20 -mu 1.5  -lu 0.5 -nd 2 -nf 100 -p 1 -l 3 -o btests/test1.xml -j 5"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="LS_mxc"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="fr.tpt.s3.mcdag.generator.MainGenerator"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-d -g -e 20 -mu 1.5 -nt 20 -nd 2 -nf 10 -p 1 -l 2 -rf 2 -o btests/test1.xml -j 5"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="MC-DAG"/>
 </launchConfiguration>
