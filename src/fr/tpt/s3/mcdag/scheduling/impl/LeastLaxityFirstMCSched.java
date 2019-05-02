@@ -14,20 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package fr.tpt.s3.mcdag.scheduling;
+package fr.tpt.s3.mcdag.scheduling.impl;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
+import fr.tpt.s3.mcdag.scheduling.GlobalGenericMCScheduler;
 
 /**
  * Least-laxity first adaptation for the MC meta-heuristic
@@ -36,18 +33,12 @@ import fr.tpt.s3.mcdag.model.VertexScheduling;
  */
 public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 	
-	// Map to implement the modified version of LLF
-	private Map<Integer, List<VertexScheduling>> equalityMap;
-	private int lastEqLax = -1;
-	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public LeastLaxityFirstMCSched (Set<McDAG> DAGs, int cores, int levels, boolean debug, boolean preemption) {
 		setMcDAGs(DAGs);
 		setNbCores(cores);
 		setLevels(levels);
 		setCountPreempt(preemption);
 		setDebug(debug);
-		equalityMap = new HashMap();
 		
 		for (McDAG d : getMcDAGs()) {
 			calcDedlines(d);
@@ -114,9 +105,11 @@ public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 					v.setWeightInL(Integer.MAX_VALUE, level);
 				} else {
 					v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
+					v.setDelayed(false);
 				}
 			} else {
 				v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
+				v.setDelayed(false);
 			}
 		}
 		// Sort the ready list
@@ -162,96 +155,5 @@ public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 			}
 		});
 		//checkForEqualities(ready, level);
-	}
-	
-	/**
-	 * Method to prevent preemptions when tasks have the same laxity
-	 * the equality is only interesting on the last element m of the list
-	 * where m is the number of available cores
-	 * @param ready
-	 * @param level
-	 */
-	private void checkForEqualities (List<VertexScheduling> ready, int level) {
-		// There is no current equality
-		if (lastEqLax == -1) {
-			int eqLax = ready.get(getNbCores() - 1).getWeights()[level]; // Check the laxity of the last element
-			boolean eq = (ready.get(getNbCores()).getWeights()[level] == eqLax) ? true : false;
-			int index = getNbCores() - 2;
-
-			// The system is a state were there is an equality on tasks are there are not enough cores
-			// Initialize the map with the first task
-			if (eq) {
-				lastEqLax = eqLax;
-				equalityMap.put(eqLax, new ArrayList<VertexScheduling>());
-				equalityMap.get(eqLax).add(ready.get(getNbCores() - 1));
-				
-				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] \t\t\t\t checkForEqualities: equality with laxity " + eqLax);
-			
-				// Look for the tasks that will be able to be scheduled
-				eq = (ready.get(index).getWeights()[level] == eqLax) ? true : false;
-				while (eq && index >= 0) {
-					// Add the ready task to the beginning of the list in the map
-					equalityMap.get(eqLax).add(0, ready.get(index));
-					index--;
-					
-					if (index > 0)
-						eq = (ready.get(index).getWeights()[level] == eqLax) ? true : false;
-					else
-						eq = false;
-				}
-				
-				// Mark tasks that will be scheduled
-				for (VertexScheduling v : equalityMap.get(eqLax))
-					v.setSticky(true);
-				
-				// Look for tasks that will not be scheduled
-				index = getNbCores();
-				eq = (ready.get(getNbCores()).getWeights()[level] == eqLax) ? true : false;
-				while (eq && index < ready.size()) {
-					// Add the ready task to the beginning of the list in the map
-					equalityMap.get(eqLax).add(0, ready.get(index));
-					index++;
-					
-					if (index < ready.size())
-						eq = (ready.get(index).getWeights()[level] == eqLax) ? true : false;
-					else
-						eq = false;
-				}
-				
-				// Mark tasks that will not be scheduled
-				for (VertexScheduling v : equalityMap.get(eqLax))
-					v.setLaxityDelayed(true);
-			}
-		} else { // The system is an equality state
-			// Grab the list from the Map
-			ArrayList<VertexScheduling> eqList = (ArrayList<VertexScheduling>) equalityMap.get(lastEqLax);
-			
-			// TODO: Update the map by removing or adding new tasks
-			Iterator<VertexScheduling> itL = eqList.iterator();
-			while (itL.hasNext()) {
-				VertexScheduling v = itL.next();
-				
-				if (!ready.contains(v))
-					itL.remove();
-			}
-			
-			if (eqList.size() == 0) {
-				equalityMap.remove(lastEqLax);
-				lastEqLax = -1;
-				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] \t\t\t\t checkForEqualities: removing list in hashmap");
-				return;
-			}
-				
-			
-			// Reorder the ready list accordingly
-			for (int i = 0; i < ready.size(); i++) {
-				// Look for previous scheduled task
-				if (eqList.contains(ready.get(i)) && ready.get(i).isLaxityDelayed()) {
-					for (int j = i; j < ready.size(); j++) {
-						Collections.swap(ready, i, j); // Swap in the ready list
-					}
-				}
-			}
-		}
 	}
 }

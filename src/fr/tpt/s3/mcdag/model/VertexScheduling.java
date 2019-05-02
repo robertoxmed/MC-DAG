@@ -37,10 +37,6 @@ public class VertexScheduling extends Vertex {
 	// Non preemptive version
 	private boolean running;
 	
-	// Modified LLF
-	private boolean sticky;
-	private boolean laxityDelayed;
-	
 	private double fProb;
 
 	/**
@@ -64,9 +60,6 @@ public class VertexScheduling extends Vertex {
 		}
 		running = false;
 		delayed = false;
-		
-		sticky = false;
-		laxityDelayed = false;
 	}
 	
 	/*
@@ -158,21 +151,5 @@ public class VertexScheduling extends Vertex {
 
 	public void setHlfet(int[] hlfet) {
 		this.hlfet = hlfet;
-	}
-
-	public boolean isSticky() {
-		return sticky;
-	}
-
-	public void setSticky(boolean sticky) {
-		this.sticky = sticky;
-	}
-
-	public boolean isLaxityDelayed() {
-		return laxityDelayed;
-	}
-
-	public void setLaxityDelayed(boolean laxityDelayed) {
-		this.laxityDelayed = laxityDelayed;
 	}
 }

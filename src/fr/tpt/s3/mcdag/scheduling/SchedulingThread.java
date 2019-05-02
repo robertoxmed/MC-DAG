@@ -23,6 +23,7 @@ import java.util.Set;
 import fr.tpt.s3.mcdag.avail.Automata;
 import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.parser.MCParser;
+import fr.tpt.s3.mcdag.scheduling.impl.LeastLaxityFirstMCSched;
 
 /**
  * Threads used by the framework to schedule and write to files
