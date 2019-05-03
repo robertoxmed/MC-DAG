@@ -113,6 +113,10 @@ public class HybridMCSched extends GlobalGenericMCScheduler {
 	protected void sortHI(List<VertexScheduling> ready, int slot, final int level) {
 		// Check if tasks need to be delayed first
 		for (VertexScheduling v : ready) {
+			
+			v.setWeightInL(v.getDeadlines()[level], level);
+			v.setDelayed(false);
+			
 			if (level != getLevels() - 1) {
 				int delta = v.getWcet(level + 1) - v.getWcet(level);
 				
@@ -120,13 +124,7 @@ public class HybridMCSched extends GlobalGenericMCScheduler {
 					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] sortHI(): Task "+v.getName()+" needs to be delayed at slot @t = "+slot);
 					v.setWeightInL(Integer.MAX_VALUE, level);
 					v.setDelayed(true);
-				} else {
-					v.setWeightInL(v.getDeadlines()[level], level);
-					v.setDelayed(false);
 				}
-			} else {
-				v.setWeightInL(v.getDeadlines()[level], level);
-				v.setDelayed(false);
 			}
 		}
 		
@@ -152,17 +150,15 @@ public class HybridMCSched extends GlobalGenericMCScheduler {
 			int dId = v.getGraphId();
 			int relatSlot = slot % v.getGraphDead();
 			
+			v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
+			
 			// If it's a HI task
 			if (v.getWcet(level + 1) > 0) {
 				// Promotion needed for the task
 				if ((v.getWcet(level) - getRemainingTime()[level][dId][v.getId()]) - scheduledUntilTinL(v, slot, level + 1) < 0) {
 					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+v.getName()+" at slot @t = "+slot);
 					v.setWeightInL(0, level);
-				} else {
-					v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
 				}
-			} else {
-				v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
 			}
 		}
 		// Order the list

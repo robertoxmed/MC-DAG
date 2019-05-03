@@ -85,6 +85,10 @@ public class EartliestDeadlineFirstMCSched extends GlobalGenericMCScheduler {
 	protected void sortHI(List<VertexScheduling> ready, int slot, final int level) {
 		// Check if tasks need to be delayed first
 		for (VertexScheduling v : ready) {
+			
+			v.setWeightInL(v.getDeadlines()[level], level);
+			v.setDelayed(false);
+			
 			if (level != getLevels() - 1) {
 				int delta = v.getWcet(level + 1) - v.getWcet(level);
 				
@@ -92,13 +96,7 @@ public class EartliestDeadlineFirstMCSched extends GlobalGenericMCScheduler {
 					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] sortHI(): Task "+v.getName()+" needs to be delayed at slot @t = "+slot);
 					v.setWeightInL(Integer.MAX_VALUE, level);
 					v.setDelayed(true);
-				} else {
-					v.setWeightInL(v.getDeadlines()[level], level);
-					v.setDelayed(false);
 				}
-			} else {
-				v.setWeightInL(v.getDeadlines()[level], level);
-				v.setDelayed(false);
 			}
 		}
 		
@@ -120,16 +118,14 @@ public class EartliestDeadlineFirstMCSched extends GlobalGenericMCScheduler {
 		for (VertexScheduling v : ready) {
 			int dagId = v.getGraphId();
 			
+			v.setWeightInL(v.getDeadlines()[level], level);
+			
 			if (v.getWcet(level + 1) > 0) {
 				// Promotion needed for the task
 				if ((v.getWcet(level) - getRemainingTime()[level][dagId][v.getId()]) - scheduledUntilTinL(v, slot, level + 1) < 0) {
 					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] sortLO(): Promotion of task "+v.getName()+" at slot @t = "+slot);
 					v.setWeightInL(0, level);
-				} else {
-					v.setWeightInL(v.getDeadlines()[level], level);
 				}
-			} else {
-				v.setWeightInL(v.getDeadlines()[level], level);
 			}
 		}
 		// Sort the ready list

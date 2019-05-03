@@ -95,6 +95,9 @@ public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 			int relatSlot = slot % v.getGraphDead();
 			int dId = v.getGraphId();
 			
+			v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
+			v.setDelayed(false);
+			
 			// It's not the highest criticality level -> perform checks
 			if (level != getLevels() - 1 && v.getWcet(level + 1) != 0) {
 				int deltaI = v.getWcet(level + 1) - v.getWcet(level);
@@ -103,13 +106,7 @@ public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+v.getName()+" needs to be delayed at slot @t = "+slot);
 					v.setDelayed(true);
 					v.setWeightInL(Integer.MAX_VALUE, level);
-				} else {
-					v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
-					v.setDelayed(false);
 				}
-			} else {
-				v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
-				v.setDelayed(false);
 			}
 		}
 		// Sort the ready list
@@ -131,17 +128,14 @@ public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 			int relatSlot = slot % v.getGraphDead();
 			int dId = v.getGraphId();
 			
+			v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
 			// If it's a HI task
 			if (v.getWcet(level + 1) > 0) {
 				// Promotion needed for the task
 				if ((v.getWcet(level) - getRemainingTime()[level][dId][v.getId()]) - scheduledUntilTinL(v, slot, level + 1) < 0) {
 					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+v.getName()+" at slot @t = "+slot);
 					v.setWeightInL(0, level);
-				} else {
-					v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
 				}
-			} else {
-				v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
 			}
 		}
 		// Sort the list

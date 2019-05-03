@@ -71,29 +71,22 @@ public class EarlistDeadlineZeroLaxity extends GlobalGenericMCScheduler {
 			int relatSlot = slot % v.getGraphDead();
 			int dId = v.getGraphId();
 			
+			// Check laxity first
+			if (v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()] == 0)
+				v.setWeightInL(0, level);
+			else
+				v.setWeightInL(v.getDeadlines()[level], level);
+			v.setDelayed(false);
+			
+			// Check if the tasks needs to be delayed
 			if (level != getLevels() - 1) {
 				
 				int delta = v.getWcet(level + 1) - v.getWcet(level);
-				// Check if the tasks needs to be delayed
 				if (scheduledUntilTinL(v, slot + 1, level + 1) <= delta) {
 					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+v.getName()+" needs to be delayed at slot @t = "+slot);
 					v.setDelayed(true);
 					v.setWeightInL(Integer.MAX_VALUE, level);
-				} else {
-					// Check laxity first
-					if (v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()] == 0)
-						v.setWeightInL(0, level);
-					else
-						v.setWeightInL(v.getDeadlines()[level], level);
-					v.setDelayed(false);
 				}
-			} else {
-				// Check laxity first
-				if (v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()] == 0)
-					v.setWeightInL(0, level);
-				else
-					v.setWeightInL(v.getDeadlines()[level], level);
-				v.setDelayed(false);
 			}
 		}
 		// Sort the ready list
@@ -114,25 +107,18 @@ public class EarlistDeadlineZeroLaxity extends GlobalGenericMCScheduler {
 			int relatSlot = slot % v.getGraphDead();
 			int dId = v.getGraphId();
 			
+			if (v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()] == 0)
+				v.setWeightInL(0, level);
+			else
+				v.setWeightInL(v.getDeadlines()[level], level);
+			
 			// If it's a HI task check if it needs to be promoted
 			if (v.getWcet(level + 1) > 0) {
 				//Promotion needed for the task
 				if ((v.getWcet(level) - getRemainingTime()[level][dId][v.getId()]) - scheduledUntilTinL(v, slot, level + 1) < 0) {
 					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+v.getName()+" at slot @t = "+slot);
 					v.setWeightInL(0, level);
-				} else {
-					// Verify laxity first
-					if (v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()] == 0)
-						v.setWeightInL(0, level);
-					else
-						v.setWeightInL(v.getDeadlines()[level], level);
 				}
-			} else {
-				// Verify laxity first
-				if (v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()] == 0)
-					v.setWeightInL(0, level);
-				else
-					v.setWeightInL(v.getDeadlines()[level], level);
 			}
 		}
 		
