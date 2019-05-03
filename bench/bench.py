@@ -13,13 +13,13 @@ from email.mime.base import MIMEBase
 from email import encoders
 
 # Global setup for generation and benchmarks
-number_levels = [3, 4, 5]
+number_levels = [3]
 number_tasks = [20, 30, 50]
-number_dags = [2, 4]
+number_dags = [2]
 number_cores = [4]
-edge_percentage = [20, 40]
-number_jobs = 20
-number_files = "200"
+edge_percentage = [20]
+number_jobs = 8
+number_files = "10"
 
 def create_setup():
     # Create the directory tree for generation
@@ -124,7 +124,7 @@ def benchmark():
                     for t in number_tasks:
                         # Create the result file
                         f = open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", "w+")
-                        if len(number_levels) == 1:
+                        if l == 2:
                             f.write("Main; U; Fed (%); PFed; AFed; AvgFed; Lax (%); PLax; ALax; AvgLax; Edf (%); PEdf; AEdf; AvgEdfHybrid(%); PHybrid; AHybird; AvgHybrid\n")
                         else:
                             f.write("Main; U; Lax (%); PLax; ALax; AvgLax; Edf (%); PEdf; AEdf; AvgEdf; Hybrid(%); PHybrid; AHybird; AvgHybrid\n")

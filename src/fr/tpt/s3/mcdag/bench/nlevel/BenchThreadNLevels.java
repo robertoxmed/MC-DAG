@@ -30,8 +30,8 @@ import fr.tpt.s3.mcdag.model.VertexScheduling;
 import fr.tpt.s3.mcdag.parser.MCParser;
 import fr.tpt.s3.mcdag.scheduling.GlobalGenericMCScheduler;
 import fr.tpt.s3.mcdag.scheduling.SchedulingException;
+import fr.tpt.s3.mcdag.scheduling.impl.EarlistDeadlineZeroLaxity;
 import fr.tpt.s3.mcdag.scheduling.impl.EartliestDeadlineFirstMCSched;
-import fr.tpt.s3.mcdag.scheduling.impl.HybridMCSched;
 import fr.tpt.s3.mcdag.scheduling.impl.LeastLaxityFirstMCSched;
 
 public class BenchThreadNLevels implements Runnable {
@@ -44,7 +44,7 @@ public class BenchThreadNLevels implements Runnable {
 	private int nbCores;
 	private GlobalGenericMCScheduler llf;
 	private GlobalGenericMCScheduler edf;
-	private GlobalGenericMCScheduler hybrid;
+	private GlobalGenericMCScheduler ezl;
 	private boolean schedLax;
 	private boolean schedEdf;
 	private boolean schedHybrid;
@@ -72,13 +72,13 @@ public class BenchThreadNLevels implements Runnable {
 		
 		int outBLSched = 0;
 		int outBEDFSched = 0;
-		int outBHybridSched = 0;
+		int outBEZLSched = 0;
 		int outPreemptsLax = 0;
 		int outPreemptsEdf = 0;
-		int outPreemptsHybrid = 0;
+		int outPreemptsEzl = 0;
 		int outActLax = 0;
 		int outActEdf = 0;
-		int outActHybrid = 0;
+		int outActEzl = 0;
 		
 		if (isSchedLax())
 			outBLSched = 1;
@@ -87,7 +87,7 @@ public class BenchThreadNLevels implements Runnable {
 			outBEDFSched = 1;
 		
 		if (isSchedHybrid())
-			outBHybridSched = 1;
+			outBEZLSched = 1;
 		
 		Hashtable<VertexScheduling, Integer> pLax = llf.getPreemptions();
 		for (VertexScheduling task : pLax.keySet())
@@ -99,10 +99,10 @@ public class BenchThreadNLevels implements Runnable {
 			outPreemptsEdf += pEdf.get(task);
 		outActEdf = edf.getActivations();
 		
-		Hashtable<VertexScheduling, Integer> pHyb = hybrid.getPreemptions();
-		for (VertexScheduling task : pHyb.keySet())
-			outPreemptsEdf += pHyb.get(task);
-		outPreemptsEdf = hybrid.getActivations();
+		Hashtable<VertexScheduling, Integer> pEzl = ezl.getPreemptions();
+		for (VertexScheduling task : pEzl.keySet())
+			outPreemptsEzl += pEzl.get(task);
+		outPreemptsEzl = ezl.getActivations();
 		
 		for (McDAG d : dags)
 			uDAGs += d.getUmax();
@@ -110,7 +110,7 @@ public class BenchThreadNLevels implements Runnable {
 		output.write(Thread.currentThread().getName()+"; "+getInputFile()+"; "
 		+outBLSched+"; "+outPreemptsLax+"; "+outActLax+"; "
 		+outBEDFSched+"; "+outPreemptsEdf+"; "+outActEdf+"; "
-		+outBHybridSched+"; "+outPreemptsHybrid+"; "+outActHybrid+"; "
+		+outBEZLSched+"; "+outPreemptsEzl+"; "+outActEzl+"; "
 		+uDAGs+"\n");
 		output.close();
 	}
@@ -152,11 +152,11 @@ public class BenchThreadNLevels implements Runnable {
 		}
 		
 		// Test hybrid
-		hybrid = new HybridMCSched(getDags(), nbCores, mcp.getNbLevels(), debug, true);
+		ezl = new EarlistDeadlineZeroLaxity(getDags(), nbCores, mcp.getNbLevels(), debug, true);
 		
 		try {
 			resetVisited(getDags());
-			hybrid.scheduleSystem();
+			ezl.scheduleSystem();
 		} catch (SchedulingException se) {
 			setSchedHybrid(false);
 			if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] HYBRID non schedulable with "+nbCores+" cores.");
@@ -234,14 +234,6 @@ public class BenchThreadNLevels implements Runnable {
 
 	public void setEdf(GlobalGenericMCScheduler edf) {
 		this.edf = edf;
-	}
-
-	public GlobalGenericMCScheduler getHybrid() {
-		return hybrid;
-	}
-
-	public void setHybrid(GlobalGenericMCScheduler hybrid) {
-		this.hybrid = hybrid;
 	}
 
 	public boolean isSchedLax() {

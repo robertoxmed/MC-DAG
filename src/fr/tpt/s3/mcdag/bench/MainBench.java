@@ -220,7 +220,7 @@ public class MainBench {
 			int i_files2 = 0;
 			String outFile = outputFilePath.substring(0, outputFilePath.lastIndexOf('.')).concat("-schedulability.csv");
 			PrintWriter writer = new PrintWriter(outFile, "UTF-8");
-			writer.println("Thread; File; LSched (%); LPreempts; LAct; ESched (%); EPreempts; EAct; HSched(%); HPreempts; HAct; Utilization");
+			writer.println("Thread; File; LLF (%); LLFPreempts; LLFAct; EDF (%); EDFPreempts; EDFAct; EZL(%); EZLPreempts; EZLAct; Utilization");
 			writer.close();
 			
 
