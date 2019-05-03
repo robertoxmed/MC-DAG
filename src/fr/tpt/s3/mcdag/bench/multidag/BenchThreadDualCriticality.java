@@ -48,13 +48,8 @@ public class BenchThreadDualCriticality implements Runnable {
 	private GlobalGenericMCScheduler edf;
 	private GlobalGenericMCScheduler hybrid;
 	
-	public int getNbCores() {
-		return nbCores;
-	}
-
-	public void setNbCores(int nbCores) {
-		this.nbCores = nbCores;
-	}
+	// Not really used
+	private Set<GlobalGenericMCScheduler> gloSchedulers;
 
 	private boolean schedFede;
 	private boolean schedLax;
@@ -64,6 +59,7 @@ public class BenchThreadDualCriticality implements Runnable {
 	public BenchThreadDualCriticality (String input, String output, int cores, boolean debug) {
 		setInputFile(input);
 		dags = new HashSet<McDAG>();
+		gloSchedulers = new HashSet<GlobalGenericMCScheduler>();
 		setOutputFile(output);
 		setNbCores(cores);
 		setDebug(debug);
@@ -71,7 +67,7 @@ public class BenchThreadDualCriticality implements Runnable {
 		setSchedLax(true);
 		setSchedEdf(true);
 		setSchedHybrid(true);
-		mcp = new MCParser(inputFile, null, dags, false);
+		mcp = new MCParser(inputFile, null, gloSchedulers, dags, false);
 	}
 	
 	/**
@@ -288,5 +284,13 @@ public class BenchThreadDualCriticality implements Runnable {
 
 	public void setSchedHybrid(boolean schedHybrid) {
 		this.schedHybrid = schedHybrid;
+	}
+	
+	public int getNbCores() {
+		return nbCores;
+	}
+
+	public void setNbCores(int nbCores) {
+		this.nbCores = nbCores;
 	}
 }

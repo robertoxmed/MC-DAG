@@ -47,6 +47,11 @@ import fr.tpt.s3.mcdag.generator.MCSystemGenerator;
 import fr.tpt.s3.mcdag.model.Vertex;
 import fr.tpt.s3.mcdag.model.VertexAvailability;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
+import fr.tpt.s3.mcdag.scheduling.GlobalGenericMCScheduler;
+import fr.tpt.s3.mcdag.scheduling.impl.EarlistDeadlineZeroLaxityMCSched;
+import fr.tpt.s3.mcdag.scheduling.impl.EartliestDeadlineFirstMCSched;
+import fr.tpt.s3.mcdag.scheduling.impl.HybridMCSched;
+import fr.tpt.s3.mcdag.scheduling.impl.LeastLaxityFirstMCSched;
 import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.model.Edge;
 
@@ -60,6 +65,7 @@ public class MCParser {
 	private boolean bOutPrism;
 
 	// Only references do not have to be instantiated
+	private Set<GlobalGenericMCScheduler> schedulers;
 	private Set<McDAG> dags;
 	private Automata auto;
 	private MCSystemGenerator ug;
@@ -70,10 +76,11 @@ public class MCParser {
 	private int nbCores;
 	private int nbLevels;
 	
-	public MCParser (String iFile, String oSFile,Set<McDAG> dags, boolean bop) {
+	public MCParser (String iFile, String oSFile, Set<GlobalGenericMCScheduler> schedulers, Set<McDAG> dags, boolean bop) {
 		setInputFile(iFile);
 		setOutSchedFile(oSFile);
 		setDags(dags);
+		setSchedulers(schedulers);
 		bOutPrism = bop;
 		this.setNbLevels(2);
 	}
@@ -106,9 +113,38 @@ public class MCParser {
 			Element l = (Element) lList.item(0);
 			setNbLevels(Integer.parseInt(l.getAttribute("number")));
 			
+			// Extract the schedulers that will be used
+			NodeList sList = doc.getElementsByTagName("schedulers");
+			int count = 0;
+			
+			for (int s = 0; s < sList.getLength(); s++) {
+				Node nSched = sList.item(s);
+				if (nSched.getNodeType() == Node.ELEMENT_NODE) {
+					Element eSched = (Element) nSched;
+					GlobalGenericMCScheduler objSched = null;
+					
+					// Test the type of scheduler
+					if (eSched.getTextContent().contentEquals("edf"))
+						objSched = new EartliestDeadlineFirstMCSched(dags, getNbCores(), getNbLevels(), false, false);
+					else if (eSched.getTextContent().contentEquals("llf"))
+						objSched = new LeastLaxityFirstMCSched(dags, getNbCores(), getNbLevels(), false, false);
+					else if (eSched.getTextContent().contentEquals("ezl"))
+						objSched = new EarlistDeadlineZeroLaxityMCSched(dags, getNbCores(), getNbLevels(), false, false);
+					else if (eSched.getTextContent().contentEquals("hybrid"))
+						objSched = new HybridMCSched(dags, getNbCores(), getNbLevels(), false, false);
+					
+					// If an existent scheduler was created add it to the set
+					if (objSched != null)
+						schedulers.add(objSched);
+					else
+						System.err.println("[WARNING] Trying to add a non-existent scheduler " + eSched.getTextContent());
+
+				}
+			}
+			
 			// Extract DAGs that constitute the system
 			NodeList eList = doc.getElementsByTagName("mcdag");
-			int count = 0;
+			count = 0;
 			
 			for (int d = 0; d < eList.getLength(); d++) {
 				Element eDag = (Element) eList.item(d);
@@ -828,5 +864,13 @@ public class MCParser {
 
 	public void setSched(String[][][] sched) {
 		this.sched = sched;
+	}
+
+	public Set<GlobalGenericMCScheduler> getSchedulers() {
+		return schedulers;
+	}
+
+	public void setSchedulers(Set<GlobalGenericMCScheduler> schedulers) {
+		this.schedulers = schedulers;
 	}
 }

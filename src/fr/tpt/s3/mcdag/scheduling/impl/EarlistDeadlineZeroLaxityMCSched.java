@@ -15,9 +15,9 @@ import fr.tpt.s3.mcdag.scheduling.GlobalGenericMCScheduler;
  * @author Roberto Medina
  *
  */
-public class EarlistDeadlineZeroLaxity extends GlobalGenericMCScheduler {
+public class EarlistDeadlineZeroLaxityMCSched extends GlobalGenericMCScheduler {
 
-	public EarlistDeadlineZeroLaxity(Set<McDAG> DAGs, int cores, int levels, boolean debug, boolean benchmark) {
+	public EarlistDeadlineZeroLaxityMCSched(Set<McDAG> DAGs, int cores, int levels, boolean debug, boolean benchmark) {
 		setMcDAGs(DAGs);
 		setNbCores(cores);
 		setCountPreempt(benchmark);

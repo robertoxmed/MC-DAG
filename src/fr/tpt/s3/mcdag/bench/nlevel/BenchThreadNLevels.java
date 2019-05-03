@@ -30,7 +30,7 @@ import fr.tpt.s3.mcdag.model.VertexScheduling;
 import fr.tpt.s3.mcdag.parser.MCParser;
 import fr.tpt.s3.mcdag.scheduling.GlobalGenericMCScheduler;
 import fr.tpt.s3.mcdag.scheduling.SchedulingException;
-import fr.tpt.s3.mcdag.scheduling.impl.EarlistDeadlineZeroLaxity;
+import fr.tpt.s3.mcdag.scheduling.impl.EarlistDeadlineZeroLaxityMCSched;
 import fr.tpt.s3.mcdag.scheduling.impl.EartliestDeadlineFirstMCSched;
 import fr.tpt.s3.mcdag.scheduling.impl.LeastLaxityFirstMCSched;
 
@@ -45,6 +45,10 @@ public class BenchThreadNLevels implements Runnable {
 	private GlobalGenericMCScheduler llf;
 	private GlobalGenericMCScheduler edf;
 	private GlobalGenericMCScheduler ezl;
+	
+	// Not really used
+	private Set<GlobalGenericMCScheduler> gloSchedulers;
+	
 	private boolean schedLax;
 	private boolean schedEdf;
 	private boolean schedHybrid;
@@ -52,13 +56,14 @@ public class BenchThreadNLevels implements Runnable {
 	public BenchThreadNLevels(String input, String output, int cores, boolean debug) {
 		setInputFile(input);
 		dags = new HashSet<McDAG>();
+		gloSchedulers = new HashSet<GlobalGenericMCScheduler>();
 		setOutputFile(output);
 		setNbCores(cores);
 		setDebug(debug);
 		setSchedLax(true);
 		setSchedEdf(true);
 		setSchedHybrid(true);
-		mcp = new MCParser(inputFile, null, dags, false);
+		mcp = new MCParser(inputFile, null, gloSchedulers, dags, false);
 	}
 	
 	/**
@@ -152,7 +157,7 @@ public class BenchThreadNLevels implements Runnable {
 		}
 		
 		// Test hybrid
-		ezl = new EarlistDeadlineZeroLaxity(getDags(), nbCores, mcp.getNbLevels(), debug, true);
+		ezl = new EarlistDeadlineZeroLaxityMCSched(getDags(), nbCores, mcp.getNbLevels(), debug, true);
 		
 		try {
 			resetVisited(getDags());

@@ -23,7 +23,6 @@ import java.util.Set;
 import fr.tpt.s3.mcdag.avail.Automata;
 import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.parser.MCParser;
-import fr.tpt.s3.mcdag.scheduling.impl.LeastLaxityFirstMCSched;
 
 /**
  * Threads used by the framework to schedule and write to files
@@ -32,6 +31,7 @@ import fr.tpt.s3.mcdag.scheduling.impl.LeastLaxityFirstMCSched;
  */
 public class SchedulingThread implements Runnable{
 	
+	private Set<GlobalGenericMCScheduler> schedulers;
 	private Set<McDAG> dags;
 	private MCParser mcp;
 	private String inputFile;
@@ -40,14 +40,14 @@ public class SchedulingThread implements Runnable{
 	private boolean levels;
 	
 	private SingleDAG ls;
-	private GlobalGenericMCScheduler scheduler;
 	private Automata auto;
 	private boolean debug;
 	private boolean preempt;
 	
 	public SchedulingThread(String iFile, boolean oSF, boolean oPF, boolean debug, boolean preempt) {
+		schedulers = new HashSet<GlobalGenericMCScheduler>();
 		dags = new HashSet<McDAG>();
-		mcp = new MCParser(iFile, null, dags, oPF);
+		mcp = new MCParser(iFile, null, schedulers, dags, oPF);
 		setOutPRISMFile(oPF);
 		setPreempt(preempt);
 		
@@ -65,47 +65,31 @@ public class SchedulingThread implements Runnable{
 			System.err.println("[WARNING] No output file has been specified for the scheduling tables.");
 		
 		// Only one DAG has to be scheduled in the multi-core architecture
-		if (dags.size() == 1) {
-			McDAG dag = dags.iterator().next();
-			ls = new SingleDAG(dag, mcp.getNbCores());
-			ls.setDebug(debug);
 			
+		if (isOutPRISMFile()) {
+			if (debug) System.out.println("[DEBUG] UniDAG: Creating the automata object.");
+			auto = new Automata(ls, dags.iterator().next());
+			auto.createAutomata();
+			mcp.setAuto(auto);
 			try {
-				ls.buildAllTables();
-			} catch (SchedulingException e1) {
-				System.out.println("[ERROR] UniDAG: unable to schedule the example: "+this.getInputFile());
-				System.out.println(e1.getMessage());
-				System.exit(1);
+				mcp.writePRISM();
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.err.println("[WARNING] Error writting PRISM files "+outPRISMFile);
 			}
-			mcp.setNbCores(ls.getNbCores());
-			mcp.sethPeriod(ls.getDeadline());
-			mcp.setSched(ls.getSched());
-			
-			if (isOutPRISMFile()) {
-				if (debug) System.out.println("[DEBUG] UniDAG: Creating the automata object.");
-				auto = new Automata(ls, dag);
-				auto.createAutomata();
-				mcp.setAuto(auto);
-				try {
-					mcp.writePRISM();
-				} catch (IOException e) {
-					e.printStackTrace();
-					System.err.println("[WARNING] Error writting PRISM files "+outPRISMFile);
-				}
-				System.out.println("["+Thread.currentThread().getName()+"] PRISM file written.");
-			}
-			
-		} else { // The model has multiple DAGs
-			//setScheduler(new HybridMCSched(mcp.getDags(), mcp.getNbCores(), mcp.getNbLevels(), debug, isPreempt()));
-			setScheduler(new LeastLaxityFirstMCSched(mcp.getDags(), mcp.getNbCores(), mcp.getNbLevels(), debug, isPreempt()));
-			//setScheduler(new EartliestDeadlineFirstMCSched(mcp.getDags(), mcp.getNbCores(), mcp.getNbLevels(), debug, isPreempt()));
-			
+			System.out.println("["+Thread.currentThread().getName()+"] PRISM file written.");
+		}
+		
+		// Test for schedulability
+		for (GlobalGenericMCScheduler scheduler : schedulers) {
+			scheduler.setDebug(debug);
+			scheduler.setCountPreempt(preempt);
 			try {
 				scheduler.scheduleSystem();
 			} catch (SchedulingException e) {
 				System.err.println("[ERROR] Unable to schedule the system");
 				e.printStackTrace();
-			} 
+			}
 		}
 		
 		/* =============== Write results ================ */
@@ -194,19 +178,19 @@ public class SchedulingThread implements Runnable{
 		this.levels = levels;
 	}
 
-	public GlobalGenericMCScheduler getScheduler() {
-		return scheduler;
-	}
-
-	public void setScheduler(GlobalGenericMCScheduler scheduler) {
-		this.scheduler = scheduler;
-	}
-
 	public boolean isPreempt() {
 		return preempt;
 	}
 
 	public void setPreempt(boolean preempt) {
 		this.preempt = preempt;
+	}
+
+	public Set<GlobalGenericMCScheduler> getSchedulers() {
+		return schedulers;
+	}
+
+	public void setSchedulers(Set<GlobalGenericMCScheduler> schedulers) {
+		this.schedulers = schedulers;
 	}
 }
