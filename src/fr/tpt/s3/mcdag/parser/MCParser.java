@@ -113,42 +113,41 @@ public class MCParser {
 			Element l = (Element) lList.item(0);
 			setNbLevels(Integer.parseInt(l.getAttribute("number")));
 			
-			// Extract the schedulers that will be used
-			NodeList sList = doc.getElementsByTagName("schedulers");
-			int count = 0;
-			
-			for (int s = 0; s < sList.getLength(); s++) {
-				Node nSched = sList.item(s);
+			// Extract the schedulers that will be used			
+			NodeList schedList = doc.getElementsByTagName("schedule");
+
+			for (int s = 0; s < schedList.getLength(); s++) {
+				Node nSched = schedList.item(s);
 				if (nSched.getNodeType() == Node.ELEMENT_NODE) {
 					Element eSched = (Element) nSched;
 					GlobalGenericMCScheduler objSched = null;
-					
+										
 					// Test the type of scheduler
-					if (eSched.getTextContent().contentEquals("edf"))
-						objSched = new EartliestDeadlineFirstMCSched(dags, getNbCores(), getNbLevels(), false, false);
-					else if (eSched.getTextContent().contentEquals("llf"))
-						objSched = new LeastLaxityFirstMCSched(dags, getNbCores(), getNbLevels(), false, false);
-					else if (eSched.getTextContent().contentEquals("ezl"))
-						objSched = new EarlistDeadlineZeroLaxityMCSched(dags, getNbCores(), getNbLevels(), false, false);
-					else if (eSched.getTextContent().contentEquals("hybrid"))
-						objSched = new HybridMCSched(dags, getNbCores(), getNbLevels(), false, false);
+					if (eSched.getAttribute("name").contentEquals("edf"))
+						objSched = new EartliestDeadlineFirstMCSched(dags, getNbCores(), getNbLevels(), true, false);
+					else if (eSched.getAttribute("name").contentEquals("llf"))
+						objSched = new LeastLaxityFirstMCSched(dags, getNbCores(), getNbLevels(), true, false);
+					else if (eSched.getAttribute("name").contentEquals("ezl"))
+						objSched = new EarlistDeadlineZeroLaxityMCSched(dags, getNbCores(), getNbLevels(), true, false);
+					else if (eSched.getAttribute("name").contentEquals("hybrid"))
+						objSched = new HybridMCSched(dags, getNbCores(), getNbLevels(), true, false);
 					
 					// If an existent scheduler was created add it to the set
 					if (objSched != null)
 						schedulers.add(objSched);
 					else
-						System.err.println("[WARNING] Trying to add a non-existent scheduler " + eSched.getTextContent());
+						System.err.println("[WARNING] Trying to add a non-existent scheduler " + eSched.getAttribute("name"));
 
 				}
 			}
 			
 			// Extract DAGs that constitute the system
 			NodeList eList = doc.getElementsByTagName("mcdag");
-			count = 0;
+			int count = 0;
 			
 			for (int d = 0; d < eList.getLength(); d++) {
 				Element eDag = (Element) eList.item(d);
-				McDAG dag	= new McDAG();
+				McDAG dag = new McDAG();
 				dag.setId(count);
 				dag.setDeadline(Integer.parseInt(eDag.getAttribute("deadline")));
 				dag.setLevels(getNbLevels());

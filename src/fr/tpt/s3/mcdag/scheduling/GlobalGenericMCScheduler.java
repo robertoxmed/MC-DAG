@@ -148,7 +148,7 @@ public abstract class GlobalGenericMCScheduler {
 	 * Function that calculates deadlines in all criticality modes for DAG
 	 * @param d
 	 */
-	protected void calcDedlines (McDAG d) {
+	protected void calcDeadlines (McDAG d) {
 		// Start by calculating deadlines in HI modes
 		for (int i = 1; i < getLevels(); i++) {
 			ArrayList<VertexScheduling> toVisit = new ArrayList<VertexScheduling>();
@@ -531,6 +531,11 @@ public abstract class GlobalGenericMCScheduler {
 	public void scheduleSystem () throws SchedulingException {
 		initTables();
 		initRemainingTimes();
+		
+		for (McDAG d : getMcDAGs()) {
+			calcDeadlines(d);
+			if (isDebug()) printDeadlines(d);
+		}
 		
 		// Start by the highest tables first
 		for (int i = getLevels() - 1; i >= 0; i--)

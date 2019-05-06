@@ -20,13 +20,9 @@ public class EarlistDeadlineZeroLaxityMCSched extends GlobalGenericMCScheduler {
 	public EarlistDeadlineZeroLaxityMCSched(Set<McDAG> DAGs, int cores, int levels, boolean debug, boolean benchmark) {
 		setMcDAGs(DAGs);
 		setNbCores(cores);
+		setLevels(levels);
 		setCountPreempt(benchmark);
 		setDebug(debug);
-		
-		for (McDAG d : getMcDAGs()) {
-			calcDedlines(d);
-			if (isDebug()) printDeadlines(d);
-		}
 		
 		if (isCountPreempt())
 			setPreemptions(new Hashtable<VertexScheduling, Integer>());

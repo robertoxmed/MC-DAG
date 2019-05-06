@@ -40,11 +40,6 @@ public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 		setCountPreempt(preemption);
 		setDebug(debug);
 		
-		for (McDAG d : getMcDAGs()) {
-			calcDedlines(d);
-			if (isDebug()) printDeadlines(d);
-		}
-		
 		if (isCountPreempt())
 			setPreemptions(new Hashtable<VertexScheduling, Integer>());
 	}

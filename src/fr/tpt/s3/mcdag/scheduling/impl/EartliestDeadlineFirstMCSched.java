@@ -41,7 +41,7 @@ public class EartliestDeadlineFirstMCSched extends GlobalGenericMCScheduler {
 		setDebug(debug);
 		
 		for (McDAG d : getMcDAGs()) {
-			calcDedlines(d);
+			calcDeadlines(d);
 			if (isDebug()) printDeadlines(d);
 		}
 		

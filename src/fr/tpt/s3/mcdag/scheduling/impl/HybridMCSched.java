@@ -47,12 +47,7 @@ public class HybridMCSched extends GlobalGenericMCScheduler {
 		setLevels(levels);
 		setCountPreempt(preemption);
 		setDebug(debug);
-		
-		for (McDAG d : getMcDAGs()) {
-			calcDedlines(d);
-			if (isDebug()) printDeadlines(d);
-		}
-		
+
 		if (isCountPreempt())
 			setPreemptions(new Hashtable<VertexScheduling, Integer>());
 	}
