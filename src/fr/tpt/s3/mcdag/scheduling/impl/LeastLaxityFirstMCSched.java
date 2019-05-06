@@ -18,7 +18,6 @@ package fr.tpt.s3.mcdag.scheduling.impl;
 
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
 
@@ -39,9 +38,6 @@ public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 		setLevels(levels);
 		setCountPreempt(preemption);
 		setDebug(debug);
-		
-		if (isCountPreempt())
-			setPreemptions(new Hashtable<VertexScheduling, Integer>());
 	}
 	
 	/**

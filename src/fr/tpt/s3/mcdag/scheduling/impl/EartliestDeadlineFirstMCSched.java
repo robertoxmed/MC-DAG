@@ -18,7 +18,6 @@ package fr.tpt.s3.mcdag.scheduling.impl;
 
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
 
@@ -39,14 +38,6 @@ public class EartliestDeadlineFirstMCSched extends GlobalGenericMCScheduler {
 		setLevels(levels);
 		setCountPreempt(preemption);
 		setDebug(debug);
-		
-		for (McDAG d : getMcDAGs()) {
-			calcDeadlines(d);
-			if (isDebug()) printDeadlines(d);
-		}
-		
-		if (isCountPreempt())
-			setPreemptions(new Hashtable<VertexScheduling, Integer>());
 	}
 
 	@Override

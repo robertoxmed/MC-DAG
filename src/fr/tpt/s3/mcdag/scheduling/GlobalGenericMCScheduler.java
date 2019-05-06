@@ -537,6 +537,10 @@ public abstract class GlobalGenericMCScheduler {
 			if (isDebug()) printDeadlines(d);
 		}
 		
+		// Instantiate the hashtable to count preemptions
+		if (isCountPreempt())
+			setPreemptions(new Hashtable<VertexScheduling, Integer>());
+		
 		// Start by the highest tables first
 		for (int i = getLevels() - 1; i >= 0; i--)
 			buildTable(i);
