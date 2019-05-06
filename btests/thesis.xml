@@ -109,5 +109,10 @@
 		</ports>
 	</mcdag>
 	<cores number="4"/>
-	<levels number="2"/>
+    <levels number="2"/>
+    <schedulers>
+        <schedule name="llf"/>
+        <schedule name="edf"/>
+        <schedule name="ezl"/>
+    </schedulers>
 </mcsystem>

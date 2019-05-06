@@ -116,6 +116,9 @@
 		</ports>
 	</mcdag>
 	<cores number="3"/>
-	<levels number="2"/>
+    <levels number="2"/>
+    <schedulers>
+        <schedule name="llf"/>
+    </schedulers>
 </mcsystem>
 
