@@ -71,10 +71,10 @@ public class EarlistDeadlineZeroLaxityMCSched extends GlobalGenericMCScheduler {
 			v.setDelayed(false);
 			
 			// Check if the tasks needs to be delayed
-			if (level != getLevels() - 1) {
-				
+			if (level != getLevels() - 1 && v.getWcet(level + 1) != 0) {
 				int delta = v.getWcet(level + 1) - v.getWcet(level);
-				if (scheduledUntilTinL(v, slot + 1, level + 1) <= delta) {
+				
+				if (scheduledUntilTinLreverse(v, slot + 1, level + 1) <= delta) {
 					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+v.getName()+" needs to be delayed at slot @t = "+slot);
 					v.setDelayed(true);
 					v.setWeightInL(Integer.MAX_VALUE, level);

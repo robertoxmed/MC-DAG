@@ -120,26 +120,23 @@ public class MainBench {
 		 */
 		
 		// For dual-criticality systems we call a specific thread
-		if (nbLvls == 2) {
-			
-			System.out.println(">>>>>>>>>>>>>>>>>>>>> NB levels "+nbLvls);
-			
+		if (nbLvls == 2) {			
 			int i_files2 = 0;
 			String outFile = outputFilePath.substring(0, outputFilePath.lastIndexOf('.')).concat("-schedulability.csv");
 			PrintWriter writer = new PrintWriter(outFile, "UTF-8");
 			writer.println("Thread; File; FSched (%); FPreempts; FAct; LSched (%); LPreempts; LAct; ESched (%); EPreempts; EAct; HSched(%); HPreempts; HAct; Utilization");
 			writer.close();
 						
-			ExecutorService executor2 = Executors.newFixedThreadPool(nbJobs);
+			ExecutorService executor = Executors.newFixedThreadPool(nbJobs);
 			while (i_files2 != nbFiles) {
 				BenchThreadDualCriticality bt2 = new BenchThreadDualCriticality(inputFilePath[i_files2], outFile, nbCores, boolDebug);
 				
-				executor2.execute(bt2);
+				executor.execute(bt2);
 				i_files2++;
 			}
 			
-			executor2.shutdown();
-			executor2.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+			executor.shutdown();
+			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 			
 			int fedTotal = 0;
 			int laxTotal = 0;

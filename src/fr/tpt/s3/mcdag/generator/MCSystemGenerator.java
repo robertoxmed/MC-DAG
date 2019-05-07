@@ -169,12 +169,12 @@ public class MCSystemGenerator {
 		
 		/* Random distribution of utilization between the bounds
 		 */
+		tasks = randIntSum(nbTasks, nbLevels);
 
 		for (int i = 0; i < nbLevels; i++) {
-			tasks[i] = (int) (nbTasks / nbLevels);
 			rU[i] = utilization;
 			budgets[i] = (int) Math.ceil(rDead * rU[i]);
-			cBounds[i] = (int) Math.ceil(rDead); 
+			cBounds[i] = (int) Math.ceil(rDead);
 		}
 		
 		if (isDebug()) {
