@@ -83,7 +83,7 @@ public class SchedulingThread implements Runnable{
 		// Test for schedulability
 		for (GlobalGenericMCScheduler scheduler : schedulers) {
 			scheduler.setDebug(debug);
-			scheduler.setCountPreempt(preempt);
+			scheduler.setCountPreempt(true);
 			try {
 				scheduler.scheduleSystem();
 			} catch (SchedulingException e) {

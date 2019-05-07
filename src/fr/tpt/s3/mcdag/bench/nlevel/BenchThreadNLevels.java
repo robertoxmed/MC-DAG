@@ -107,7 +107,7 @@ public class BenchThreadNLevels implements Runnable {
 		Hashtable<VertexScheduling, Integer> pEzl = ezl.getPreemptions();
 		for (VertexScheduling task : pEzl.keySet())
 			outPreemptsEzl += pEzl.get(task);
-		outPreemptsEzl = ezl.getActivations();
+		outActEzl = ezl.getActivations();
 		
 		for (McDAG d : dags)
 			uDAGs += d.getUmax();

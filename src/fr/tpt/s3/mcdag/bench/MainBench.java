@@ -291,10 +291,10 @@ public class MainBench {
 			double hybridPercPreempts = (double) hybridPreempts / hybridActiv;
 			
 			Writer wOutput = new BufferedWriter(new FileWriter(outputFilePathTotal, true));
-			wOutput.write(Thread.currentThread().getName()+"; "+utilization+"; "
-						  +laxPerc+"; "+laxPreempts+"; "+laxActiv+"; "+laxPercPreempts+"; "
-						  +edfPerc+"; "+edfPreempts+"; "+edfActiv+"; "+edfPercPreempts+"; "
-						  +hybridPerc+"; "+hybridPreempts+"; "+hybridActiv+"; "+hybridPercPreempts+"\n");
+			wOutput.write(utilization+","
+						  +laxPerc+","+laxPreempts+","+laxActiv+","+laxPercPreempts+","
+						  +edfPerc+","+edfPreempts+","+edfActiv+","+edfPercPreempts+","
+						  +hybridPerc+","+hybridPreempts+","+hybridActiv+","+hybridPercPreempts+"\n");
 			wOutput.close();
 			
 		} else {
