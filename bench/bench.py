@@ -7,19 +7,27 @@ import shutil
 import textwrap
 import smtplib
 import time
+import matplotlib.pyplot as plt
+import csv
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 
 # Global setup for generation and benchmarks
-number_levels = [3]
+global number_levels
+global number_tasks
+global number_dags
+global number_cores
+global edge_percentage
+
+number_levels = [4]
 number_tasks = [20, 30, 50]
 number_dags = [2]
 number_cores = [4]
 edge_percentage = [20]
 number_jobs = 8
-number_files = "10"
+number_files = "100"
 
 def create_setup():
     # Create the directory tree for generation
@@ -123,12 +131,12 @@ def benchmark():
                 for d in number_dags:
                     for t in number_tasks:
                         # Create the result file
-                        f = open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", "w+")
-                        if l == 2:
-                            f.write("Main; U; Fed (%); PFed; AFed; AvgFed; Lax (%); PLax; ALax; AvgLax; Edf (%); PEdf; AEdf; AvgEdfHybrid(%); PHybrid; AHybird; AvgHybrid\n")
-                        else:
-                            f.write("Main; U; Lax (%); PLax; ALax; AvgLax; Edf (%); PEdf; AEdf; AvgEdf; Hybrid(%); PHybrid; AHybird; AvgHybrid\n")
-                        f.close()
+#                         f = open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", "w+")
+#                         if l == 2:
+#                             f.write("Main; U; Fed (%); PFed; AFed; AvgFed; Lax (%); PLax; ALax; AvgLax; Edf (%); PEdf; AEdf; AvgEdfHybrid(%); PHybrid; AHybird; AvgHybrid\n")
+#                         else:
+#                             f.write("Main; U; Lax (%); PLax; ALax; AvgLax; Edf (%); PEdf; AEdf; AvgEdf; Hybrid(%); Ezl; AEzl; AvgEzl\n")
+#                         f.close()
                         # Vary utilization
                         low_bound = c /4
                         step = c * 0.025
@@ -143,6 +151,35 @@ def benchmark():
                             if ret != 0:
                                 print("ERROR unexpected behavior for the benchmarking. Exiting...")
                                 return -1
+
+def plot():
+     
+    for l in number_levels:
+        for c in number_cores:
+            for p in edge_percentage:
+                for d in number_dags:
+                    for t in number_tasks:
+                        x = []
+                        llf = []
+                        edf = []
+                        ezl = []
+                        
+                        with open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", 'r') as csvfile:
+                            plots = csv.reader(csvfile, delimiter=',')
+                            for row in plots:
+                                x.append(float(row[0])/4)
+                                llf.append(float(row[1]))
+                                edf.append(float(row[5]))
+                                ezl.append(float(row[9]))
+                        plt.figure()            
+                        plt.plot(x,llf, label='LLF')
+                        plt.plot(x,edf, label='EDF')
+                        plt.plot(x,ezl, label='EZL')
+                        plt.xlabel('U norm')
+                        plt.ylabel('Acceptance rate')
+                        plt.title('Results  levels '+str(l)+' tasks '+str(t))
+                        plt.legend()
+                        plt.savefig("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/graph-l"+str(l)+"-c"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+".png")
 
 def main():
     usage_str = "%prog [options]"
@@ -189,7 +226,8 @@ def main():
         generate()
 
     if options.benchmark:
-        benchmark()
+        #benchmark()
+        plot()
         end = time.time()
         send_email(start,end)
 
@@ -227,11 +265,11 @@ def send_email(t_start,t_end):
             for p in edge_percentage:
                 for d in number_dags:
                     for t in number_tasks:
-                        attachment = open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", "rb")
+                        attachment = open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/graph-l"+str(l)+"-c"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+".png", "rb")
                         part = MIMEBase('application', 'octet-stream')
                         part.set_payload((attachment).read())
                         encoders.encode_base64(part)
-                        part.add_header('Content-Disposition', "attachment; filename=results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv")
+                        part.add_header('Content-Disposition', "attachment; filename=results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/graph-l"+str(l)+"-c"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+".png")
                         msg.attach(part)
 
     server = smtplib.SMTP('smtp.gmail.com:587')
