@@ -9,10 +9,13 @@ import smtplib
 import time
 import matplotlib.pyplot as plt
 import csv
+import zipfile
+import tempfile
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
+from _ast import With
 
 # Global setup for generation and benchmarks
 global number_levels
@@ -260,6 +263,7 @@ def send_email(t_start,t_end):
 
     msg.attach(MIMEText(TEXT, 'plain'))
 
+    # Attach graphs' PNGs
     for l in number_levels:
         for c in number_cores:
             for p in edge_percentage:
@@ -271,6 +275,24 @@ def send_email(t_start,t_end):
                         encoders.encode_base64(part)
                         part.add_header('Content-Disposition', "attachment; filename=results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/graph-l"+str(l)+"-c"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+".png")
                         msg.attach(part)
+                        
+    # Create a zip with results
+    zf = tempfile.TemporaryFile(prefix='results', suffix='.zip')
+    zip = zipfile.ZipFile(zf, 'w')
+    for l in number_levels:
+        for c in number_cores:
+            for p in edge_percentage:
+                for d in number_dags:
+                    for t in number_tasks:
+                        zip.write("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv")
+    zip.close()
+    zf.seek(0)
+    part = MIMEBase('application', 'zip')
+    part.set_payload(zf.read())
+    encoders.encode_base64(part)
+    part.add_header('Content-Disposition', "attachment; filename=results.zip")
+    msg.attach(part)
+    
 
     server = smtplib.SMTP('smtp.gmail.com:587')
     server.ehlo()
