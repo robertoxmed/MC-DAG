@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import numpy
+import numpy as np
 import os
 import optparse
 import sys
@@ -26,10 +26,10 @@ global edge_percentage
 
 number_levels = [4]
 number_tasks = [20, 30, 50]
-number_dags = [2]
-number_cores = [4]
-edge_percentage = [20]
-number_jobs = 8
+number_dags = [1]
+number_cores = [8]
+edge_percentage = [40]
+number_jobs = 16
 number_files = "100"
 
 def create_setup():
@@ -115,7 +115,7 @@ def generate():
                         step = c * 0.025
                         upper_bound = c + step
 
-                        for u in numpy.arange(low_bound, upper_bound, step):
+                        for u in np.arange(low_bound, upper_bound, step):
                             cmd = "java -jar bin/generator.jar -mu "+str(round(u,2))+"\
                                    -nd "+str(d)+" -l "+str(l)+" -nt "+str(t)+" -nf "+number_files+" -e "+str(p)+"\
                                    -o genned/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/test-"+str(round(u,2))+".xml\
@@ -145,7 +145,7 @@ def benchmark():
                         step = c * 0.025
                         upper_bound = c + step
 
-                        for u in numpy.arange(low_bound, upper_bound, step):
+                        for u in np.arange(low_bound, upper_bound, step):
                             cmd = "java -jar bin/benchmark.jar  -i genned/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/test-"+str(round(u,2))+"*.xml\
                                    -o results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/detail/out-"+str(round(u,2))+".csv \
                                    -ot results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv\
@@ -166,18 +166,38 @@ def plot():
                         llf = []
                         edf = []
                         ezl = []
-                        
+
                         with open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", 'r') as csvfile:
                             plots = csv.reader(csvfile, delimiter=',')
                             for row in plots:
-                                x.append(float(row[0])/4)
+                                x.append(float(row[0])/c)
                                 llf.append(float(row[1]))
                                 edf.append(float(row[5]))
                                 ezl.append(float(row[9]))
+                                
+                                # Calculate polynomial approximations
+                                llf_z = np.polyfit(x, llf, 5)
+                                llf_f = np.poly1d(llf_z)
+                                llf_x_new = np.linspace(x[0], x[-1], 50)
+                                llf_y_new = llf_f(llf_x_new)
+                                
+                                edf_z = np.polyfit(x, edf, 5)
+                                edf_f = np.poly1d(edf_z)
+                                edf_x_new = np.linspace(x[0], x[-1], 50)
+                                edf_y_new = edf_f(edf_x_new)
+                                
+                                ezl_z = np.polyfit(x, ezl, 5)
+                                ezl_f = np.poly1d(ezl_z)
+                                ezl_x_new = np.linspace(x[0], x[-1], 50)
+                                ezl_y_new = ezl_f(ezl_x_new)
+                                
                         plt.figure()            
-                        plt.plot(x,llf, label='LLF')
-                        plt.plot(x,edf, label='EDF')
-                        plt.plot(x,ezl, label='EZL')
+                        plt.plot(x,llf, 'b.')
+                        plt.plot(llf_x_new, llf_y_new, 'b', label='LLF')
+                        plt.plot(x,edf, 'gd', markersize=4)
+                        plt.plot(edf_x_new, edf_y_new, 'g', label='EDF')
+                        plt.plot(x,ezl, 'rs', markersize=3)
+                        plt.plot(ezl_x_new, ezl_y_new, 'r', label='EZL')
                         plt.xlabel('U norm')
                         plt.ylabel('Acceptance rate')
                         plt.title('Results  levels '+str(l)+' tasks '+str(t))
@@ -229,7 +249,7 @@ def main():
         generate()
 
     if options.benchmark:
-        #benchmark()
+        benchmark()
         plot()
         end = time.time()
         send_email(start,end)

@@ -27,6 +27,23 @@ public class EarlistDeadlineZeroLaxityMCSched extends GlobalGenericMCScheduler {
 	@Override
 	protected boolean verifyConstraints(List<VertexScheduling> ready, int slot, int level) {
 		int sumSlotsLeft = 0;
+		int sumZeroLax = 0;
+		
+		for (VertexScheduling v : ready) {
+			// Task has negative laxity -> non schedulable system
+			if (v.getWeights()[level] < 0) {
+				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): negative laxity on task "+v.getName());
+				return false;
+			} else if (v.getWeights()[level] == 0) {
+				sumZeroLax += 1;
+			}
+		}
+		
+		// More than m zero laxity tasks
+		if (sumZeroLax > getNbCores()) {
+			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): more than m zero laxity tasks");
+			return false;
+		}
 		
 		for (VertexScheduling v : ready) {
 			// Task is activated and deadline was missed

@@ -35,7 +35,6 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import fr.tpt.s3.mcdag.bench.multidag.BenchThreadDualCriticality;
 import fr.tpt.s3.mcdag.bench.nlevel.BenchThreadNLevels;
 
 /**
@@ -120,100 +119,100 @@ public class MainBench {
 		 */
 		
 		// For dual-criticality systems we call a specific thread
-		if (nbLvls == 2) {			
-			int i_files2 = 0;
-			String outFile = outputFilePath.substring(0, outputFilePath.lastIndexOf('.')).concat("-schedulability.csv");
-			PrintWriter writer = new PrintWriter(outFile, "UTF-8");
-			writer.println("Thread; File; FSched (%); FPreempts; FAct; LSched (%); LPreempts; LAct; ESched (%); EPreempts; EAct; HSched(%); HPreempts; HAct; Utilization");
-			writer.close();
-						
-			ExecutorService executor = Executors.newFixedThreadPool(nbJobs);
-			while (i_files2 != nbFiles) {
-				BenchThreadDualCriticality bt2 = new BenchThreadDualCriticality(inputFilePath[i_files2], outFile, nbCores, boolDebug);
-				
-				executor.execute(bt2);
-				i_files2++;
-			}
-			
-			executor.shutdown();
-			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-			
-			int fedTotal = 0;
-			int laxTotal = 0;
-			int edfTotal = 0;
-			int hybridTotal = 0;
-			int fedPreempts = 0;
-			int laxPreempts = 0;
-			int edfPreempts = 0;
-			int hybridPreempts = 0;
-			int fedActiv = 0;
-			int laxActiv = 0;
-			int edfActiv = 0;
-			int hybridActiv = 0;
-			// Read lines in file and do average
-			int i = 0;
-			File f = new File(outFile);
-			@SuppressWarnings("resource")
-			Scanner line = new Scanner(f);
-			while (line.hasNextLine()) {
-				String s = line.nextLine();
-				if (i > 0) { // To skip the first line
-					try (Scanner inLine = new Scanner(s).useDelimiter("; ")) {
-						int j = 0;
-						
-						while (inLine.hasNext()) {
-							String val = inLine.next();
-							if (j == 2) {
-								fedTotal += Integer.parseInt(val);
-							} else if (j == 3) {
-								fedPreempts += Integer.parseInt(val);
-							} else if (j == 4) {
-								fedActiv += Integer.parseInt(val);
-							} else if (j == 5) {
-								laxTotal += Integer.parseInt(val);
-							} else if (j == 6) {
-								laxPreempts += Integer.parseInt(val);
-							} else if (j == 7) {
-								laxActiv += Integer.parseInt(val);
-							} else if (j == 8) {
-								edfTotal += Integer.parseInt(val);
-							} else if (j == 9) {
-								edfPreempts += Integer.parseInt(val);
-							} else if (j == 10) {
-								edfActiv += Integer.parseInt(val);
-							} else if (j == 11) {
-								hybridTotal += Integer.parseInt(val);
-							} else if (j == 12) {
-								hybridPreempts += Integer.parseInt(val);
-							} else if (j == 13) {
-								hybridActiv += Integer.parseInt(val);
-							}
-							j++;
-						}
-					}
-				}
-				i++;
-			}
-			
-			// Write percentage
-			double fedPerc = (double) fedTotal / nbFiles;
-			double laxPerc = (double) laxTotal / nbFiles;
-			double edfPerc = (double) edfTotal / nbFiles;
-			double hybridPerc = (double) hybridTotal / nbFiles;
-			
-			double fedPercPreempts = (double) fedPreempts / fedActiv;
-			double laxPercPreempts = (double) laxPreempts / laxActiv;
-			double edfPercPreempts = (double) edfPreempts / edfActiv;
-			double hybridPercPreempts = (double) hybridPreempts / hybridActiv;
-			
-			Writer wOutput = new BufferedWriter(new FileWriter(outputFilePathTotal, true));
-			wOutput.write(Thread.currentThread().getName()+"; "+utilization+"; "+fedPerc+"; "+fedPreempts+"; "+fedActiv+"; "+fedPercPreempts+"; "
-						  +laxPerc+"; "+laxPreempts+"; "+laxActiv+"; "+laxPercPreempts+"; "
-						  +edfPerc+"; "+edfPreempts+"; "+edfActiv+"; "+edfPercPreempts+"; "
-						  +hybridPerc+"; "+hybridPreempts+"; "+hybridActiv+"; "+hybridPercPreempts+"\n");
-			wOutput.close();
-			
-		} else if (nbLvls > 2) {
+//		if (nbLvls == 2) {			
+//			int i_files2 = 0;
+//			String outFile = outputFilePath.substring(0, outputFilePath.lastIndexOf('.')).concat("-schedulability.csv");
+//			PrintWriter writer = new PrintWriter(outFile, "UTF-8");
+//			writer.println("Thread; File; FSched (%); FPreempts; FAct; LSched (%); LPreempts; LAct; ESched (%); EPreempts; EAct; HSched(%); HPreempts; HAct; Utilization");
+//			writer.close();
+//						
+//			ExecutorService executor = Executors.newFixedThreadPool(nbJobs);
+//			while (i_files2 != nbFiles) {
+//				BenchThreadDualCriticality bt2 = new BenchThreadDualCriticality(inputFilePath[i_files2], outFile, nbCores, boolDebug);
+//				
+//				executor.execute(bt2);
+//				i_files2++;
+//			}
+//			
+//			executor.shutdown();
+//			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+//			
+//			int fedTotal = 0;
+//			int laxTotal = 0;
+//			int edfTotal = 0;
+//			int hybridTotal = 0;
+//			int fedPreempts = 0;
+//			int laxPreempts = 0;
+//			int edfPreempts = 0;
+//			int hybridPreempts = 0;
+//			int fedActiv = 0;
+//			int laxActiv = 0;
+//			int edfActiv = 0;
+//			int hybridActiv = 0;
+//			// Read lines in file and do average
+//			int i = 0;
+//			File f = new File(outFile);
+//			@SuppressWarnings("resource")
+//			Scanner line = new Scanner(f);
+//			while (line.hasNextLine()) {
+//				String s = line.nextLine();
+//				if (i > 0) { // To skip the first line
+//					try (Scanner inLine = new Scanner(s).useDelimiter("; ")) {
+//						int j = 0;
+//						
+//						while (inLine.hasNext()) {
+//							String val = inLine.next();
+//							if (j == 2) {
+//								fedTotal += Integer.parseInt(val);
+//							} else if (j == 3) {
+//								fedPreempts += Integer.parseInt(val);
+//							} else if (j == 4) {
+//								fedActiv += Integer.parseInt(val);
+//							} else if (j == 5) {
+//								laxTotal += Integer.parseInt(val);
+//							} else if (j == 6) {
+//								laxPreempts += Integer.parseInt(val);
+//							} else if (j == 7) {
+//								laxActiv += Integer.parseInt(val);
+//							} else if (j == 8) {
+//								edfTotal += Integer.parseInt(val);
+//							} else if (j == 9) {
+//								edfPreempts += Integer.parseInt(val);
+//							} else if (j == 10) {
+//								edfActiv += Integer.parseInt(val);
+//							} else if (j == 11) {
+//								hybridTotal += Integer.parseInt(val);
+//							} else if (j == 12) {
+//								hybridPreempts += Integer.parseInt(val);
+//							} else if (j == 13) {
+//								hybridActiv += Integer.parseInt(val);
+//							}
+//							j++;
+//						}
+//					}
+//				}
+//				i++;
+//			}
+//			
+//			// Write percentage
+//			double fedPerc = (double) fedTotal / nbFiles;
+//			double laxPerc = (double) laxTotal / nbFiles;
+//			double edfPerc = (double) edfTotal / nbFiles;
+//			double hybridPerc = (double) hybridTotal / nbFiles;
+//			
+//			double fedPercPreempts = (double) fedPreempts / fedActiv;
+//			double laxPercPreempts = (double) laxPreempts / laxActiv;
+//			double edfPercPreempts = (double) edfPreempts / edfActiv;
+//			double hybridPercPreempts = (double) hybridPreempts / hybridActiv;
+//			
+//			Writer wOutput = new BufferedWriter(new FileWriter(outputFilePathTotal, true));
+//			wOutput.write(Thread.currentThread().getName()+"; "+utilization+"; "+fedPerc+"; "+fedPreempts+"; "+fedActiv+"; "+fedPercPreempts+"; "
+//						  +laxPerc+"; "+laxPreempts+"; "+laxActiv+"; "+laxPercPreempts+"; "
+//						  +edfPerc+"; "+edfPreempts+"; "+edfActiv+"; "+edfPercPreempts+"; "
+//						  +hybridPerc+"; "+hybridPreempts+"; "+hybridActiv+"; "+hybridPercPreempts+"\n");
+//			wOutput.close();
+//			
+//		} else if (nbLvls > 2) {
 			int i_files2 = 0;
 			String outFile = outputFilePath.substring(0, outputFilePath.lastIndexOf('.')).concat("-schedulability.csv");
 			PrintWriter writer = new PrintWriter(outFile, "UTF-8");
@@ -297,10 +296,10 @@ public class MainBench {
 						  +hybridPerc+","+hybridPreempts+","+hybridActiv+","+hybridPercPreempts+"\n");
 			wOutput.close();
 			
-		} else {
-			System.err.println("Wrong number of levels");
-			System.exit(-1);
-		}
+//		} else {
+//			System.err.println("Wrong number of levels");
+//			System.exit(-1);
+//		}
 		
 		System.out.println("[BENCH Main] Done benchmarking U = "+utilization+" Levels "+nbLvls);
 	}
