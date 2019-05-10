@@ -45,7 +45,7 @@ public class MCSystemGenerator {
 	protected RandomNumberGenerator rng;
 	protected boolean debug;
 	
-	protected int possibleDeadlines[] = {100, 120, 150, 180, 200, 220, 250, 300, 400, 500}; 
+//	protected int possibleDeadlines[] = {100, 120, 150, 180, 200, 220, 250, 300, 400, 500}; 
 	
 	public MCSystemGenerator (double maxU, int nbTasks,
 			double eProb, int levels, int paraDegree, int nbDAGs,
@@ -155,8 +155,7 @@ public class MCSystemGenerator {
 		int rank;
 		int prevRank;
 		
-		int idxDeadline = rng.randomUnifInt(0, possibleDeadlines.length - 1);
-		int rDead = possibleDeadlines[idxDeadline];
+		int rDead = rng.randomUnifInt((int)(nbTasks / utilization), (int)(nbTasks / utilization) * 100);
 		
 		/* Init phase:
 		 * 	Utilization per mode + budgets per mode

@@ -29,9 +29,7 @@ public class MCSystemGeneratorDev extends MCSystemGenerator{
 			int rank;
 			int prevRank;
 			
-			int idxDeadline = rng.randomUnifInt(0, possibleDeadlines.length - 1);
-			int rDead = possibleDeadlines[idxDeadline];
-			
+			int rDead = rng.randomUnifInt((int)(nbTasks / utilization), (int)(nbTasks / utilization) * 100);			
 			/* Init phase:
 			 * 	Utilization per mode + budgets per mode
 			 *  Deadline given to graph

@@ -24,13 +24,13 @@ global number_dags
 global number_cores
 global edge_percentage
 
-number_levels = [4]
-number_tasks = [20, 30, 50]
+number_levels = [2, 4, 5]
+number_tasks = [30]
 number_dags = [1]
 number_cores = [8]
 edge_percentage = [40]
 number_jobs = 16
-number_files = "100"
+number_files = "300"
 
 def create_setup():
     # Create the directory tree for generation
@@ -133,14 +133,6 @@ def benchmark():
             for p in edge_percentage:
                 for d in number_dags:
                     for t in number_tasks:
-                        # Create the result file
-#                         f = open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", "w+")
-#                         if l == 2:
-#                             f.write("Main; U; Fed (%); PFed; AFed; AvgFed; Lax (%); PLax; ALax; AvgLax; Edf (%); PEdf; AEdf; AvgEdfHybrid(%); PHybrid; AHybird; AvgHybrid\n")
-#                         else:
-#                             f.write("Main; U; Lax (%); PLax; ALax; AvgLax; Edf (%); PEdf; AEdf; AvgEdf; Hybrid(%); Ezl; AEzl; AvgEzl\n")
-#                         f.close()
-                        # Vary utilization
                         low_bound = c /4
                         step = c * 0.025
                         upper_bound = c + step
@@ -156,7 +148,6 @@ def benchmark():
                                 return -1
 
 def plot():
-     
     for l in number_levels:
         for c in number_cores:
             for p in edge_percentage:
@@ -175,21 +166,21 @@ def plot():
                                 edf.append(float(row[5]))
                                 ezl.append(float(row[9]))
                                 
-                                # Calculate polynomial approximations
-                                llf_z = np.polyfit(x, llf, 5)
-                                llf_f = np.poly1d(llf_z)
-                                llf_x_new = np.linspace(x[0], x[-1], 50)
-                                llf_y_new = llf_f(llf_x_new)
-                                
-                                edf_z = np.polyfit(x, edf, 5)
-                                edf_f = np.poly1d(edf_z)
-                                edf_x_new = np.linspace(x[0], x[-1], 50)
-                                edf_y_new = edf_f(edf_x_new)
-                                
-                                ezl_z = np.polyfit(x, ezl, 5)
-                                ezl_f = np.poly1d(ezl_z)
-                                ezl_x_new = np.linspace(x[0], x[-1], 50)
-                                ezl_y_new = ezl_f(ezl_x_new)
+                            # Calculate polynomial approximations
+                            llf_z = np.polyfit(x, llf, 5)
+                            llf_f = np.poly1d(llf_z)
+                            llf_x_new = np.linspace(x[0], x[-1], 50)
+                            llf_y_new = llf_f(llf_x_new)
+                            
+                            edf_z = np.polyfit(x, edf, 5)
+                            edf_f = np.poly1d(edf_z)
+                            edf_x_new = np.linspace(x[0], x[-1], 50)
+                            edf_y_new = edf_f(edf_x_new)
+                            
+                            ezl_z = np.polyfit(x, ezl, 5)
+                            ezl_f = np.poly1d(ezl_z)
+                            ezl_x_new = np.linspace(x[0], x[-1], 50)
+                            ezl_y_new = ezl_f(ezl_x_new)
                                 
                         plt.figure()            
                         plt.plot(x,llf, 'b.')
@@ -203,6 +194,37 @@ def plot():
                         plt.title('Results  levels '+str(l)+' tasks '+str(t))
                         plt.legend()
                         plt.savefig("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/graph-l"+str(l)+"-c"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+".png")
+
+def plot_levels():
+    i = 0
+    llf_lvl = [[] for x in range(len(number_levels))]
+    plt.figure() 
+    
+    for l in number_levels:
+        x = []
+        for c in number_cores:
+            for p in edge_percentage:
+                for d in number_dags:
+                    for t in number_tasks:
+                        with open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", 'r') as csvfile:
+                            plots = csv.reader(csvfile, delimiter=',')
+                            for row in plots:
+                                
+                                x.append(float(row[0])/c) 
+                                llf_lvl[i].append(float(row[1]))
+                            # Calculate polynomial approximation
+                            llf_z = np.polyfit(x, llf_lvl[i], 5)
+                            llf_f = np.poly1d(llf_z)
+                            llf_x_new = np.linspace(x[0], x[-1], 50)
+                            llf_y_new = llf_f(llf_x_new)
+                        plt.plot(x, llf_lvl[i], '.')
+                        plt.plot(llf_x_new, llf_y_new)
+        i = i + 1
+
+    plt.xlabel('U norm')
+    plt.ylabel('Acceptance rate')
+    plt.title('GLLF Results')
+    plt.savefig("llf.png")                        
 
 def main():
     usage_str = "%prog [options]"
@@ -250,7 +272,7 @@ def main():
 
     if options.benchmark:
         benchmark()
-        plot()
+        plot_levels()
         end = time.time()
         send_email(start,end)
 
@@ -289,11 +311,15 @@ def send_email(t_start,t_end):
             for p in edge_percentage:
                 for d in number_dags:
                     for t in number_tasks:
-                        attachment = open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/graph-l"+str(l)+"-c"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+".png", "rb")
+                        attachment = open("llf.png", "rb")
+
+                        #attachment = open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/graph-l"+str(l)+"-c"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+".png", "rb")
                         part = MIMEBase('application', 'octet-stream')
                         part.set_payload((attachment).read())
                         encoders.encode_base64(part)
-                        part.add_header('Content-Disposition', "attachment; filename=results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/graph-l"+str(l)+"-c"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+".png")
+                        part.add_header('Content-Disposition', "attachment; filename=llf.png")
+
+                        #part.add_header('Content-Disposition', "attachment; filename=results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/graph-l"+str(l)+"-c"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+".png")
                         msg.attach(part)
                         
     # Create a zip with results
