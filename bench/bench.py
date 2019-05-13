@@ -32,6 +32,10 @@ edge_percentage = [40]
 number_jobs = 16
 number_files = "300"
 
+# Global setup for matplotlib
+schedulers = ["llf", "edf", "ezl"]
+colors = ['b', 'g', 'r']
+
 def create_setup():
     # Create the directory tree for generation
     if not os.path.exists("genned"):
@@ -196,35 +200,81 @@ def plot():
                         plt.savefig("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/graph-l"+str(l)+"-c"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+".png")
 
 def plot_levels():
-    i = 0
-    llf_lvl = [[] for x in range(len(number_levels))]
-    plt.figure() 
+    s = 1
+    col = 0
+    for sched in schedulers:
+        i = 0
+        lvl = [[] for x in range(len(number_levels))]
+        plt.figure() 
+        
+        for l in number_levels:
+            x = []
+            for c in number_cores:
+                for p in edge_percentage:
+                    for d in number_dags:
+                        for t in number_tasks:
+                            with open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", 'r') as csvfile:
+                                plots = csv.reader(csvfile, delimiter=',')
+                                for row in plots:
+                                    
+                                    x.append(float(row[0])/c) 
+                                    lvl[i].append(float(row[s]))
+                                # Calculate polynomial approximation
+                                z = np.polyfit(x, lvl[i], 5)
+                                f = np.poly1d(z)
+                                x_new = np.linspace(x[0], x[-1], 50)
+                                y_new = f(x_new)
+                            plt.plot(x, lvl[i], colors[col]+'.')
+                            plt.plot(x_new, y_new, colors[col], label=str(l))
+            i = i + 1
+            col = col + 1 
+
+        plt.xlabel('U norm')
+        plt.ylabel('Acceptance rate')
+        plt.title(sched+" Results levels "+str(l)+" tasks "+str(t))
+        plt.savefig(sched+".png")
+        s = s + 4
+        col = 0
+
+def plot_preempt():
     
     for l in number_levels:
-        x = []
         for c in number_cores:
             for p in edge_percentage:
                 for d in number_dags:
                     for t in number_tasks:
-                        with open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", 'r') as csvfile:
-                            plots = csv.reader(csvfile, delimiter=',')
-                            for row in plots:
-                                
-                                x.append(float(row[0])/c) 
-                                llf_lvl[i].append(float(row[1]))
-                            # Calculate polynomial approximation
-                            llf_z = np.polyfit(x, llf_lvl[i], 5)
-                            llf_f = np.poly1d(llf_z)
-                            llf_x_new = np.linspace(x[0], x[-1], 50)
-                            llf_y_new = llf_f(llf_x_new)
-                        plt.plot(x, llf_lvl[i], '.')
-                        plt.plot(llf_x_new, llf_y_new)
-        i = i + 1
+                        plt.figure()
+                        i = 0
+                        s = 4
+                        col = 0
+                        preempt = [[] for x in range(len(schedulers))]
+                        for sched in schedulers:
+                            x = []
 
-    plt.xlabel('U norm')
-    plt.ylabel('Acceptance rate')
-    plt.title('GLLF Results')
-    plt.savefig("llf.png")                        
+                            plt.figure() 
+
+                            with open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", 'r') as csvfile:
+                                plots = csv.reader(csvfile, delimiter=',')
+                                for row in plots:
+                                    
+                                    x.append(float(row[0])/c) 
+                                    preempt[i].append(float(row[s]))
+                                # Calculate polynomial approximation
+                                z = np.polyfit(x, preempt[i], 3)
+                                f = np.poly1d(z)
+                                x_new = np.linspace(x[0], x[-1], 50)
+                                y_new = f(x_new)
+                            plt.semilogy(y_new, np.log(100*y_new))
+                            plt.plot(x, preempt[i], colors[col]+'.')
+                            plt.plot(x_new, y_new, colors[col], label=str(l))
+                            s = s + 4
+                            col = col + 1
+                            i = i + 1
+                            
+                        plt.xlabel('U norm')
+                        plt.ylabel('Preemption/job')
+                        plt.title("Results levels "+str(l)+" tasks "+str(t))
+                        plt.savefig(str(l)+".png")
 
 def main():
     usage_str = "%prog [options]"
@@ -271,8 +321,8 @@ def main():
         generate()
 
     if options.benchmark:
-        benchmark()
-        plot_levels()
+        #benchmark()
+        plot_preempt()
         end = time.time()
         send_email(start,end)
 
@@ -306,21 +356,18 @@ def send_email(t_start,t_end):
     msg.attach(MIMEText(TEXT, 'plain'))
 
     # Attach graphs' PNGs
-    for l in number_levels:
-        for c in number_cores:
-            for p in edge_percentage:
-                for d in number_dags:
-                    for t in number_tasks:
-                        attachment = open("llf.png", "rb")
+    for sched in schedulers:
 
-                        #attachment = open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/graph-l"+str(l)+"-c"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+".png", "rb")
-                        part = MIMEBase('application', 'octet-stream')
-                        part.set_payload((attachment).read())
-                        encoders.encode_base64(part)
-                        part.add_header('Content-Disposition', "attachment; filename=llf.png")
+        attachment = open(sched+".png", "rb")
 
-                        #part.add_header('Content-Disposition', "attachment; filename=results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/graph-l"+str(l)+"-c"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+".png")
-                        msg.attach(part)
+        #attachment = open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/graph-l"+str(l)+"-c"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+".png", "rb")
+        part = MIMEBase('application', 'octet-stream')
+        part.set_payload((attachment).read())
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', "attachment; filename="+sched+".png")
+
+        #part.add_header('Content-Disposition', "attachment; filename=results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/graph-l"+str(l)+"-c"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+".png")
+        msg.attach(part)
                         
     # Create a zip with results
     zf = tempfile.TemporaryFile(prefix='results', suffix='.zip')
