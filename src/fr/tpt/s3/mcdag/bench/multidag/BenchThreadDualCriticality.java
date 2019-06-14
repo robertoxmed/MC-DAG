@@ -30,8 +30,8 @@ import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.parser.MCParser;
 import fr.tpt.s3.mcdag.scheduling.GlobalGenericMCScheduler;
 import fr.tpt.s3.mcdag.scheduling.SchedulingException;
+import fr.tpt.s3.mcdag.scheduling.federated.OldFederatedMCSched;
 import fr.tpt.s3.mcdag.scheduling.impl.EartliestDeadlineFirstMCSched;
-import fr.tpt.s3.mcdag.scheduling.impl.FederatedMCSched;
 import fr.tpt.s3.mcdag.scheduling.impl.HybridMCSched;
 import fr.tpt.s3.mcdag.scheduling.impl.LeastLaxityFirstMCSched;
 
@@ -43,7 +43,7 @@ public class BenchThreadDualCriticality implements Runnable {
 	private String outputFile;
 	private boolean debug;
 	private int nbCores;
-	private FederatedMCSched fedScheduler;
+	private OldFederatedMCSched fedScheduler;
 	private GlobalGenericMCScheduler llf;
 	private GlobalGenericMCScheduler edf;
 	private GlobalGenericMCScheduler hybrid;
@@ -157,7 +157,7 @@ public class BenchThreadDualCriticality implements Runnable {
 		// Test federated approach
 		// Make a copy of the system instance
 		Set<McDAG> fedDAGs = new HashSet<McDAG>(dags);
-		fedScheduler = new FederatedMCSched(fedDAGs, nbCores, debug);
+		fedScheduler = new OldFederatedMCSched(fedDAGs, nbCores, debug);
 		
 		try {
 			fedScheduler.buildAllTables();

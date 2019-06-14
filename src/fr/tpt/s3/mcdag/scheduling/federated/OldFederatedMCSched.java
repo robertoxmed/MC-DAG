@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package fr.tpt.s3.mcdag.scheduling.impl;
+package fr.tpt.s3.mcdag.scheduling.federated;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -40,7 +40,7 @@ import fr.tpt.s3.mcdag.util.MathMCDAG;
  * @author roberto
  *
  */
-public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
+public class OldFederatedMCSched extends AbstractMixedCriticalityScheduler{
 	
 	// Set of DAGs to be scheduled 
 	private Set<McDAG> mcDags;
@@ -62,7 +62,7 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 	 * @param system
 	 * @param architecture
 	 */
-	public FederatedMCSched (Set<McDAG> system, int architecture, boolean debug) {
+	public OldFederatedMCSched (Set<McDAG> system, int architecture, boolean debug) {
 		setMcDags(system);
 		setNbCores(architecture);
 		setDebug(debug);
@@ -517,7 +517,7 @@ public class FederatedMCSched extends AbstractMixedCriticalityScheduler{
 			if (d.getUmax() < 1) {
 				lightDAGs.add(d);
 			} else {
-				coresQuota -= d.getUmax();
+				coresQuota -= Math.ceil(d.getUmax());
 				heavyDAGs.add(d);
 			}
 		}

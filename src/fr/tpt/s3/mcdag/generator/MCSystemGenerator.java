@@ -155,7 +155,7 @@ public class MCSystemGenerator {
 		int rank;
 		int prevRank;
 		
-		int rDead = rng.randomUnifInt((int)(nbTasks / utilization), (int)(nbTasks / utilization) * 100);
+		int rDead = rng.randomUnifInt((int)(nbTasks / utilization), (int)(nbTasks / utilization) * 10);
 		
 		/* Init phase:
 		 * 	Utilization per mode + budgets per mode
@@ -353,8 +353,8 @@ public class MCSystemGenerator {
 		
 		for (McDAG d : getGennedDAGs()) {
 			uSys += d.getUmax();
-		}		
-		System.out.println(">>>>>>>>>>>>>>> U generated " + uSys);
+		}
+		System.out.println(">>>>>>>>>>>>>>> Utilization "+uSys);
 		if (userMaxU * 0.999 <= uSys && uSys <= userMaxU)
 			return true;
 		
