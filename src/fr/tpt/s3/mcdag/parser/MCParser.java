@@ -48,6 +48,8 @@ import fr.tpt.s3.mcdag.model.Vertex;
 import fr.tpt.s3.mcdag.model.VertexAvailability;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
 import fr.tpt.s3.mcdag.scheduling.GlobalGenericMCScheduler;
+import fr.tpt.s3.mcdag.scheduling.federated.EarliestDeadlineFirstFedSched;
+import fr.tpt.s3.mcdag.scheduling.federated.GenericFederatedMCSched;
 import fr.tpt.s3.mcdag.scheduling.impl.EarlistDeadlineZeroLaxityMCSched;
 import fr.tpt.s3.mcdag.scheduling.impl.EartliestDeadlineFirstMCSched;
 import fr.tpt.s3.mcdag.scheduling.impl.HybridMCSched;
@@ -66,6 +68,8 @@ public class MCParser {
 
 	// Only references do not have to be instantiated
 	private Set<GlobalGenericMCScheduler> schedulers;
+	private Set<GenericFederatedMCSched> fschedulers;
+
 	private Set<McDAG> dags;
 	private Automata auto;
 	private MCSystemGenerator ug;
@@ -76,11 +80,13 @@ public class MCParser {
 	private int nbCores;
 	private int nbLevels;
 	
-	public MCParser (String iFile, String oSFile, Set<GlobalGenericMCScheduler> schedulers, Set<McDAG> dags, boolean bop) {
+	public MCParser (String iFile, String oSFile, Set<GlobalGenericMCScheduler> schedulers,
+			Set<GenericFederatedMCSched> fschedulers, Set<McDAG> dags, boolean bop) {
 		setInputFile(iFile);
 		setOutSchedFile(oSFile);
 		setDags(dags);
 		setSchedulers(schedulers);
+		setFschedulers(fschedulers);
 		bOutPrism = bop;
 		this.setNbLevels(2);
 	}
@@ -121,6 +127,7 @@ public class MCParser {
 				if (nSched.getNodeType() == Node.ELEMENT_NODE) {
 					Element eSched = (Element) nSched;
 					GlobalGenericMCScheduler objSched = null;
+					GenericFederatedMCSched objFSched = null;
 										
 					// Test the type of scheduler
 					if (eSched.getAttribute("name").contentEquals("edf"))
@@ -131,10 +138,15 @@ public class MCParser {
 						objSched = new EarlistDeadlineZeroLaxityMCSched(dags, getNbCores(), getNbLevels(), true, false);
 					else if (eSched.getAttribute("name").contentEquals("hybrid"))
 						objSched = new HybridMCSched(dags, getNbCores(), getNbLevels(), true, false);
+					// Test for federated schedulers
+					else if (eSched.getAttribute("name").contentEquals("fed-edf"))
+						objFSched = new EarliestDeadlineFirstFedSched(dags, getNbCores(), getNbLevels(), false);
 					
 					// If an existent scheduler was created add it to the set
 					if (objSched != null)
 						schedulers.add(objSched);
+					else if (objFSched != null)
+						fschedulers.add(objFSched);
 					else
 						System.err.println("[WARNING] Trying to add a non-existent scheduler " + eSched.getAttribute("name"));
 
@@ -871,5 +883,13 @@ public class MCParser {
 
 	public void setSchedulers(Set<GlobalGenericMCScheduler> schedulers) {
 		this.schedulers = schedulers;
+	}
+	
+	public Set<GenericFederatedMCSched> getFschedulers() {
+		return fschedulers;
+	}
+
+	public void setFschedulers(Set<GenericFederatedMCSched> fschedulers) {
+		this.fschedulers = fschedulers;
 	}
 }

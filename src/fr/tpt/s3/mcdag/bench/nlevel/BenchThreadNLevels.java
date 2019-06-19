@@ -63,7 +63,7 @@ public class BenchThreadNLevels implements Runnable {
 		setSchedLax(true);
 		setSchedEdf(true);
 		setSchedHybrid(true);
-		mcp = new MCParser(inputFile, null, gloSchedulers, dags, false);
+		mcp = new MCParser(inputFile, null, gloSchedulers, null, dags, false);
 	}
 	
 	/**

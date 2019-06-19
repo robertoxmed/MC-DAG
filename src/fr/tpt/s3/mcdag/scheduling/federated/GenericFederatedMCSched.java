@@ -210,7 +210,7 @@ public abstract class GenericFederatedMCSched {
 		
 		// Add all source nodes
 		for (Vertex v : d.getVertices()) {
-			if (v.isSourceinLReverse(level))
+			if (v.isSourceinL(level))
 				ready.add((VertexScheduling) v);
 		}
 		
@@ -222,7 +222,7 @@ public abstract class GenericFederatedMCSched {
 		// Iterate through time indexes
 		for (int timeIndex = 0; timeIndex < d.getDeadline(); timeIndex++) {
 			if (isDebug()) {
-				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] buildHiTable("+level+"): @t = "+timeIndex+", tasks activated: ");
+				System.out.print("[DEBUG "+Thread.currentThread().getName()+"] Federated buildTable("+level+"): @t = "+timeIndex+", tasks activated: ");
 				for (VertexScheduling v : ready)
 					System.out.print("Prio("+v.getName()+") = "+v.getWeights()[level]+"; ");
 				System.out.println("");
@@ -256,7 +256,7 @@ public abstract class GenericFederatedMCSched {
 			// When a job finishes it could activate successors
 			if (jobFinished)
 				checkJobActivations(ready, scheduled, d, level);
-			
+			sort(ready, timeIndex, level);
 			jobFinished = false;
 			lit = ready.listIterator();
 		}
@@ -274,9 +274,8 @@ public abstract class GenericFederatedMCSched {
 	public void scheduleSystems () throws SchedulingException {
 		init();
 		
-		
-		
 		for (McDAG d : getMcDAGs()) {
+			calcDeadlines(d);
 			if (debug) printDeadlines(d);
 			
 			for (int i = 0; i < getLevels(); i++) {

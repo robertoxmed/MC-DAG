@@ -23,6 +23,7 @@ import java.util.Set;
 import fr.tpt.s3.mcdag.avail.Automata;
 import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.parser.MCParser;
+import fr.tpt.s3.mcdag.scheduling.federated.GenericFederatedMCSched;
 
 /**
  * Threads used by the framework to schedule and write to files
@@ -32,6 +33,7 @@ import fr.tpt.s3.mcdag.parser.MCParser;
 public class SchedulingThread implements Runnable{
 	
 	private Set<GlobalGenericMCScheduler> schedulers;
+	private Set<GenericFederatedMCSched> fschedulers;
 	private Set<McDAG> dags;
 	private MCParser mcp;
 	private String inputFile;
@@ -46,8 +48,9 @@ public class SchedulingThread implements Runnable{
 	
 	public SchedulingThread(String iFile, boolean oSF, boolean oPF, boolean debug, boolean preempt) {
 		schedulers = new HashSet<GlobalGenericMCScheduler>();
+		fschedulers = new HashSet<GenericFederatedMCSched>();
 		dags = new HashSet<McDAG>();
-		mcp = new MCParser(iFile, null, schedulers, dags, oPF);
+		mcp = new MCParser(iFile, null, schedulers, fschedulers, dags, oPF);
 		setOutPRISMFile(oPF);
 		setPreempt(preempt);
 		
@@ -80,14 +83,25 @@ public class SchedulingThread implements Runnable{
 			System.out.println("["+Thread.currentThread().getName()+"] PRISM file written.");
 		}
 		
-		// Test for schedulability
+		// Test for schedulability with alap methods
 		for (GlobalGenericMCScheduler scheduler : schedulers) {
 			scheduler.setDebug(debug);
 			scheduler.setCountPreempt(true);
 			try {
 				scheduler.scheduleSystem();
 			} catch (SchedulingException e) {
-				System.err.println("[ERROR] Unable to schedule the system");
+				System.err.println("[ERROR] Global alap scheduler: Unable to schedule the system");
+				e.printStackTrace();
+			}
+		}
+		
+		// Test for schedulability with federated approaches
+		for (GenericFederatedMCSched fsched : fschedulers) {
+			fsched.setDebug(debug);
+			try {
+				fsched.scheduleSystems();
+			} catch (SchedulingException e) {
+				System.err.println("[ERROR] Federated scheduler: Unable to schedule the system");
 				e.printStackTrace();
 			}
 		}

@@ -2,6 +2,7 @@ package fr.tpt.s3.mcdag.scheduling.federated;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
 
@@ -13,13 +14,15 @@ import fr.tpt.s3.mcdag.model.VertexScheduling;
  * @author Roberto Medina
  *
  */
-public class EarliestDeadlineFirstMCSched extends GenericFederatedMCSched {
+public class EarliestDeadlineFirstFedSched extends GenericFederatedMCSched {
 	
-	public EarliestDeadlineFirstMCSched(Set<McDAG> DAGs, int cores, int levels, boolean debug) {
+	public EarliestDeadlineFirstFedSched(Set<McDAG> DAGs, int cores, int levels, boolean debug) {
 		setMcDAGs(DAGs);
 		setDebug(debug);
 		setNbCores(cores);
 		setLevels(levels);
+		setSchedTables(new Hashtable<McDAG, String[][][]>());
+		setRemainingTime(new Hashtable<McDAG,int[][]>());
 	}
 
 	@Override
@@ -35,11 +38,14 @@ public class EarliestDeadlineFirstMCSched extends GenericFederatedMCSched {
 
 	@Override
 	protected void sort(List<VertexScheduling> ready, int slot, int level) {
+		for (VertexScheduling v : ready) {
+			v.setWeightInL(v.getDeadlines()[level], level);
+		}
 		Collections.sort(ready, new Comparator<VertexScheduling>() {
 			@Override
 			public int compare (VertexScheduling o1, VertexScheduling o2) {
-				if (o1.getDeadlines()[level] - o2.getDeadlines()[level] != 0)
-					return o1.getDeadlines()[level] - o2.getDeadlines()[level];
+				if (o1.getWeights()[level] - o2.getWeights()[level] != 0)
+					return o1.getWeights()[level] - o2.getWeights()[level];
 				else
 					return o1.getId() - o2.getId();
 			}
