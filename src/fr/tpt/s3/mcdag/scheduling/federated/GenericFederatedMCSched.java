@@ -18,6 +18,7 @@ public abstract class GenericFederatedMCSched {
 	
 	// Set of MC-DAGs to schedule
 	private Set<McDAG> mcDAGs;
+	private Set<McDAG> heavyDAGs;
 	
 	// Set of scheduling tables
 	private Hashtable<McDAG, String[][][]> schedTables;
@@ -27,6 +28,10 @@ public abstract class GenericFederatedMCSched {
 	
 	private int nbCores;
 	private int levels;
+	
+	// Preemption counters
+	private Hashtable<VertexScheduling, Integer> preemptions;
+	private int activations;
 	
 	// Debugging boolean
 	private boolean debug;
@@ -120,10 +125,9 @@ public abstract class GenericFederatedMCSched {
 	 * Function to initialize tables with the respective
 	 */
 	protected void init () throws SchedulingException {
-		
 		// Check for heavy DAGs
 		int coresQuota = getNbCores();
-		Set<McDAG> heavyDAGs = new HashSet<McDAG>();
+		heavyDAGs = new HashSet<McDAG>();
 		
 		// Separate heavy DAGs and check quota
 		for (McDAG d : getMcDAGs()) {
@@ -274,7 +278,7 @@ public abstract class GenericFederatedMCSched {
 	public void scheduleSystems () throws SchedulingException {
 		init();
 		
-		for (McDAG d : getMcDAGs()) {
+		for (McDAG d : heavyDAGs) {
 			calcDeadlines(d);
 			if (debug) printDeadlines(d);
 			
@@ -296,7 +300,7 @@ public abstract class GenericFederatedMCSched {
 	 * @param d
 	 */
 	protected void printDeadlines (McDAG d) {
-		System.out.println("[DEBUG "+Thread.currentThread().getName()+"] DAG "+d.getId()+" printing LFTs");
+		System.out.println("[DEBUG "+Thread.currentThread().getName()+"] Federated: DAG "+d.getId()+" printing deadlines");
 		
 		for (Vertex a : d.getVertices()) {
 			System.out.print("[DEBUG "+Thread.currentThread().getName()+"]\t Actor "+a.getName()+", ");
@@ -314,10 +318,11 @@ public abstract class GenericFederatedMCSched {
 	 */
 	protected void printTables (McDAG d) {
 		String [][][] sched = schedTables.get(d);
+		int cores = (int) Math.ceil(d.getUmax());
 		
 		for (int i = getLevels() - 1; i >= 0; i--) {
 			System.out.println("Scheduling table in mode "+ i+":");
-			for (int c = 0; c < getNbCores(); c++) {
+			for (int c = 0; c < cores; c++) {
 				for (int s = 0; s < d.getDeadline(); s++) {
 					if (sched[i][s][c] != null)
 						System.out.print(sched[i][s][c]+" | ");
@@ -380,5 +385,29 @@ public abstract class GenericFederatedMCSched {
 
 	public void setRemainingTime(Hashtable<McDAG,int[][]> remainingTime) {
 		this.remainingTime = remainingTime;
-	}	
+	}
+
+	public Hashtable<VertexScheduling, Integer> getPreemptions() {
+		return preemptions;
+	}
+
+	public void setPreemptions(Hashtable<VertexScheduling, Integer> preemptions) {
+		this.preemptions = preemptions;
+	}
+
+	public Set<McDAG> getHeavyDAGs() {
+		return heavyDAGs;
+	}
+
+	public void setHeavyDAGs(Set<McDAG> heavyDAGs) {
+		this.heavyDAGs = heavyDAGs;
+	}
+
+	public int getActivations() {
+		return activations;
+	}
+
+	public void setActivations(int activations) {
+		this.activations = activations;
+	}
 }

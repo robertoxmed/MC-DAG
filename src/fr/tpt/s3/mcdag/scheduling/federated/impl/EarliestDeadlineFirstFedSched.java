@@ -1,4 +1,4 @@
-package fr.tpt.s3.mcdag.scheduling.federated;
+package fr.tpt.s3.mcdag.scheduling.federated.impl;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -8,6 +8,7 @@ import java.util.Set;
 
 import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
+import fr.tpt.s3.mcdag.scheduling.federated.GenericFederatedMCSched;
 
 /**
  * Implementation of EDF priority ordering 

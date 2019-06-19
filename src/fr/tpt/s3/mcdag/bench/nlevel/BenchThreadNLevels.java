@@ -42,12 +42,13 @@ public class BenchThreadNLevels implements Runnable {
 	private String outputFile;
 	private boolean debug;
 	private int nbCores;
+	
+	// Global alap schedulers
 	private GlobalGenericMCScheduler llf;
 	private GlobalGenericMCScheduler edf;
 	private GlobalGenericMCScheduler ezl;
 	
-	// Not really used
-	private Set<GlobalGenericMCScheduler> gloSchedulers;
+	// Federated schedulers
 	
 	private boolean schedLax;
 	private boolean schedEdf;
@@ -56,14 +57,13 @@ public class BenchThreadNLevels implements Runnable {
 	public BenchThreadNLevels(String input, String output, int cores, boolean debug) {
 		setInputFile(input);
 		dags = new HashSet<McDAG>();
-		gloSchedulers = new HashSet<GlobalGenericMCScheduler>();
 		setOutputFile(output);
 		setNbCores(cores);
 		setDebug(debug);
 		setSchedLax(true);
 		setSchedEdf(true);
 		setSchedHybrid(true);
-		mcp = new MCParser(inputFile, null, gloSchedulers, null, dags, false);
+		mcp = new MCParser(inputFile, null, null, null, dags, false);
 	}
 	
 	/**
@@ -156,7 +156,7 @@ public class BenchThreadNLevels implements Runnable {
 			if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] LAXITY non schedulable with "+nbCores+" cores.");
 		}
 		
-		// Test hybrid
+		// Test ezl
 		ezl = new EarlistDeadlineZeroLaxityMCSched(getDags(), nbCores, mcp.getNbLevels(), debug, true);
 		
 		try {

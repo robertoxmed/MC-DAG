@@ -30,7 +30,8 @@ import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.parser.MCParser;
 import fr.tpt.s3.mcdag.scheduling.GlobalGenericMCScheduler;
 import fr.tpt.s3.mcdag.scheduling.SchedulingException;
-import fr.tpt.s3.mcdag.scheduling.federated.OldFederatedMCSched;
+import fr.tpt.s3.mcdag.scheduling.federated.GenericFederatedMCSched;
+import fr.tpt.s3.mcdag.scheduling.federated.impl.EarliestDeadlineFirstFedSched;
 import fr.tpt.s3.mcdag.scheduling.impl.EartliestDeadlineFirstMCSched;
 import fr.tpt.s3.mcdag.scheduling.impl.HybridMCSched;
 import fr.tpt.s3.mcdag.scheduling.impl.LeastLaxityFirstMCSched;
@@ -43,13 +44,14 @@ public class BenchThreadDualCriticality implements Runnable {
 	private String outputFile;
 	private boolean debug;
 	private int nbCores;
-	private OldFederatedMCSched fedScheduler;
+	
+	// Global alap schedulers
 	private GlobalGenericMCScheduler llf;
 	private GlobalGenericMCScheduler edf;
 	private GlobalGenericMCScheduler hybrid;
 	
-	// Not really used
-	private Set<GlobalGenericMCScheduler> gloSchedulers;
+	// Federated schedulers
+	private GenericFederatedMCSched fedEdf;
 
 	private boolean schedFede;
 	private boolean schedLax;
@@ -59,7 +61,6 @@ public class BenchThreadDualCriticality implements Runnable {
 	public BenchThreadDualCriticality (String input, String output, int cores, boolean debug) {
 		setInputFile(input);
 		dags = new HashSet<McDAG>();
-		gloSchedulers = new HashSet<GlobalGenericMCScheduler>();
 		setOutputFile(output);
 		setNbCores(cores);
 		setDebug(debug);
@@ -67,7 +68,7 @@ public class BenchThreadDualCriticality implements Runnable {
 		setSchedLax(true);
 		setSchedEdf(true);
 		setSchedHybrid(true);
-		mcp = new MCParser(inputFile, null, gloSchedulers, null, dags, false);
+		mcp = new MCParser(inputFile, null, null, null, dags, false);
 	}
 	
 	/**
@@ -105,10 +106,10 @@ public class BenchThreadDualCriticality implements Runnable {
 			outBHybridSched = 1;
 		
 		if (isSchedEdf() && isSchedLax() && isSchedFede()) {
-			Hashtable<VertexScheduling, Integer> pFed = fedScheduler.getPreempts();
+			Hashtable<VertexScheduling, Integer> pFed = fedEdf.getPreemptions();
 			for (VertexScheduling task : pFed.keySet())
 				outPreemptsFed += pFed.get(task);
-			outActFed = fedScheduler.getActivations();
+			outActFed = fedEdf.getActivations();
 
 			Hashtable<VertexScheduling, Integer> pLax = llf.getPreemptions();
 			for (VertexScheduling task : pLax.keySet())
@@ -157,10 +158,10 @@ public class BenchThreadDualCriticality implements Runnable {
 		// Test federated approach
 		// Make a copy of the system instance
 		Set<McDAG> fedDAGs = new HashSet<McDAG>(dags);
-		fedScheduler = new OldFederatedMCSched(fedDAGs, nbCores, debug);
+		fedEdf = new EarliestDeadlineFirstFedSched(fedDAGs, nbCores, 2, debug);
 		
 		try {
-			fedScheduler.buildAllTables();
+			fedEdf.scheduleSystems();
 		} catch (SchedulingException se) {
 			setSchedFede(false);
 			if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] FEDERATED non schedulable with "+nbCores+" cores.");
