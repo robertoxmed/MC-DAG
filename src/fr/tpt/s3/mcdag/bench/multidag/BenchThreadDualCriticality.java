@@ -28,13 +28,13 @@ import fr.tpt.s3.mcdag.model.Vertex;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
 import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.parser.MCParser;
-import fr.tpt.s3.mcdag.scheduling.GlobalGenericMCScheduler;
 import fr.tpt.s3.mcdag.scheduling.SchedulingException;
 import fr.tpt.s3.mcdag.scheduling.federated.GenericFederatedMCSched;
 import fr.tpt.s3.mcdag.scheduling.federated.impl.EarliestDeadlineFirstFedSched;
-import fr.tpt.s3.mcdag.scheduling.impl.EartliestDeadlineFirstMCSched;
-import fr.tpt.s3.mcdag.scheduling.impl.HybridMCSched;
-import fr.tpt.s3.mcdag.scheduling.impl.LeastLaxityFirstMCSched;
+import fr.tpt.s3.mcdag.scheduling.galap.GlobalGenericMCScheduler;
+import fr.tpt.s3.mcdag.scheduling.galap.impl.EartliestDeadlineFirstMCSched;
+import fr.tpt.s3.mcdag.scheduling.galap.impl.HybridMCSched;
+import fr.tpt.s3.mcdag.scheduling.galap.impl.LeastLaxityFirstMCSched;
 
 public class BenchThreadDualCriticality implements Runnable {
 	

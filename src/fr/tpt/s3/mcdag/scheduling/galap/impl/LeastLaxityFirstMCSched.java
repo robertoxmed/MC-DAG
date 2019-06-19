@@ -1,4 +1,20 @@
-package fr.tpt.s3.mcdag.scheduling.impl;
+/*******************************************************************************
+ * Copyright (c) 2018 Roberto Medina
+ * Written by Roberto Medina (rmedina@telecom-paristech.fr)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
+package fr.tpt.s3.mcdag.scheduling.galap.impl;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -7,23 +23,26 @@ import java.util.Set;
 
 import fr.tpt.s3.mcdag.model.McDAG;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
-import fr.tpt.s3.mcdag.scheduling.GlobalGenericMCScheduler;
+import fr.tpt.s3.mcdag.scheduling.galap.GlobalGenericMCScheduler;
 
 /**
- * Adaptation of the EZL scheduler
+ * Least-laxity first adaptation for the MC meta-heuristic
  * @author Roberto Medina
  *
  */
-public class EarlistDeadlineZeroLaxityMCSched extends GlobalGenericMCScheduler {
-
-	public EarlistDeadlineZeroLaxityMCSched(Set<McDAG> DAGs, int cores, int levels, boolean debug, boolean benchmark) {
+public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
+	
+	public LeastLaxityFirstMCSched (Set<McDAG> DAGs, int cores, int levels, boolean debug, boolean preemption) {
 		setMcDAGs(DAGs);
 		setNbCores(cores);
 		setLevels(levels);
-		setCountPreempt(benchmark);
+		setCountPreempt(preemption);
 		setDebug(debug);
 	}
 	
+	/**
+	 * Function that verifies if the scheduling tables can still be obtained 
+	 */
 	@Override
 	protected boolean verifyConstraints(List<VertexScheduling> ready, int slot, int level) {
 		int sumSlotsLeft = 0;
@@ -45,19 +64,7 @@ public class EarlistDeadlineZeroLaxityMCSched extends GlobalGenericMCScheduler {
 			return false;
 		}
 		
-		for (VertexScheduling v : ready) {
-			// Task is activated and deadline was missed
-			int relatSlot = slot % v.getGraphDead();
-			if (level >= 1)
-				relatSlot = (gethPeriod() - slot - 1) % v.getGraphDead();
-			
-			if (relatSlot > v.getDeadlines()[level]) {
-				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): deadline not respected for "+v.getName());
-				return false;
-			}
-		}
-		
-		// Calculate the sum of remaining slots
+		// Get the sum of remaining slots
 		int relatSlot = 0;
 		if (level >= 1)
 			relatSlot = gethPeriod() - slot - 1;
@@ -66,7 +73,7 @@ public class EarlistDeadlineZeroLaxityMCSched extends GlobalGenericMCScheduler {
 		
 		sumSlotsLeft = (gethPeriod() - relatSlot) * getNbCores();
 		if (sumSlotsLeft < getSumRemainTimes()[level]) {
-			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): Not enough slots left "+sumSlotsLeft+" for "+getSumRemainTimes()[level]);
+			if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): Not enough slots left "+sumSlotsLeft+" for "+getSumRemainTimes());
 			return false;
 		}
 		
@@ -74,24 +81,19 @@ public class EarlistDeadlineZeroLaxityMCSched extends GlobalGenericMCScheduler {
 	}
 
 	@Override
-	protected void sortHI(List<VertexScheduling> ready, int slot, int level) {
-		// Check if tasks need to be delayed first
+	protected void sortHI(List<VertexScheduling> ready, int slot, final int level) {
 		for (VertexScheduling v : ready) {
 			int relatSlot = slot % v.getGraphDead();
 			int dId = v.getGraphId();
 			
-			// Check laxity first
-			if (v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()] == 0)
-				v.setWeightInL(0, level);
-			else
-				v.setWeightInL(v.getDeadlines()[level], level);
+			v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
 			v.setDelayed(false);
 			
-			// Check if the tasks needs to be delayed
+			// It's not the highest criticality level -> perform checks
 			if (level != getLevels() - 1 && v.getWcet(level + 1) != 0) {
-				int delta = v.getWcet(level + 1) - v.getWcet(level);
-				
-				if (scheduledUntilTinLreverse(v, slot + 1, level + 1) <= delta) {
+				int deltaI = v.getWcet(level + 1) - v.getWcet(level);
+				//Check if in the higher table the Ci(L+1) - Ci(L) has been allocated
+				if (scheduledUntilTinLreverse(v, slot + 1, level + 1) <= deltaI) {
 					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Task "+v.getName()+" needs to be delayed at slot @t = "+slot);
 					v.setDelayed(true);
 					v.setWeightInL(Integer.MAX_VALUE, level);
@@ -108,6 +110,7 @@ public class EarlistDeadlineZeroLaxityMCSched extends GlobalGenericMCScheduler {
 					return o2.getId() - o1.getId();
 			}
 		});
+		//checkForEqualities(ready, level);
 	}
 
 	@Override
@@ -116,21 +119,16 @@ public class EarlistDeadlineZeroLaxityMCSched extends GlobalGenericMCScheduler {
 			int relatSlot = slot % v.getGraphDead();
 			int dId = v.getGraphId();
 			
-			if (v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()] == 0)
-				v.setWeightInL(0, level);
-			else
-				v.setWeightInL(v.getDeadlines()[level], level);
-			
-			// If it's a HI task check if it needs to be promoted
+			v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
+			// If it's a HI task
 			if (v.getWcet(level + 1) > 0) {
-				//Promotion needed for the task
+				// Promotion needed for the task
 				if ((v.getWcet(level) - getRemainingTime()[level][dId][v.getId()]) - scheduledUntilTinL(v, slot, level + 1) < 0) {
 					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] calcLaxity(): Promotion of task "+v.getName()+" at slot @t = "+slot);
 					v.setWeightInL(0, level);
 				}
 			}
 		}
-		
 		// Sort the list
 		Collections.sort(ready, new Comparator<VertexScheduling>() {
 			@Override
@@ -141,5 +139,6 @@ public class EarlistDeadlineZeroLaxityMCSched extends GlobalGenericMCScheduler {
 					return o1.getId() - o2.getId();
 			}
 		});
+		//checkForEqualities(ready, level);
 	}
 }
