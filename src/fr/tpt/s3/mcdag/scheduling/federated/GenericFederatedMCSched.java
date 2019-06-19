@@ -331,7 +331,10 @@ public abstract class GenericFederatedMCSched {
 		System.out.print("\n");
 	}
 	
-
+	/*
+	 * Getters & setters
+	 */
+	
 	public int getNbCores() {
 		return nbCores;
 	}
