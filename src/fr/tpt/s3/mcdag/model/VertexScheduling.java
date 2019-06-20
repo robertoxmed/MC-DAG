@@ -25,13 +25,12 @@ public class VertexScheduling extends Vertex {
 	private int rank;
 
 	// Used for multiDAG scheduling N level
-	private int graphDead;
+	private McDAG dagRef;
 	
 	// Used for N levels scheduling
 	private int deadlines[];
 	private int weights[];
 	private boolean visitedL[];
-	private int graphID;
 	private boolean delayed;
 	
 	// Non preemptive version
@@ -80,14 +79,6 @@ public class VertexScheduling extends Vertex {
 		this.rank = rank;
 	}
 
-	public int getGraphDead() {
-		return graphDead;
-	}
-
-	public void setGraphDead(int graphDead) {
-		this.graphDead = graphDead;
-	}
-
 	public int[] getDeadlines() {
 		return deadlines;
 	}
@@ -121,14 +112,6 @@ public class VertexScheduling extends Vertex {
 		this.visitedL = visitedL;
 	}
 
-	public int getGraphId() {
-		return graphID;
-	}
-
-	public void setGraphID(int graphID) {
-		this.graphID = graphID;
-	}
-
 	public boolean isDelayed() {
 		return delayed;
 	}
@@ -151,5 +134,13 @@ public class VertexScheduling extends Vertex {
 
 	public void setHlfet(int[] hlfet) {
 		this.hlfet = hlfet;
+	}
+
+	public McDAG getDagRef() {
+		return dagRef;
+	}
+
+	public void setDagRef(McDAG dagRef) {
+		this.dagRef = dagRef;
 	}
 }

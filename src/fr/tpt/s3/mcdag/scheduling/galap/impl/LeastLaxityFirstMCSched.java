@@ -83,8 +83,8 @@ public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 	@Override
 	protected void sortHI(List<VertexScheduling> ready, int slot, final int level) {
 		for (VertexScheduling v : ready) {
-			int relatSlot = slot % v.getGraphDead();
-			int dId = v.getGraphId();
+			int relatSlot = slot % v.getDagRef().getDeadline();
+			int dId = v.getDagRef().getId();
 			
 			v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
 			v.setDelayed(false);
@@ -116,8 +116,8 @@ public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 	@Override
 	protected void sortLO(List<VertexScheduling> ready, int slot, int level) {
 		for (VertexScheduling v : ready) {
-			int relatSlot = slot % v.getGraphDead();
-			int dId = v.getGraphId();
+			int relatSlot = slot % v.getDagRef().getDeadline();
+			int dId = v.getDagRef().getId();
 			
 			v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
 			// If it's a HI task

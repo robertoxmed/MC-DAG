@@ -58,7 +58,7 @@ public class HybridMCSched extends GlobalGenericMCScheduler {
 		
 		for (VertexScheduling v : ready) {
 			if (level >= 1 ) {
-				int relatSlot =  (gethPeriod() - slot - 1) % v.getGraphDead();
+				int relatSlot =  (gethPeriod() - slot - 1) % v.getDagRef().getDeadline();
 				if (relatSlot > v.getWeights()[level]) {
 					if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): deadline not respected for "+v.getName());
 					return false;
@@ -138,8 +138,8 @@ public class HybridMCSched extends GlobalGenericMCScheduler {
 	@Override
 	protected void sortLO(List<VertexScheduling> ready, int slot, int level) {
 		for (VertexScheduling v : ready) {
-			int dId = v.getGraphId();
-			int relatSlot = slot % v.getGraphDead();
+			int dId = v.getDagRef().getId();
+			int relatSlot = slot % v.getDagRef().getDeadline();
 			
 			v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
 			

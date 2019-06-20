@@ -214,7 +214,8 @@ public abstract class GlobalGenericMCScheduler {
 	 */
 	protected int scheduledUntilTinL (VertexScheduling a, int t, int l) {
 		int ret = 0;
-		int start = (int)(t / a.getGraphDead()) * a.getGraphDead();
+		int start = (int)(t / a.getDagRef().getDeadline()) * a.getDagRef().getDeadline();
+		
 		
 		for (int i = start; i <= t; i++) {
 			for (int c = 0; c < getNbCores(); c++) {
@@ -245,7 +246,7 @@ public abstract class GlobalGenericMCScheduler {
 		if (t == 0)
 			return 0;
 
-		end = ((int)(realSlot / a.getGraphDead()) + 1)  * a.getGraphDead() - 1;
+		end = ((int)(realSlot / a.getDagRef().getDeadline()) + 1)  * a.getDagRef().getDeadline() - 1;
 				
 		for (int i = end; i >= realSlot; i--) {
 			for (int c = 0; c < getNbCores(); c++) {
@@ -380,7 +381,7 @@ public abstract class GlobalGenericMCScheduler {
 				}
 					
 				if (add && !ready.contains(connectedVertex)
-						&& remainingTime[level][connectedVertex.getGraphId()][connectedVertex.getId()] != 0) {
+						&& remainingTime[level][connectedVertex.getDagRef().getId()][connectedVertex.getId()] != 0) {
 					ready.add(connectedVertex);
 				}
 			} 
@@ -403,7 +404,7 @@ public abstract class GlobalGenericMCScheduler {
 					// Remove nodes from the scheduled list
 					scheduled.remove(v);
 					
-					remainingTime[level][((VertexScheduling)v).getGraphId()][v.getId()] = v.getWcet(level);
+					remainingTime[level][((VertexScheduling)v).getDagRef().getId()][v.getId()] = v.getWcet(level);
 					sumRemainTimes[level] += v.getWcet(level);
 					
 					if (level >= 1 && v.isSinkinL(level))
@@ -481,7 +482,7 @@ public abstract class GlobalGenericMCScheduler {
 					VertexScheduling v = lit.next();
 					
 					if (!v.isDelayed()) {
-						int val = remainingTime[level][v.getGraphId()][v.getId()];
+						int val = remainingTime[level][v.getDagRef().getId()][v.getId()];
 						
 						sched[level][timeIndex][coreIndex] = v.getName();
 						val--;
@@ -493,7 +494,7 @@ public abstract class GlobalGenericMCScheduler {
 							jobFinished = true;
 							lit.remove();
 						}
-						remainingTime[level][v.getGraphId()][v.getId()] = val;
+						remainingTime[level][v.getDagRef().getId()][v.getId()] = val;
 					} 
 				}
 			}

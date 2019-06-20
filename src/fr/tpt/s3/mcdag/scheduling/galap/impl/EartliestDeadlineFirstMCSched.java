@@ -46,9 +46,9 @@ public class EartliestDeadlineFirstMCSched extends GlobalGenericMCScheduler {
 		
 		for (VertexScheduling v : ready) {
 			// Task is activated and its deadline has passed -> non schedulable system
-			int relatSlot = slot % v.getGraphDead();
+			int relatSlot = slot % v.getDagRef().getDeadline();
 			if (level >= 1)
-				relatSlot =  (gethPeriod() - slot - 1) % v.getGraphDead();
+				relatSlot =  (gethPeriod() - slot - 1) % v.getDagRef().getDeadline();
 			
 			if (relatSlot > v.getDeadlines()[level]) {
 				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): deadline not respected for "+v.getName());
@@ -107,7 +107,7 @@ public class EartliestDeadlineFirstMCSched extends GlobalGenericMCScheduler {
 	protected void sortLO(List<VertexScheduling> ready, int slot, int level) {
 		// If it's a HI task verify that mode transition is respected
 		for (VertexScheduling v : ready) {
-			int dagId = v.getGraphId();
+			int dagId = v.getDagRef().getId();
 			
 			v.setWeightInL(v.getDeadlines()[level], level);
 			

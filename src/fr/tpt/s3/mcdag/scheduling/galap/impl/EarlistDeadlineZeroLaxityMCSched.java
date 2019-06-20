@@ -47,9 +47,9 @@ public class EarlistDeadlineZeroLaxityMCSched extends GlobalGenericMCScheduler {
 		
 		for (VertexScheduling v : ready) {
 			// Task is activated and deadline was missed
-			int relatSlot = slot % v.getGraphDead();
+			int relatSlot = slot % v.getDagRef().getDeadline();
 			if (level >= 1)
-				relatSlot = (gethPeriod() - slot - 1) % v.getGraphDead();
+				relatSlot = (gethPeriod() - slot - 1) % v.getDagRef().getDeadline();
 			
 			if (relatSlot > v.getDeadlines()[level]) {
 				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): deadline not respected for "+v.getName());
@@ -77,8 +77,8 @@ public class EarlistDeadlineZeroLaxityMCSched extends GlobalGenericMCScheduler {
 	protected void sortHI(List<VertexScheduling> ready, int slot, int level) {
 		// Check if tasks need to be delayed first
 		for (VertexScheduling v : ready) {
-			int relatSlot = slot % v.getGraphDead();
-			int dId = v.getGraphId();
+			int relatSlot = slot % v.getDagRef().getDeadline();
+			int dId = v.getDagRef().getId();
 			
 			// Check laxity first
 			if (v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()] == 0)
@@ -113,8 +113,8 @@ public class EarlistDeadlineZeroLaxityMCSched extends GlobalGenericMCScheduler {
 	@Override
 	protected void sortLO(List<VertexScheduling> ready, int slot, int level) {
 		for (VertexScheduling v : ready) {
-			int relatSlot = slot % v.getGraphDead();
-			int dId = v.getGraphId();
+			int relatSlot = slot % v.getDagRef().getDeadline();
+			int dId = v.getDagRef().getId();
 			
 			if (v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()] == 0)
 				v.setWeightInL(0, level);

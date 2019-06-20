@@ -147,7 +147,7 @@ public class Counters {
 			int nbActivations = 0;
 			for (int lvl = 0; lvl < levels; lvl++) {
 				if (a.getWcet(lvl) != 0)
-					nbActivations += (int)(hPeriod / a.getGraphDead());
+					nbActivations += (int)(hPeriod / a.getDagRef().getDeadline());
 			}
 			int val = refs.get(a);
 			val -= nbActivations;

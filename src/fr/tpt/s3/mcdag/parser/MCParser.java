@@ -194,8 +194,7 @@ public class MCParser {
 							((VertexScheduling) a).setfProb(Double.parseDouble(e.getElementsByTagName("fprob").item(0).getTextContent()));
 						}
 							
-						((VertexScheduling) a).setGraphID(count);
-						((VertexScheduling) a).setGraphDead(dag.getDeadline());
+						((VertexScheduling) a).setDagRef(dag);
 						dag.getVertices().add(a);
 					}
 				}
