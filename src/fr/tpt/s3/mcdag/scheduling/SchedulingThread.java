@@ -100,7 +100,7 @@ public class SchedulingThread implements Runnable{
 		for (GenericFederatedMCSched fsched : fschedulers) {
 			fsched.setDebug(debug);
 			try {
-				fsched.scheduleSystems();
+				fsched.scheduleSystem();
 			} catch (SchedulingException e) {
 				System.err.println("[ERROR] Federated scheduler: Unable to schedule the system");
 				e.printStackTrace();

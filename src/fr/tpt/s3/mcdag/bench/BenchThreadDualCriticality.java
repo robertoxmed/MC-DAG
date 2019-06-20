@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package fr.tpt.s3.mcdag.bench.multidag;
+package fr.tpt.s3.mcdag.bench;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -161,7 +161,7 @@ public class BenchThreadDualCriticality implements Runnable {
 		fedEdf = new EarliestDeadlineFirstFedSched(fedDAGs, nbCores, 2, debug);
 		
 		try {
-			fedEdf.scheduleSystems();
+			fedEdf.scheduleSystem();
 		} catch (SchedulingException se) {
 			setSchedFede(false);
 			if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] FEDERATED non schedulable with "+nbCores+" cores.");

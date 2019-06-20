@@ -275,7 +275,7 @@ public abstract class GenericFederatedMCSched {
 	 * Method that schedules the system using a federated approach
 	 * @throws SchedulingException
 	 */
-	public void scheduleSystems () throws SchedulingException {
+	public void scheduleSystem () throws SchedulingException {
 		init();
 		
 		for (McDAG d : heavyDAGs) {

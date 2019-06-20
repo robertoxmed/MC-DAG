@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package fr.tpt.s3.mcdag.bench.nlevel;
+package fr.tpt.s3.mcdag.bench;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -29,6 +29,10 @@ import fr.tpt.s3.mcdag.model.Vertex;
 import fr.tpt.s3.mcdag.model.VertexScheduling;
 import fr.tpt.s3.mcdag.parser.MCParser;
 import fr.tpt.s3.mcdag.scheduling.SchedulingException;
+import fr.tpt.s3.mcdag.scheduling.federated.GenericFederatedMCSched;
+import fr.tpt.s3.mcdag.scheduling.federated.impl.EarliestDeadlineFirstFedSched;
+import fr.tpt.s3.mcdag.scheduling.federated.impl.EarliestDeadlineZeroLaxityFedSched;
+import fr.tpt.s3.mcdag.scheduling.federated.impl.LeastLaxityFirstFedSched;
 import fr.tpt.s3.mcdag.scheduling.galap.GlobalGenericMCScheduler;
 import fr.tpt.s3.mcdag.scheduling.galap.impl.EarlistDeadlineZeroLaxityMCSched;
 import fr.tpt.s3.mcdag.scheduling.galap.impl.EartliestDeadlineFirstMCSched;
@@ -47,12 +51,17 @@ public class BenchThreadNLevels implements Runnable {
 	private GlobalGenericMCScheduler llf;
 	private GlobalGenericMCScheduler edf;
 	private GlobalGenericMCScheduler ezl;
-	
-	// Federated schedulers
-	
 	private boolean schedLax;
 	private boolean schedEdf;
-	private boolean schedHybrid;
+	private boolean schedEzl;
+	
+	// Federated schedulers
+	private GenericFederatedMCSched fedLlf;
+	private GenericFederatedMCSched fedEdf;
+	private GenericFederatedMCSched fedEzl;
+	private boolean schedFedLax;
+	private boolean schedFedEdf;
+	private boolean schedFedEzl;
 	
 	public BenchThreadNLevels(String input, String output, int cores, boolean debug) {
 		setInputFile(input);
@@ -62,7 +71,10 @@ public class BenchThreadNLevels implements Runnable {
 		setDebug(debug);
 		setSchedLax(true);
 		setSchedEdf(true);
-		setSchedHybrid(true);
+		setSchedEzl(true);
+		setSchedFedEdf(true);
+		setSchedFedLax(true);
+		setSchedFedEzl(true);
 		mcp = new MCParser(inputFile, null, null, null, dags, false);
 	}
 	
@@ -85,13 +97,18 @@ public class BenchThreadNLevels implements Runnable {
 		int outActEdf = 0;
 		int outActEzl = 0;
 		
+		// Federated variables
+		int outSchedFedEdf = 0;
+		int outSchedFedLax = 0;
+		int outSchedFedEzl = 0;
+		
 		if (isSchedLax())
 			outBLSched = 1;
 		
 		if (isSchedEdf())
 			outBEDFSched = 1;
 		
-		if (isSchedHybrid())
+		if (isSchedEzl())
 			outBEZLSched = 1;
 		
 		Hashtable<VertexScheduling, Integer> pLax = llf.getPreemptions();
@@ -112,10 +129,18 @@ public class BenchThreadNLevels implements Runnable {
 		for (McDAG d : dags)
 			uDAGs += d.getUmax();
 		
+		if (isSchedFedEdf())
+			outSchedFedEdf = 1;
+		if (isSchedFedLax())
+			outSchedFedLax = 1;
+		if (isSchedFedEzl())
+			outSchedFedEzl = 1;
+		
 		output.write(Thread.currentThread().getName()+"; "+getInputFile()+"; "
 		+outBLSched+"; "+outPreemptsLax+"; "+outActLax+"; "
 		+outBEDFSched+"; "+outPreemptsEdf+"; "+outActEdf+"; "
 		+outBEZLSched+"; "+outPreemptsEzl+"; "+outActEzl+"; "
+		+outSchedFedLax+"; "+outSchedFedEdf+"; "+outSchedFedEzl+"; "
 		+uDAGs+"\n");
 		output.close();
 	}
@@ -133,10 +158,14 @@ public class BenchThreadNLevels implements Runnable {
 	@Override
 	public void run() {
 		mcp.readXML();
+		
+		/*
+		 * TEST GLOBAL ALAP IMPLEMENTATIONS
+		 */
+		
 		// Test edf
 		// Make another copy of the system instance
 		edf = new EartliestDeadlineFirstMCSched(getDags(), nbCores, mcp.getNbLevels(), debug, true);
-		
 		try {
 			resetVisited(getDags());
 			edf.scheduleSystem();
@@ -147,7 +176,6 @@ public class BenchThreadNLevels implements Runnable {
 	
 		// Test laxity
 		llf = new LeastLaxityFirstMCSched(getDags(), nbCores, mcp.getNbLevels(), debug, true);
-		
 		try {
 			resetVisited(getDags());
 			llf.scheduleSystem();
@@ -158,13 +186,43 @@ public class BenchThreadNLevels implements Runnable {
 		
 		// Test ezl
 		ezl = new EarlistDeadlineZeroLaxityMCSched(getDags(), nbCores, mcp.getNbLevels(), debug, true);
-		
 		try {
 			resetVisited(getDags());
 			ezl.scheduleSystem();
 		} catch (SchedulingException se) {
-			setSchedHybrid(false);
+			setSchedEzl(false);
 			if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] HYBRID non schedulable with "+nbCores+" cores.");
+		}
+		
+		/*
+		 * TEST FEDERATED IMPLEMENTATIONS
+		 */
+		fedEdf = new EarliestDeadlineFirstFedSched(dags, nbCores, mcp.getNbLevels(), debug);
+		try {
+			resetVisited(getDags());
+			fedEdf.scheduleSystem();
+		} catch (SchedulingException se) {
+			setSchedFedEdf(false);
+			if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] FED-EDF non schedulable with "+nbCores+" cores.");
+
+		}
+		
+		fedLlf = new LeastLaxityFirstFedSched(dags, nbCores, mcp.getNbLevels(), debug);
+		try {
+			resetVisited(getDags());
+			fedLlf.scheduleSystem();
+		} catch (SchedulingException se) {
+			setSchedFedLax(false);
+			if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] FED-LLF non schedulable with "+nbCores+" cores.");
+		}
+		
+		fedEzl = new EarliestDeadlineZeroLaxityFedSched(dags, nbCores, mcp.getNbLevels(), debug);
+		try {
+			resetVisited(getDags());
+			fedEzl.scheduleSystem();
+		} catch (SchedulingException se) {
+			setSchedFedEzl(false);
+			if (isDebug()) System.out.println("[BENCH "+Thread.currentThread().getName()+"] FED-EZL non schedulable with "+nbCores+" cores.");
 		}
 		
 		// Write results
@@ -257,12 +315,36 @@ public class BenchThreadNLevels implements Runnable {
 		this.schedEdf = schedEdf;
 	}
 
-	public boolean isSchedHybrid() {
-		return schedHybrid;
+	public boolean isSchedEzl() {
+		return schedEzl;
 	}
 
-	public void setSchedHybrid(boolean schedHybrid) {
-		this.schedHybrid = schedHybrid;
+	public void setSchedEzl(boolean schedHybrid) {
+		this.schedEzl = schedHybrid;
+	}
+
+	public boolean isSchedFedLax() {
+		return schedFedLax;
+	}
+
+	public void setSchedFedLax(boolean schedFedLax) {
+		this.schedFedLax = schedFedLax;
+	}
+
+	public boolean isSchedFedEdf() {
+		return schedFedEdf;
+	}
+
+	public void setSchedFedEdf(boolean schedFedEdf) {
+		this.schedFedEdf = schedFedEdf;
+	}
+
+	public boolean isSchedFedEzl() {
+		return schedFedEzl;
+	}
+
+	public void setSchedFedEzl(boolean schedFedEzl) {
+		this.schedFedEzl = schedFedEzl;
 	}
 	
 }
