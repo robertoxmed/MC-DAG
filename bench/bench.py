@@ -24,13 +24,13 @@ global number_dags
 global number_cores
 global edge_percentage
 
-number_levels = [2, 4, 5]
+number_levels = [2]
 number_tasks = [30]
 number_dags = [1]
 number_cores = [8]
 edge_percentage = [40]
 number_jobs = 16
-number_files = "300"
+number_files = "10"
 
 # Global setup for matplotlib
 schedulers = ["llf", "edf", "ezl"]
@@ -161,6 +161,9 @@ def plot():
                         llf = []
                         edf = []
                         ezl = []
+                        fedllf = []
+                        fededf = []
+                        fedezl = []
 
                         with open("results/l"+str(l)+"/c"+str(c)+"/e"+str(p)+"/"+str(d)+"/"+str(t)+"/out-l"+str(l)+"-c-"+str(c)+"-e"+str(p)+"-"+str(d)+"-"+str(t)+"-total.csv", 'r') as csvfile:
                             plots = csv.reader(csvfile, delimiter=',')
@@ -169,6 +172,9 @@ def plot():
                                 llf.append(float(row[1]))
                                 edf.append(float(row[5]))
                                 ezl.append(float(row[9]))
+                                fedllf.append(float(row[10]))
+                                fededf.append(float(row[11]))
+                                fedezl.append(float(row[12]))
                                 
                             # Calculate polynomial approximations
                             llf_z = np.polyfit(x, llf, 5)
@@ -185,6 +191,21 @@ def plot():
                             ezl_f = np.poly1d(ezl_z)
                             ezl_x_new = np.linspace(x[0], x[-1], 50)
                             ezl_y_new = ezl_f(ezl_x_new)
+                            
+                            fedllf_z = np.polyfit(x, fedllf, 5)
+                            fedllf_f = np.poly1d(fedllf_z)
+                            fedllf_x_new = np.linspace(x[0], x[-1], 50)
+                            fedllf_y_new = fedllf_f(fedllf_x_new)
+                            
+                            fededf_z = np.polyfit(x, fededf, 5)
+                            fededf_f = np.poly1d(fededf_z)
+                            fededf_x_new = np.linspace(x[0], x[-1], 50)
+                            fededf_y_new = fededf_f(fededf_x_new)
+                            
+                            fedezl_z = np.polyfit(x, fedezl, 5)
+                            fedezl_f = np.poly1d(fedezl_z)
+                            fedezl_x_new = np.linspace(x[0], x[-1], 50)
+                            fedezl_y_new = fedezl_f(fedezl_x_new)
                                 
                         plt.figure()            
                         plt.plot(x,llf, 'b.')
@@ -193,6 +214,15 @@ def plot():
                         plt.plot(edf_x_new, edf_y_new, 'g', label='EDF')
                         plt.plot(x,ezl, 'rs', markersize=3)
                         plt.plot(ezl_x_new, ezl_y_new, 'r', label='EZL')
+                        
+                        plt.plot(x,fedllf, 'b.')
+                        plt.plot(fedllf_x_new, fedllf_y_new, 'b--', label='FED-LLF')
+                        plt.plot(x,fededf, 'gd', markersize=4)
+                        plt.plot(fededf_x_new, fededf_y_new, 'g--', label='FED-EDF')
+                        plt.plot(x,fedezl, 'rs', markersize=3)
+                        plt.plot(fedezl_x_new, fedezl_y_new, 'r--', label='FED-EZL')
+                        
+                        
                         plt.xlabel('U norm')
                         plt.ylabel('Acceptance rate')
                         plt.title('Results  levels '+str(l)+' tasks '+str(t))
@@ -322,7 +352,7 @@ def main():
 
     if options.benchmark:
         #benchmark()
-        plot_preempt()
+        plot()
         end = time.time()
         send_email(start,end)
 

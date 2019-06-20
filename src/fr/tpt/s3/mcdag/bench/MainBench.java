@@ -144,6 +144,10 @@ public class MainBench {
 		int laxActiv = 0;
 		int edfActiv = 0;
 		int hybridActiv = 0;
+		
+		int fedLaxTotal = 0;
+		int fedEdfTotal = 0;
+		int fedEzlTotal = 0;
 		// Read lines in file and do average
 		int i = 0;
 		File f = new File(outFile);
@@ -175,6 +179,12 @@ public class MainBench {
 							hybridPreempts += Integer.parseInt(val);
 						} else if (j == 10) {
 							hybridActiv += Integer.parseInt(val);
+						} else if (j == 11) {
+							fedLaxTotal += Integer.parseInt(val);
+						} else if (j == 12) {
+							fedEdfTotal += Integer.parseInt(val);
+						} else if (j == 13) {
+							fedEzlTotal += Integer.parseInt(val);
 						}
 						j++;
 					}
@@ -192,11 +202,16 @@ public class MainBench {
 		double edfPercPreempts = (double) edfPreempts / edfActiv;
 		double hybridPercPreempts = (double) hybridPreempts / hybridActiv;
 		
+		double fedLaxPerc = (double) fedLaxTotal / nbFiles;
+		double fedEdfPerc = (double) fedEdfTotal / nbFiles;
+		double fedEzlPerc = (double) fedEzlTotal / nbFiles;
+		
 		Writer wOutput = new BufferedWriter(new FileWriter(outputFilePathTotal, true));
 		wOutput.write(utilization+","
 					  +laxPerc+","+laxPreempts+","+laxActiv+","+laxPercPreempts+","
 					  +edfPerc+","+edfPreempts+","+edfActiv+","+edfPercPreempts+","
-					  +hybridPerc+","+hybridPreempts+","+hybridActiv+","+hybridPercPreempts+"\n");
+					  +hybridPerc+","+hybridPreempts+","+hybridActiv+","+hybridPercPreempts+","
+					  +fedLaxPerc+","+fedEdfPerc+","+fedEzlPerc+"\n");
 		wOutput.close();
 		System.out.println("[BENCH Main] Done benchmarking U = "+utilization+" Levels "+nbLvls);
 	}
