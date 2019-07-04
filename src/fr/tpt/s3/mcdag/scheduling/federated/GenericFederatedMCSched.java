@@ -28,6 +28,7 @@ public abstract class GenericFederatedMCSched {
 	
 	private int nbCores;
 	private int levels;
+	private boolean singleDAG;
 	
 	// Preemption counters
 	private Hashtable<VertexScheduling, Integer> preemptions;
@@ -144,9 +145,12 @@ public abstract class GenericFederatedMCSched {
 			throw se;
 		}
 		
+		if (heavyDAGs.size() == 1)
+			setSingleDAG(true);
+		
 		// Init variables 
 		for (McDAG d : heavyDAGs) {
-			int cores = (int)(Math.ceil(d.getUmax()));
+			int cores = isSingleDAG() ? getNbCores() : (int)(Math.ceil(d.getUmax()));
 			String[][][] dagTables = new String[getLevels()][d.getDeadline()][cores];
 			
 			// Initialize tables
@@ -210,7 +214,7 @@ public abstract class GenericFederatedMCSched {
 	protected void buildTable (McDAG d, int level) throws SchedulingException {
 		List<VertexScheduling> ready = new LinkedList<VertexScheduling>();
 		List<VertexScheduling> scheduled = new LinkedList<VertexScheduling>();
-		int cores = (int)(Math.ceil(d.getUmax()));
+		int cores = isSingleDAG() ? getNbCores() : (int)(Math.ceil(d.getUmax()));
 		
 		// Add all source nodes
 		for (Vertex v : d.getVertices()) {
@@ -409,5 +413,13 @@ public abstract class GenericFederatedMCSched {
 
 	public void setActivations(int activations) {
 		this.activations = activations;
+	}
+
+	public boolean isSingleDAG() {
+		return singleDAG;
+	}
+
+	public void setSingleDAG(boolean singleDAG) {
+		this.singleDAG = singleDAG;
 	}
 }

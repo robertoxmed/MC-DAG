@@ -150,5 +150,6 @@ public class MainGenerator {
 				}
 			}
 		}
+		System.out.println("[GENERATOR Main] Done generating U = "+maxU+" Levels "+levels);
 	}
 }

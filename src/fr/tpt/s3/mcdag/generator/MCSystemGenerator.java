@@ -354,7 +354,6 @@ public class MCSystemGenerator {
 		for (McDAG d : getGennedDAGs()) {
 			uSys += d.getUmax();
 		}
-		System.out.println(">>>>>>>>>>>>>>> Utilization "+uSys);
 		if (userMaxU * 0.999 <= uSys && uSys <= userMaxU)
 			return true;
 		
