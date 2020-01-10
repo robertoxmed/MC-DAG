@@ -51,7 +51,7 @@ public class EarlistDeadlineZeroLaxityMCSched extends GlobalGenericMCScheduler {
 			if (level >= 1)
 				relatSlot = (gethPeriod() - slot - 1) % v.getDagRef().getDeadline();
 			
-			if (relatSlot > v.getDeadlines()[level]) {
+			if (relatSlot > v.getModifiedDeadlines()[level]) {
 				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): deadline not respected for "+v.getName());
 				return false;
 			}
@@ -81,10 +81,10 @@ public class EarlistDeadlineZeroLaxityMCSched extends GlobalGenericMCScheduler {
 			int dId = v.getDagRef().getId();
 			
 			// Check laxity first
-			if (v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()] == 0)
+			if (v.getModifiedDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()] == 0)
 				v.setWeightInL(0, level);
 			else
-				v.setWeightInL(v.getDeadlines()[level], level);
+				v.setWeightInL(v.getModifiedDeadlines()[level], level);
 			v.setDelayed(false);
 			
 			// Check if the tasks needs to be delayed
@@ -116,10 +116,10 @@ public class EarlistDeadlineZeroLaxityMCSched extends GlobalGenericMCScheduler {
 			int relatSlot = slot % v.getDagRef().getDeadline();
 			int dId = v.getDagRef().getId();
 			
-			if (v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()] == 0)
+			if (v.getModifiedDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()] == 0)
 				v.setWeightInL(0, level);
 			else
-				v.setWeightInL(v.getDeadlines()[level], level);
+				v.setWeightInL(v.getModifiedDeadlines()[level], level);
 			
 			// If it's a HI task check if it needs to be promoted
 			if (v.getWcet(level + 1) > 0) {

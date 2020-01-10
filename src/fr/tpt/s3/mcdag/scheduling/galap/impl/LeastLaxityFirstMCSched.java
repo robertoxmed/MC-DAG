@@ -86,7 +86,7 @@ public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 			int relatSlot = slot % v.getDagRef().getDeadline();
 			int dId = v.getDagRef().getId();
 			
-			v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
+			v.setWeightInL(v.getModifiedDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
 			v.setDelayed(false);
 			
 			// It's not the highest criticality level -> perform checks
@@ -119,7 +119,7 @@ public class LeastLaxityFirstMCSched extends GlobalGenericMCScheduler{
 			int relatSlot = slot % v.getDagRef().getDeadline();
 			int dId = v.getDagRef().getId();
 			
-			v.setWeightInL(v.getDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
+			v.setWeightInL(v.getModifiedDeadlines()[level] - relatSlot - getRemainingTime()[level][dId][v.getId()], level);
 			// If it's a HI task
 			if (v.getWcet(level + 1) > 0) {
 				// Promotion needed for the task

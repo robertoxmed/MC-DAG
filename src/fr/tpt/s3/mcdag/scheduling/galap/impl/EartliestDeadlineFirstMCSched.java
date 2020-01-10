@@ -50,7 +50,7 @@ public class EartliestDeadlineFirstMCSched extends GlobalGenericMCScheduler {
 			if (level >= 1)
 				relatSlot =  (gethPeriod() - slot - 1) % v.getDagRef().getDeadline();
 			
-			if (relatSlot > v.getDeadlines()[level]) {
+			if (relatSlot > v.getModifiedDeadlines()[level]) {
 				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] verifyConstraints(): deadline not respected for "+v.getName());
 				return false;
 			}
@@ -77,7 +77,7 @@ public class EartliestDeadlineFirstMCSched extends GlobalGenericMCScheduler {
 		// Check if tasks need to be delayed first
 		for (VertexScheduling v : ready) {
 			
-			v.setWeightInL(v.getDeadlines()[level], level);
+			v.setWeightInL(v.getModifiedDeadlines()[level], level);
 			v.setDelayed(false);
 			
 			if (level != getLevels() - 1) {
@@ -109,7 +109,7 @@ public class EartliestDeadlineFirstMCSched extends GlobalGenericMCScheduler {
 		for (VertexScheduling v : ready) {
 			int dagId = v.getDagRef().getId();
 			
-			v.setWeightInL(v.getDeadlines()[level], level);
+			v.setWeightInL(v.getModifiedDeadlines()[level], level);
 			
 			if (v.getWcet(level + 1) > 0) {
 				// Promotion needed for the task

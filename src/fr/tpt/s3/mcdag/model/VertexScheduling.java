@@ -29,6 +29,7 @@ public class VertexScheduling extends Vertex {
 	
 	// Used for N levels scheduling
 	private int deadlines[];
+	private int modifiedDeadlines[];
 	private int weights[];
 	private boolean visitedL[];
 	private boolean delayed;
@@ -48,6 +49,7 @@ public class VertexScheduling extends Vertex {
 		
 		hlfet = new int[nbLevels];
 		deadlines = new int[nbLevels];
+		setModifiedDeadlines(new int[nbLevels]);
 		weights = new int[nbLevels];
 		visitedL = new boolean[nbLevels];
 		
@@ -142,5 +144,13 @@ public class VertexScheduling extends Vertex {
 
 	public void setDagRef(McDAG dagRef) {
 		this.dagRef = dagRef;
+	}
+
+	public int[] getModifiedDeadlines() {
+		return modifiedDeadlines;
+	}
+
+	public void setModifiedDeadlines(int modifiedDeadline[]) {
+		this.modifiedDeadlines = modifiedDeadline;
 	}
 }

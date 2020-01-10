@@ -67,6 +67,10 @@ public abstract class GlobalGenericMCScheduler {
 	// Debugging boolean
 	private boolean debug;
 	
+	// Deadline updates for successors
+	// Level, Job Activation
+	private Hashtable<VertexScheduling, int[][]> modifiedDeadline;
+	
 	/*
 	 * SCHEDULING FUNCTIONS
 	 */
@@ -299,6 +303,9 @@ public abstract class GlobalGenericMCScheduler {
 				}
 			}
 		}
+		
+		// Init modified deadlines
+		modifiedDeadline = new Hashtable<VertexScheduling, int[][]>();
 	}
 	
 	/**
@@ -370,7 +377,6 @@ public abstract class GlobalGenericMCScheduler {
 				for (Edge e2 : forward ? connectedVertex.getRcvEdges() : connectedVertex.getSndEdges()) {
 					VertexScheduling checkedVertex = (VertexScheduling) (forward ? e2.getSrc() : e2.getDest());
 						
-					
 					if (forward && !scheduled.contains(checkedVertex)) {
 						add = false;
 						break;
@@ -389,6 +395,65 @@ public abstract class GlobalGenericMCScheduler {
 	}
 	
 	/**
+	 * This function stores start times of tasks to update deadlines on other levels
+	 * @param ready
+	 * @param slot
+	 */
+	protected void storeModifiedDeadline (final VertexScheduling v, final int slot, final int level) {
+		for (Edge e : v.getRcvEdges()) {
+			VertexScheduling connectedVertex = (VertexScheduling) e.getSrc();
+			
+			// Task is being executed in the next level
+			if (connectedVertex.getWcet(level - 1) != 0) {
+				// Get the job activation 
+				int graphDeadline = connectedVertex.getDagRef().getDeadline();
+				int nbActivations = gethPeriod() / graphDeadline;
+				int jobActivation = slot / graphDeadline;
+				
+				if (slot < connectedVertex.getDeadlines()[level - 1]) {					
+					if (debug) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] storeModifiedDeadline("+level+"): @t = "+slot+", storing new deadline for DAG (id."+connectedVertex.getDagRef().getId()+"-"+connectedVertex.getName()+") activation "+jobActivation);
+
+					int valDeadline[][] = null;
+					if (modifiedDeadline.get(connectedVertex) != null) {
+						valDeadline = modifiedDeadline.get(connectedVertex);
+					} else {
+						valDeadline = new int[getLevels()][nbActivations];
+						
+						for (int i = 0; i < nbActivations; i++)
+							valDeadline[level - 1][i] = connectedVertex.getDeadlines()[level - 1];
+					}
+					
+					valDeadline[level - 1][jobActivation] = slot % connectedVertex.getDagRef().getDeadline();
+					modifiedDeadline.put(connectedVertex, valDeadline);
+				
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Function updates jobs deadline when needed
+	 * @param ready
+	 */
+	protected void updateJobsDeadline (final List<VertexScheduling> ready, final int slot, final int level) {
+		int valDeadline[][] = null;
+
+		for (VertexScheduling v : ready) {
+			if ((valDeadline = modifiedDeadline.get(v)) != null) {
+				int graphDeadline = v.getDagRef().getDeadline();
+				int nbActivation = slot / graphDeadline;
+				
+				if (valDeadline[level][nbActivation] < v.getDeadlines()[level]) {
+					v.getModifiedDeadlines()[level] = valDeadline[level][nbActivation];
+					if (debug) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] updateJobsDeadline("+level+"): Updating deadline for (te"+v.getDagRef().getId()+"-"+v.getName()+") to "+valDeadline[level][nbActivation]);
+				}
+			} else {
+				v.getModifiedDeadlines()[level] = v.getDeadlines()[level];
+			}
+		}
+	}
+	
+	/**
 	 * Function that adds entry vertices when the period of a MC-DAG is reached
 	 * @param ready
 	 * @param slot
@@ -396,7 +461,6 @@ public abstract class GlobalGenericMCScheduler {
 	 */
 	protected void checkDagActivations (List<VertexScheduling> ready, List<VertexScheduling> scheduled, int slot, int level) {		
 		for (McDAG d : getMcDAGs()) {
-			
 			if (slot % d.getDeadline() == 0) {
 				if (isDebug()) System.out.println("[DEBUG "+Thread.currentThread().getName()+"] checkDAGActivation(): DAG (id. "+d.getId()+") activation at slot "+slot);
 				
@@ -448,6 +512,8 @@ public abstract class GlobalGenericMCScheduler {
 				}
 			}
 		}
+		if (level == 0)
+			updateJobsDeadline(ready, 0, level);
 		
 		if (forward)
 			sortLO(ready, 0, level);
@@ -490,6 +556,8 @@ public abstract class GlobalGenericMCScheduler {
 							
 						// Task has been fully scheduled
 						if (val == 0) {
+							if (level == 1)
+								storeModifiedDeadline(v, timeIndex, level);
 							scheduled.add(v);
 							jobFinished = true;
 							lit.remove();
@@ -501,8 +569,11 @@ public abstract class GlobalGenericMCScheduler {
 			resetDelays();
 			
 			// A job finished its execution -> new tasks can be activated
-			if (jobFinished)
+			if (jobFinished) {
 				checkJobActivations(ready, scheduled, level);
+				if (level == 0)
+					updateJobsDeadline(ready, timeIndex, level);
+			}
 			
 			if (forward) {
 				if (timeIndex != hPeriod - 1) {
@@ -537,6 +608,13 @@ public abstract class GlobalGenericMCScheduler {
 		for (McDAG d : getMcDAGs()) {
 			calcDeadlines(d);
 			if (isDebug()) printDeadlines(d);
+		}
+		
+		for (McDAG d : getMcDAGs()) {
+			for (Vertex v : d.getVertices()) {
+				for (int l = 0; l < getLevels(); l++)
+					((VertexScheduling) v).getModifiedDeadlines()[l] = ((VertexScheduling) v).getDeadlines()[l];
+			}
 		}
 		
 		// Instantiate the hashtable to count preemptions
@@ -713,6 +791,5 @@ public abstract class GlobalGenericMCScheduler {
 
 	public void setSumRemainTimes(int sumRemainTimes[]) {
 		this.sumRemainTimes = sumRemainTimes;
-	}
-	
+	}	
 }
