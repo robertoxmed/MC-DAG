@@ -36,3 +36,4 @@ This implementation supports the following publications:
 * *Availability Enhancement and Analysis for Mixed-Criticality Systems on Multi-core - R. Medina, E. Borde and L. Pautet* - presented at [DATE 2018](https://www.date-conference.com/)
 * *Scheduling Multi-Periodic Mixed-Criticality DAGs on Multi-core Architectures - R. Medina, E. Borde and L. Pautet* - presented at [RTSS 2018](http://2018.rtss.org/).
 * *Deployment of mixed-criticality and data driven systems on multi-cores architectures - R. Medina* - [Université Paris-Saclay](https://pastel.archives-ouvertes.fr/tel-02086680/document) (carried at Télécom ParisTech).
+* *Generalized Mixed-Criticality Static Scheduling for Periodic Directed Acyclic Graphs on Multi-Core Processors - R. Medina, E. Borde and L. Pautet* - [IEEE Transactions on Computers 2020](https://ieeexplore.ieee.org/abstract/document/9079213).
